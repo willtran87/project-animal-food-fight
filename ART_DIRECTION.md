@@ -11,7 +11,7 @@ Current status: `source-reference-pass`. The in-game sprites now use image-gener
 Current v1 image-gen reference:
 
 ```text
-assets/art-direction/food-animal-sticker-reference-v1.png
+assets/art-direction/food-animal-sticker-reference-v1.webp
 ```
 
 Current transparent sprite pipeline proofs:
@@ -19,15 +19,15 @@ Current transparent sprite pipeline proofs:
 ```text
 assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_evolution_SW_sheet.png
 assets/sprites/runtime/sushi-seal-v3/sushi-seal_evolution_SW_sheet.png
-assets/sprites/runtime/taco-tiger-v3/taco-tiger_evolution_SW_sheet.png
-assets/sprites/runtime/berry-bat-v3/berry-bat_evolution_SW_sheet.png
-assets/sprites/runtime/noodle-newt-v3/noodle-newt_evolution_SW_sheet.png
+assets/sprites/runtime/taco-tiger-v3/taco-tiger_evolution_SW_sheet.webp
+assets/sprites/runtime/berry-bat-v3/berry-bat_evolution_SW_sheet.webp
+assets/sprites/runtime/noodle-newt-v3/noodle-newt_evolution_SW_sheet.webp
 ```
 
 Current v1 background:
 
 ```text
-assets/backgrounds/picnic-arena-background-v1-2048x1280.png
+assets/backgrounds/picnic-arena-background-v1-2048x1280.webp
 ```
 
 Status: `source-reference-pass`.

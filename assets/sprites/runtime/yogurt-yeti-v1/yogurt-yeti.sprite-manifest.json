@@ -10,7 +10,7 @@
     { "tier": 3, "formName": "Frozen Yeti", "frame": "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_frozen-yeti_idle_SW_00.png" },
     { "tier": 4, "formName": "Glacier Parfait", "frame": "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_glacier-parfait_idle_SW_00.png" }
   ],
-  "sheet": "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_evolution_SW_sheet.png",
+  "sheet": "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_evolution_SW_sheet.webp",
   "notes": [
     "Generated with built-in image generation as a four-form Uncommon line on a flat #00ff00 chroma-key background.",
     "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."

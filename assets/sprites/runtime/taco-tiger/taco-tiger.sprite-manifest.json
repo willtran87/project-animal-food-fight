@@ -29,7 +29,7 @@
     }
   ],
   "sheet": "assets/sprites/runtime/taco-tiger/taco-tiger_evolution_SW_sheet.png",
-  "finalFormSheet": "assets/sprites/runtime/final-forms-v2/food-animal-final-forms-v2_evolution_SW_sheet.png",
+  "finalFormSheet": "assets/sprites/runtime/final-forms-v2/food-animal-final-forms-v2_evolution_SW_sheet.webp",
   "notes": [
     "Generated with built-in image generation on a flat #ff00ff chroma-key background.",
     "Background was removed with the imagegen remove_chroma_key.py helper.",

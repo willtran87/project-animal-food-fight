@@ -10,7 +10,7 @@
     { "tier": 3, "formName": "Fiesta Fang", "frame": "assets/sprites/runtime/taco-tiger-v3/taco-tiger_fiesta-fang_idle_SW_00.png" },
     { "tier": 4, "formName": "Carnival Tiger", "frame": "assets/sprites/runtime/taco-tiger-v3/taco-tiger_carnival-tiger_idle_SW_00.png" }
   ],
-  "sheet": "assets/sprites/runtime/taco-tiger-v3/taco-tiger_evolution_SW_sheet.png",
+  "sheet": "assets/sprites/runtime/taco-tiger-v3/taco-tiger_evolution_SW_sheet.webp",
   "notes": [
     "Generated with built-in image generation as a coherent four-form line on a flat #ff00ff chroma-key background.",
     "Forms were prompted as one evolving tiger identity with the same crouched pose, face, stripe language, and taco shell.",

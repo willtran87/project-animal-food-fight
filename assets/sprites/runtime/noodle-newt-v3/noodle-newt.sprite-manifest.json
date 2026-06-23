@@ -12,7 +12,7 @@
     { "tier": 3, "formName": "Hotpot Newt", "frame": "assets/sprites/runtime/noodle-newt-v3/noodle-newt_hotpot-newt_idle_SW_00.png" },
     { "tier": 4, "formName": "Cauldron Newt", "frame": "assets/sprites/runtime/noodle-newt-v3/noodle-newt_cauldron-newt-grand-v2_idle_SW_00.png" }
   ],
-  "sheet": "assets/sprites/runtime/noodle-newt-v3/noodle-newt_evolution_SW_sheet.png",
+  "sheet": "assets/sprites/runtime/noodle-newt-v3/noodle-newt_evolution_SW_sheet.webp",
   "notes": [
     "Generated with built-in image generation as a coherent four-form line on a flat #ff00ff chroma-key background.",
     "Forms were prompted as one evolving yellow newt identity with the same face, pose, herb frills, noodle motif, and gradual soup vessel growth.",

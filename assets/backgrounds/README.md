@@ -2,8 +2,8 @@
 
 ## Picnic Arena Background V1
 
-- Source copy: `assets/backgrounds/picnic-arena-background-v1-source.png`
-- Runtime crop: `assets/backgrounds/picnic-arena-background-v1-2048x1280.png`
+- Source copy: `assets/backgrounds/picnic-arena-background-v1-source.webp`
+- Runtime crop: `assets/backgrounds/picnic-arena-background-v1-2048x1280.webp`
 - Runtime ratio: `16:10`, matching the `1024x640` canvas.
 - Status: `source-reference-pass`
 

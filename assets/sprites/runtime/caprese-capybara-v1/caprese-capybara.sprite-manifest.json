@@ -30,7 +30,7 @@
       "frame": "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_antipasto-harbour_idle_SW_00.png"
     }
   ],
-  "sheet": "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_evolution_SW_sheet.png",
+  "sheet": "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_evolution_SW_sheet.webp",
   "notes": [
     "Generated with built-in image generation on flat #ff00ff.",
     "Converted with remove_chroma_key.py and sliced in grouped mode into 192x192 runtime sprites.",

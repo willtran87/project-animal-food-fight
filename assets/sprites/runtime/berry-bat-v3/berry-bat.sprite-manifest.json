@@ -10,7 +10,7 @@
     { "tier": 3, "formName": "Elderberry Bat", "frame": "assets/sprites/runtime/berry-bat-v3/berry-bat_elderberry-bat_idle_SW_00.png" },
     { "tier": 4, "formName": "Royal Berry Bat", "frame": "assets/sprites/runtime/berry-bat-v3/berry-bat_royal-berry-bat_idle_SW_00.png" }
   ],
-  "sheet": "assets/sprites/runtime/berry-bat-v3/berry-bat_evolution_SW_sheet.png",
+  "sheet": "assets/sprites/runtime/berry-bat-v3/berry-bat_evolution_SW_sheet.webp",
   "notes": [
     "Generated with built-in image generation as a coherent four-form line on a flat #ff00ff chroma-key background.",
     "Forms were prompted as one evolving berry-bodied bat identity with the same cute face, wings, berry cluster, and leaf accents.",

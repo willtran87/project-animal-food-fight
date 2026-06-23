@@ -1174,7 +1174,7 @@
       name: "Sunny Breakfast Patio",
       short: "Patio",
       mood: "Morning boards favor warm openers.",
-      backgroundSrc: "assets/backgrounds/arena-sunny-breakfast-patio-v1.png",
+      backgroundSrc: "assets/backgrounds/arena-sunny-breakfast-patio-v1.webp",
       color: "#e8b765",
       effects: [
         { tag: "HELP", text: "Breakfast starts hasted." },
@@ -1187,7 +1187,7 @@
       name: "Rainy Fish Market",
       short: "Market",
       mood: "Wet lanes reward sea pressure.",
-      backgroundSrc: "assets/backgrounds/arena-rainy-fish-market-v1.png",
+      backgroundSrc: "assets/backgrounds/arena-rainy-fish-market-v1.webp",
       color: "#5aa6d6",
       effects: [
         { tag: "HELP", text: "Ocean attacks faster." },
@@ -1200,7 +1200,7 @@
       name: "Street Festival",
       short: "Festival",
       mood: "Tempo comps thrive in the crowd.",
-      backgroundSrc: "assets/backgrounds/arena-street-festival-v1.png",
+      backgroundSrc: "assets/backgrounds/arena-street-festival-v1.webp",
       color: "#d9573c",
       effects: [
         { tag: "HELP", text: "Street/Spicy/Snack faster." },
@@ -1213,7 +1213,7 @@
       name: "Spice Bazaar",
       short: "Bazaar",
       mood: "Statuses linger in the heat.",
-      backgroundSrc: "assets/backgrounds/arena-spice-bazaar-v1.png",
+      backgroundSrc: "assets/backgrounds/arena-spice-bazaar-v1.webp",
       color: "#d9852f",
       effects: [
         { tag: "HELP", text: "Spicy/Street damage rises." },
@@ -1226,7 +1226,7 @@
       name: "Frozen Parfait Peak",
       short: "Peak",
       mood: "Cold boards reward patient scaling.",
-      backgroundSrc: "assets/backgrounds/arena-frozen-parfait-peak-v1.png",
+      backgroundSrc: "assets/backgrounds/arena-frozen-parfait-peak-v1.webp",
       color: "#7ec7e8",
       effects: [
         { tag: "HELP", text: "Sweet starts shielded." },
@@ -1239,7 +1239,7 @@
       name: "Dim Sum Kitchen",
       short: "Kitchen",
       mood: "Front lines hold in the steam.",
-      backgroundSrc: "assets/backgrounds/arena-dim-sum-kitchen-v1.png",
+      backgroundSrc: "assets/backgrounds/arena-dim-sum-kitchen-v1.webp",
       color: "#8b6f50",
       effects: [
         { tag: "HELP", text: "Snack/Breakfast fronts hold." },
@@ -1256,23 +1256,23 @@
   const SHOP_STARTING_UNLOCKED_SLOTS = 4;
   const SHOP_SLOT_UNLOCK_COSTS = [0, 0, 0, 0, 30, 45, 60, 75];
   const INFO_PANEL = { x: 670, y: 244, w: 338, h: 392 };
-  const TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-bg-v1.png?v=1";
-  const FOOD_MENU_BG_SRC = "assets/ui/runtime/food-menu-bg-v1.png?v=1";
+  const TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-bg-v1.webp?v=1";
+  const FOOD_MENU_BG_SRC = "assets/ui/runtime/food-menu-bg-v1.webp?v=1";
   const SHOP_SLOT_BG_SRC = "assets/ui/runtime/shop-slot-card-bg-v1.png?v=1";
-  const SHOP_LOCK_CLOTH_BG_SRC = "assets/ui/runtime/shop-lock-cloth-bg-v2.png?v=1";
+  const SHOP_LOCK_CLOTH_BG_SRC = "assets/ui/runtime/shop-lock-cloth-bg-v2.webp?v=1";
   const BENCH_SLOT_BG_SRC = "assets/ui/runtime/bench-countertop-cream-stone-v1.png?v=1";
   const BENCH_SLOT_BG_SCALE = 1.12;
-  const BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-picnic-blanket-v1.png?v=3";
-  const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.png";
-  const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.png";
-  const SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/food-animal-stall-forward-facing-v1.png";
-  const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.png";
+  const BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-picnic-blanket-v1.webp?v=3";
+  const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
+  const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";
+  const SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/food-animal-stall-forward-facing-v1.webp";
+  const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.webp";
   const CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/beat-up-food-menu-button-v2.png";
   const SHOPKEEPER_LEVEL_SRCS = [
     SHOPKEEPER_SRC,
-    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-teen-lv2-v3.png",
-    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-adult-lv3-v3.png",
-    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-lean-muscle-lv4-v3.png",
+    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-teen-lv2-v3.webp",
+    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-adult-lv3-v3.webp",
+    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-lean-muscle-lv4-v3.webp",
   ];
   const SHOPKEEPER_DISPLAY = {
     stall: { x: 720, y: 54, w: 258, h: 206 },
@@ -1315,6 +1315,7 @@
     dividerHeight: 420,
   };
   const BATTLE_DRINK_SLOT_SIZE = BATTLE_FORMATION.cellSize;
+  const BATTLE_DRINK_ICON_RADIUS = 38;
   const DRINK_PULSE_ANIMATION_SECONDS = 0.58;
   const DRINK_PULSE_HOP_PIXELS = 9;
   const DRINK_TOSS_ANIMATION_SECONDS = 0.62;
@@ -1327,6 +1328,8 @@
     return { x: PREP_BOARD_ORIGIN.x + col * PREP_BOARD_SPACING, y: PREP_BOARD_ORIGIN.y + row * PREP_BOARD_SPACING, col, row };
   });
   const DRINK_SLOT_SIZE = 72;
+  const TILE_DRINK_ICON_RADIUS_SCALE = 0.54;
+  const TILE_DRINK_ICON_Y_OFFSET = 0;
   const drinkSlots = [
     ...Array.from({ length: BOARD_ROWS }, (_, row) => ({
       x: PREP_BOARD_ORIGIN.x - PREP_BOARD_SPACING,
@@ -1374,14 +1377,14 @@
   }
 
   const buttons = {
-    shopUpgrade: { x: 650, y: 4, w: 112, h: 52, label: "Upgrade", icon: "^", signSrc: "assets/ui/runtime/chalk-sign-upgrade-v1.png" },
-    roll: { x: 775, y: 4, w: 112, h: 52, label: "Roll", icon: "R", signSrc: "assets/ui/runtime/chalk-sign-reroll-v1.png" },
-    battle: { x: 900, y: 4, w: 112, h: 52, label: "Battle", icon: ">", signSrc: "assets/ui/runtime/chalk-sign-battle-v1.png" },
+    shopUpgrade: { x: 650, y: 4, w: 112, h: 52, label: "Upgrade", icon: "^", signSrc: "assets/ui/runtime/chalk-sign-upgrade-v1.webp" },
+    roll: { x: 775, y: 4, w: 112, h: 52, label: "Roll", icon: "R", signSrc: "assets/ui/runtime/chalk-sign-reroll-v1.webp" },
+    battle: { x: 900, y: 4, w: 112, h: 52, label: "Battle", icon: ">", signSrc: "assets/ui/runtime/chalk-sign-battle-v1.webp" },
     battleSpeed: { x: 812, y: 4, w: 126, h: 52, label: "Speed 1x", icon: ">>", signSrc: BATTLE_SPEED_CHALK_SRC, chalkMode: "speed" },
     next: { x: 812, y: 4, w: 150, h: 52, label: "Next", icon: ">" },
-    reward0: { x: 730, y: 320, w: 242, h: 38, label: "Reward", icon: "" },
-    reward1: { x: 730, y: 364, w: 242, h: 38, label: "Reward", icon: "" },
-    reward2: { x: 730, y: 408, w: 242, h: 38, label: "Reward", icon: "" },
+    reward0: { x: 730, y: 346, w: 242, h: 46, label: "Reward", icon: "" },
+    reward1: { x: 730, y: 398, w: 242, h: 46, label: "Reward", icon: "" },
+    reward2: { x: 730, y: 450, w: 242, h: 46, label: "Reward", icon: "" },
     sell: { x: 906, y: 390, w: 92, h: 28, label: "Sell", icon: "" },
     detach: { x: 906, y: 422, w: 92, h: 28, label: "Detach", icon: "" },
   };
@@ -3101,17 +3104,17 @@
   const SHOP_SALE_CHANCES = [0, 0.08, 0.12, 0.16, 0.22];
   const ITEM_SPRITES = {
     sunny_side_egg: "assets/items/runtime/sunny_side_egg-evolved-v1.png?v=3",
-    bean_brew: "assets/items/runtime/bean_brew-grand-v2-lv1.png?v=1",
-    berry_fizz: "assets/items/runtime/berry_fizz-grand-v2-lv1.png?v=1",
+    bean_brew: "assets/items/runtime/bean_brew-grand-v2-lv1.webp?v=1",
+    berry_fizz: "assets/items/runtime/berry_fizz-grand-v2-lv1.webp?v=1",
     garden_spritz: "assets/items/runtime/garden_spritz-grand-v2-lv1.png?v=1",
-    citrus_tea: "assets/items/runtime/citrus_tea-grand-v2-lv1.png?v=1",
-    chili_crunch_cola: "assets/items/runtime/chili_crunch_cola-grand-v2-lv1.png?v=1",
+    citrus_tea: "assets/items/runtime/citrus_tea-grand-v2-lv1.webp?v=1",
+    chili_crunch_cola: "assets/items/runtime/chili_crunch_cola-grand-v2-lv1.webp?v=1",
     pepper_broth: "assets/items/runtime/pepper_broth-grand-v2-lv1.png?v=1",
-    abyssal_shake: "assets/items/runtime/abyssal_shake-grand-v2-lv1.png?v=1",
+    abyssal_shake: "assets/items/runtime/abyssal_shake-grand-v2-lv1.webp?v=1",
     cream_soda_float: "assets/items/runtime/cream_soda_float-grand-v1-lv1.png?v=1",
     tidepool_espresso: "assets/items/runtime/tidepool_espresso-grand-v1-lv1.png?v=1",
-    avocado_lassi: "assets/items/runtime/avocado_lassi-grand-v1-lv1.png?v=1",
-    chili_brine_tonic: "assets/items/runtime/chili_brine_tonic-grand-v1-lv1.png?v=1",
+    avocado_lassi: "assets/items/runtime/avocado_lassi-grand-v1-lv1.webp?v=1",
+    chili_brine_tonic: "assets/items/runtime/chili_brine_tonic-grand-v1-lv1.webp?v=1",
     market_malt: "assets/items/runtime/market_malt-grand-v1-lv1.png?v=1",
     maple_cloud_cocoa: "assets/items/runtime/maple_cloud_cocoa-grand-v1-lv1.png?v=1",
     pearl_biscuit_latte: "assets/items/runtime/pearl_biscuit_latte-grand-v1-lv1.png?v=1",
@@ -3119,30 +3122,30 @@
     nori_pop_slush: "assets/items/runtime/nori_pop_slush-grand-v1-lv1.png?v=1",
     harissa_morning_shot: "assets/items/runtime/harissa_morning_shot-grand-v1-lv1.png?v=1",
     pretzel_cream_soda: "assets/items/runtime/pretzel_cream_soda-grand-v1-lv1.png?v=1",
-    boba_night_tea: "assets/items/runtime/boba_night_tea-grand-v1-lv1.png?v=1",
+    boba_night_tea: "assets/items/runtime/boba_night_tea-grand-v1-lv1.webp?v=1",
     pico_lime_agua: "assets/items/runtime/pico_lime_agua-grand-v1-lv1.png?v=1",
-    butter_pat: "assets/items/runtime/butter_pat-evolved-v1.png?v=3",
-    cheese_star: "assets/items/runtime/cheese_star-evolution-v2-lv1.png?v=1",
-    bacon_strips: "assets/items/runtime/bacon_strips-sticker-v1-lv1.png?v=2",
-    cherry_tomato: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv1.png?v=1",
+    butter_pat: "assets/items/runtime/butter_pat-evolved-v1.webp?v=3",
+    cheese_star: "assets/items/runtime/cheese_star-evolution-v2-lv1.webp?v=1",
+    bacon_strips: "assets/items/runtime/bacon_strips-sticker-v1-lv1.webp?v=2",
+    cherry_tomato: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv1.webp?v=1",
     pickle_chip: "assets/items/runtime/pickle_chip-white-sticker-thin-v1-lv1.png?v=1",
     mushroom_cap: "assets/items/runtime/mushroom_cap-sticker-v1-lv1.png?v=1",
     pepperoni_slice: "assets/items/runtime/pepperoni_slice-white-sticker-thin-v1-lv1.png?v=1",
     lemon_wedge: "assets/items/runtime/lemon_wedge-white-sticker-thin-v1-lv1.png?v=1",
     olive_ring: "assets/items/runtime/olive_ring-white-sticker-thin-v1-lv1.png?v=1",
-    chili_pepper: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv1.png?v=1",
-    avocado_fan: "assets/items/runtime/avocado_fan-sticker-v1-lv1.png?v=1",
+    chili_pepper: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv1.webp?v=1",
+    avocado_fan: "assets/items/runtime/avocado_fan-sticker-v1-lv1.webp?v=1",
     jam_dollop: "assets/items/runtime/jam_dollop-sticker-v1-lv1.png?v=1",
-    caramel_crown: "assets/items/runtime/caramel_crown-sticker-v1-lv1.png?v=1",
+    caramel_crown: "assets/items/runtime/caramel_crown-sticker-v1-lv1.webp?v=1",
     whipped_cream_puff: "assets/items/runtime/whipped_cream_puff-sticker-v1-lv1.png?v=1",
-    basil_leaf: "assets/items/runtime/basil_leaf-sticker-v1-lv1.png?v=1",
+    basil_leaf: "assets/items/runtime/basil_leaf-sticker-v1-lv1.webp?v=1",
     honey_drizzle: "assets/items/runtime/honey_drizzle-sticker-v1-lv1.png?v=1",
     garlic_clove: "assets/items/runtime/garlic_clove-sticker-v1-lv1.png?v=1",
     rice_ball: "assets/items/runtime/rice_ball-sticker-v1-lv1.png?v=1",
     onion_ring: "assets/items/runtime/onion_ring-sticker-v1-lv1.png?v=1",
     maple_leaf: "assets/items/runtime/maple_leaf-maple-syrup-sticker-v1-lv1.png?v=1",
     marshmallow_cube: "assets/items/runtime/marshmallow_cube-sticker-v1-lv1.png?v=1",
-    cookie_crumb: "assets/items/runtime/cookie_crumb-sticker-v1-lv1.png?v=1",
+    cookie_crumb: "assets/items/runtime/cookie_crumb-sticker-v1-lv1.webp?v=1",
     seaweed_wrap: "assets/items/runtime/seaweed_wrap-sticker-v1-lv1.png?v=1",
     pretzel_stick: "assets/items/runtime/pretzel_stick-sticker-v1-lv1.png?v=1",
     waffle_cone: "assets/items/runtime/waffle_cone-sticker-v1-lv1.png?v=1",
@@ -3155,10 +3158,10 @@
     vinegar_splash: "assets/items/runtime/vinegar_splash-sticker-v1-lv1.png?v=1",
     cucumber_slice: "assets/items/runtime/cucumber_slice-sticker-v1-lv1.png?v=1",
     cracker_plate: "assets/items/runtime/cracker_plate-sticker-v2-lv1.png?v=1",
-    cherry_pit: "assets/items/runtime/cherry_pit-sticker-v1-lv1.png?v=1",
-    breadstick_dummy: "assets/items/runtime/breadstick_dummy-sticker-v1-lv1.png?v=1",
+    cherry_pit: "assets/items/runtime/cherry_pit-sticker-v1-lv1.webp?v=1",
+    breadstick_dummy: "assets/items/runtime/breadstick_dummy-sticker-v1-lv1.webp?v=1",
     popcorn_kernel: "assets/items/runtime/popcorn_kernel-sticker-v1-lv1.png?v=1",
-    coupon_clip: "assets/items/runtime/coupon_clip-sticker-v1-lv1.png?v=1",
+    coupon_clip: "assets/items/runtime/coupon_clip-sticker-v1-lv1.webp?v=1",
     lucky_grape: "assets/items/runtime/lucky_grape-green-key-sticker-v1-lv1.png?v=1",
     shopping_bag: "assets/items/runtime/shopping_bag-sticker-v1-lv1.png?v=1",
     recipe_card: "assets/items/runtime/recipe_card-sticker-v1-lv1.png?v=1",
@@ -3169,17 +3172,17 @@
     glass_candy: "assets/items/runtime/glass_candy-sticker-v1-lv1.png?v=1",
     wasabi_pea: "assets/items/runtime/wasabi_pea-sticker-v1-lv1.png?v=1",
     molten_cheese: "assets/items/runtime/molten_cheese-sticker-v1-lv1.png?v=1",
-    brittle_cracker: "assets/items/runtime/brittle_cracker-sticker-v1-lv1.png?v=1",
+    brittle_cracker: "assets/items/runtime/brittle_cracker-sticker-v1-lv1.webp?v=1",
     golden_truffle_crown: "assets/items/runtime/golden_truffle_crown-sticker-v1-lv1.png?v=1",
     dragonfruit_star: "assets/items/runtime/dragonfruit_star-sticker-v1-lv1.png?v=1",
     rainbow_mochi: "assets/items/runtime/rainbow_mochi-sticker-v1-lv1.png?v=1",
-    caviar_pearls: "assets/items/runtime/caviar_pearls-sticker-v2-lv1.png?v=1",
+    caviar_pearls: "assets/items/runtime/caviar_pearls-sticker-v2-lv1.webp?v=1",
     saffron_threads: "assets/items/runtime/saffron_threads-sticker-v1-lv1.png?v=1",
     scallion_oil: "assets/items/runtime/scallion_oil-sticker-v1-lv1.png?v=1",
     gochugaru_flakes: "assets/items/runtime/gochugaru_flakes-sticker-v1-lv1.png?v=1",
     dill_sprig: "assets/items/runtime/dill_sprig-sticker-v1-lv1.png?v=1",
     sesame_seeds: "assets/items/runtime/sesame_seeds-sticker-v1-lv1.png?v=1",
-    cinnamon_sugar: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv1.png?v=1",
+    cinnamon_sugar: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv1.webp?v=1",
     milk_tea_foam: "assets/items/runtime/milk_tea_foam-sticker-v1-lv1.png?v=1",
     royal_icing_crest: "assets/items/runtime/royal_icing_crest-sticker-v1-lv1.png?v=1",
   };
@@ -3189,44 +3192,44 @@
       3: "assets/items/runtime/sunny_side_egg-v3.png?v=3",
     },
     butter_pat: {
-      2: "assets/items/runtime/butter_pat-v2.png?v=3",
-      3: "assets/items/runtime/butter_pat-v3.png?v=3",
+      2: "assets/items/runtime/butter_pat-v2.webp?v=3",
+      3: "assets/items/runtime/butter_pat-v3.webp?v=3",
     },
     cheese_star: {
-      2: "assets/items/runtime/cheese_star-evolution-v2-lv2.png?v=1",
-      3: "assets/items/runtime/cheese_star-evolution-v2-lv3.png?v=1",
+      2: "assets/items/runtime/cheese_star-evolution-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/cheese_star-evolution-v2-lv3.webp?v=1",
     },
     bacon_strips: {
-      2: "assets/items/runtime/bacon_strips-sticker-v1-lv2.png?v=2",
-      3: "assets/items/runtime/bacon_strips-sticker-v1-lv3.png?v=2",
+      2: "assets/items/runtime/bacon_strips-sticker-v1-lv2.webp?v=2",
+      3: "assets/items/runtime/bacon_strips-sticker-v1-lv3.webp?v=2",
     },
     bean_brew: {
-      2: "assets/items/runtime/bean_brew-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/bean_brew-grand-v2-lv3.png?v=1",
+      2: "assets/items/runtime/bean_brew-grand-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/bean_brew-grand-v2-lv3.webp?v=1",
     },
     berry_fizz: {
-      2: "assets/items/runtime/berry_fizz-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/berry_fizz-grand-v2-lv3.png?v=1",
+      2: "assets/items/runtime/berry_fizz-grand-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/berry_fizz-grand-v2-lv3.webp?v=1",
     },
     garden_spritz: {
       2: "assets/items/runtime/garden_spritz-grand-v2-lv2.png?v=1",
       3: "assets/items/runtime/garden_spritz-grand-v2-lv3.png?v=1",
     },
     citrus_tea: {
-      2: "assets/items/runtime/citrus_tea-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/citrus_tea-grand-v2-lv3.png?v=1",
+      2: "assets/items/runtime/citrus_tea-grand-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/citrus_tea-grand-v2-lv3.webp?v=1",
     },
     chili_crunch_cola: {
-      2: "assets/items/runtime/chili_crunch_cola-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/chili_crunch_cola-grand-v2-lv3.png?v=1",
+      2: "assets/items/runtime/chili_crunch_cola-grand-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/chili_crunch_cola-grand-v2-lv3.webp?v=1",
     },
     pepper_broth: {
       2: "assets/items/runtime/pepper_broth-grand-v2-lv2.png?v=1",
       3: "assets/items/runtime/pepper_broth-grand-v2-lv3.png?v=1",
     },
     abyssal_shake: {
-      2: "assets/items/runtime/abyssal_shake-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/abyssal_shake-grand-v2-lv3.png?v=1",
+      2: "assets/items/runtime/abyssal_shake-grand-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/abyssal_shake-grand-v2-lv3.webp?v=1",
     },
     cream_soda_float: {
       2: "assets/items/runtime/cream_soda_float-grand-v1-lv2.png?v=1",
@@ -3237,12 +3240,12 @@
       3: "assets/items/runtime/tidepool_espresso-grand-v1-lv3.png?v=1",
     },
     avocado_lassi: {
-      2: "assets/items/runtime/avocado_lassi-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/avocado_lassi-grand-v1-lv3.png?v=1",
+      2: "assets/items/runtime/avocado_lassi-grand-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/avocado_lassi-grand-v1-lv3.webp?v=1",
     },
     chili_brine_tonic: {
-      2: "assets/items/runtime/chili_brine_tonic-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/chili_brine_tonic-grand-v1-lv3.png?v=1",
+      2: "assets/items/runtime/chili_brine_tonic-grand-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/chili_brine_tonic-grand-v1-lv3.webp?v=1",
     },
     market_malt: {
       2: "assets/items/runtime/market_malt-grand-v1-lv2.png?v=1",
@@ -3273,16 +3276,16 @@
       3: "assets/items/runtime/pretzel_cream_soda-grand-v1-lv3.png?v=1",
     },
     boba_night_tea: {
-      2: "assets/items/runtime/boba_night_tea-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/boba_night_tea-grand-v1-lv3.png?v=1",
+      2: "assets/items/runtime/boba_night_tea-grand-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/boba_night_tea-grand-v1-lv3.webp?v=1",
     },
     pico_lime_agua: {
       2: "assets/items/runtime/pico_lime_agua-grand-v1-lv2.png?v=1",
       3: "assets/items/runtime/pico_lime_agua-grand-v1-lv3.png?v=1",
     },
     cherry_tomato: {
-      2: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv3.png?v=1",
+      2: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv3.webp?v=1",
     },
     pickle_chip: {
       2: "assets/items/runtime/pickle_chip-white-sticker-thin-v1-lv2.png?v=1",
@@ -3305,28 +3308,28 @@
       3: "assets/items/runtime/olive_ring-white-sticker-thin-v1-lv3.png?v=1",
     },
     chili_pepper: {
-      2: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv2.png?v=1",
-      3: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv3.png?v=1",
+      2: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv3.webp?v=1",
     },
     avocado_fan: {
-      2: "assets/items/runtime/avocado_fan-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/avocado_fan-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/avocado_fan-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/avocado_fan-sticker-v1-lv3.webp?v=1",
     },
     jam_dollop: {
       2: "assets/items/runtime/jam_dollop-sticker-v1-lv2.png?v=1",
       3: "assets/items/runtime/jam_dollop-sticker-v1-lv3.png?v=1",
     },
     caramel_crown: {
-      2: "assets/items/runtime/caramel_crown-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/caramel_crown-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/caramel_crown-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/caramel_crown-sticker-v1-lv3.webp?v=1",
     },
     whipped_cream_puff: {
       2: "assets/items/runtime/whipped_cream_puff-sticker-v1-lv2.png?v=1",
       3: "assets/items/runtime/whipped_cream_puff-sticker-v1-lv3.png?v=1",
     },
     basil_leaf: {
-      2: "assets/items/runtime/basil_leaf-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/basil_leaf-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/basil_leaf-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/basil_leaf-sticker-v1-lv3.webp?v=1",
     },
     honey_drizzle: {
       2: "assets/items/runtime/honey_drizzle-sticker-v1-lv2.png?v=1",
@@ -3353,8 +3356,8 @@
       3: "assets/items/runtime/marshmallow_cube-sticker-v1-lv3.png?v=1",
     },
     cookie_crumb: {
-      2: "assets/items/runtime/cookie_crumb-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cookie_crumb-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/cookie_crumb-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/cookie_crumb-sticker-v1-lv3.webp?v=1",
     },
     seaweed_wrap: {
       2: "assets/items/runtime/seaweed_wrap-sticker-v1-lv2.png?v=1",
@@ -3405,20 +3408,20 @@
       3: "assets/items/runtime/cracker_plate-sticker-v2-lv3.png?v=1",
     },
     cherry_pit: {
-      2: "assets/items/runtime/cherry_pit-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cherry_pit-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/cherry_pit-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/cherry_pit-sticker-v1-lv3.webp?v=1",
     },
     breadstick_dummy: {
-      2: "assets/items/runtime/breadstick_dummy-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/breadstick_dummy-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/breadstick_dummy-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/breadstick_dummy-sticker-v1-lv3.webp?v=1",
     },
     popcorn_kernel: {
       2: "assets/items/runtime/popcorn_kernel-sticker-v1-lv2.png?v=1",
       3: "assets/items/runtime/popcorn_kernel-sticker-v1-lv3.png?v=1",
     },
     coupon_clip: {
-      2: "assets/items/runtime/coupon_clip-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/coupon_clip-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/coupon_clip-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/coupon_clip-sticker-v1-lv3.webp?v=1",
     },
     lucky_grape: {
       2: "assets/items/runtime/lucky_grape-green-key-sticker-v1-lv2.png?v=1",
@@ -3461,8 +3464,8 @@
       3: "assets/items/runtime/molten_cheese-sticker-v1-lv3.png?v=1",
     },
     brittle_cracker: {
-      2: "assets/items/runtime/brittle_cracker-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/brittle_cracker-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/brittle_cracker-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/brittle_cracker-sticker-v1-lv3.webp?v=1",
     },
     golden_truffle_crown: {
       2: "assets/items/runtime/golden_truffle_crown-sticker-v1-lv2.png?v=1",
@@ -3477,8 +3480,8 @@
       3: "assets/items/runtime/rainbow_mochi-sticker-v1-lv3.png?v=1",
     },
     caviar_pearls: {
-      2: "assets/items/runtime/caviar_pearls-sticker-v2-lv2.png?v=1",
-      3: "assets/items/runtime/caviar_pearls-sticker-v2-lv3.png?v=1",
+      2: "assets/items/runtime/caviar_pearls-sticker-v2-lv2.webp?v=1",
+      3: "assets/items/runtime/caviar_pearls-sticker-v2-lv3.webp?v=1",
     },
     saffron_threads: {
       2: "assets/items/runtime/saffron_threads-sticker-v1-lv2.png?v=1",
@@ -3501,8 +3504,8 @@
       3: "assets/items/runtime/sesame_seeds-sticker-v1-lv3.png?v=1",
     },
     cinnamon_sugar: {
-      2: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv3.png?v=1",
+      2: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv2.webp?v=1",
+      3: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv3.webp?v=1",
     },
     milk_tea_foam: {
       2: "assets/items/runtime/milk_tea_foam-sticker-v1-lv2.png?v=1",
@@ -3642,19 +3645,19 @@
   const drinkThrowableSpriteCache = new Map();
   const statusEffectSpriteCache = new Map();
   const uiSpriteCache = new Map();
-  const BACKGROUND_SRC = "assets/backgrounds/picnic-arena-background-v1-2048x1280.png";
+  const BACKGROUND_SRC = "assets/backgrounds/picnic-arena-background-v1-2048x1280.webp";
   const UPGRADE_STAR_SRC = "assets/ui/runtime/upgrade-star-v2.png";
   const SHOP_LOCKED_SRC = "assets/ui/runtime/shop-lock-locked-v1.png";
   const SHOP_UNLOCKED_SRC = "assets/ui/runtime/shop-lock-unlocked-v1.png";
   const STATUS_HEART_SRC = "assets/ui/runtime/status-heart-v1.png";
   const STATUS_COIN_SRC = "assets/ui/runtime/status-coin-v1.png";
-  const BOARD_PLATE_SLOT_SRC = "assets/items/runtime/board_plate-minimal-v1.png?v=1";
+  const BOARD_PLATE_SLOT_SRC = "assets/items/runtime/board_plate-minimal-v1.webp?v=1";
   const DRINK_COASTER_SLOT_SRC = "assets/items/runtime/drink_coaster-minimal-v1.png?v=1";
   const TOPPING_CUTTING_BOARD_SLOT_SRC = "assets/items/runtime/topping_cutting_board-stall-v2.png?v=1";
   const UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-v1.png";
-  const STATUS_CHALK_COURSE_SRC = "assets/ui/runtime/status-chalk-course-v1.png";
-  const STATUS_CHALK_COINS_SRC = "assets/ui/runtime/status-chalk-coins-v1.png";
-  const STATUS_CHALK_HEALTH_SRC = "assets/ui/runtime/status-chalk-health-v1.png";
+  const STATUS_CHALK_COURSE_SRC = "assets/ui/runtime/status-chalk-course-v1.webp";
+  const STATUS_CHALK_COINS_SRC = "assets/ui/runtime/status-chalk-coins-v1.webp";
+  const STATUS_CHALK_HEALTH_SRC = "assets/ui/runtime/status-chalk-health-v1.webp";
   const UI_ICON_ATLAS_CELL = 64;
   const UI_ICON_ATLAS = {
     trait_breakfast: [0, 0],
@@ -5197,7 +5200,7 @@
     state.selected = null;
     state.drag = null;
     state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} coins` : ""}`;
-    burst(itemRefSlot(keeper), evolved.accent || evolved.color);
+    mergeExplosion(itemRefSlot(keeper), evolved);
     state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} coins` : ""}`);
     return true;
   }
@@ -5260,7 +5263,7 @@
     state.selected = null;
     state.drag = null;
     state.message = `${evolved.short} evolved${reward ? ` +${reward} coins` : ""}`;
-    burst(keeper.area === "board" ? boardSlots[keeper.index] : benchSlots[keeper.index], evolved.accent);
+    mergeExplosion(keeper.area === "board" ? boardSlots[keeper.index] : benchSlots[keeper.index], evolved);
     state.log.unshift(`${evolved.name} reached ${tier + 1} stars${reward ? ` and earned ${reward} coins` : ""}`);
     resolveItemMerges();
     return true;
@@ -6512,7 +6515,9 @@
     state.phase = "result";
     state.enemyPreview = null;
     state.rewardChoices = state.hearts > 0 ? generateRewardChoices(won) : [];
-    state.message = won ? `Victory +${income.total} coins` : state.hearts > 0 ? `Defeat +${income.total} coins` : "Run over";
+    state.message = state.hearts > 0
+      ? `${won ? "Victory" : "Defeat"} +${income.total} coins - choose a reward`
+      : "Run over";
     state.log.unshift(won ? `Won +${income.total} coins` : `Lost ${damage} hearts +${income.total} coins`);
     clearParticles();
     state.battle.attacks = [];
@@ -8452,10 +8457,19 @@
     state.particles.length = 0;
   }
 
+  function particleSpriteSrc(spriteKind, particleType, particleTier) {
+    if (!particleType) return null;
+    if (spriteKind === "drink") return DRINK_THROWABLE_SPRITES[particleType] || null;
+    if (spriteKind === "item") return ITEM_TIER_SPRITES[particleType]?.[itemTier(particleTier)] || ITEM_SPRITES[particleType] || null;
+    return ATTACK_PARTICLE_SPRITES[particleType] || null;
+  }
+
   function burst(pos, color, options = {}) {
     const count = options.count || 14;
     const particleType = options.particleType;
-    const imageSrc = particleType ? ATTACK_PARTICLE_SPRITES[particleType] : null;
+    const particleSprite = options.particleSprite || (options.food ? "attack" : null);
+    const particleTier = options.particleTier || 1;
+    const imageSrc = particleSpriteSrc(particleSprite, particleType, particleTier);
     const foodParticles = Boolean(options.food && imageSrc);
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -8475,6 +8489,8 @@
         color,
         imageSrc,
         particleType,
+        particleTier,
+        particleSprite,
         foodParticles,
         size,
         rotation: Math.random() * Math.PI * 2,
@@ -8487,6 +8503,7 @@
   function foodExplosion(pos, color, particleType, options = {}) {
     burst(pos, color, {
       food: true,
+      particleSprite: "attack",
       particleType,
       count: options.count || 11,
       size: options.size,
@@ -8497,6 +8514,56 @@
       sizeMin: options.sizeMin,
       sizeMax: options.sizeMax,
     });
+  }
+
+  function mergeExplosion(pos, entry) {
+    if (!pos || !entry) return;
+    if (isUnit(entry)) {
+      foodExplosion(pos, entry.accent || entry.color, entry.typeId || entry.id, {
+        count: 12,
+        spread: 18,
+        life: 0.68,
+        speedMin: 105,
+        speedMax: 255,
+        sizeMin: 18,
+        sizeMax: 30,
+      });
+      return;
+    }
+    const color = entry.accent || entry.color || "#f0d56b";
+    if (isDrink(entry)) {
+      burst(pos, color, {
+        food: true,
+        particleSprite: "drink",
+        particleType: entry.id,
+        particleTier: entry.tier,
+        count: 10,
+        spread: 16,
+        life: 0.7,
+        speedMin: 95,
+        speedMax: 230,
+        sizeMin: 20,
+        sizeMax: 32,
+      });
+      return;
+    }
+    if (isTopping(entry)) {
+      burst(pos, color, {
+        food: true,
+        particleSprite: "item",
+        particleType: entry.id,
+        particleTier: entry.tier,
+        count: 10,
+        spread: 15,
+        life: 0.66,
+        speedMin: 90,
+        speedMax: 220,
+        sizeMin: 18,
+        sizeMax: 28,
+      });
+      return;
+    }
+    burst(pos, color);
   }
 
   function defeatExplosion(unit, particleType) {
@@ -9566,8 +9633,8 @@
 
   function drawItemCard(item, x, y, w, h, shopCard, options = {}) {
     const tileDrink = !shopCard && options.hideTileName && isDrink(item);
-    const radius = Math.min(w, h) * (shopCard ? 0.26 : tileDrink ? 0.39 : 0.25);
-    drawItemIcon(item, x, y - (shopCard ? 31 : tileDrink ? 4 : 14), radius);
+    const radius = Math.min(w, h) * (shopCard ? 0.26 : tileDrink ? TILE_DRINK_ICON_RADIUS_SCALE : 0.25);
+    drawItemIcon(item, x, y - (shopCard ? 31 : tileDrink ? TILE_DRINK_ICON_Y_OFFSET : 14), radius);
     if (shopCard) drawRarityBadge(x - w / 2 + 7, y - h / 2 + 7, item.rarity, "small");
     ctx.textAlign = "center";
     if (shopCard) {
@@ -12745,26 +12812,74 @@
     ctx.stroke();
 
     const income = state.lastIncome;
+    const hasReward = state.hearts > 0 && state.rewardChoices?.length;
+    const won = income?.result === "win";
+    const resultTitle = state.hearts <= 0 ? "Run Over" : won ? "Victory!" : "Defeat";
+    const resultColor = state.hearts <= 0 ? "#9b3028" : won ? "#1f7d4a" : "#a94b2b";
+    roundedRect(728, 112, 246, 34, 8);
+    ctx.fillStyle = won ? "rgba(219, 246, 198, 0.92)" : state.hearts <= 0 ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
+    ctx.stroke();
     ctx.fillStyle = "#16392d";
-    ctx.font = "900 17px Inter, sans-serif";
-    ctx.fillText(state.hearts <= 0 ? "Run Over" : "Battle Report", 730, 128);
-    ctx.fillStyle = "#6a4b35";
-    ctx.font = "700 12px Inter, sans-serif";
-    if (income) {
-      ctx.fillText(`${income.result === "win" ? "Victory" : "Defeat"} income:`, 730, 150);
-      drawCurrencyAmount(income.total, 842, 147, {
-        sign: "+",
-        font: "800 12px Inter, sans-serif",
-        color: "#6a4b35",
-        iconSize: 13,
-      });
+    ctx.font = "900 16px Inter, sans-serif";
+    fitText(resultTitle, 742, 134, hasReward ? 118 : 210, "900 16px Inter, sans-serif", resultColor);
+    if (hasReward) {
+      roundedRect(864, 119, 92, 19, 6);
+      ctx.fillStyle = "#f7d15b";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(138, 82, 35, 0.28)";
+      ctx.stroke();
+      drawUiAtlasIcon("reward_gold", 876, 128, 15, { tooltip: null });
+      ctx.font = "900 9px Inter, sans-serif";
+      fitText("REWARD", 887, 132, 60, "900 9px Inter, sans-serif", "#6a3f14");
     }
-    drawCombatLedger(state.lastCombatLedger, 730, 172, 242);
+    if (income) {
+      roundedRect(728, 154, 246, 31, 7);
+      ctx.fillStyle = "rgba(255, 249, 214, 0.72)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+      ctx.stroke();
+      ctx.fillStyle = "#6a4b35";
+      ctx.font = "900 10px Inter, sans-serif";
+      ctx.fillText("BATTLE PAYOUT", 740, 174);
+      drawCurrencyAmount(income.total, 858, 170, {
+        sign: "+",
+        font: "900 15px Inter, sans-serif",
+        color: "#16392d",
+        iconSize: 16,
+      });
+      const heartDamage = state.lastCombatLedger?.heartDamage || 0;
+      if (heartDamage > 0) {
+        ctx.fillStyle = "#9b3028";
+        ctx.font = "900 10px Inter, sans-serif";
+        fitText(`-${heartDamage} health`, 913, 174, 52, "900 10px Inter, sans-serif", "#9b3028");
+      }
+    }
+    drawCombatLedger(state.lastCombatLedger, 730, 194, 242);
     if (!state.rewardChoices?.length) {
       wrapText(state.hearts <= 0 ? "Your run has ended. Restart from the top bar." : "Reward claimed.", 730, 320, 242, 15);
       return;
     }
+    drawRewardPrompt();
     state.rewardChoices.forEach((reward, index) => drawRewardChoice(reward, buttons[`reward${index}`], index));
+  }
+
+  function drawRewardPrompt() {
+    roundedRect(724, 302, 254, 194, 8);
+    ctx.fillStyle = "rgba(255, 241, 176, 0.5)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(217, 144, 67, 0.48)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    drawUiAtlasIcon("reward_gold", 742, 318, 22, { tooltip: { title: "Post-battle reward", body: "Pick one reward before the next course starts." } });
+    ctx.fillStyle = "#16392d";
+    ctx.font = "900 14px Inter, sans-serif";
+    ctx.fillText("Choose 1 Reward", 758, 323);
+    ctx.fillStyle = "#8a5223";
+    ctx.font = "800 10px Inter, sans-serif";
+    ctx.fillText("Claim one to start the next course", 758, 337);
   }
 
   function drawCombatLedger(ledger, x, y, maxWidth) {
@@ -12783,7 +12898,7 @@
       [`KOs`, `${ledger.ally.kos}-${ledger.enemy.kos} in ${ledger.duration}s`, "info_ko", "Knockouts and total battle duration."],
     ];
     rows.forEach(([label, value, iconId, body], index) => {
-      const rowY = y + 22 + index * 22;
+      const rowY = y + 18 + index * 18;
       drawUiAtlasIcon(iconId, x + 8, rowY - 4, 16, { tooltip: { title: label, body } });
       ctx.fillStyle = "#6a4b35";
       ctx.font = "800 10px Inter, sans-serif";
@@ -12798,35 +12913,71 @@
       : "No major support target";
     ctx.fillStyle = "#6a4b35";
     ctx.font = "800 10px Inter, sans-serif";
-    drawUiAtlasIcon("info_damage", x + 8, y + 88, 16, { tooltip: { title: "MVP", body: "Top damage dealer for the fight." } });
-    drawUiAtlasIcon("info_shield", x + 8, y + 110, 16, { tooltip: { title: "Held", body: "Unit that received the most support." } });
-    ctx.fillText("MVP", x + 20, y + 92);
-    ctx.fillText("Held", x + 20, y + 114);
+    drawUiAtlasIcon("info_damage", x + 8, y + 74, 16, { tooltip: { title: "MVP", body: "Top damage dealer for the fight." } });
+    drawUiAtlasIcon("info_shield", x + 8, y + 92, 16, { tooltip: { title: "Held", body: "Unit that received the most support." } });
+    ctx.fillText("MVP", x + 20, y + 78);
+    ctx.fillText("Held", x + 20, y + 96);
     ctx.font = "900 11px Inter, sans-serif";
-    fitText(mvp, x + 52, y + 92, maxWidth - 52, "900 11px Inter, sans-serif", "#16392d");
-    fitText(protectedLine, x + 52, y + 114, maxWidth - 52, "900 11px Inter, sans-serif", "#16392d");
+    fitText(mvp, x + 52, y + 78, maxWidth - 52, "900 11px Inter, sans-serif", "#16392d");
+    fitText(protectedLine, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", "#16392d");
+  }
+
+  function rewardIconId(reward) {
+    if (!reward) return "reward_gold";
+    if (reward.type === "gold" || reward.type === "arenaPurse") return "reward_gold";
+    if (reward.type === "freeRolls" || reward.type === "arenaScout" || reward.type === "arenaHold") return "reward_freeRolls";
+    if (reward.type === "item") return reward.key?.startsWith("favorite:") ? "reward_favorite" : "reward_item";
+    if (reward.type === "copy") return "reward_copy";
+    if (reward.type === "upgradeDiscount" || reward.type === "shopSlotUnlock") return "reward_discount";
+    if (reward.type?.startsWith("arena")) return "reward_arena";
+    return "reward_gold";
+  }
+
+  function rewardKindLabel(reward) {
+    if (!reward) return "REWARD";
+    if (reward.type === "gold" || reward.type === "arenaPurse") return "COINS";
+    if (reward.type === "freeRolls") return "ROLL";
+    if (reward.type === "item") return reward.key?.startsWith("favorite:") ? "FAV" : "TOP";
+    if (reward.type === "copy") return "COPY";
+    if (reward.type === "upgradeDiscount") return "UPG";
+    if (reward.type === "shopSlotUnlock") return "SLOT";
+    if (reward.type?.startsWith("arena")) return "ARENA";
+    return "REWARD";
   }
 
   function drawRewardChoice(reward, button, index) {
+    const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 260 + index * 0.7);
     roundedRect(button.x, button.y, button.w, button.h, 8);
-    ctx.fillStyle = "#fff9d6";
+    ctx.fillStyle = index === 0 ? `rgba(255, 249, 214, ${0.92 + pulse * 0.06})` : "#fff9d6";
     ctx.fill();
     ctx.strokeStyle = index === 0 ? "#d99043" : "rgba(22, 57, 45, 0.24)";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = index === 0 ? 3 : 2;
     ctx.stroke();
     ctx.lineWidth = 1;
+    roundedRect(button.x + 8, button.y + 7, 32, 32, 7);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.66)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.stroke();
+    drawUiAtlasIcon(rewardIconId(reward), button.x + 24, button.y + 23, 24, {
+      tooltip: { title: reward.title, body: reward.body },
+    });
+    roundedRect(button.x + button.w - 56, button.y + 8, 42, 15, 5);
+    ctx.fillStyle = "#f7d15b";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(138, 82, 35, 0.2)";
+    ctx.stroke();
+    ctx.fillStyle = "#6a3f14";
+    ctx.font = "900 8px Inter, sans-serif";
+    fitText(rewardKindLabel(reward), button.x + button.w - 51, button.y + 19, 32, "900 8px Inter, sans-serif", "#6a3f14");
     ctx.fillStyle = "#16392d";
-    ctx.font = "900 13px Inter, sans-serif";
-    const textX = button.x + 12;
-    const textWidth = button.w - 24;
-    if (reward.type === "gold") {
-      fitText(`+${reward.amount} coins`, textX, button.y + 15, textWidth, "900 13px Inter, sans-serif", "#16392d");
-    } else {
-      fitText(reward.title, textX, button.y + 15, textWidth, "900 13px Inter, sans-serif", "#16392d");
-    }
+    ctx.font = "900 12px Inter, sans-serif";
+    const textX = button.x + 48;
+    const textWidth = button.w - 112;
+    fitText(reward.title, textX, button.y + 18, textWidth, "900 12px Inter, sans-serif", "#16392d");
     ctx.fillStyle = "#6a4b35";
     ctx.font = "700 10px Inter, sans-serif";
-    fitText(reward.body, textX, button.y + 30, textWidth, "700 10px Inter, sans-serif", "#6a4b35");
+    fitText(reward.body, textX, button.y + 34, button.w - 62, "700 10px Inter, sans-serif", "#6a4b35");
   }
 
   function drawEnemyPreviewMini(x, y, maxWidth) {
@@ -13287,10 +13438,6 @@
       ctx.strokeStyle = hasArtBackdrop ? "transparent" : "rgba(22, 57, 45, 0.12)";
       ctx.stroke();
       if (occupied) continue;
-      registerTooltip(x - cell / 2, y - cell / 2, cell, cell, {
-        title: "Combat plate",
-        body: "Place a food animal here.",
-      });
     }
   }
 
@@ -13330,13 +13477,9 @@
         ctx.lineWidth = 1;
       }
       if (item) {
-        drawBattleDrinkIcon(item, x, y, 29, battle);
+        drawBattleDrinkIcon(item, x, y, BATTLE_DRINK_ICON_RADIUS, battle);
         drawUpgradeStars(itemTier(item.tier), x, y + size / 2 - 5, 6, "center");
       }
-      registerTooltip(x - size / 2, y - size / 2, size, size, {
-        title: "Combat coaster",
-        body: "Drink effects apply here.",
-      });
     });
   }
 
@@ -13368,28 +13511,72 @@
 
   function drawBattleUnit(unit) {
     const radius = 28 + unit.tier * 4;
+    drawBattleShieldRim(unit, unit.x, unit.y, radius);
     drawUnitStatusFlashes(unit, unit.x, unit.y, radius);
     drawFoodAnimal(unit, unit.x, unit.y, radius, unit.side === "ally");
     drawUnitStatusGlyphs(unit, unit.x, unit.y, radius);
-    ctx.fillStyle = "#17382d";
-    ctx.font = "800 12px Inter, sans-serif";
-    ctx.textAlign = "center";
-    drawUpgradeStars(unit.tier, unit.x, unit.y + 48, 10, "center");
-    const bw = 58;
-    const hpPct = Math.max(0, unit.hp / unit.maxHp);
-    roundedRect(unit.x - bw / 2, unit.y - 48, bw, 8, 4);
-    ctx.fillStyle = "#e7d7bb";
+    const healthShown = drawBattleHealthStrip(unit, radius);
+    drawUpgradeStars(unit.tier, unit.x, unit.y + radius + (healthShown ? 21 : 14), 10, "center");
+    ctx.textAlign = "left";
+  }
+
+  function drawBattleShieldRim(unit, x, y, r) {
+    if (!(unit.shield > 0)) return;
+    const shieldPct = clamp(unit.shield / Math.max(1, unit.maxHp * 0.5), 0.12, 1);
+    const time = visibleBattle()?.elapsed || 0;
+    const seed = typeof unit.uid === "number" ? unit.uid * 0.37 : r * 0.11;
+    const pulse = 0.5 + Math.sin(time * 4.4 + seed) * 0.5;
+    const glow = 4 + shieldPct * 7 + pulse * 2;
+
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.fillStyle = `rgba(90, 166, 214, ${0.07 + shieldPct * 0.09})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 6, r * 1.18 + glow, r * 0.78 + glow * 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
-    roundedRect(unit.x - bw / 2, unit.y - 48, bw * hpPct, 8, 4);
-    ctx.fillStyle = hpPct > 0.45 ? "#4a9e68" : "#d9573c";
+    ctx.strokeStyle = `rgba(55, 142, 198, ${0.34 + shieldPct * 0.28})`;
+    ctx.lineWidth = 2 + shieldPct * 4;
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(229, 250, 255, ${0.32 + pulse * 0.18})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 6, r * 1.08 + glow * 0.55, r * 0.7 + glow * 0.28, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBattleHealthStrip(unit, r) {
+    const hpPct = clamp01(unit.hp / Math.max(1, unit.maxHp));
+    if (hpPct >= 0.995) return false;
+    const bw = 50;
+    const bh = 6;
+    const x = unit.x - bw / 2;
+    const y = unit.y + r + 5;
+    const fillWidth = clamp(bw * hpPct, 0, bw);
+
+    ctx.save();
+    roundedRect(x, y, bw, bh, 3);
+    ctx.fillStyle = "rgba(255, 249, 224, 0.78)";
     ctx.fill();
-    if (unit.shield > 0) {
-      const shieldPct = Math.max(0.08, Math.min(1, unit.shield / Math.max(1, unit.maxHp * 0.5)));
-      roundedRect(unit.x - bw / 2, unit.y - 58, bw * shieldPct, 6, 3);
-      ctx.fillStyle = "#5aa6d6";
+    ctx.strokeStyle = "rgba(22, 57, 45, 0.34)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (fillWidth > 0) {
+      roundedRect(x, y, fillWidth, bh, Math.min(3, fillWidth / 2));
+      ctx.fillStyle = hpPct > 0.45 ? "#4a9e68" : "#d9573c";
       ctx.fill();
     }
-    ctx.textAlign = "left";
+    if (hpPct <= 0.28) {
+      const time = visibleBattle()?.elapsed || 0;
+      ctx.globalAlpha = 0.5 + Math.sin(time * 7.5) * 0.18;
+      ctx.strokeStyle = "#d9573c";
+      ctx.lineWidth = 2;
+      roundedRect(x - 2, y - 2, bw + 4, bh + 4, 5);
+      ctx.stroke();
+    }
+    ctx.restore();
+    return true;
   }
 
   function drawBattleDefeatStill(unit) {
@@ -13615,7 +13802,11 @@
       const alpha = Math.max(0, p.life / (p.maxLife || 0.45));
       ctx.globalAlpha = alpha;
       if (p.foodParticles) {
-        const image = getAttackParticleSprite(p.particleType);
+        const image = p.particleSprite === "drink"
+          ? getDrinkThrowableSprite(p.particleType)
+          : p.particleSprite === "item"
+            ? getItemSprite({ id: p.particleType, tier: p.particleTier })
+            : getAttackParticleSprite(p.particleType);
         const size = (p.size || 24) * (0.75 + alpha * 0.35);
         ctx.save();
         ctx.translate(p.x, p.y);
