@@ -293,6 +293,7 @@ The runtime map in `game.js` is:
 - Coconut Shrimp Sheep throws a static coconut shrimp bite.
 - Crab Cake Caterpillar throws a static crab cake bite.
 - Pico de Gallo Gecko throws a static pico-on-chip bite.
+- Green Juice Goose throws a static green-juice cucumber token with no baked-in trails, splashes, or loose particles.
 
 ## Drink Buff Throwables V1
 

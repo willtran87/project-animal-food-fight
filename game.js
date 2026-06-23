@@ -36,9 +36,9 @@
       hp: 42,
       atk: 8,
       speed: 1.18,
-      role: "Protector",
-      ability: "guard",
-      abilityText: "Team shields",
+      role: "Table Guardian",
+      ability: "taunt_guard",
+      abilityText: "Taunt guard",
       forms: [
         { name: "Toastlet", short: "Toastlet" },
         { name: "Butterback", short: "Butter" },
@@ -795,9 +795,9 @@
       hp: 36,
       atk: 8,
       speed: 1,
-      role: "Creamy Guard",
-      ability: "guard",
-      abilityText: "Pit guard",
+      role: "Pit Thorns",
+      ability: "thorns",
+      abilityText: "Counter hits",
       forms: [
         { name: "Avocado Totl", short: "Totl" },
         { name: "Avocado Axolotl", short: "Avo" },
@@ -829,6 +829,29 @@
       ],
     },
     {
+      id: "green_juice_goose",
+      name: "Green Juice Goose",
+      short: "Juice",
+      rarity: "common",
+      family: "breakfast",
+      traits: ["breakfast", "fresh"],
+      emoji: "JG",
+      color: "#8ccf2e",
+      accent: "#f2c43f",
+      hp: 26,
+      atk: 10,
+      speed: 0.9,
+      role: "Garden Volley",
+      ability: "back_row",
+      abilityText: "Back-row juice",
+      forms: [
+        { name: "Juice Gosling", short: "Gosling" },
+        { name: "Celery Goose", short: "Celery" },
+        { name: "Garden Brunch Gander", short: "Gander" },
+        { name: "Green Juice Goose", short: "Goose" },
+      ],
+    },
+    {
       id: "caprese_capybara",
       name: "Caprese Capybara",
       short: "Caprese",
@@ -841,9 +864,9 @@
       hp: 42,
       atk: 8,
       speed: 1.12,
-      role: "Plate Anchor",
-      ability: "row_shield",
-      abilityText: "Caprese row",
+      role: "Plate Captain",
+      ability: "formation_captain",
+      abilityText: "Formation buff",
       forms: [
         { name: "Mozzarella Pup", short: "Mozz" },
         { name: "Caprese Capybara", short: "Caprese" },
@@ -886,10 +909,10 @@
       accent: "#2f7f83",
       hp: 28,
       atk: 8,
-      speed: 0.94,
-      role: "Tide Healer",
-      ability: "heal",
-      abilityText: "Kelp heal",
+      speed: 1.02,
+      role: "Tide Lock",
+      ability: "iceberg_lock",
+      abilityText: "Tide lock",
       forms: [
         { name: "Kelp Joey", short: "Joey" },
         { name: "Kelp Koala", short: "Kelp" },
@@ -956,9 +979,9 @@
       hp: 34,
       atk: 12,
       speed: 0.98,
-      role: "Cake Breaker",
-      ability: "armor_break",
-      abilityText: "Crab-cake breaker",
+      role: "Shell Cracker",
+      ability: "shield_breaker",
+      abilityText: "Shield steal",
       forms: [
         { name: "Crumb Grub", short: "Crumb" },
         { name: "Crab Cake Caterpillar", short: "Cake" },
@@ -1079,7 +1102,7 @@
   };
 
   const FAVORITE_TOPPINGS = {
-    toast_tortoise: { itemId: "bacon_strips", bonus: "Guard shields and bacon crackle are stronger" },
+    toast_tortoise: { itemId: "bacon_strips", bonus: "Taunt shields and bacon crackle are stronger" },
     sushi_seal: { itemId: "seaweed_wrap", bonus: "Can pressure back rows with sharper executes" },
     taco_tiger: { itemId: "hot_sauce_bottle", bonus: "Cleave hits harder and burns hotter" },
     berry_bat: { itemId: "jam_dollop", bonus: "Back-row volley splashes through clustered foes" },
@@ -1112,19 +1135,20 @@
     breakfast_burrito_boar: { itemId: "sunny_side_egg", bonus: "Breakfast cleave starts richer" },
     caesar_salamander: { itemId: "serving_tray", bonus: "Crisp heals and shields buff allies harder" },
     cucumber_cobra: { itemId: "dill_sprig", bonus: "Crisp binds leave enemies cooler" },
-    avocado_axolotl: { itemId: "avocado_fan", bonus: "Pit guard recovers through long fights" },
+    avocado_axolotl: { itemId: "avocado_fan", bonus: "Pit thorns punish attackers through long fights" },
     herb_hare: { itemId: "basil_leaf", bonus: "Garden openers leave enemies slower" },
-    caprese_capybara: { itemId: "cherry_tomato", bonus: "Caprese rows hold with brighter support" },
+    green_juice_goose: { itemId: "pickle_chip", bonus: "Green juice volley splashes through back rows" },
+    caprese_capybara: { itemId: "cherry_tomato", bonus: "Caprese formations hold and hit brighter" },
     vinaigrette_viper: { itemId: "vinegar_splash", bonus: "Sharp dressing statuses linger" },
-    kelp_koala: { itemId: "rice_ball", bonus: "Kelp support wraps allies in stronger recovery" },
+    kelp_koala: { itemId: "rice_ball", bonus: "Kelp tide locks slow attackers and guard itself" },
     melon_mint_mantis: { itemId: "mint_leaf", bonus: "Mint cleanses refresh allies with extra lift" },
     coconut_shrimp_sheep: { itemId: "honey_drizzle", bonus: "Coconut-crisp finishes hit wounded enemies harder" },
-    crab_cake_caterpillar: { itemId: "cracker_plate", bonus: "Crumb armor breaks crack sturdy front lines" },
+    crab_cake_caterpillar: { itemId: "cracker_plate", bonus: "Crumb crackers steal shields from sturdy fronts" },
     pico_de_gallo_gecko: { itemId: "onion_ring", bonus: "Pico splash carries bright onion crunch through columns" },
   };
 
   const FAVORITE_COMBO_SPECS = {
-    toast_tortoise: ["Combo: team shields +12%", "Bacon crackle hits harder"],
+    toast_tortoise: ["Combo: taunt shields +12%", "Bacon crackle punishes attackers"],
     sushi_seal: ["Combo: wounded executes +12% PWR", "Seaweed sharpens wounded finishes"],
     taco_tiger: ["Combo: cleave splash +12% PWR", "Hot sauce spreads cleave pressure"],
     berry_bat: ["Combo: jam volley splash +12% PWR", "Honey carries volley splash farther"],
@@ -1157,14 +1181,15 @@
     breakfast_burrito_boar: ["Combo: egg breakfast cleave +12% PWR", "Egg yolk splashes nearby enemies"],
     caesar_salamander: ["Combo: garnish support +12%", "Garnish turns support into buffs"],
     cucumber_cobra: ["Combo: dill binds +9% duration", "Dill keeps chilled binds sticky"],
-    avocado_axolotl: ["Combo: every third attack self-heals", "Avocado pit guards long fights"],
+    avocado_axolotl: ["Combo: thorn counters +12% PWR", "Avocado pits punish attackers"],
     herb_hare: ["Combo: opener slows targets", "Basil makes openers trip targets"],
-    caprese_capybara: ["Combo: row shields +12%", "Tomato support echoes across row"],
+    green_juice_goose: ["Combo: green juice volley +12% PWR", "Pickle crunch splashes through back rows"],
+    caprese_capybara: ["Combo: formation buffs +12%", "Tomato formations boost rows and columns"],
     vinaigrette_viper: ["Combo: dressing statuses +9% duration", "Vinegar statuses linger and bite"],
-    kelp_koala: ["Combo: tide heals +12%", "Rice-ball recovery leaves a light shield"],
+    kelp_koala: ["Combo: tide locks +9% duration", "Rice-ball recovery hardens tide shields"],
     melon_mint_mantis: ["Combo: mint cleanse +12%", "Mint haste follows each cleanse"],
     coconut_shrimp_sheep: ["Combo: coconut finish +12% PWR", "Honeyed crunch pressures wounded targets"],
-    crab_cake_caterpillar: ["Combo: crumb break +12% PWR", "Cracker crumbs pierce sturdy fronts"],
+    crab_cake_caterpillar: ["Combo: shield steal +12% PWR", "Cracker crumbs steal enemy shields"],
     pico_de_gallo_gecko: ["Combo: pico splash +12% PWR", "Onion crunch clips nearby foes"],
   };
 
@@ -1463,6 +1488,7 @@
   const STATUS_EFFECT_STYLES = {
     burn: { color: "#e24822", accent: "#ffc14a", kind: "flame" },
     mark: { color: "#59651d", accent: "#d8e46b", kind: "target" },
+    taunt: { color: "#85512e", accent: "#f0d56b", kind: "target" },
     haste: { color: "#f0b12e", accent: "#fff0a8", kind: "chevron" },
     attackBoost: { color: "#d7a64e", accent: "#fff3bd", kind: "burst" },
     attackSlow: { color: "#f4d67a", accent: "#7c5a1e", kind: "down" },
@@ -2666,10 +2692,11 @@
       accent: "#9b6824",
       price: ECONOMY.itemCost + 5,
       shopWeight: 9,
-      statusDamageReductionPct: 0.3,
-      abilityText: "Less splash/status damage",
-      cardText: "AOE guard",
-      description: "A cracker plate that reduces splash, bounce, burn, and other secondary damage.",
+      shieldedTargetDamagePct: 0.22,
+      cooldownDelay: 0.06,
+      abilityText: "Cracks shields, delays",
+      cardText: "Crack slow",
+      description: "A crunchy cracker plate that helps break shielded enemies and slightly delays targets after hits.",
     },
     {
       id: "cherry_pit",
@@ -3593,6 +3620,7 @@
     cucumber_cobra: "assets/particles/runtime/food-attack-particle-fresh-garden_cucumber_cobra_static_idle_SW_00.png",
     avocado_axolotl: "assets/particles/runtime/food-attack-particle-fresh-garden_avocado_axolotl_static_idle_SW_00.png",
     herb_hare: "assets/particles/runtime/food-attack-particle-fresh-garden_herb_hare_static_idle_SW_00.png",
+    green_juice_goose: "assets/particles/runtime/food-attack-particle-green-juice-goose_static_idle_SW_00.png",
     caprese_capybara: "assets/particles/runtime/food-attack-particle-fresh-garden_caprese_capybara_static_idle_SW_00.png",
     vinaigrette_viper: "assets/particles/runtime/food-attack-particle-fresh-garden_vinaigrette_viper_static_idle_SW_00.png",
     kelp_koala: "assets/particles/runtime/food-attack-particle-gap-fillers_kelp_koala_static_idle_SW_00.png",
@@ -3947,6 +3975,12 @@
       3: "assets/sprites/runtime/herb-hare-v1/herb-hare_focaccia-jackrabbit_idle_SW_00.png",
       4: "assets/sprites/runtime/herb-hare-v1/herb-hare_greenhouse-jumper_idle_SW_00.png",
     },
+    green_juice_goose: {
+      1: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_juice-gosling_idle_SW_00.png",
+      2: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_celery-goose_idle_SW_00.png",
+      3: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_garden-brunch-gander_idle_SW_00.png",
+      4: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_green-juice-goose_idle_SW_00.png",
+    },
     caprese_capybara: {
       1: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_mozzarella-pup_idle_SW_00.png",
       2: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_caprese-capybara_idle_SW_00.png",
@@ -4026,6 +4060,7 @@
     cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-defeat-food-v2.png",
     avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-defeat-food-v2.png",
     herb_hare: "assets/sprites/runtime/defeat-stills/herb-hare-defeat-food-v2.png",
+    green_juice_goose: "assets/sprites/runtime/defeat-stills/green-juice-goose-defeat-food-v1.png",
     caprese_capybara: "assets/sprites/runtime/defeat-stills/caprese-capybara-defeat-food-v2.png",
     vinaigrette_viper: "assets/sprites/runtime/defeat-stills/vinaigrette-viper-defeat-food-v2.png",
     kelp_koala: "assets/sprites/runtime/defeat-stills/kelp-koala-defeat-food-v1.png",
@@ -7467,6 +7502,10 @@
         unit.attackBoost.remaining -= dt;
         if (unit.attackBoost.remaining <= 0) unit.attackBoost = null;
       }
+      if (unit.taunt) {
+        unit.taunt.remaining -= dt;
+        if (unit.taunt.remaining <= 0) unit.taunt = null;
+      }
       if (unit.attackSlow) {
         unit.attackSlow.remaining -= negativeDt;
         if (unit.attackSlow.remaining <= 0) unit.attackSlow = null;
@@ -7688,6 +7727,19 @@
       return;
     }
 
+    if (unit.ability === "shield_breaker") {
+      const stolen = target.shield > 0 ? Math.min(target.shield, shieldBreakSteal(unit)) : 0;
+      if (stolen > 0) {
+        target.shield -= stolen;
+        recordCombatDamage(battle, unit, target, 0, stolen);
+        grantShield(unit, Math.max(1, Math.round(stolen * 0.75)), { noShare: true });
+        burst({ x: unit.x, y: unit.y }, "#5ea3b5");
+      }
+      applyDamage(target, unit.atk + (stolen > 0 ? shieldBreakBonus(unit) : 0), unit, battle, { color: "#5ea3b5" });
+      applyOnAttackItem(unit, target, battle, foes);
+      return;
+    }
+
     if (unit.ability === "bagel_build") {
       applyDamage(target, unit.atk, unit, battle, { color: "#c98a3a" });
       const buildTargets = allies
@@ -7796,6 +7848,19 @@
       return;
     }
 
+    if (unit.ability === "formation_captain") {
+      applyDamage(target, unit.atk, unit, battle, { color: "#d84a3a" });
+      formationAllies(unit, allies).forEach((ally) => {
+        const shielded = grantShield(ally, supportAmount(unit, formationShield(unit)));
+        ally.attackBoost = { remaining: formationBuffDuration(unit), pct: formationAttackBoost(unit) };
+        applySupportItem(unit, ally);
+        if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, battle, "#d84a3a");
+      });
+      burst({ x: unit.x, y: unit.y }, "#6fae48");
+      applyOnAttackItem(unit, target, battle, foes);
+      return;
+    }
+
     if (unit.ability === "iceberg_lock") {
       applyDamage(target, unit.atk, unit, battle, { color: "#7ec7e8" });
       if (!target.dead) {
@@ -7834,6 +7899,11 @@
 
     applyDamage(target, unit.atk, unit, battle);
     applyOnAttackItem(unit, target, battle, foes);
+    if (unit.ability === "taunt_guard") {
+      unit.taunt = { remaining: tauntDuration(unit) };
+      const shielded = grantShield(unit, supportAmount(unit, tauntGuardShield(unit)), { noShare: true });
+      if (shielded > 0) burst({ x: unit.x, y: unit.y }, "#d99043");
+    }
     if (unit.ability === "guard") {
       const friend = lowestShieldedAlly(allies);
       if (friend) {
@@ -8002,6 +8072,13 @@
 
   function applyBattleStartAbilities(units, foes = []) {
     units
+      .filter((unit) => unit.ability === "taunt_guard")
+      .forEach((unit) => {
+        unit.taunt = { remaining: tauntDuration(unit) + 0.8 };
+        const shielded = grantShield(unit, supportAmount(unit, Math.round(tauntGuardShield(unit) * 1.15)), { noShare: true });
+        if (shielded > 0) burst({ x: unit.x, y: unit.y }, "#d99043");
+      });
+    units
       .filter((unit) => unit.ability === "syrup_start")
       .forEach((unit) => {
         units
@@ -8037,6 +8114,17 @@
             if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, state.battle, "#f0dcb8");
           });
         burst({ x: unit.x, y: unit.y }, "#f0dcb8");
+      });
+    units
+      .filter((unit) => unit.ability === "formation_captain")
+      .forEach((unit) => {
+        formationAllies(unit, units).forEach((ally) => {
+          const shielded = grantShield(ally, supportAmount(unit, Math.round(formationShield(unit) * 1.2)));
+          ally.attackBoost = { remaining: formationBuffDuration(unit), pct: formationAttackBoost(unit) };
+          applySupportItem(unit, ally);
+          if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, state.battle, "#d84a3a");
+        });
+        burst({ x: unit.x, y: unit.y }, "#6fae48");
       });
     units
       .filter((unit) => unit.ability === "survive_scale" && unit.tier >= 2 && (unit.permanentHpBonus || 0) > 0)
@@ -8296,6 +8384,22 @@
       });
     }
     if (
+      (damage > 0 || absorbed > 0) &&
+      !options.status &&
+      !options.noItemTriggers &&
+      target.ability === "thorns" &&
+      source?.uid &&
+      !source.dead &&
+      source.side !== target.side
+    ) {
+      applyDamage(source, thornDamage(target), target, battle, {
+        status: true,
+        noItemTriggers: true,
+        color: target.accent || "#6f4b2f",
+      });
+      burst({ x: target.x, y: target.y }, target.accent || "#6f4b2f");
+    }
+    if (
       target.hp <= 0 &&
       !target.dead &&
       !options.noDeathSave &&
@@ -8434,6 +8538,44 @@
 
   function guardShield(unit) {
     return Math.round(unit.maxHp * 0.1 + unit.abilityPower * 1.25);
+  }
+
+  function tauntGuardShield(unit) {
+    return Math.max(2, Math.round(unit.maxHp * 0.12 + unit.abilityPower * 0.85));
+  }
+
+  function tauntDuration(unit) {
+    return Number(Math.min(3.8, 1.8 + unit.tier * 0.35).toFixed(1));
+  }
+
+  function thornDamage(unit) {
+    return Math.max(1, Math.round(unit.maxHp * 0.045 + unit.abilityPower * 0.45));
+  }
+
+  function shieldBreakSteal(unit) {
+    return Math.max(2, Math.round(unit.abilityPower * 1.1 + unit.atk * 0.25));
+  }
+
+  function shieldBreakBonus(unit) {
+    return Math.max(1, Math.round(unit.abilityPower * 0.75));
+  }
+
+  function formationShield(unit) {
+    return Math.max(2, Math.round(unit.maxHp * 0.06 + unit.abilityPower * 0.72));
+  }
+
+  function formationAttackBoost(unit) {
+    return Number(Math.min(0.22, 0.08 + unit.abilityPower * 0.004).toFixed(2));
+  }
+
+  function formationBuffDuration(unit) {
+    return Number(Math.min(4, 2.4 + unit.tier * 0.3).toFixed(1));
+  }
+
+  function formationAllies(unit, allies) {
+    return allies
+      .filter((ally) => !ally.dead && (ally.uid === unit.uid || ally.row === unit.row || ally.col === unit.col))
+      .slice(0, unit.tier >= 3 ? 5 : 4);
   }
 
   function syrupShield(unit) {
@@ -8644,6 +8786,8 @@
   function chooseTarget(unit, foes) {
     const living = foes.filter((foe) => !foe.dead);
     if (!living.length) return null;
+    const taunting = living.filter((foe) => foe.taunt?.remaining > 0);
+    if (taunting.length) return nearest(unit, taunting);
     const targetColumn = canAttackBackRow(unit) ? backmostOccupiedColumn(living) : frontmostOccupiedColumn(living);
     const candidates = living.filter((foe) => foe.col === targetColumn);
     if (unit.ability === "execute" && !canAttackBackRow(unit)) return weakestEnemy(living);
@@ -10440,10 +10584,10 @@
 
   function foodRoleGroup(animal) {
     const ability = animal?.ability || "";
-    if (["guard", "syrup_start", "row_guard", "cleanse", "pit_guard", "crisp_heal", "caprese_row"].includes(ability)) return "support";
-    if (["pretzel_delay", "sour_slow", "taffy_bind", "opening_pull", "pearl_stun", "pearl_lock", "crisp_bind", "garden_opener", "status_spread"].includes(ability)) return "control";
-    if (["survive_income", "copycat", "trail_gold", "market_cart"].includes(ability)) return "economy";
-    if (["survivor_scaling", "decoy_summon", "kernel_combo", "late_scale"].includes(ability)) return "scaling";
+    if (["guard", "heal", "cleanse", "syrup_start", "bagel_build", "row_shield", "formation_captain", "taunt_guard"].includes(ability)) return "support";
+    if (["slow", "sour_aura", "sticky_lane", "pull_start", "pearl_stun", "iceberg_lock"].includes(ability)) return "control";
+    if (["treat_income", "copy_luck"].includes(ability)) return "economy";
+    if (["survive_scale", "ginger_decoy", "kernel_combo", "thorns"].includes(ability)) return "scaling";
     return "damage";
   }
 
@@ -13360,6 +13504,8 @@
 
   function abilitySpecLine(unit) {
     if (!unit) return "No ability";
+    if (unit.ability === "taunt_guard") return `Taunt ${tauntDuration(unit)}s; self shield ${supportAmount(unit, tauntGuardShield(unit))}`;
+    if (unit.ability === "thorns") return `When hit: counter ${thornDamage(unit)} dmg`;
     if (unit.ability === "guard") return `Hit: shield lowest ally ${supportAmount(unit, guardShield(unit))}`;
     if (unit.ability === "execute") return `Target weakest; +${executeBonus(unit)} dmg at <=50% HP`;
     if (unit.ability === "cleave") return `Hit: column splash ${cleaveDamage(unit)} dmg`;
@@ -13369,6 +13515,7 @@
     if (unit.ability === "slow") return `Hit: target CD +${pretzelDelay(unit)}s`;
     if (unit.ability === "pepper_dash") return `Hit: burn ${pepperBurnDamage(unit)}/s ${statusDuration(unit, pepperBurnDuration(unit)).toFixed(1)}s`;
     if (unit.ability === "armor_break") return `+${armorBreakBonus(unit)} dmg vs front/shield/high-HP`;
+    if (unit.ability === "shield_breaker") return `Steal up to ${shieldBreakSteal(unit)} shield; +${shieldBreakBonus(unit)} dmg`;
     if (unit.ability === "bagel_build") return `Hit: 2 allies get ${supportAmount(unit, bagelBuildShield(unit))} shield`;
     if (unit.ability === "treat_income") return `Survive battle: +${donutTreatGold(unit)} coins`;
     if (unit.ability === "status_spread") return `Hit: burn ${kimchiBurnDamage(unit)}/s; mark +${percentText(kimchiMarkPct(unit))} dmg`;
@@ -13376,6 +13523,7 @@
     if (unit.ability === "kernel_combo") return `Stack: +${popcornDamagePerStack(unit)} dmg, +${percentText(popcornStackHaste(unit))} spd`;
     if (unit.ability === "sour_aura") return `Hit: support -${percentText(yogurtSourPct(unit))}, shield dmg +${yogurtShieldCrackDamage(unit)}`;
     if (unit.ability === "row_shield") return `Row shield ${supportAmount(unit, dumplingRowShield(unit))} on hit`;
+    if (unit.ability === "formation_captain") return `Row/col shield ${supportAmount(unit, formationShield(unit))}, +${percentText(formationAttackBoost(unit))} dmg`;
     if (unit.ability === "cleanse") return `Cleanse: heal ${supportAmount(unit, lemonCleanseHeal(unit))}, shield ${supportAmount(unit, lemonCleanseShield(unit))}`;
     if (unit.ability === "shakshuka_burn") return `Hit: burn ${shakshukaBurnDamage(unit)}/s, splash ${shakshukaSplashDamage(unit)}`;
     if (unit.ability === "pull_start") return `Start: pull back-row, ${krakenPullDamage(unit)} dmg, CD +${krakenPullDelay(unit)}s`;
@@ -13388,6 +13536,18 @@
   }
 
   function specialEffectFor(unit) {
+    if (unit.ability === "taunt_guard") {
+      return {
+        title: "Spec: Table Guardian",
+        body: `Battle start and hit: taunt enemies for ${tauntDuration(unit)}s and gain ${supportAmount(unit, tauntGuardShield(unit))} shield. Taunted enemies target this unit first.`,
+      };
+    }
+    if (unit.ability === "thorns") {
+      return {
+        title: "Spec: Pit Thorns",
+        body: `When hit by direct damage, counter the attacker for ${thornDamage(unit)} damage. Counter damage cannot trigger more counters.`,
+      };
+    }
     if (unit.ability === "guard") {
       const title = unit.typeId === "avocado_axolotl" ? "Spec: Pit Guard" : "Spec: Team Shield";
       return {
@@ -13409,8 +13569,9 @@
     }
     if (unit.ability === "back_row") {
       const combo = unit.item?.backRowTargeting ? ` Favorite back hit +${berryPretzelComboDamage(unit)}.` : "";
+      const isGreenJuice = unit.typeId === "green_juice_goose";
       return {
-        title: "Spec: Back-Row Volley",
+        title: isGreenJuice ? "Spec: Garden Volley" : "Spec: Back-Row Volley",
         body: `Targets back occupied column. Extra bolts ${Math.max(0, unit.tier - 1)} x ${volleyDamage(unit)} damage.${combo}`,
       };
     }
@@ -13447,6 +13608,12 @@
       return {
         title: isBenedict ? "Spec: Brunch Breaker" : "Spec: Curry Breaker",
         body: `Damage +${armorBreakBonus(unit)} if target is front row, shielded, or has max HP >=115% of this unit.`,
+      };
+    }
+    if (unit.ability === "shield_breaker") {
+      return {
+        title: "Spec: Shell Cracker",
+        body: `Before damage, steal up to ${shieldBreakSteal(unit)} shield from the target. If shield was stolen, damage +${shieldBreakBonus(unit)} and this unit gains 75% of the stolen shield.`,
       };
     }
     if (unit.ability === "bagel_build") {
@@ -13496,6 +13663,12 @@
         body: `Battle start row shield ${supportAmount(unit, Math.round(dumplingRowShield(unit) * 0.8))}. On hit, row shield ${supportAmount(unit, dumplingRowShield(unit))}.`,
       };
     }
+    if (unit.ability === "formation_captain") {
+      return {
+        title: "Spec: Plate Captain",
+        body: `Battle start and hit: allies sharing this unit's row or column gain ${supportAmount(unit, formationShield(unit))} shield and +${percentText(formationAttackBoost(unit))} damage for ${formationBuffDuration(unit)}s.`,
+      };
+    }
     if (unit.ability === "cleanse") {
       return {
         title: "Spec: Citrus Cleanse",
@@ -13534,8 +13707,9 @@
       };
     }
     if (unit.ability === "iceberg_lock") {
+      const isKelp = unit.typeId === "kelp_koala";
       return {
-        title: "Spec: Iceberg Lock",
+        title: isKelp ? "Spec: Tide Lock" : "Spec: Iceberg Lock",
         body: `Start front enemies: cooldown +${oysterLockDelay(unit)}s. Hit: cooldown +${oysterLockDelay(unit)}s, attack speed -${percentText(oysterSlowPct(unit))}, self shield ${supportAmount(unit, oysterLockShield(unit))}.`,
       };
     }
@@ -13947,6 +14121,7 @@
     if (unit.burn) effects.push({ id: "burn", ...STATUS_EFFECT_STYLES.burn });
     if (unit.mark) effects.push({ id: "mark", ...STATUS_EFFECT_STYLES.mark });
     if (unit.teamVulnerable) effects.push({ id: "teamVulnerable", ...STATUS_EFFECT_STYLES.teamVulnerable });
+    if (unit.taunt) effects.push({ id: "taunt", ...STATUS_EFFECT_STYLES.taunt });
     if (unit.haste) effects.push({ id: "haste", ...STATUS_EFFECT_STYLES.haste });
     if (unit.attackBoost) effects.push({ id: "attackBoost", ...STATUS_EFFECT_STYLES.attackBoost });
     if (unit.attackSlow) effects.push({ id: "attackSlow", ...STATUS_EFFECT_STYLES.attackSlow });
@@ -15004,6 +15179,7 @@
       burn: unit.burn ? { remaining: Number(unit.burn.remaining.toFixed(2)), damage: unit.burn.damage } : null,
       mark: unit.mark ? { remaining: Number(unit.mark.remaining.toFixed(2)), sourceUid: unit.mark.sourceUid, damagePct: unit.mark.damagePct } : null,
       teamVulnerable: unit.teamVulnerable ? { remaining: Number(unit.teamVulnerable.remaining.toFixed(2)), pct: unit.teamVulnerable.pct } : null,
+      taunt: unit.taunt ? { remaining: Number(unit.taunt.remaining.toFixed(2)) } : null,
       haste: unit.haste ? { remaining: Number(unit.haste.remaining.toFixed(2)), pct: unit.haste.pct } : null,
       attackBoost: unit.attackBoost ? { remaining: Number(unit.attackBoost.remaining.toFixed(2)), pct: unit.attackBoost.pct } : null,
       attackSlow: unit.attackSlow ? { remaining: Number(unit.attackSlow.remaining.toFixed(2)), pct: unit.attackSlow.pct } : null,

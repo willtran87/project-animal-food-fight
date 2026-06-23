@@ -106,6 +106,12 @@ The first Uncommon animal lines now use the same chroma-key-to-transparent workf
 
 These are four-form `source-reference-pass` idle sprites generated with built-in image generation on flat chroma-key backgrounds, converted to alpha with `remove_chroma_key.py`, then sliced in grouped mode into `192x192` runtime PNGs. The first three Uncommons used `#ff00ff`; Popcorn Porcupine and Yogurt Yeti use `#00ff00`.
 
+## Green Juice Goose V1
+
+Green Juice Goose was added as a Breakfast/Fresh gap-filler using a flat `#ff00ff` source-reference sheet. The chroma-key source lives at `source/green-juice-goose-evolution-v1-chromakey.png`, the cleaned alpha sheet lives at `transparent/green-juice-goose-evolution-v1-transparent.png`, and four grouped-sliced runtime idle frames plus the preview sheet live under `runtime/green-juice-goose-v1/`.
+
+The presentable meal still is intentionally a brunch plate, not a defeated character: source `source/green-juice-goose-meal-v1-preview.png`, cleaned alpha `transparent/green-juice-goose-meal-v1-transparent.png`, runtime `runtime/defeat-stills/green-juice-goose-defeat-food-v1.png`.
+
 ## Rare Evolution Lines V1
 
 The first Rare animal lines follow the same four-form chroma-key-to-transparent workflow:
