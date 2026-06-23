@@ -1321,6 +1321,7 @@
   const DRINK_TOSS_ANIMATION_SECONDS = 0.62;
   const DRINK_TOSS_PROJECTILE_SIZE = 52;
   const DRINK_TOSS_ARC_HEIGHT = 44;
+  const DRINK_TOSS_IMPACT_PARTICLES = 7;
   const PREP_BOARD_ORIGIN = { x: 382, y: 278 };
   const PREP_BOARD_SPACING = 78;
   const boardSlots = Array.from({ length: BOARD_COLS * BOARD_ROWS }, (_, index) => {
@@ -7296,7 +7297,12 @@
       performCombatAction(unit, battle, foes);
     }
     battle.attacks = battle.attacks.filter((a) => (a.t -= dt) > 0);
-    battle.drinkTosses = (battle.drinkTosses || []).filter((toss) => (toss.t -= dt) > 0);
+    battle.drinkTosses = (battle.drinkTosses || []).filter((toss) => {
+      toss.t -= dt;
+      if (toss.t > 0) return true;
+      drinkTossImpact(toss, battle);
+      return false;
+    });
     if (battle.enemies.every((u) => u.dead)) {
       battle.result = "win";
       endBattle(true);
@@ -11140,16 +11146,18 @@
 
     drawItemIcon(selectedItem, x + 58, y + 82, 42);
     drawUpgradeStars(selectedTier, x + 58, y + 136, 9, "center");
+    const headerReserve = isDrink(item) ? 82 : 0;
+    if (isDrink(item)) drawCodexDrinkParticlePreview(item, x + w - 42, y + 82, 34);
     ctx.fillStyle = "#16392d";
     ctx.font = "900 20px Inter, sans-serif";
-    fitText(item.name, x + 128, y + 36, w - 144, "900 20px Inter, sans-serif", "#16392d");
-    fitText(`Lv ${selectedTier}`, x + 128, y + 64, w - 144, "900 16px Inter, sans-serif", "#16392d");
+    fitText(item.name, x + 128, y + 36, w - 144 - headerReserve, "900 20px Inter, sans-serif", "#16392d");
+    fitText(`Lv ${selectedTier}`, x + 128, y + 64, w - 144 - headerReserve, "900 16px Inter, sans-serif", "#16392d");
     ctx.fillStyle = "#6a4b35";
     ctx.font = "800 12px Inter, sans-serif";
-    fitText(`${typeLabel} - ${itemCardText(selectedItem)}`, x + 128, y + 84, w - 144, "800 12px Inter, sans-serif", "#6a4b35");
+    fitText(`${typeLabel} - ${itemCardText(selectedItem)}`, x + 128, y + 84, w - 144 - headerReserve, "800 12px Inter, sans-serif", "#6a4b35");
     drawRarityBadge(x + 128, y + 99, item.rarity, "small");
     if (isDrink(item) && item.pairTraits?.length) {
-      drawTraitChips(item.pairTraits, x + 196, y + 99, w - 210, { maxRows: 2, fontSize: 8, minWidth: 38, rowHeight: 16 });
+      drawTraitChips(item.pairTraits, x + 196, y + 99, w - 210 - headerReserve, { maxRows: 2, fontSize: 8, minWidth: 38, rowHeight: 16 });
     }
 
     const stat = itemPrimaryStat(selectedItem);
@@ -11230,6 +11238,24 @@
     const fans = favoriteUsersForItem(item.id);
     fitText(fans.length ? fans.join(", ") : "No favorite animal yet.", x + 20, relatedY + 20, w - 40, "800 11px Inter, sans-serif", "#6a4b35");
 
+  }
+
+  function drawCodexDrinkParticlePreview(item, centerX, centerY, radius) {
+    const image = getDrinkThrowableSprite(item?.id);
+    roundedRect(centerX - radius, centerY - radius, radius * 2, radius * 2, 8);
+    ctx.fillStyle = "rgba(255, 249, 214, 0.62)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (!image || !image.complete || image.naturalWidth <= 0) return;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = 0.94;
+    const size = radius * 1.48;
+    ctx.drawImage(image, Math.round(centerX - size / 2), Math.round(centerY - size / 2), size, size);
+    ctx.restore();
+    ctx.imageSmoothingEnabled = true;
   }
 
   function drawTechnicalBulletLines(lines, x, y, maxWidth, lineHeight, maxRows) {
@@ -13621,6 +13647,25 @@
     ctx.imageSmoothingEnabled = true;
   }
 
+  function drinkTossImpact(toss, battle) {
+    if (!toss || !battle) return;
+    const units = [...battle.allies, ...battle.enemies];
+    const target = units.find((u) => u.uid === toss.to);
+    if (!target) return;
+    burst({ x: target.x, y: target.y - 4 }, toss.color || "#7ec7e8", {
+      food: true,
+      particleSprite: "drink",
+      particleType: toss.id,
+      count: DRINK_TOSS_IMPACT_PARTICLES,
+      spread: 14,
+      life: 0.46,
+      speedMin: 70,
+      speedMax: 165,
+      sizeMin: 13,
+      sizeMax: 23,
+    });
+  }
+
   function clamp01(value) {
     return Math.max(0, Math.min(1, value));
   }
@@ -13806,7 +13851,7 @@
   }
 
   function drawUnitStatusFlashes(unit, x, y, r) {
-    const effects = activeStatusEffects(unit);
+    const effects = activeStatusEffects(unit).filter((effect) => effect.id !== "burn");
     if (!effects.length) return;
     const time = visibleBattle()?.elapsed || 0;
     effects.slice(0, 4).forEach((effect, index) => {
