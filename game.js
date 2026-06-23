@@ -910,9 +910,9 @@
       hp: 28,
       atk: 8,
       speed: 1.02,
-      role: "Tide Lock",
-      ability: "iceberg_lock",
-      abilityText: "Tide lock",
+      role: "Tide Bind",
+      ability: "slow",
+      abilityText: "Tide bind",
       forms: [
         { name: "Kelp Joey", short: "Joey" },
         { name: "Kelp Koala", short: "Kelp" },
@@ -1140,7 +1140,7 @@
     green_juice_goose: { itemId: "pickle_chip", bonus: "Green juice volley splashes through back rows" },
     caprese_capybara: { itemId: "cherry_tomato", bonus: "Caprese formations hold and hit brighter" },
     vinaigrette_viper: { itemId: "vinegar_splash", bonus: "Sharp dressing statuses linger" },
-    kelp_koala: { itemId: "rice_ball", bonus: "Kelp tide locks slow attackers and guard itself" },
+    kelp_koala: { itemId: "rice_ball", bonus: "Kelp tide binds slow attackers and share support" },
     melon_mint_mantis: { itemId: "mint_leaf", bonus: "Mint cleanses refresh allies with extra lift" },
     coconut_shrimp_sheep: { itemId: "honey_drizzle", bonus: "Coconut-crisp finishes hit wounded enemies harder" },
     crab_cake_caterpillar: { itemId: "cracker_plate", bonus: "Crumb crackers steal shields from sturdy fronts" },
@@ -1186,7 +1186,7 @@
     green_juice_goose: ["Combo: green juice volley +12% PWR", "Pickle crunch splashes through back rows"],
     caprese_capybara: ["Combo: formation buffs +12%", "Tomato formations boost rows and columns"],
     vinaigrette_viper: ["Combo: dressing statuses +9% duration", "Vinegar statuses linger and bite"],
-    kelp_koala: ["Combo: tide locks +9% duration", "Rice-ball recovery hardens tide shields"],
+    kelp_koala: ["Combo: tide binds +9% duration", "Rice-ball recovery shares support"],
     melon_mint_mantis: ["Combo: mint cleanse +12%", "Mint haste follows each cleanse"],
     coconut_shrimp_sheep: ["Combo: coconut finish +12% PWR", "Honeyed crunch pressures wounded targets"],
     crab_cake_caterpillar: ["Combo: shield steal +12% PWR", "Cracker crumbs steal enemy shields"],
@@ -2677,9 +2677,9 @@
       price: ECONOMY.itemCost + 5,
       shopWeight: 9,
       statusDurationReductionPct: 0.35,
-      abilityText: "Statuses fade faster",
+      abilityText: "Statuses and delays fade faster",
       cardText: "Resist",
-      description: "A cool cucumber slice that makes negative statuses wear off faster.",
+      description: "A cool cucumber slice that makes negative statuses wear off faster and softens cooldown delays.",
     },
     {
       id: "cracker_plate",
@@ -4363,7 +4363,7 @@
     if (item.timedHastePct) lines.push(`At ${item.timedHasteAt || 10}s: +${percentText(item.timedHastePct)} speed for ${item.timedHasteDuration || 4}s`);
     if (item.shieldedTargetDamagePct) lines.push(`Vs shielded targets: damage +${percentText(item.shieldedTargetDamagePct)}`);
     if (item.attackSlowPct) lines.push(`Attacks slow enemy speed by ${percentText(item.attackSlowPct)} for ${item.attackSlowDuration || 3}s`);
-    if (item.statusDurationReductionPct) lines.push(`Negative statuses fade ${percentText(item.statusDurationReductionPct)} faster`);
+    if (item.statusDurationReductionPct) lines.push(`Negative statuses and cooldown delays fade ${percentText(item.statusDurationReductionPct)} faster`);
     if (item.statusDamageReductionPct) lines.push(`Splash/status damage taken -${percentText(item.statusDamageReductionPct)}`);
     if (item.decoyHpPct) lines.push(`Battle start: summon decoy with ${percentText(item.decoyHpPct)} max HP`);
     if (item.firstHitRedirect) lines.push(`First direct hit is redirected once`);
@@ -4433,7 +4433,7 @@
     if (item.timedHastePct) return `${item.timedHasteAt || 10}s haste +${percentText(item.timedHastePct)}`;
     if (item.shieldedTargetDamagePct) return `vs shields +${percentText(item.shieldedTargetDamagePct)} dmg`;
     if (item.attackSlowPct) return `attack slow ${percentText(item.attackSlowPct)}`;
-    if (item.statusDurationReductionPct) return `statuses fade ${percentText(item.statusDurationReductionPct)} faster`;
+    if (item.statusDurationReductionPct) return `statuses/delays fade ${percentText(item.statusDurationReductionPct)} faster`;
     if (item.statusDamageReductionPct) return `splash/status dmg -${percentText(item.statusDamageReductionPct)}`;
     if (item.decoyHpPct) return `start decoy ${percentText(item.decoyHpPct)} HP`;
     if (item.firstHitRedirect) return `redirect first hit`;
@@ -4750,7 +4750,7 @@
     if (traitId === "spicy") return stage >= 2 ? "Attack +16%; burn 16% ATK" : "Attack +8%";
     if (traitId === "street_food") return `Attack speed +${[0, 8, 16, 26][stage] || 26}%`;
     if (traitId === "snack") return `First 3 hits +${stage >= 2 ? 22 : 12}%`;
-    if (traitId === "fresh") return `Fresh support +${[0, 8, 14, 20][stage] || 20}%; statuses clear ${[0, 15, 25, 40][stage] || 40}% faster`;
+    if (traitId === "fresh") return `Fresh support +${[0, 8, 14, 20][stage] || 20}%; statuses/delays fade ${[0, 15, 25, 40][stage] || 40}% faster`;
     return traitInfo(traitId).thresholds[stage - 1]?.text || "";
   }
 
@@ -5017,8 +5017,9 @@
     } else if (arena.id === "rainy_fish_market") {
       if (units.some((unit) => !unit.dead && unitHasTrait(unit, "ocean"))) {
         foes.filter((foe) => !foe.dead).forEach((foe) => {
-          foe.cooldown += 0.12;
-          foe.slowed = { remaining: Math.max(foe.slowed?.remaining || 0, 1.1) };
+          if (applyCooldownDelay(foe, 0.12) > 0) {
+            foe.slowed = { remaining: Math.max(foe.slowed?.remaining || 0, 1.1) };
+          }
           burst({ x: foe.x, y: foe.y }, arena.color);
         });
       }
@@ -6448,6 +6449,7 @@
     clone.abilityPower = unit.abilityPower;
     clone.baseAbilityPower = unit.abilityPower;
     clone.speed = unit.speed;
+    clone.cooldown = battleInitialCooldown();
     clone.item = cloneItem(unit.item);
     return clone;
   }
@@ -6668,7 +6670,7 @@
       side,
       slot,
       shield: 0,
-      cooldown: 0.25 + Math.random() * 0.35,
+      cooldown: battleInitialCooldown(),
     };
     clone.item = cloneItem(unit.item);
     clone.permanentHpBonus = unit.permanentHpBonus || 0;
@@ -6678,6 +6680,10 @@
     }
     refreshUnitItemStats(clone);
     return clone;
+  }
+
+  function battleInitialCooldown() {
+    return 0.2 + Math.random() * 0.28;
   }
 
   function applyBattleStartItemEffects(units) {
@@ -7699,7 +7705,7 @@
 
     if (unit.ability === "slow") {
       applyDamage(target, unit.atk, unit, battle, { color: "#f0d56b" });
-      if (!target.dead) target.cooldown += pretzelDelay(unit);
+      if (!target.dead) applyCooldownDelay(target, pretzelDelay(unit), unit);
       applyOnAttackItem(unit, target, battle, foes);
       return;
     }
@@ -7803,8 +7809,9 @@
       foes
         .filter((foe) => !foe.dead && foe.col === target.col)
         .forEach((foe) => {
-          foe.cooldown += waffleLaneDelay(unit);
-          foe.slowed = { remaining: statusDuration(unit, 1.4) };
+          if (applyCooldownDelay(foe, waffleLaneDelay(unit), unit) > 0) {
+            foe.slowed = { remaining: statusDuration(unit, 1.4) };
+          }
         });
       applyOnAttackItem(unit, target, battle, foes);
       return;
@@ -7864,11 +7871,12 @@
     if (unit.ability === "iceberg_lock") {
       applyDamage(target, unit.atk, unit, battle, { color: "#7ec7e8" });
       if (!target.dead) {
-        target.cooldown += oysterLockDelay(unit);
-        target.attackSlow = {
-          remaining: statusDuration(unit, 2.4 + unit.tier * 0.25),
-          pct: oysterSlowPct(unit),
-        };
+        if (applyCooldownDelay(target, oysterLockDelay(unit), unit) > 0) {
+          target.attackSlow = {
+            remaining: statusDuration(unit, 2.4 + unit.tier * 0.25),
+            pct: oysterSlowPct(unit),
+          };
+        }
       }
       const shielded = grantShield(unit, supportAmount(unit, oysterLockShield(unit)));
       if (shielded > 0) burst({ x: unit.x, y: unit.y }, "#d8f2ff");
@@ -7880,17 +7888,19 @@
       applyDamage(target, unit.atk, unit, battle, { color: "#c99bd8" });
       unit.pearlAttackCount = (unit.pearlAttackCount || 0) + 1;
       if (!target.dead && unit.pearlAttackCount % bobaStunEvery(unit) === 0) {
-        target.cooldown += bobaStunDelay(unit);
-        target.attackSlow = {
-          remaining: statusDuration(unit, bobaSlowDuration(unit)),
-          pct: bobaAttackSlow(unit),
-        };
+        if (applyCooldownDelay(target, bobaStunDelay(unit), unit) > 0) {
+          target.attackSlow = {
+            remaining: statusDuration(unit, bobaSlowDuration(unit)),
+            pct: bobaAttackSlow(unit),
+          };
+        }
         const bounceTarget = foes
           .filter((foe) => !foe.dead && foe.uid !== target.uid && isAdjacentSlot(target, foe))
           .sort((a, b) => distSq(target, a) - distSq(target, b))[0];
         if (bounceTarget && unit.tier >= 3) {
-          bounceTarget.cooldown += Math.round(bobaStunDelay(unit) * 0.65 * 100) / 100;
-          bounceTarget.slowed = { remaining: statusDuration(unit, 1.2) };
+          if (applyCooldownDelay(bounceTarget, Math.round(bobaStunDelay(unit) * 0.65 * 100) / 100, unit) > 0) {
+            bounceTarget.slowed = { remaining: statusDuration(unit, 1.2) };
+          }
         }
       }
       applyOnAttackItem(unit, target, battle, foes);
@@ -7994,8 +8004,9 @@
       };
     }
     if (target && !target.dead && unit.item.cooldownDelay) {
-      target.cooldown += unit.item.cooldownDelay;
-      target.slowed = { remaining: statusDuration(unit, 1.2) };
+      if (applyCooldownDelay(target, unit.item.cooldownDelay, unit) > 0) {
+        target.slowed = { remaining: statusDuration(unit, 1.2) };
+      }
     }
     if (target && !target.dead && unit.item.attackSlowPct) {
       target.attackSlow = {
@@ -8030,6 +8041,30 @@
     return duration * (1 + (source?.item?.statusDurationBonusPct || 0) + favoriteToppingBonusPct(source) * 0.75 + arenaStatusDurationBonus(source));
   }
 
+  function cooldownDelayResistance(unit) {
+    if (!unit || unit.dead) return 0;
+    let resistance = unit.item?.statusDurationReductionPct || 0;
+    const freshStage = activeTraitStage(unit, "fresh");
+    if (freshStage > 0) {
+      resistance += [0, 0.15, 0.25, 0.4][freshStage] || 0.4;
+    }
+    return Math.min(0.7, resistance);
+  }
+
+  function applyCooldownDelay(target, amount, source = null, options = {}) {
+    if (!target || target.dead || amount <= 0) return 0;
+    if (!options.noCleanse && target.item?.firstDebuffCleanseHealPct && !target.firstDebuffCleanseUsed) {
+      target.firstDebuffCleanseUsed = true;
+      cleanseUnit(target);
+      healUnit(target, Math.max(1, Math.round(target.maxHp * target.item.firstDebuffCleanseHealPct)));
+      burst({ x: target.x, y: target.y }, target.item.accent || "#2e6f2b");
+      return 0;
+    }
+    const applied = Number(Math.max(0, amount * (1 - cooldownDelayResistance(target))).toFixed(3));
+    target.cooldown += applied;
+    return applied;
+  }
+
   function applyBattleStartTraitEffects(units, foes = []) {
     const breakfastStage = traitStageForUnits(units, "breakfast");
     if (breakfastStage > 0) {
@@ -8050,8 +8085,9 @@
       foes
         .filter((foe) => !foe.dead)
         .forEach((foe) => {
-          foe.cooldown += delay;
-          foe.slowed = { remaining: oceanStage >= 2 ? 2 : 1.2 };
+          if (applyCooldownDelay(foe, delay) > 0) {
+            foe.slowed = { remaining: oceanStage >= 2 ? 2 : 1.2 };
+          }
           burst({ x: foe.x, y: foe.y }, traitInfo("ocean").color);
         });
     }
@@ -8149,8 +8185,9 @@
           .sort((a, b) => distSq(unit, a) - distSq(unit, b))
           .slice(0, unit.tier >= 3 ? 2 : 1);
         targets.forEach((foe) => {
-          foe.cooldown += oysterLockDelay(unit);
-          foe.slowed = { remaining: statusDuration(unit, 1.8) };
+          if (applyCooldownDelay(foe, oysterLockDelay(unit), unit) > 0) {
+            foe.slowed = { remaining: statusDuration(unit, 1.8) };
+          }
           burst({ x: foe.x, y: foe.y }, "#7ec7e8");
         });
         grantShield(unit, supportAmount(unit, oysterLockShield(unit)), { noShare: true });
@@ -8174,8 +8211,9 @@
     const nextCol = Math.min(FRONT_COL, (target.col ?? BACK_COL) + 1);
     const newSlot = (target.row ?? 0) * BOARD_COLS + nextCol;
     positionBattleUnit(target, target.side, newSlot);
-    target.cooldown += krakenPullDelay(unit);
-    target.slowed = { remaining: statusDuration(unit, 1.6) };
+    if (applyCooldownDelay(target, krakenPullDelay(unit), unit) > 0) {
+      target.slowed = { remaining: statusDuration(unit, 1.6) };
+    }
     if (state.battle) applyDamage(target, krakenPullDamage(unit), unit, state.battle, { color: unit.accent, particleType: unit.typeId, status: true });
     burst({ x: target.x, y: target.y }, unit.accent);
   }
@@ -8591,7 +8629,7 @@
   }
 
   function pretzelDelay(unit) {
-    return Number(Math.min(1.1, 0.32 + unit.abilityPower * 0.02).toFixed(2));
+    return Number(Math.min(0.62, 0.16 + unit.abilityPower * 0.01).toFixed(2));
   }
 
   function armorBreakBonus(unit) {
@@ -8719,15 +8757,15 @@
   }
 
   function oysterLockDelay(unit) {
-    return Number(Math.min(1.15, 0.26 + unit.abilityPower * 0.018).toFixed(2));
+    return Number(Math.min(0.68, 0.14 + unit.abilityPower * 0.009).toFixed(2));
   }
 
   function oysterLockShield(unit) {
-    return Math.max(2, Math.round(unit.maxHp * 0.06 + unit.abilityPower * 0.75));
+    return Math.max(2, Math.round(unit.abilityPower * 0.75 + unit.tier * 2));
   }
 
   function oysterSlowPct(unit) {
-    return Number(Math.min(0.26, 0.1 + unit.abilityPower * 0.004).toFixed(2));
+    return Number(Math.min(0.16, 0.06 + unit.abilityPower * 0.0025).toFixed(2));
   }
 
   function krakenPullDelay(unit) {
@@ -13707,9 +13745,8 @@
       };
     }
     if (unit.ability === "iceberg_lock") {
-      const isKelp = unit.typeId === "kelp_koala";
       return {
-        title: isKelp ? "Spec: Tide Lock" : "Spec: Iceberg Lock",
+        title: "Spec: Iceberg Lock",
         body: `Start front enemies: cooldown +${oysterLockDelay(unit)}s. Hit: cooldown +${oysterLockDelay(unit)}s, attack speed -${percentText(oysterSlowPct(unit))}, self shield ${supportAmount(unit, oysterLockShield(unit))}.`,
       };
     }
