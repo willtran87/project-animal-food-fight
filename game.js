@@ -1320,6 +1320,7 @@
   const DRINK_PULSE_HOP_PIXELS = 9;
   const DRINK_TOSS_ANIMATION_SECONDS = 0.62;
   const DRINK_TOSS_PROJECTILE_SIZE = 52;
+  const DRINK_TOSS_ARC_HEIGHT = 44;
   const PREP_BOARD_ORIGIN = { x: 382, y: 278 };
   const PREP_BOARD_SPACING = 78;
   const boardSlots = Array.from({ length: BOARD_COLS * BOARD_ROWS }, (_, index) => {
@@ -1330,6 +1331,7 @@
   const DRINK_SLOT_SIZE = 72;
   const TILE_DRINK_ICON_RADIUS_SCALE = 0.54;
   const TILE_DRINK_ICON_Y_OFFSET = 0;
+  const DRINK_COASTER_OPAQUE_ANCHOR_Y = 0.74;
   const drinkSlots = [
     ...Array.from({ length: BOARD_ROWS }, (_, row) => ({
       x: PREP_BOARD_ORIGIN.x - PREP_BOARD_SPACING,
@@ -9639,6 +9641,7 @@
     const radius = Math.min(w, h) * (shopCard ? 0.26 : tileDrink ? TILE_DRINK_ICON_RADIUS_SCALE : 0.25);
     drawItemIcon(item, x, y - (shopCard ? 31 : tileDrink ? TILE_DRINK_ICON_Y_OFFSET : 14), radius, {
       centerOpaque: tileDrink,
+      opaqueAnchorY: tileDrink ? DRINK_COASTER_OPAQUE_ANCHOR_Y : 0.5,
     });
     if (shopCard) drawRarityBadge(x - w / 2 + 7, y - h / 2 + 7, item.rarity, "small");
     ctx.textAlign = "center";
@@ -11189,7 +11192,8 @@
       if (options.centerOpaque) {
         const metrics = itemSpriteMetrics(image);
         const offsetX = ((metrics.x + metrics.w / 2) / Math.max(1, image.naturalWidth) - 0.5) * size;
-        const offsetY = ((metrics.y + metrics.h / 2) / Math.max(1, image.naturalHeight) - 0.5) * size;
+        const anchorY = Math.max(0, Math.min(1, options.opaqueAnchorY ?? 0.5));
+        const offsetY = ((metrics.y + metrics.h * anchorY) / Math.max(1, image.naturalHeight) - 0.5) * size;
         ctx.drawImage(image, x - size / 2 - offsetX, y - size / 2 - offsetY, size, size);
       } else {
         ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
@@ -13458,7 +13462,7 @@
     const progress = clamp01(1 - toss.t / duration);
     const eased = 1 - (1 - progress) ** 2;
     const x = toss.fromX + (to.x - toss.fromX) * eased;
-    const y = toss.fromY + (to.y - toss.fromY) * eased - Math.sin(progress * Math.PI) * 22;
+    const y = toss.fromY + (to.y - toss.fromY) * eased - Math.sin(progress * Math.PI) * DRINK_TOSS_ARC_HEIGHT;
     const scale = 0.88 + Math.sin(progress * Math.PI) * 0.12;
     const image = getDrinkThrowableSprite(toss.id);
     const size = DRINK_TOSS_PROJECTILE_SIZE * scale;
@@ -13554,9 +13558,9 @@
   function drawBattleDrinkIcon(item, x, y, r, battle) {
     const motion = drinkPulseMotion(item, battle);
     ctx.save();
-    ctx.translate(x, y - 4 + motion.y);
+    ctx.translate(x, y + motion.y);
     ctx.scale(motion.scaleX, motion.scaleY);
-    drawItemIcon(item, 0, 0, r, { centerOpaque: true });
+    drawItemIcon(item, 0, 0, r, { centerOpaque: true, opaqueAnchorY: DRINK_COASTER_OPAQUE_ANCHOR_Y });
     ctx.restore();
   }
 
