@@ -5208,6 +5208,140 @@
     return true;
   }
 
+  function itemMatchesMerge(item, target) {
+    return isItem(item) && isItem(target) && item.id === target.id && itemTier(item.tier) === itemTier(target.tier) && itemTier(item.tier) < MAX_ITEM_TIER;
+  }
+
+  function itemMergeRefsWithIncoming(item, targetArea, targetIndex) {
+    const target = state[targetArea]?.[targetIndex];
+    if (!itemMatchesMerge(item, target)) return [];
+    const matches = allLooseItemRefs().filter((ref) => itemMatchesMerge(item, ref.item));
+    if (matches.length + 1 < 3) return [];
+    const ordered = orderedItemMergeRefs(matches, item).sort((a, b) => {
+      const aIsTarget = a.area === targetArea && a.index === targetIndex;
+      const bIsTarget = b.area === targetArea && b.index === targetIndex;
+      return aIsTarget === bIsTarget ? 0 : aIsTarget ? -1 : 1;
+    });
+    return ordered.slice(0, 2);
+  }
+
+  function unitMaxTier(unit) {
+    return CATALOG.find((entry) => entry.id === unit?.typeId)?.forms.length || 1;
+  }
+
+  function unitMatchesMerge(unit, target) {
+    return isUnit(unit) && isUnit(target) && unit.typeId === target.typeId && unit.tier === target.tier && unit.tier < unitMaxTier(unit);
+  }
+
+  function unitMergeRefsWithIncoming(unit, targetArea, targetIndex) {
+    const target = state[targetArea]?.[targetIndex];
+    if (!unitMatchesMerge(unit, target)) return [];
+    const matches = allOwnedRefs().filter((ref) => unitMatchesMerge(unit, ref.unit));
+    const actualProgressWithIncoming = matches.reduce((total, ref) => total + mergeProgressFor(ref), 1);
+    if (actualProgressWithIncoming + fortunePhantomCopy(unit.typeId, unit.tier, actualProgressWithIncoming) < 3) return [];
+    const ordered = matches.sort((a, b) => {
+      const aIsTarget = a.area === targetArea && a.index === targetIndex;
+      const bIsTarget = b.area === targetArea && b.index === targetIndex;
+      return aIsTarget === bIsTarget ? 0 : aIsTarget ? -1 : 1;
+    });
+    const consumed = [];
+    let progress = 1;
+    for (const ref of ordered) {
+      consumed.push(ref);
+      progress += mergeProgressFor(ref);
+      if (progress >= 3) break;
+    }
+    return progress >= 3 ? consumed : [];
+  }
+
+  function canMergeShopEntryIntoSlot(entry, targetArea, targetIndex) {
+    const target = state[targetArea]?.[targetIndex];
+    if (!target) return false;
+    if (isItem(entry)) {
+      if (isDrink(entry)) {
+        if (targetArea !== "bench" && targetArea !== "drinks" && targetArea !== "itemBench") return false;
+      } else if (targetArea !== "bench" && targetArea !== "itemBench") return false;
+      if (targetArea === "itemBench" && !itemBenchSlotAccepts(targetIndex, entry)) return false;
+      return itemMergeRefsWithIncoming(entry, targetArea, targetIndex).length >= 2;
+    }
+    if (targetArea !== "bench" && targetArea !== "board") return false;
+    return unitMergeRefsWithIncoming(entry, targetArea, targetIndex).length > 0;
+  }
+
+  function hasShopMergeTarget(entry) {
+    if (isItem(entry)) {
+      const storageTargets = [
+        ...state.bench.map((_, index) => ({ area: "bench", index })),
+        ...state.itemBench.map((_, index) => ({ area: "itemBench", index })),
+        ...state.drinks.map((_, index) => ({ area: "drinks", index })),
+      ];
+      return storageTargets.some((target) => canMergeShopEntryIntoSlot(entry, target.area, target.index));
+    }
+    return [...state.bench.map((_, index) => ({ area: "bench", index })), ...state.board.map((_, index) => ({ area: "board", index }))]
+      .some((target) => canMergeShopEntryIntoSlot(entry, target.area, target.index));
+  }
+
+  function clearPurchasedShopSlot(shopIndex) {
+    state.shop[shopIndex] = null;
+    state.shopFrozen[shopIndex] = false;
+    state.shopSales[shopIndex] = false;
+  }
+
+  function buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex) {
+    const entry = state.shop[shopIndex];
+    if (!entry || !canMergeShopEntryIntoSlot(entry, targetArea, targetIndex)) return false;
+    const cost = purchaseCost(entry, shopIndex);
+    if (state.gold < cost) {
+      state.message = "Need gold";
+      return false;
+    }
+    state.gold -= cost;
+    markItemDiscountUsed(entry, shopIndex, cost);
+    clearPurchasedShopSlot(shopIndex);
+
+    if (isItem(entry)) {
+      const consumedRefs = itemMergeRefsWithIncoming(entry, targetArea, targetIndex);
+      consumedRefs.forEach((ref) => placeItemRef(ref, null));
+      const evolved = makeItem(entry.id, itemTier(entry.tier) + 1);
+      const keeper = { area: targetArea, index: targetIndex };
+      placeItemRef(keeper, evolved);
+      const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
+      if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
+      state.selected = null;
+      state.drag = null;
+      state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} coins` : ""}`;
+      mergeExplosion(itemRefSlot(keeper), evolved);
+      state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} coins` : ""}`);
+      resolveItemMerges();
+      return true;
+    }
+
+    const consumedRefs = unitMergeRefsWithIncoming(entry, targetArea, targetIndex);
+    const keeperUnit = state[targetArea][targetIndex];
+    const keeperItem = mergeItemIsConsumed(keeperUnit.item) ? null : cloneItem(keeperUnit.item);
+    const extraItems = consumedRefs
+      .filter((ref) => ref.area !== targetArea || ref.index !== targetIndex)
+      .map((ref) => ref.unit.item)
+      .filter((item) => item && !mergeItemIsConsumed(item))
+      .map((item) => cloneItem(item));
+    consumedRefs.forEach((ref) => placeRef(ref, null));
+    const evolved = makeUnit(entry.typeId, entry.tier + 1);
+    evolved.item = keeperItem;
+    refreshUnitItemStats(evolved);
+    placeRef({ area: targetArea, index: targetIndex }, evolved);
+    extraItems.forEach((item) => moveItemToBench(item));
+    const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
+    if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
+    state.selected = null;
+    state.drag = null;
+    state.message = `${evolved.short} evolved${reward ? ` +${reward} coins` : ""}`;
+    mergeExplosion(targetArea === "board" ? boardSlots[targetIndex] : benchSlots[targetIndex], evolved);
+    state.log.unshift(`${evolved.name} reached ${evolved.tier} stars${reward ? ` and earned ${reward} coins` : ""}`);
+    resolveItemMerges();
+    resolveMerges();
+    return true;
+  }
+
   function mergeProgressFor(ref) {
     const bonus = ref.area === "bench" ? ref.unit?.item?.mergeProgressBonus || 0 : 0;
     return 1 + bonus;
@@ -5352,15 +5486,14 @@
       return false;
     }
     if (state[targetArea][targetIndex]) {
+      if (buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex)) return true;
       state.message = "Spot full";
       return false;
     }
     state.gold -= cost;
     markItemDiscountUsed(entry, shopIndex, cost);
     state[targetArea][targetIndex] = entry;
-    state.shop[shopIndex] = null;
-    state.shopFrozen[shopIndex] = false;
-    state.shopSales[shopIndex] = false;
+    clearPurchasedShopSlot(shopIndex);
     state.message = isDrink(entry) && targetArea === "drinks" ? `${entry.short} poured` : `${entry.short} bought`;
     if (isUnit(entry)) resolveMerges();
     if (isItem(entry)) resolveItemMerges();
@@ -5418,9 +5551,10 @@
   }
 
   function hasShopItemTarget(item) {
-    if (isDrink(item)) return firstEmptyItemStorage(item) || firstEmptyDrinkSlot() >= 0;
+    if (isDrink(item)) return firstEmptyItemStorage(item) || firstEmptyDrinkSlot() >= 0 || hasShopMergeTarget(item);
     return (
       firstEmptyItemStorage(item) ||
+      hasShopMergeTarget(item) ||
       state.bench.some((entry) => isUnit(entry) && !entry.item) ||
       state.board.some((entry) => isUnit(entry) && !entry.item)
     );
@@ -9553,6 +9687,7 @@
         return isTopping(drag.unit) && Boolean(unit) && !unit.item;
       }
       if (drag.area === "shop") {
+        if (target && canMergeShopEntryIntoSlot(drag.unit, area, index)) return true;
         if (isDrink(drag.unit)) {
           if (area === "itemBench") return itemBenchSlotAccepts(index, drag.unit) && !target;
           return (area === "bench" || area === "drinks") && !target;
@@ -9587,6 +9722,7 @@
       return isUnit(target) && !target.item;
     }
     if (!target) return true;
+    if (drag.area === "shop") return canMergeShopEntryIntoSlot(drag.unit, area, index);
     if (drag.area === "bench" && area === "bench") return index !== drag.index;
     if (drag.area === "bench" && area === "board") return isUnit(target);
     return drag.area === "board" && area === "board" && isUnit(target);
