@@ -34,6 +34,10 @@ The third drink-gap pass adds Harissa Morning Shot, Pretzel Cream Soda, Boba Nig
 
 Pico Lime Agua used a magenta `#ff00ff` key because the subject is green/lime-heavy. Harissa Morning Shot used a hard green-key pass plus green-edge cleanup after the soft matte retained a faint square background.
 
+## Night Bite Energy Grand V1
+
+Night Bite Energy was added as a Breakfast/Snack energy drink gap filler. The first wired version was extracted from a style-reference preview rather than a chroma-key strip: `source/night_bite_energy-grand-strip-v1-preview.png` was background-cut into `transparent/night_bite_energy-grand-strip-v1-transparent.png`, then sliced into `runtime/night_bite_energy-grand-v1-lv1.png`, `runtime/night_bite_energy-grand-v1-lv2.png`, and `runtime/night_bite_energy-grand-v1-lv3.png`.
+
 ## Bespoke Favorite Toppings V1
 
 The favorite-topping flavor pass added six bespoke toppings as 6x3 sticker-style evolution art. The source sheet is `source/bespoke-toppings-v1-chromakey.png`, the transparent sheet is `transparent/bespoke-toppings-v1-transparent.png`, and active runtime sprites live under `runtime/*-sticker-v1-lv1.png`, `runtime/*-sticker-v1-lv2.png`, and `runtime/*-sticker-v1-lv3.png` for Scallion Oil, Gochugaru Flakes, Dill Sprig, Sesame Seeds, Cinnamon Sugar, and Milk Tea Foam.

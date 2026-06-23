@@ -321,6 +321,7 @@ Battle drink activation uses dedicated static throwable stickers. The art itself
   - `runtime/drink-buff-throwable_pretzel_cream_soda_idle_SW_00.png`
   - `runtime/drink-buff-throwable_boba_night_tea_idle_SW_00.png`
   - `runtime/drink-buff-throwable_pico_lime_agua_idle_SW_00.png`
+  - `runtime/drink-buff-throwable_night_bite_energy_idle_SW_00.png`
 
 Packaging notes:
 
@@ -329,4 +330,5 @@ Packaging notes:
 - Runtime frames were cut by main connected sticker component, not equal grid crop, so detached source shadow slivers are discarded.
 - Each runtime frame is `96x96` with transparent corners and at least `13px` alpha margin to avoid clipping in battle toss rendering.
 - Berry Fizz was replaced with a brighter green-key v3 source at `source/drink-buff-throwable-berry-fizz-v3-chromakey.png` and `transparent/drink-buff-throwable-berry-fizz-v3-transparent.png` so it reads as magenta berry soda instead of a dark boba pearl.
+- Night Bite Energy was added as a standalone magenta-key source. The current v2 orb source lives at `source/drink-buff-throwable-night-bite-energy-v2-orb-chromakey.png` and `transparent/drink-buff-throwable-night-bite-energy-v2-orb-transparent.png`. The runtime frame is a single static neon-green watery ball with no baked-in trails, splashes, or loose particles.
 - Contact/report artifacts: `output/drink-buff-throwables-v1-contact.png` and `output/drink-buff-throwables-v1-report.json`.

@@ -2131,6 +2131,28 @@
       description: "A bright lime agua fresca that speeds its line, with a merged recovery pulse for Street and Fresh animals.",
     },
     {
+      id: "night_bite_energy",
+      kind: "item",
+      type: "drink",
+      name: "Night Bite Energy",
+      short: "Bite",
+      rarity: "common",
+      color: "#17191f",
+      accent: "#b7f22c",
+      price: ECONOMY.itemCost,
+      shopWeight: 6,
+      drinkAttackSpeedPct: 0.08,
+      pairTraits: ["breakfast", "snack"],
+      pairedDrinkAttackSpeedPct: 0.06,
+      drinkPulseType: "haste",
+      drinkPulseInterval: 5,
+      drinkPulseDuration: 2.2,
+      drinkPulseHastePct: 0.11,
+      abilityText: "Drink line speed",
+      cardText: "Line spd",
+      description: "A neon sour-melon energy drink that speeds its line, with a merged breakfast-snack haste pulse for Breakfast and Snack animals.",
+    },
+    {
       id: "cherry_tomato",
       kind: "item",
       type: "topping",
@@ -3138,6 +3160,7 @@
     pretzel_cream_soda: "assets/items/runtime/pretzel_cream_soda-grand-v1-lv1.png?v=1",
     boba_night_tea: "assets/items/runtime/boba_night_tea-grand-v1-lv1.webp?v=1",
     pico_lime_agua: "assets/items/runtime/pico_lime_agua-grand-v1-lv1.png?v=1",
+    night_bite_energy: "assets/items/runtime/night_bite_energy-grand-v1-lv1.png?v=1",
     butter_pat: "assets/items/runtime/butter_pat-evolved-v1.webp?v=3",
     cheese_star: "assets/items/runtime/cheese_star-evolution-v2-lv1.webp?v=1",
     bacon_strips: "assets/items/runtime/bacon_strips-sticker-v1-lv1.webp?v=2",
@@ -3296,6 +3319,10 @@
     pico_lime_agua: {
       2: "assets/items/runtime/pico_lime_agua-grand-v1-lv2.png?v=1",
       3: "assets/items/runtime/pico_lime_agua-grand-v1-lv3.png?v=1",
+    },
+    night_bite_energy: {
+      2: "assets/items/runtime/night_bite_energy-grand-v1-lv2.png?v=1",
+      3: "assets/items/runtime/night_bite_energy-grand-v1-lv3.png?v=1",
     },
     cherry_tomato: {
       2: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv2.webp?v=1",
@@ -3596,6 +3623,7 @@
     pretzel_cream_soda: "assets/particles/runtime/drink-buff-throwable_pretzel_cream_soda_idle_SW_00.png?v=1",
     boba_night_tea: "assets/particles/runtime/drink-buff-throwable_boba_night_tea_idle_SW_00.png?v=1",
     pico_lime_agua: "assets/particles/runtime/drink-buff-throwable_pico_lime_agua_idle_SW_00.png?v=1",
+    night_bite_energy: "assets/particles/runtime/drink-buff-throwable_night_bite_energy_idle_SW_00.png?v=3",
   };
   const DRINK_THROWABLE_TYPES = Object.keys(DRINK_THROWABLE_SPRITES);
 
