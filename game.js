@@ -1385,9 +1385,9 @@
     battle: { x: 900, y: 4, w: 112, h: 52, label: "Battle", icon: ">", signSrc: "assets/ui/runtime/chalk-sign-battle-v1.webp" },
     battleSpeed: { x: 812, y: 4, w: 126, h: 52, label: "Speed 1x", icon: ">>", signSrc: BATTLE_SPEED_CHALK_SRC, chalkMode: "speed" },
     next: { x: 812, y: 4, w: 150, h: 52, label: "Next", icon: ">" },
-    reward0: { x: 718, y: 340, w: 268, h: 50, label: "Reward", icon: "" },
-    reward1: { x: 718, y: 393, w: 268, h: 50, label: "Reward", icon: "" },
-    reward2: { x: 718, y: 446, w: 268, h: 50, label: "Reward", icon: "" },
+    reward0: { x: 718, y: 358, w: 268, h: 50, label: "Reward", icon: "" },
+    reward1: { x: 718, y: 418, w: 268, h: 50, label: "Reward", icon: "" },
+    reward2: { x: 718, y: 478, w: 268, h: 50, label: "Reward", icon: "" },
     sell: { x: 906, y: 390, w: 92, h: 28, label: "Sell", icon: "" },
     detach: { x: 906, y: 422, w: 92, h: 28, label: "Detach", icon: "" },
   };
@@ -13039,7 +13039,7 @@
   }
 
   function drawResultPanel() {
-    roundedRect(700, 96, 306, 404, 8);
+    roundedRect(700, 76, 306, 466, 8);
     ctx.fillStyle = "rgba(255, 253, 232, 0.86)";
     ctx.fill();
     ctx.strokeStyle = "rgba(22, 57, 45, 0.18)";
@@ -13050,34 +13050,34 @@
     const won = income?.result === "win";
     const resultTitle = state.hearts <= 0 ? "Run Over" : won ? "Victory!" : "Defeat";
     const resultColor = state.hearts <= 0 ? "#9b3028" : won ? "#1f7d4a" : "#a94b2b";
-    roundedRect(718, 112, 268, 34, 8);
+    roundedRect(718, 92, 268, 34, 8);
     ctx.fillStyle = won ? "rgba(219, 246, 198, 0.92)" : state.hearts <= 0 ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
     ctx.fill();
     ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
     ctx.stroke();
     ctx.fillStyle = "#16392d";
     ctx.font = "900 16px Inter, sans-serif";
-    fitText(resultTitle, 732, 134, hasReward ? 138 : 232, "900 16px Inter, sans-serif", resultColor);
+    fitText(resultTitle, 732, 114, hasReward ? 138 : 232, "900 16px Inter, sans-serif", resultColor);
     if (hasReward) {
-      roundedRect(882, 119, 92, 19, 6);
+      roundedRect(882, 99, 92, 19, 6);
       ctx.fillStyle = "#f7d15b";
       ctx.fill();
       ctx.strokeStyle = "rgba(138, 82, 35, 0.28)";
       ctx.stroke();
-      drawUiAtlasIcon("reward_gold", 894, 128, 15, { tooltip: null });
+      drawUiAtlasIcon("reward_gold", 894, 108, 15, { tooltip: null });
       ctx.font = "900 9px Inter, sans-serif";
-      fitText("REWARD", 905, 132, 60, "900 9px Inter, sans-serif", "#6a3f14");
+      fitText("REWARD", 905, 112, 60, "900 9px Inter, sans-serif", "#6a3f14");
     }
     if (income) {
-      roundedRect(718, 154, 268, 31, 7);
+      roundedRect(718, 136, 268, 31, 7);
       ctx.fillStyle = "rgba(255, 249, 214, 0.72)";
       ctx.fill();
       ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
       ctx.stroke();
       ctx.fillStyle = "#6a4b35";
       ctx.font = "900 10px Inter, sans-serif";
-      ctx.fillText("BATTLE PAYOUT", 730, 174);
-      drawCurrencyAmount(income.total, 870, 170, {
+      ctx.fillText("BATTLE PAYOUT", 730, 156);
+      drawCurrencyAmount(income.total, 870, 152, {
         sign: "+",
         font: "900 15px Inter, sans-serif",
         color: "#16392d",
@@ -13087,10 +13087,10 @@
       if (heartDamage > 0) {
         ctx.fillStyle = "#9b3028";
         ctx.font = "900 10px Inter, sans-serif";
-        fitText(`-${heartDamage} health`, 925, 174, 52, "900 10px Inter, sans-serif", "#9b3028");
+        fitText(`-${heartDamage} health`, 925, 156, 52, "900 10px Inter, sans-serif", "#9b3028");
       }
     }
-    drawCombatLedger(state.lastCombatLedger, 720, 194, 268);
+    drawCombatLedger(state.lastCombatLedger, 720, 188, 268);
     if (!state.rewardChoices?.length) {
       wrapText(state.hearts <= 0 ? "Your run has ended. Restart from the top bar." : "Reward claimed.", 720, 320, 268, 15);
       return;
@@ -13100,20 +13100,20 @@
   }
 
   function drawRewardPrompt() {
-    roundedRect(710, 296, 286, 200, 8);
+    roundedRect(710, 304, 286, 232, 8);
     ctx.fillStyle = "rgba(255, 241, 176, 0.5)";
     ctx.fill();
     ctx.strokeStyle = "rgba(217, 144, 67, 0.48)";
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.lineWidth = 1;
-    drawUiAtlasIcon("reward_gold", 730, 317, 22, { tooltip: { title: "Post-battle reward", body: "Pick one reward before the next course starts." } });
+    drawUiAtlasIcon("reward_gold", 730, 329, 22, { tooltip: { title: "Post-battle reward", body: "Pick one reward before the next course starts." } });
     ctx.fillStyle = "#16392d";
     ctx.font = "900 14px Inter, sans-serif";
-    ctx.fillText("Choose 1 Reward", 748, 322);
+    ctx.fillText("Choose 1 Reward", 748, 334);
     ctx.fillStyle = "#8a5223";
     ctx.font = "800 10px Inter, sans-serif";
-    ctx.fillText("Claim one to start the next course", 748, 336);
+    ctx.fillText("Claim one to start the next course", 748, 348);
   }
 
   function drawCombatLedger(ledger, x, y, maxWidth) {
