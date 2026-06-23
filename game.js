@@ -3640,6 +3640,7 @@
   const tintedSpriteCache = new Map();
   const runtimeSpriteCache = new Map();
   const runtimeSpriteMetricsCache = new Map();
+  const itemSpriteMetricsCache = new Map();
   const itemSpriteCache = new Map();
   const attackParticleSpriteCache = new Map();
   const drinkThrowableSpriteCache = new Map();
@@ -7037,8 +7038,10 @@
     }
     state.message = `Claimed ${reward.title}`;
     state.log.unshift(`Reward: ${reward.title}`);
+    const rewardParticles = state.particles.slice();
     state.rewardChoices = [];
     continuePrep();
+    state.particles.push(...rewardParticles);
     return true;
   }
 
@@ -9634,7 +9637,9 @@
   function drawItemCard(item, x, y, w, h, shopCard, options = {}) {
     const tileDrink = !shopCard && options.hideTileName && isDrink(item);
     const radius = Math.min(w, h) * (shopCard ? 0.26 : tileDrink ? TILE_DRINK_ICON_RADIUS_SCALE : 0.25);
-    drawItemIcon(item, x, y - (shopCard ? 31 : tileDrink ? TILE_DRINK_ICON_Y_OFFSET : 14), radius);
+    drawItemIcon(item, x, y - (shopCard ? 31 : tileDrink ? TILE_DRINK_ICON_Y_OFFSET : 14), radius, {
+      centerOpaque: tileDrink,
+    });
     if (shopCard) drawRarityBadge(x - w / 2 + 7, y - h / 2 + 7, item.rarity, "small");
     ctx.textAlign = "center";
     if (shopCard) {
@@ -11175,13 +11180,20 @@
     drawItemIcon(unit.item, x + offsetX, y + offsetY, r * 0.9);
   }
 
-  function drawItemIcon(item, x, y, r) {
+  function drawItemIcon(item, x, y, r, options = {}) {
     const image = getItemSprite(item);
     const size = Math.round(r * 2.4);
     ctx.save();
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+      if (options.centerOpaque) {
+        const metrics = itemSpriteMetrics(image);
+        const offsetX = ((metrics.x + metrics.w / 2) / Math.max(1, image.naturalWidth) - 0.5) * size;
+        const offsetY = ((metrics.y + metrics.h / 2) / Math.max(1, image.naturalHeight) - 0.5) * size;
+        ctx.drawImage(image, x - size / 2 - offsetX, y - size / 2 - offsetY, size, size);
+      } else {
+        ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+      }
       ctx.imageSmoothingEnabled = true;
     } else if (isDrink(item)) {
       drawFallbackDrink(item, x, y, r);
@@ -11527,6 +11539,62 @@
       return metrics;
     } catch (error) {
       runtimeSpriteMetricsCache.set(cacheKey, fallback);
+      return fallback;
+    }
+  }
+
+  function itemSpriteMetrics(image) {
+    const cacheKey = image.currentSrc || image.src || image;
+    if (itemSpriteMetricsCache.has(cacheKey)) return itemSpriteMetricsCache.get(cacheKey);
+    const metrics = alphaSpriteMetrics(image, itemSpriteMetricsCache);
+    return metrics;
+  }
+
+  function alphaSpriteMetrics(image, cache) {
+    const cacheKey = image.currentSrc || image.src || image;
+    const fallback = {
+      x: 0,
+      y: 0,
+      w: Math.max(1, image.naturalWidth || image.width || 1),
+      h: Math.max(1, image.naturalHeight || image.height || 1),
+    };
+    if (!image.complete || !image.naturalWidth || !image.naturalHeight) return fallback;
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const px = canvas.getContext("2d", { willReadFrequently: true });
+      px.drawImage(image, 0, 0);
+      const { data, width, height } = px.getImageData(0, 0, canvas.width, canvas.height);
+      let minX = width;
+      let minY = height;
+      let maxX = -1;
+      let maxY = -1;
+      for (let yy = 0; yy < height; yy += 1) {
+        for (let xx = 0; xx < width; xx += 1) {
+          if (data[(yy * width + xx) * 4 + 3] <= 8) continue;
+          if (xx < minX) minX = xx;
+          if (yy < minY) minY = yy;
+          if (xx > maxX) maxX = xx;
+          if (yy > maxY) maxY = yy;
+        }
+      }
+      if (maxX < minX || maxY < minY) {
+        cache.set(cacheKey, fallback);
+        return fallback;
+      }
+      const pad = 2;
+      const metrics = {
+        x: Math.max(0, minX - pad),
+        y: Math.max(0, minY - pad),
+        w: Math.min(width, maxX + pad + 1) - Math.max(0, minX - pad),
+        h: Math.min(height, maxY + pad + 1) - Math.max(0, minY - pad),
+      };
+      cache.set(cacheKey, metrics);
+      return metrics;
+    } catch (error) {
+      cache.set(cacheKey, fallback);
       return fallback;
     }
   }
@@ -13488,7 +13556,7 @@
     ctx.save();
     ctx.translate(x, y - 4 + motion.y);
     ctx.scale(motion.scaleX, motion.scaleY);
-    drawItemIcon(item, 0, 0, r);
+    drawItemIcon(item, 0, 0, r, { centerOpaque: true });
     ctx.restore();
   }
 
@@ -13511,72 +13579,60 @@
 
   function drawBattleUnit(unit) {
     const radius = 28 + unit.tier * 4;
-    drawBattleShieldRim(unit, unit.x, unit.y, radius);
     drawUnitStatusFlashes(unit, unit.x, unit.y, radius);
     drawFoodAnimal(unit, unit.x, unit.y, radius, unit.side === "ally");
     drawUnitStatusGlyphs(unit, unit.x, unit.y, radius);
-    const healthShown = drawBattleHealthStrip(unit, radius);
-    drawUpgradeStars(unit.tier, unit.x, unit.y + radius + (healthShown ? 21 : 14), 10, "center");
+    const baseBarRows = drawBattleBaseBars(unit, radius);
+    drawUpgradeStars(unit.tier, unit.x, unit.y + radius + 14 + baseBarRows * 8, 10, "center");
     ctx.textAlign = "left";
   }
 
-  function drawBattleShieldRim(unit, x, y, r) {
-    if (!(unit.shield > 0)) return;
-    const shieldPct = clamp(unit.shield / Math.max(1, unit.maxHp * 0.5), 0.12, 1);
-    const time = visibleBattle()?.elapsed || 0;
-    const seed = typeof unit.uid === "number" ? unit.uid * 0.37 : r * 0.11;
-    const pulse = 0.5 + Math.sin(time * 4.4 + seed) * 0.5;
-    const glow = 4 + shieldPct * 7 + pulse * 2;
-
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.fillStyle = `rgba(90, 166, 214, ${0.07 + shieldPct * 0.09})`;
-    ctx.beginPath();
-    ctx.ellipse(x, y + 6, r * 1.18 + glow, r * 0.78 + glow * 0.42, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = `rgba(55, 142, 198, ${0.34 + shieldPct * 0.28})`;
-    ctx.lineWidth = 2 + shieldPct * 4;
-    ctx.stroke();
-    ctx.strokeStyle = `rgba(229, 250, 255, ${0.32 + pulse * 0.18})`;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(x, y + 6, r * 1.08 + glow * 0.55, r * 0.7 + glow * 0.28, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+  function drawBattleBaseBars(unit, r) {
+    const shieldPct = unit.shield > 0 ? clamp(unit.shield / Math.max(1, unit.maxHp * 0.5), 0.08, 1) : 0;
+    const hpPct = clamp01(unit.hp / Math.max(1, unit.maxHp));
+    const healthVisible = hpPct < 0.995;
+    let rows = 0;
+    if (shieldPct > 0) {
+      drawBattleBaseBar(unit.x, unit.y + r + 5, shieldPct, "#5aa6d6", "rgba(220, 244, 252, 0.8)");
+      rows += 1;
+    }
+    if (healthVisible) {
+      const y = unit.y + r + 5 + rows * 8;
+      drawBattleBaseBar(unit.x, y, hpPct, hpPct > 0.45 ? "#4a9e68" : "#d9573c", "rgba(255, 249, 224, 0.78)");
+      if (hpPct <= 0.28) {
+        const time = visibleBattle()?.elapsed || 0;
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.sin(time * 7.5) * 0.18;
+        ctx.strokeStyle = "#d9573c";
+        ctx.lineWidth = 2;
+        roundedRect(unit.x - 27, y - 2, 54, 9, 5);
+        ctx.stroke();
+        ctx.restore();
+      }
+      rows += 1;
+    }
+    return rows;
   }
 
-  function drawBattleHealthStrip(unit, r) {
-    const hpPct = clamp01(unit.hp / Math.max(1, unit.maxHp));
-    if (hpPct >= 0.995) return false;
+  function drawBattleBaseBar(centerX, y, pct, color, bgColor) {
     const bw = 50;
-    const bh = 6;
-    const x = unit.x - bw / 2;
-    const y = unit.y + r + 5;
-    const fillWidth = clamp(bw * hpPct, 0, bw);
+    const bh = 5;
+    const x = centerX - bw / 2;
+    const fillWidth = clamp(bw * pct, 0, bw);
 
     ctx.save();
     roundedRect(x, y, bw, bh, 3);
-    ctx.fillStyle = "rgba(255, 249, 224, 0.78)";
+    ctx.fillStyle = bgColor;
     ctx.fill();
     ctx.strokeStyle = "rgba(22, 57, 45, 0.34)";
     ctx.lineWidth = 1;
     ctx.stroke();
     if (fillWidth > 0) {
       roundedRect(x, y, fillWidth, bh, Math.min(3, fillWidth / 2));
-      ctx.fillStyle = hpPct > 0.45 ? "#4a9e68" : "#d9573c";
+      ctx.fillStyle = color;
       ctx.fill();
     }
-    if (hpPct <= 0.28) {
-      const time = visibleBattle()?.elapsed || 0;
-      ctx.globalAlpha = 0.5 + Math.sin(time * 7.5) * 0.18;
-      ctx.strokeStyle = "#d9573c";
-      ctx.lineWidth = 2;
-      roundedRect(x - 2, y - 2, bw + 4, bh + 4, 5);
-      ctx.stroke();
-    }
     ctx.restore();
-    return true;
   }
 
   function drawBattleDefeatStill(unit) {
