@@ -1,0 +1,18 @@
+{
+  "unitId": "mochi-mammoth",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/mochi-mammoth-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/mochi-mammoth-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Mochi Calf", "frame": "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_mochi-calf_idle_SW_00.png" },
+    { "tier": 2, "formName": "Mochi Mammoth", "frame": "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_mochi-mammoth_idle_SW_00.png" },
+    { "tier": 3, "formName": "Mooncake Mastodon", "frame": "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_mooncake-mastodon_idle_SW_00.png" },
+    { "tier": 4, "formName": "Festival Colossus", "frame": "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_festival-colossus_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a four-form Epic line on a flat #00ff00 chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

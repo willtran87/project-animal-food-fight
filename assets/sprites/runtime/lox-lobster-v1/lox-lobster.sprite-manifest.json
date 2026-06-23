@@ -1,0 +1,39 @@
+{
+  "unitId": "lox-lobster",
+  "typeId": "lox_lobster",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/lox-lobster-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/lox-lobster-evolution-v1-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Lox Claw",
+      "frame": "assets/sprites/runtime/lox-lobster-v1/lox-lobster_lox-claw_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Lox Lobster",
+      "frame": "assets/sprites/runtime/lox-lobster-v1/lox-lobster_lox-lobster_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Bagel-Reef Lobster",
+      "frame": "assets/sprites/runtime/lox-lobster-v1/lox-lobster_bagel-reef-lobster_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Brunch Reef Monarch",
+      "frame": "assets/sprites/runtime/lox-lobster-v1/lox-lobster_brunch-reef-monarch_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/lox-lobster-v1/lox-lobster_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on flat #00ff00.",
+    "Converted with remove_chroma_key.py and sliced in grouped mode into 192x192 runtime sprites.",
+    "Static idle source-reference-pass only; not a production-ready animation package."
+  ]
+}

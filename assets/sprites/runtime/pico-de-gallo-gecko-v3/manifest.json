@@ -1,0 +1,14 @@
+{
+  "source": "assets/sprites/transparent/pico-de-gallo-gecko-v3-transparent.png",
+  "method": "connected-component crop from separated four-form sheet; no grid slicing",
+  "frameSize": [
+    192,
+    192
+  ],
+  "frames": [
+    "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_tomato-gecko_idle_SW_00.png",
+    "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_pico-de-gallo-gecko_idle_SW_00.png",
+    "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_salsa-crest-gecko_idle_SW_00.png",
+    "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_market-bowl-basilisk_idle_SW_00.png"
+  ]
+}

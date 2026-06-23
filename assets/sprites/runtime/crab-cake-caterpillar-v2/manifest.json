@@ -1,0 +1,14 @@
+{
+  "source": "assets/sprites/transparent/crab-cake-caterpillar-v2-transparent.png",
+  "method": "connected-component crop from separated four-form sheet; no grid slicing",
+  "frameSize": [
+    192,
+    192
+  ],
+  "frames": [
+    "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_crumb-grub_idle_SW_00.png",
+    "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_crab-cake-caterpillar_idle_SW_00.png",
+    "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_golden-shell-loaf_idle_SW_00.png",
+    "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_boardwalk-crab-cake-moth_idle_SW_00.png"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "unitId": "donut-dodo",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/donut-dodo-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/donut-dodo-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Donut Dodo", "frame": "assets/sprites/runtime/donut-dodo-v1/donut-dodo_donut-dodo_idle_SW_00.png" },
+    { "tier": 2, "formName": "Glazed Dodo", "frame": "assets/sprites/runtime/donut-dodo-v1/donut-dodo_glazed-dodo_idle_SW_00.png" },
+    { "tier": 3, "formName": "Sprinkle Roc", "frame": "assets/sprites/runtime/donut-dodo-v1/donut-dodo_sprinkle-roc_idle_SW_00.png" },
+    { "tier": 4, "formName": "Bakery Phoenix", "frame": "assets/sprites/runtime/donut-dodo-v1/donut-dodo_bakery-phoenix_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/donut-dodo-v1/donut-dodo_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a four-form Rare line on a flat #ff00ff chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "unitId": "granola-goat",
+  "typeId": "granola_goat",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/granola-goat-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/granola-goat-evolution-v1-transparent.png",
+  "tier4GrandSourceChromaKey": "assets/sprites/source/granola-goat-tier4-grand-v2-chromakey.png",
+  "tier4GrandTransparentSource": "assets/sprites/transparent/granola-goat-tier4-grand-v2-transparent.png",
+  "phases34V3SourceChromaKey": "assets/sprites/source/granola-goat-phases-3-4-v3-chromakey.png",
+  "phases34V3TransparentSource": "assets/sprites/transparent/granola-goat-phases-3-4-v3-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Oat Kid",
+      "frame": "assets/sprites/runtime/granola-goat-v1/granola-goat_oat-kid_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Granola Goat",
+      "frame": "assets/sprites/runtime/granola-goat-v1/granola-goat_granola-goat_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Trail-Mix Ram",
+      "frame": "assets/sprites/runtime/granola-goat-v1/granola-goat_trail-mix-ram-v3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Harvest Ibex",
+      "frame": "assets/sprites/runtime/granola-goat-v1/granola-goat_harvest-ibex-v3_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/granola-goat-v1/granola-goat_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on flat #ff00ff.",
+    "Converted with remove_chroma_key.py and sliced in grouped mode into 192x192 runtime sprites.",
+    "Tier 4 was upgraded with a grand-v2 generated replacement while keeping the original Harvest Ibex frame available.",
+    "Phases 3 and 4 were regenerated together in v3 so both face screen-left and use a controlled 192x192 runtime scale.",
+    "Static idle source-reference-pass only; not a production-ready animation package."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "unitId": "croissant-kraken",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/croissant-kraken-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/croissant-kraken-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Croissant Squid", "frame": "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_croissant-squid_idle_SW_00.png" },
+    { "tier": 2, "formName": "Buttered Kraken", "frame": "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_buttered-kraken_idle_SW_00.png" },
+    { "tier": 3, "formName": "Laminated Leviathan", "frame": "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_laminated-leviathan_idle_SW_00.png" },
+    { "tier": 4, "formName": "Thousand-Layer Abyss", "frame": "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_thousand-layer-abyss_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a four-form Epic line on a flat #00ff00 chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "source": "assets/sprites/transparent/kelp-koala-v2-transparent.png",
+  "method": "connected-component crop from separated four-form sheet; no grid slicing",
+  "frameSize": [
+    192,
+    192
+  ],
+  "frames": [
+    "assets/sprites/runtime/kelp-koala-v2/kelp-koala_kelp-joey_idle_SW_00.png",
+    "assets/sprites/runtime/kelp-koala-v2/kelp-koala_kelp-koala_idle_SW_00.png",
+    "assets/sprites/runtime/kelp-koala-v2/kelp-koala_seaweed-snacker_idle_SW_00.png",
+    "assets/sprites/runtime/kelp-koala-v2/kelp-koala_tide-grove-koala_idle_SW_00.png"
+  ]
+}

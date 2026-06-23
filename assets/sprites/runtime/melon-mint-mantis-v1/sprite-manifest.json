@@ -1,0 +1,11 @@
+{
+  "source": "assets/sprites/transparent/food-animal-gap-fillers-v1-transparent.png",
+  "prefix": "melon-mint-mantis",
+  "frames": [
+    "melon-mint-mantis_mint-sprout-mantis_idle_SW_00.png",
+    "melon-mint-mantis_melon-mint-mantis_idle_SW_00.png",
+    "melon-mint-mantis_honeydew-blade_idle_SW_00.png",
+    "melon-mint-mantis_melon-grove-reaper_idle_SW_00.png"
+  ],
+  "sheet": "melon-mint-mantis_evolution_SW_sheet.png"
+}

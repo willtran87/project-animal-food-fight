@@ -1,0 +1,40 @@
+{
+  "unitId": "hot-chip-hamster",
+  "typeId": "hot_chip_hamster",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/hot-chip-hamster-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/hot-chip-hamster-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Hot Chip Pup",
+      "frame": "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_hot-chip-pup_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Hot Chip Hamster",
+      "frame": "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_hot-chip-hamster_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Flamin' Wheel Hamster",
+      "frame": "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_flamin-wheel-hamster_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Kettlefire Hamster",
+      "frame": "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_kettlefire-hamster_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on flat #00ff00.",
+    "V2 explicitly locks every form to a hamster silhouette and replaces the prior capybara-drifting final form.",
+    "Converted with remove_chroma_key.py and sliced in grouped mode into 192x192 runtime sprites.",
+    "Static idle source-reference-pass only; not a production-ready animation package."
+  ]
+}

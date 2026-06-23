@@ -1,0 +1,19 @@
+{
+  "unitId": "sushi-seal",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/sushi-seal-evolution-v3-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/sushi-seal-evolution-v3-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Maki Pup", "frame": "assets/sprites/runtime/sushi-seal-v3/sushi-seal_maki-pup_idle_SW_00.png" },
+    { "tier": 2, "formName": "Nigiri Seal", "frame": "assets/sprites/runtime/sushi-seal-v3/sushi-seal_nigiri-seal_idle_SW_00.png" },
+    { "tier": 3, "formName": "Dragon Roll", "frame": "assets/sprites/runtime/sushi-seal-v3/sushi-seal_dragon-roll_idle_SW_00.png" },
+    { "tier": 4, "formName": "Omakase Seal", "frame": "assets/sprites/runtime/sushi-seal-v3/sushi-seal_omakase-seal_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/sushi-seal-v3/sushi-seal_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a coherent four-form line on a flat #ff00ff chroma-key background.",
+    "Forms were prompted as one evolving seal identity with the same face, flippers, pose, palette, and sushi-roll body.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

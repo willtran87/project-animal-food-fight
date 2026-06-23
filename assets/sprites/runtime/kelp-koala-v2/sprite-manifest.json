@@ -1,0 +1,13 @@
+{
+  "source": "assets/sprites/transparent/kelp-koala-v2-transparent.png",
+  "prefix": "kelp-koala",
+  "frames": [
+    "kelp-koala_kelp-joey_idle_SW_00.png",
+    "kelp-koala_kelp-koala_idle_SW_00.png",
+    "kelp-koala_seaweed-snacker_idle_SW_00.png",
+    "kelp-koala_tide-grove-koala_idle_SW_00.png"
+  ],
+  "sheet": "kelp-koala_evolution_SW_sheet.png",
+  "crop": "component-centered",
+  "paddingRatio": 0.2
+}

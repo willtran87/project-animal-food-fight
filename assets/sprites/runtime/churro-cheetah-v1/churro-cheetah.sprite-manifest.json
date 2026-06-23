@@ -1,0 +1,42 @@
+{
+  "unitId": "churro-cheetah",
+  "typeId": "churro_cheetah",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/churro-cheetah-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/churro-cheetah-evolution-v1-transparent.png",
+  "tier4V2SourceChromaKey": "assets/sprites/source/churro-cheetah-dulce-firecat-v2-chromakey.png",
+  "tier4V2TransparentSource": "assets/sprites/transparent/churro-cheetah-dulce-firecat-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Churro Cub",
+      "frame": "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_churro-cub_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Cinnamon Cheetah",
+      "frame": "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_cinnamon-cheetah_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Chili Churro Cheetah",
+      "frame": "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_chili-churro-cheetah_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Dulce Firecat",
+      "frame": "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_dulce-firecat-v2_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on flat #ff00ff.",
+    "Converted with remove_chroma_key.py and sliced in grouped mode into 192x192 runtime sprites.",
+    "Tier 4 was regenerated as v2 so Dulce Firecat faces screen-left like tiers 1-3 while preserving the original frame.",
+    "Static idle source-reference-pass only; not a production-ready animation package."
+  ]
+}

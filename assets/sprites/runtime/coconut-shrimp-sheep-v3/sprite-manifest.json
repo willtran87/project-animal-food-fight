@@ -1,0 +1,13 @@
+{
+  "source": "assets/sprites/transparent/coconut-shrimp-sheep-v3-transparent.png",
+  "prefix": "coconut-shrimp-sheep",
+  "frames": [
+    "coconut-shrimp-sheep_coconut-lamb_idle_SW_00.png",
+    "coconut-shrimp-sheep_coconut-shrimp-sheep_idle_SW_00.png",
+    "coconut-shrimp-sheep_fried-fleece-shrimp_idle_SW_00.png",
+    "coconut-shrimp-sheep_island-coconut-ram_idle_SW_00.png"
+  ],
+  "sheet": "coconut-shrimp-sheep_evolution_SW_sheet.png",
+  "crop": "component-centered",
+  "paddingRatio": 0.2
+}

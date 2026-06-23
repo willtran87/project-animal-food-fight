@@ -1,0 +1,40 @@
+{
+  "unitId": "noodle-newt",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/noodle-newt-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/noodle-newt-evolution-v1-transparent.png",
+  "finalFormSourceChromaKey": "assets/sprites/source/food-animal-final-forms-v2-chromakey.png",
+  "finalFormTransparentSource": "assets/sprites/transparent/food-animal-final-forms-v2-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Noodle Newt",
+      "frame": "assets/sprites/runtime/noodle-newt/noodle-newt_noodle-newt_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Ramen Newt",
+      "frame": "assets/sprites/runtime/noodle-newt/noodle-newt_ramen-newt_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Hotpot Newt",
+      "frame": "assets/sprites/runtime/noodle-newt/noodle-newt_hotpot-newt_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Cauldron Newt",
+      "frame": "assets/sprites/runtime/noodle-newt/noodle-newt_cauldron-newt-v2_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/noodle-newt/noodle-newt_evolution_SW_sheet.png",
+  "finalFormSheet": "assets/sprites/runtime/final-forms-v2/food-animal-final-forms-v2_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on a flat #ff00ff chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper.",
+    "Frames are transparent 192x192 PNGs suitable for prototype use.",
+    "Tier 4 final form comes from the anchored v2 final-forms sheet generated against the current tier-3 runtime sprite identities.",
+    "This is not production-ready animation packaging; no bespoke animation frames beyond idle source-reference poses are present."
+  ]
+}

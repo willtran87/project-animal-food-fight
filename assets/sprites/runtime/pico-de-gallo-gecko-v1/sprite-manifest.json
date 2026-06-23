@@ -1,0 +1,11 @@
+{
+  "source": "assets/sprites/transparent/food-animal-gap-fillers-v1-transparent.png",
+  "prefix": "pico-de-gallo-gecko",
+  "frames": [
+    "pico-de-gallo-gecko_tomato-gecko_idle_SW_00.png",
+    "pico-de-gallo-gecko_pico-de-gallo-gecko_idle_SW_00.png",
+    "pico-de-gallo-gecko_salsa-crest-gecko_idle_SW_00.png",
+    "pico-de-gallo-gecko_market-bowl-basilisk_idle_SW_00.png"
+  ],
+  "sheet": "pico-de-gallo-gecko_evolution_SW_sheet.png"
+}

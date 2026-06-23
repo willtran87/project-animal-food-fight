@@ -1,0 +1,18 @@
+{
+  "unitId": "curry-crab",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/curry-crab-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/curry-crab-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Curry Crab", "frame": "assets/sprites/runtime/curry-crab-v1/curry-crab_curry-crab_idle_SW_00.png" },
+    { "tier": 2, "formName": "Masala Crab", "frame": "assets/sprites/runtime/curry-crab-v1/curry-crab_masala-crab_idle_SW_00.png" },
+    { "tier": 3, "formName": "Spiceclaw", "frame": "assets/sprites/runtime/curry-crab-v1/curry-crab_spiceclaw_idle_SW_00.png" },
+    { "tier": 4, "formName": "Vindaloo Titan", "frame": "assets/sprites/runtime/curry-crab-v1/curry-crab_vindaloo-titan_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/curry-crab-v1/curry-crab_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a four-form Uncommon line on a flat #ff00ff chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

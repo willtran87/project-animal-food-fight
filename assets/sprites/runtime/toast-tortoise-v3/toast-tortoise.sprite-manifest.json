@@ -1,0 +1,19 @@
+{
+  "unitId": "toast-tortoise",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/toast-tortoise-evolution-v3-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/toast-tortoise-evolution-v3-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Toastlet", "frame": "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_toastlet_idle_SW_00.png" },
+    { "tier": 2, "formName": "Butterback", "frame": "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_butterback_idle_SW_00.png" },
+    { "tier": 3, "formName": "Clubshell", "frame": "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_clubshell_idle_SW_00.png" },
+    { "tier": 4, "formName": "Banquet Shell", "frame": "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_banquet-shell_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a coherent four-form line on a flat #ff00ff chroma-key background.",
+    "Forms were prompted as one evolving tortoise identity with the same face, pose, palette, and toast-shell concept.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

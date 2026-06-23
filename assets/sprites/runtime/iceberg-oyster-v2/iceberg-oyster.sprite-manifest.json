@@ -1,0 +1,47 @@
+{
+  "unitId": "iceberg-oyster",
+  "typeId": "iceberg_oyster",
+  "packageStatus": "imagegen-v2-food-first",
+  "sourceChromaKey": "assets/sprites/source/iceberg-oyster-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/iceberg-oyster-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Iceberg Oyster",
+      "frame": "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_iceberg-oyster_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Pearl-Ice Oyster",
+      "frame": "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_pearl-ice-oyster_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Glacier Shell Oyster",
+      "frame": "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_glacier-shell-oyster_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Abyssal Ice Pearl",
+      "frame": "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_abyssal-ice-pearl_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_evolution_SW_sheet.png",
+  "sliceSplits": [
+    0,
+    390,
+    854,
+    1296,
+    1909
+  ],
+  "runtimeSubjectMaxSide": 148,
+  "notes": [
+    "Regenerated after art review because v1 read too animal-first.",
+    "Prompt emphasized oyster dish, half shell, crushed ice, lemon/cucumber/caviar garnish, and subtle pearl-face personality.",
+    "Generated with built-in image generation on flat #ff00ff, removed with remove_chroma_key.py, split by alpha-projection gaps, and centered into 192x192 runtime sprites."
+  ]
+}

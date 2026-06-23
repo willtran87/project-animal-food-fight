@@ -1,0 +1,41 @@
+{
+  "unitId": "benedict-lobster",
+  "typeId": "benedict_lobster",
+  "packageStatus": "source-reference-pass",
+  "replacesConcept": "lox-lobster",
+  "sourceChromaKey": "assets/sprites/source/benedict-lobster-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/benedict-lobster-evolution-v1-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Benny Lobster",
+      "frame": "assets/sprites/runtime/benedict-lobster-v1/benedict-lobster_benny-lobster_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Benedict Lobster",
+      "frame": "assets/sprites/runtime/benedict-lobster-v1/benedict-lobster_benedict-lobster_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Hollandaise Reef Lobster",
+      "frame": "assets/sprites/runtime/benedict-lobster-v1/benedict-lobster_hollandaise-reef-lobster_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Brunch Tide Monarch",
+      "frame": "assets/sprites/runtime/benedict-lobster-v1/benedict-lobster_brunch-tide-monarch_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/benedict-lobster-v1/benedict-lobster_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on flat #ff00ff.",
+    "Replaces the lox/bagel lobster concept with a food-first eggs Benedict and hollandaise lobster line.",
+    "Converted with remove_chroma_key.py and sliced in columns mode into 192x192 runtime sprites.",
+    "Static idle source-reference-pass only; not a production-ready animation package."
+  ]
+}

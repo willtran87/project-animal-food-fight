@@ -1,0 +1,18 @@
+{
+  "unitId": "dumpling-armadillo",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/dumpling-armadillo-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/dumpling-armadillo-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Dumpling Dillo", "frame": "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_dumpling-dillo_idle_SW_00.png" },
+    { "tier": 2, "formName": "Bao Armadillo", "frame": "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_bao-armadillo_idle_SW_00.png" },
+    { "tier": 3, "formName": "Dim Sum Dozer", "frame": "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_dim-sum-dozer_idle_SW_00.png" },
+    { "tier": 4, "formName": "Steam-Basket Bastion", "frame": "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_steam-basket-bastion_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a four-form Rare line on a flat #ff00ff chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}

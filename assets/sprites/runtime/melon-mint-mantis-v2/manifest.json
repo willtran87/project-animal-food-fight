@@ -1,0 +1,14 @@
+{
+  "source": "assets/sprites/transparent/melon-mint-mantis-v2-transparent.png",
+  "method": "connected-component crop from separated four-form sheet; no grid slicing",
+  "frameSize": [
+    192,
+    192
+  ],
+  "frames": [
+    "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_mint-sprout-mantis_idle_SW_00.png",
+    "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_melon-mint-mantis_idle_SW_00.png",
+    "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_honeydew-blade_idle_SW_00.png",
+    "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_melon-grove-reaper_idle_SW_00.png"
+  ]
+}

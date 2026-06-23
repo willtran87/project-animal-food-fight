@@ -1,0 +1,18 @@
+{
+  "unitId": "gingerbread-golem",
+  "packageStatus": "source-reference-pass",
+  "sourceChromaKey": "assets/sprites/source/gingerbread-golem-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/gingerbread-golem-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "forms": [
+    { "tier": 1, "formName": "Gingerling", "frame": "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_gingerling_idle_SW_00.png" },
+    { "tier": 2, "formName": "Gingerbread Golem", "frame": "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_gingerbread-golem_idle_SW_00.png" },
+    { "tier": 3, "formName": "Frosted Guardian", "frame": "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_frosted-guardian_idle_SW_00.png" },
+    { "tier": 4, "formName": "Candy-Castle Colossus", "frame": "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_candy-castle-colossus_idle_SW_00.png" }
+  ],
+  "sheet": "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation as a four-form Epic line on a flat #00ff00 chroma-key background.",
+    "Background was removed with the imagegen remove_chroma_key.py helper, then frames were sliced in grouped mode."
+  ]
+}
