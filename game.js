@@ -1427,6 +1427,17 @@
     { id: "trait", label: "Trait Pack", weight: 4, minRound: 3, countBias: 0, tierBias: 0.04, tier3Bias: 0.02, statBias: 0, itemBias: 0, drinkBias: 0, traitFocus: 0.9 },
     { id: "loaded", label: "Loaded", weight: 3, minRound: 5, countBias: -1, tierBias: 0.02, tier3Bias: 0.03, statBias: 0.02, itemBias: 1, drinkBias: 1, traitFocus: 0.55 },
   ];
+  const ENEMY_ARCHETYPE_PRIMARY_SHARE = 0.64;
+  const ENEMY_ARCHETYPE_NOISE = {
+    countBias: 0.38,
+    tierBias: 0.045,
+    tier3Bias: 0.025,
+    statBias: 0.022,
+    itemBias: 0.38,
+    drinkBias: 0.38,
+    traitFocus: 0.14,
+    rarityBias: 0.34,
+  };
   const TIER_SCALING = [
     null,
     { hp: 1, atk: 1, speed: 1, ability: 1 },
@@ -6060,10 +6071,13 @@
   }
 
   function makeEnemyPlan(round = state.round) {
-    const archetype = chooseEnemyArchetype(round);
+    const primaryArchetype = chooseEnemyArchetype(round);
+    const secondaryArchetype = chooseEnemySecondaryArchetype(round, primaryArchetype);
+    const archetype = blendEnemyArchetypes(primaryArchetype, secondaryArchetype);
     const themeTrait = Math.random() < (archetype.traitFocus || 0) ? chooseEnemyThemeTrait() : null;
     const baseCount = Math.min(boardSlots.length, 2 + Math.floor(round / 2));
-    const count = Math.max(1, Math.min(boardSlots.length, baseCount + (archetype.countBias || 0) + enemyCountJitter(round)));
+    const countBias = stochasticRound(archetype.countBias || 0);
+    const count = Math.max(1, Math.min(boardSlots.length, baseCount + countBias + enemyCountJitter(round)));
     const rarityWeights = enemyRarityWeights(round, archetype);
     const adaptivePressure = enemyAdaptivePressure(round);
     const latePressure = enemyLatePressure(round);
@@ -6071,6 +6085,10 @@
       round,
       archetypeId: archetype.id,
       archetypeLabel: archetype.label,
+      primaryArchetypeId: primaryArchetype.id,
+      primaryArchetypeLabel: primaryArchetype.label,
+      secondaryArchetypeId: secondaryArchetype.id,
+      secondaryArchetypeLabel: secondaryArchetype.label,
       themeTrait,
       count,
       rarityWeights,
@@ -6088,6 +6106,56 @@
   function chooseEnemyArchetype(round) {
     const options = ENEMY_ARCHETYPES.filter((archetype) => round >= (archetype.minRound || 1));
     return weightedChoice(options, (archetype) => archetype.weight || 1) || ENEMY_ARCHETYPES[0];
+  }
+
+  function chooseEnemySecondaryArchetype(round, primaryArchetype) {
+    const options = ENEMY_ARCHETYPES.filter((archetype) => archetype.id !== primaryArchetype?.id && round >= (archetype.minRound || 1));
+    return weightedChoice(options, (archetype) => Math.max(1, archetype.weight || 1)) || primaryArchetype || ENEMY_ARCHETYPES[0];
+  }
+
+  function blendEnemyArchetypes(primaryArchetype, secondaryArchetype) {
+    const primary = primaryArchetype || ENEMY_ARCHETYPES[0];
+    const secondary = secondaryArchetype || primary;
+    const hasSecondary = secondary.id !== primary.id;
+    const primaryShare = hasSecondary ? ENEMY_ARCHETYPE_PRIMARY_SHARE : 1;
+    const secondaryShare = hasSecondary ? 1 - ENEMY_ARCHETYPE_PRIMARY_SHARE : 0;
+    const blended = {
+      id: hasSecondary ? `${primary.id}_${secondary.id}` : primary.id,
+      label: hasSecondary ? `${primary.label} + ${secondary.label}` : primary.label,
+      countBias: blendedEnemyBias(primary, secondary, "countBias", primaryShare, secondaryShare, -1, 1),
+      tierBias: blendedEnemyBias(primary, secondary, "tierBias", primaryShare, secondaryShare, -0.16, 0.16),
+      tier3Bias: blendedEnemyBias(primary, secondary, "tier3Bias", primaryShare, secondaryShare, -0.06, 0.07),
+      statBias: blendedEnemyBias(primary, secondary, "statBias", primaryShare, secondaryShare, -0.05, 0.05),
+      itemBias: blendedEnemyBias(primary, secondary, "itemBias", primaryShare, secondaryShare, -1, 1),
+      drinkBias: blendedEnemyBias(primary, secondary, "drinkBias", primaryShare, secondaryShare, -1, 1),
+      traitFocus: blendedEnemyBias(primary, secondary, "traitFocus", primaryShare, secondaryShare, 0.18, 0.72),
+      rarityBias: blendedEnemyBias(
+        { rarityBias: enemyArchetypeRarityBias(primary) },
+        { rarityBias: enemyArchetypeRarityBias(secondary) },
+        "rarityBias",
+        primaryShare,
+        secondaryShare,
+        -1,
+        1
+      ),
+    };
+    return blended;
+  }
+
+  function blendedEnemyBias(primary, secondary, key, primaryShare, secondaryShare, min, max) {
+    const base = (primary[key] || 0) * primaryShare + (secondary[key] || 0) * secondaryShare;
+    return clamp(base + enemyArchetypeNoise(key), min, max);
+  }
+
+  function enemyArchetypeNoise(key) {
+    const range = ENEMY_ARCHETYPE_NOISE[key] || 0;
+    return (Math.random() * 2 - 1) * range;
+  }
+
+  function enemyArchetypeRarityBias(archetype) {
+    if (archetype?.id === "loaded" || archetype?.id === "elite") return 1;
+    if (archetype?.id === "swarm") return -1;
+    return 0;
   }
 
   function chooseEnemyThemeTrait() {
@@ -6132,7 +6200,7 @@
   }
 
   function enemyRarityWeights(round, archetype = ENEMY_ARCHETYPES[0]) {
-    const bias = archetype.id === "loaded" || archetype.id === "elite" ? 1 : archetype.id === "swarm" ? -1 : 0;
+    const bias = typeof archetype.rarityBias === "number" ? archetype.rarityBias : enemyArchetypeRarityBias(archetype);
     const latePressure = enemyLatePressure(round);
     return {
       common: 100,
@@ -6157,7 +6225,14 @@
     const base = 1 + Math.floor(round / every);
     const jitterRoll = Math.random();
     const jitter = round <= 1 ? 0 : jitterRoll < 0.18 ? -1 : jitterRoll > 0.84 ? 1 : 0;
-    return Math.max(0, Math.min(max, base + bias + jitter));
+    return Math.max(0, Math.min(max, base + stochasticRound(bias) + jitter));
+  }
+
+  function stochasticRound(value) {
+    const sign = value < 0 ? -1 : 1;
+    const magnitude = Math.abs(value);
+    const floor = Math.floor(magnitude);
+    return sign * (floor + (Math.random() < magnitude - floor ? 1 : 0));
   }
 
   function weightedChoice(entries, weightFor) {
@@ -6279,6 +6354,10 @@
     return {
       archetype: plan.archetypeId,
       label: plan.archetypeLabel,
+      primaryArchetype: plan.primaryArchetypeId,
+      primaryLabel: plan.primaryArchetypeLabel,
+      secondaryArchetype: plan.secondaryArchetypeId,
+      secondaryLabel: plan.secondaryArchetypeLabel,
       themeTrait: plan.themeTrait,
       count: plan.count,
       toppingCount: plan.toppingCount,
