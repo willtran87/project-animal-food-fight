@@ -4678,7 +4678,7 @@
   const REALITY_DRINK_COASTER_SLOT_SRC = "assets/items/runtime/combat_coaster-horror-v1.png?v=1";
   const TOPPING_CUTTING_BOARD_SLOT_SRC = "assets/items/runtime/topping_cutting_board-stall-v2.png?v=1";
   const REALITY_TOPPING_STORAGE_SLOT_SRC = "assets/items/runtime/topping_storage-horror-v1.png?v=1";
-  const UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-v1.png";
+  const UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-v2.png?v=1";
   const REALITY_UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-war-v2.png?v=1";
   const STATUS_CHALK_COURSE_SRC = "assets/ui/runtime/status-chalk-course-v1.webp";
   const STATUS_CHALK_COINS_SRC = "assets/ui/runtime/status-chalk-coins-v1.webp";

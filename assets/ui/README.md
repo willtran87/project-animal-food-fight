@@ -5,6 +5,7 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 ## Runtime
 
 - `runtime/ui-icon-atlas-v1.png` - 8x4 atlas, 64px cells, used for arena, reward, action, ledger, and mold-adjacent UI icons.
+- `runtime/ui-icon-atlas-v2.png` - active cozy 8x4 atlas with the same 64px cell contract as v1, replacing only the post-battle reward row with clearer reward icons.
 - `runtime/ui-icon-atlas-war-v2.png` - active horror-mode 8x4 atlas with the same 64px cell contract, replacing cozy reward/action/info glyphs with brighter mechanical scrap, scan, weapon, rig, hull, and hazard icons.
 - `runtime/upgrade-star-v2.png` - generated tier star icon.
 - `runtime/shop-lock-locked-v1.png` / `runtime/shop-lock-unlocked-v1.png` - generated shop lock toggle icons.
@@ -18,6 +19,9 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `source/ui-icon-atlas-v1-chromakey.png` - built-in image generation source on a flat chroma-key background.
 - `transparent/ui-icon-atlas-v1-transparent.png` - chroma-key removed with `remove_chroma_key.py`.
 - `runtime/ui-icon-atlas-v1.png` - transparent source repacked into a true 512x256, 8x4 atlas so game code can sample 64px cells without distortion.
+- `source/ui-icon-atlas-rewards-v2-chromakey.png` - built-in image generation source for the improved cozy post-battle reward row on a flat magenta key.
+- `transparent/ui-icon-atlas-rewards-v2-transparent.png` - magenta key removed.
+- `runtime/ui-icon-atlas-v2.png` - v1 atlas with only row 1 replaced by the v2 reward strip: coins, reroll, topping, copy, arena, favorite, discount, and heart.
 - `source/ui-icon-atlas-war-v1-chromakey.png` / `runtime/ui-icon-atlas-war-v1.png` - first horror icon pass, retained as a draft but not active because the icons were too dark at 11-25px in live horror UI.
 - `source/ui-icon-atlas-war-v2-chromakey.png` - built-in image generation source on flat `#ff00ff`, generated after auditing horror mode for cozy icon leftovers and readability.
 - `transparent/ui-icon-atlas-war-v2-transparent.png` - magenta key removed.
