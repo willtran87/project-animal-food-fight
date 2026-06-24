@@ -1,0 +1,27 @@
+{
+  "packageId": "war-machine-banana-split-giraffe-boss-v1",
+  "packageStatus": "horror-theme-boss-idle-particle-defeat-pass",
+  "unitId": "banana_split_giraffe_boss",
+  "sourceChromaKey": "assets/sprites/source/war-machine-banana-split-giraffe-boss-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-banana-split-giraffe-boss-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "particleFrameSize": { "w": 96, "h": 96 },
+  "theme": "future-war-horror",
+  "forms": [
+    {
+      "tier": 4,
+      "formName": "Holograph Projector Giraffe",
+      "frame": "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-banana-split-giraffe-boss-holograph-camera-pulse-core-v1.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v1.png",
+  "contactPreview": "output/war-machine-banana-split-giraffe-boss-v1-contact.png",
+  "notes": [
+    "Generated with built-in image generation on flat #00ff00, then converted with remove_chroma_key.py.",
+    "The accepted source sheet contains three pure robot subjects: one idle level 10 boss, one disabled wreck defeat still, and one static holograph-camera pulse particle.",
+    "The prompt required a holograph-projector head, a camera on the tail, future-war neon lighting, black outline, high-detail pixel art, and no food or organic giraffe cues.",
+    "Grouped slicing found three clean runtime frames; the particle was center-fit into a 96x96 runtime PNG."
+  ]
+}

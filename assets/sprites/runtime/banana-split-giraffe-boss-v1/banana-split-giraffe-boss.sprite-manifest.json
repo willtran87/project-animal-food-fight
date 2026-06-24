@@ -1,0 +1,25 @@
+{
+  "unitId": "banana-split-giraffe-boss",
+  "typeId": "banana_split_giraffe_boss",
+  "packageStatus": "source-reference-pass",
+  "conceptRole": "level 10 boss",
+  "sourceChromaKey": "assets/sprites/source/banana-split-giraffe-boss-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/banana-split-giraffe-boss-v1-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "forms": [
+    {
+      "tier": 4,
+      "formName": "Banana Split Giraffe",
+      "frame": "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_evolution_SW_sheet.png",
+  "notes": [
+    "Generated with built-in image generation on flat #ff00ff.",
+    "Converted with remove_chroma_key.py and sliced into a single 192x192 runtime boss sprite.",
+    "Static idle source-reference-pass only; not wired into gameplay or a production-ready animation package."
+  ]
+}

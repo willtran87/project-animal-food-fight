@@ -3,10 +3,12 @@
 
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
+  const nativeMeasureText = ctx.measureText.bind(ctx);
   const W = 1024;
   const H = 640;
   const DISPLAY_SCALE = 1.5625;
-  const BACKING_SCALE = Math.max(3, Math.min(4, (window.devicePixelRatio || 1) * 2));
+  const MAX_BACKING_SCALE = 2.5;
+  const BACKING_SCALE = Math.max(1.5, Math.min(MAX_BACKING_SCALE, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
   const IDLE_BREATH = {
     period: 3.25,
     periodVariance: 0.42,
@@ -28,6 +30,9 @@
   const FINAL_VICTORY_ROUND = 20;
   const FINAL_BOSS_TYPE_ID = "cyber_brain_final_boss";
   const FINAL_BOSS_MINION_TYPE_ID = "brainstem_wire_minion";
+  const GIRAFFE_BOSS_ROUND = 10;
+  const GIRAFFE_BOSS_TYPE_ID = "banana_split_giraffe_boss";
+  const GIRAFFE_BOSS_SLOT = 3;
   const REBOOT_STATIC_FADE_SECONDS = 1.28;
   const REBOOT_STATIC_RESET_AT = 0.58;
   const FINAL_VICTORY_STATIC_FADE_SECONDS = REBOOT_STATIC_FADE_SECONDS;
@@ -49,6 +54,38 @@
     "A table set for tomorrow, even when no one is certain tomorrow will come.",
     "There is still always hope.",
   ];
+
+  const TEXT_LAYOUT_CACHE_LIMIT = 5000;
+  const textMeasureCache = new Map();
+  const wrappedTextCache = new Map();
+  let assetDrawPending = false;
+
+  function rememberCacheEntry(cache, key, value) {
+    if (cache.size >= TEXT_LAYOUT_CACHE_LIMIT) cache.clear();
+    cache.set(key, value);
+    return value;
+  }
+
+  function measureTextWidth(text, font = ctx.font) {
+    const value = String(text ?? "");
+    const key = `${font}\n${value}`;
+    if (textMeasureCache.has(key)) return textMeasureCache.get(key);
+    const previousFont = ctx.font;
+    if (font && ctx.font !== font) ctx.font = font;
+    const width = nativeMeasureText(value).width;
+    if (font && ctx.font !== previousFont) ctx.font = previousFont;
+    rememberCacheEntry(textMeasureCache, key, width);
+    return width;
+  }
+
+  function requestDraw() {
+    assetDrawPending = true;
+  }
+
+  function drawFrame() {
+    assetDrawPending = false;
+    draw();
+  }
 
   function normalizeRealityOverride(value) {
     if (value === true || value === false || value === null) return value;
@@ -1713,7 +1750,7 @@
   const REALITY_SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/war-future-market-stall-v3-native-cutout.png?v=1";
   const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.webp";
   const REALITY_BREAK_ROUND = 10;
-  const REALITY_SHOPKEEPER_SRC = "assets/shopkeeper/runtime/black-outline-horror-terminator-shopkeeper-kitten-v3-alpha.png?v=1";
+  const REALITY_SHOPKEEPER_SRC = "assets/shopkeeper/runtime/black-outline-horror-terminator-shopkeeper-kitten-v4-alpha.png?v=1";
   const CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/beat-up-food-menu-button-v2.png";
   const REALITY_CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/horror-food-menu-hanging-sign-v1.png?v=3";
   const SHOPKEEPER_LEVEL_SRCS = [
@@ -4514,6 +4551,7 @@
     coconut_shrimp_sheep: "assets/particles/runtime/food-attack-particle-gap-fillers_coconut_shrimp_sheep_static_idle_SW_00.png",
     crab_cake_caterpillar: "assets/particles/runtime/food-attack-particle-gap-fillers_crab_cake_caterpillar_static_idle_SW_00.png",
     pico_de_gallo_gecko: "assets/particles/runtime/food-attack-particle-gap-fillers_pico_de_gallo_gecko_static_idle_SW_00.png",
+    [GIRAFFE_BOSS_TYPE_ID]: "assets/particles/runtime/banana-split-giraffe-boss-ice-cream-sticker-particle-v2.png?v=1",
   };
   const REALITY_ATTACK_PARTICLE_SPRITES = {
     toast_tortoise: "assets/particles/runtime/war-machine-toast-tortoise-static-rail-discharge-v3.png?v=1",
@@ -4559,6 +4597,7 @@
     caesar_salamander: "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v1.png?v=1",
     cucumber_cobra: "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v1.png?v=1",
     avocado_axolotl: "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v1.png?v=1",
+    [GIRAFFE_BOSS_TYPE_ID]: "assets/particles/runtime/banana-split-giraffe-boss-ice-cream-sticker-particle-v2.png?v=1",
     [FINAL_BOSS_TYPE_ID]: "assets/particles/runtime/cyber_brain_final_boss-attack-particle-v1.png?v=1",
     [FINAL_BOSS_MINION_TYPE_ID]: "assets/particles/runtime/brainstem_wire_minion-attack-particle-v1.png?v=1",
   };
@@ -4996,6 +5035,12 @@
       3: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_salsa-crest-gecko_idle_SW_00.png",
       4: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_market-bowl-basilisk_idle_SW_00.png",
     },
+    [GIRAFFE_BOSS_TYPE_ID]: {
+      1: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
+    },
   };
   const REALITY_RUNTIME_SPRITES = {
     toast_tortoise: {
@@ -5256,6 +5301,12 @@
       3: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk3_idle_SW_00.png?v=1",
       4: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk4_idle_SW_00.png?v=1",
     },
+    [GIRAFFE_BOSS_TYPE_ID]: {
+      1: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
+    },
     [FINAL_BOSS_TYPE_ID]: {
       1: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
       2: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
@@ -5314,6 +5365,7 @@
     coconut_shrimp_sheep: "assets/sprites/runtime/defeat-stills/coconut-shrimp-sheep-defeat-food-v1.png",
     crab_cake_caterpillar: "assets/sprites/runtime/defeat-stills/crab-cake-caterpillar-defeat-food-v1.png",
     pico_de_gallo_gecko: "assets/sprites/runtime/defeat-stills/pico-de-gallo-gecko-defeat-food-v1.png",
+    [GIRAFFE_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
   };
   const REALITY_DEFEAT_STILL_SPRITES = {
     toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v3.png?v=1",
@@ -5354,6 +5406,7 @@
     benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v1.png?v=1",
     curry_crab: "assets/sprites/runtime/defeat-stills/curry-crab-war-machine-defeat-v1.png?v=1",
     churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v1.png?v=1",
+    [GIRAFFE_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
     granola_goat: "assets/sprites/runtime/defeat-stills/granola-goat-war-machine-defeat-v1.png?v=1",
     breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v1.png?v=1",
     caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v1.png?v=1",
@@ -5888,6 +5941,10 @@
     return typeId === FINAL_BOSS_TYPE_ID || typeId === FINAL_BOSS_MINION_TYPE_ID;
   }
 
+  function isGiraffeBossUnitType(typeId) {
+    return typeId === GIRAFFE_BOSS_TYPE_ID;
+  }
+
   function makeFinalBossUnit(typeId, options = {}) {
     const boss = typeId === FINAL_BOSS_TYPE_ID;
     const tier = options.tier || (boss ? 4 : 2);
@@ -5929,6 +5986,52 @@
       enemySlot: options.enemySlot ?? null,
       battleSpriteScale: boss ? 2.0 : 1.06,
       battleSpriteOffsetY: boss ? 28 : 4,
+    };
+  }
+
+  function makeGiraffeBossUnit(plan = {}) {
+    const maxHp = Math.round(430 * (plan.bossHpMultiplier || 1));
+    const atk = Math.round(18 * (plan.bossAtkMultiplier || 1));
+    return {
+      kind: "unit",
+      uid: unitSeq++,
+      typeId: GIRAFFE_BOSS_TYPE_ID,
+      lineName: "Banana Split Giraffe",
+      name: "Banana Split Giraffe",
+      short: "Split Giraffe",
+      emoji: "BG",
+      rarity: "epic",
+      family: "dessert",
+      traits: ["sweet", "bakery"],
+      color: "#f7c45f",
+      accent: "#78efff",
+      role: "Level 10 Boss",
+      ability: "giraffe_boss_glitch",
+      abilityText: "Glitch sundae beam",
+      tier: 4,
+      hp: maxHp,
+      maxHp,
+      baseAtk: atk,
+      atk,
+      abilityPower: 20,
+      baseAbilityPower: 20,
+      speed: 1.04,
+      cooldown: 0.36 + Math.random() * 0.18,
+      targetUid: null,
+      shield: 36,
+      x: 0,
+      y: 0,
+      side: "enemy",
+      slot: null,
+      item: null,
+      dead: false,
+      enemySlot: plan.bossSlot ?? GIRAFFE_BOSS_SLOT,
+      battleSpriteScale: 1.7,
+      battleSpriteOffsetY: 22,
+      defeatStillScale: 1.45,
+      giraffeBossUnit: true,
+      glitchToRobot: true,
+      forceRealityDefeatStill: true,
     };
   }
 
@@ -7953,6 +8056,29 @@
 
   function makeEnemyPlan(round = state.round) {
     if (isFinalBossRound(round)) return makeFinalBossEnemyPlan(round);
+    if (isGiraffeBossRound(round)) return makeGiraffeBossEnemyPlan(round);
+    return makeStandardEnemyPlan(round);
+  }
+
+  function isGiraffeBossRound(round = state.round) {
+    return round === GIRAFFE_BOSS_ROUND;
+  }
+
+  function makeGiraffeBossEnemyPlan(round = GIRAFFE_BOSS_ROUND) {
+    const plan = makeStandardEnemyPlan(round);
+    return {
+      ...plan,
+      archetypeId: `${GIRAFFE_BOSS_TYPE_ID}_${plan.archetypeId}`,
+      archetypeLabel: `Banana Split Boss + ${plan.archetypeLabel}`,
+      giraffeBoss: true,
+      bossTypeId: GIRAFFE_BOSS_TYPE_ID,
+      bossSlot: GIRAFFE_BOSS_SLOT,
+      bossHpMultiplier: 1,
+      bossAtkMultiplier: 1,
+    };
+  }
+
+  function makeStandardEnemyPlan(round = state.round) {
     const primaryArchetype = chooseEnemyArchetype(round);
     const secondaryArchetype = chooseEnemySecondaryArchetype(round, primaryArchetype);
     const archetype = blendEnemyArchetypes(primaryArchetype, secondaryArchetype);
@@ -8158,6 +8284,7 @@
 
   function makeEnemyTeam(plan = makeEnemyPlan()) {
     if (plan.finalBoss) return makeFinalBossTeam();
+    if (plan.giraffeBoss) return makeGiraffeBossTeam(plan);
     const usedTypeIds = [];
     const units = Array.from({ length: plan.count }, () => {
       const typeId = chooseEnemyUnitId(plan, usedTypeIds);
@@ -8168,6 +8295,25 @@
     });
     equipEnemyToppings(units, plan);
     return units;
+  }
+
+  function makeGiraffeBossTeam(plan = makeEnemyPlan()) {
+    const boss = makeGiraffeBossUnit(plan);
+    const mobCount = Math.max(0, Math.min(boardSlots.length - 1, (plan.count || 1) - 1));
+    const openSlots = [...Array(boardSlots.length).keys()]
+      .filter((slot) => slot !== (plan.bossSlot ?? GIRAFFE_BOSS_SLOT))
+      .sort(() => Math.random() - 0.5);
+    const usedTypeIds = [GIRAFFE_BOSS_TYPE_ID];
+    const mobs = Array.from({ length: mobCount }, (_, index) => {
+      const typeId = chooseEnemyUnitId(plan, usedTypeIds);
+      usedTypeIds.push(typeId);
+      const unit = makeUnit(typeId, enemyTierForPlan(plan));
+      unit.enemyPlan = plan.archetypeId;
+      unit.enemySlot = openSlots[index % openSlots.length] ?? null;
+      return applyEnemyRoundStats(unit, plan);
+    });
+    equipEnemyToppings(mobs, plan);
+    return [boss, ...mobs];
   }
 
   function makeFinalBossTeam() {
@@ -8254,6 +8400,9 @@
       secondaryLabel: plan.secondaryArchetypeLabel,
       themeTrait: plan.themeTrait,
       count: plan.count,
+      giraffeBoss: Boolean(plan.giraffeBoss),
+      bossTypeId: plan.bossTypeId || null,
+      bossSlot: Number.isInteger(plan.bossSlot) ? plan.bossSlot : null,
       toppingCount: plan.toppingCount,
       drinkCount: plan.drinkCount,
       hpMultiplier: Number(plan.hpMultiplier.toFixed(2)),
@@ -8272,9 +8421,11 @@
   }
 
   function cloneEnemyPreviewUnit(unit) {
-    const clone = unit.finalBossUnit || isFinalBossUnitType(unit.typeId)
-      ? makeFinalBossUnit(unit.typeId, { tier: unit.tier, enemySlot: unit.enemySlot })
-      : makeUnit(unit.typeId, unit.tier);
+    const clone = unit.giraffeBossUnit || isGiraffeBossUnitType(unit.typeId)
+      ? makeGiraffeBossUnit({ bossSlot: unit.enemySlot ?? GIRAFFE_BOSS_SLOT })
+      : unit.finalBossUnit || isFinalBossUnitType(unit.typeId)
+        ? makeFinalBossUnit(unit.typeId, { tier: unit.tier, enemySlot: unit.enemySlot })
+        : makeUnit(unit.typeId, unit.tier);
     clone.side = "enemy";
     clone.maxHp = unit.maxHp;
     clone.hp = unit.maxHp;
@@ -8287,9 +8438,13 @@
     clone.item = cloneItem(unit.item);
     clone.shield = unit.shield || 0;
     clone.finalBossUnit = Boolean(unit.finalBossUnit);
+    clone.giraffeBossUnit = Boolean(unit.giraffeBossUnit);
+    clone.glitchToRobot = Boolean(unit.glitchToRobot);
+    clone.forceRealityDefeatStill = Boolean(unit.forceRealityDefeatStill);
     clone.enemySlot = unit.enemySlot ?? null;
     clone.battleSpriteScale = unit.battleSpriteScale || clone.battleSpriteScale;
     clone.battleSpriteOffsetY = unit.battleSpriteOffsetY || clone.battleSpriteOffsetY;
+    clone.defeatStillScale = unit.defeatStillScale || clone.defeatStillScale;
     return clone;
   }
 
@@ -9624,6 +9779,23 @@
 
     const target = chooseTarget(unit, foes);
     if (!target) return;
+
+    if (unit.ability === "giraffe_boss_glitch") {
+      unit.giraffeAttackCount = (unit.giraffeAttackCount || 0) + 1;
+      applyDamage(target, unit.atk, unit, battle, {
+        color: "#f8c55f",
+        particleType: GIRAFFE_BOSS_TYPE_ID,
+      });
+      if (!target.dead && unit.giraffeAttackCount % 3 === 0) {
+        applyCooldownDelay(target, 0.12, unit);
+        target.attackSlow = {
+          remaining: statusDuration(unit, 1.3),
+          pct: 0.07,
+        };
+      }
+      applyOnAttackItem(unit, target, battle, foes);
+      return;
+    }
 
     if (unit.ability === "neural_overmind") {
       unit.overmindAttackCount = (unit.overmindAttackCount || 0) + 1;
@@ -11583,7 +11755,7 @@
   function getBackgroundImage(src = currentArena()?.backgroundSrc || BACKGROUND_SRC) {
     if (backgroundImageCache.has(src)) return backgroundImageCache.get(src);
     const image = new Image();
-    image.onload = draw;
+    image.onload = requestDraw;
     image.onerror = () => {
       if (src !== BACKGROUND_SRC && src !== REALITY_BACKGROUND_SRC) backgroundImageCache.delete(src);
     };
@@ -12104,7 +12276,7 @@
     let titleFontSize = activeReveal ? 10 : 16;
     const titleMaxWidth = activeReveal ? w - 24 : w - 30;
     ctx.font = `900 ${titleFontSize}px Inter, sans-serif`;
-    while (!activeReveal && titleFontSize > 10 && ctx.measureText(banner).width > titleMaxWidth) {
+    while (!activeReveal && titleFontSize > 10 && measureTextWidth(banner, ctx.font) > titleMaxWidth) {
       titleFontSize -= 1;
       ctx.font = `900 ${titleFontSize}px Inter, sans-serif`;
     }
@@ -12189,7 +12361,7 @@
     const gap = 7;
     const useIcon = image && image.complete && image.naturalWidth > 0;
     const label = useIcon ? text : fallbackText;
-    const textWidth = ctx.measureText(label).width;
+    const textWidth = measureTextWidth(label, ctx.font);
     const totalWidth = useIcon ? iconSize + gap + textWidth : textWidth;
     let cursor = x + w / 2 - totalWidth / 2;
     if (useIcon) {
@@ -12234,7 +12406,7 @@
       ctx.textBaseline = "alphabetic";
       return;
     }
-    const textWidth = ctx.measureText(text).width;
+    const textWidth = measureTextWidth(text, ctx.font);
     let totalWidth = iconSize + gap + textWidth;
     let size = iconSize;
     if (Number.isFinite(maxWidth) && totalWidth > maxWidth) {
@@ -12264,8 +12436,8 @@
     }
     const gap = 4;
     const suffixGap = suffixText ? 5 : 0;
-    const amountWidth = ctx.measureText(amountText).width;
-    const suffixWidth = suffixText ? ctx.measureText(suffixText).width : 0;
+    const amountWidth = measureTextWidth(amountText, ctx.font);
+    const suffixWidth = suffixText ? measureTextWidth(suffixText, ctx.font) : 0;
     const totalWidth = iconSize + gap + amountWidth + suffixGap + suffixWidth;
     let cursor = align === "center" ? x - totalWidth / 2 : align === "right" ? x - totalWidth : x;
     ctx.drawImage(image, Math.round(cursor), Math.round(y - iconSize + 2), iconSize, iconSize);
@@ -12290,12 +12462,12 @@
     const maxWidth = w - 14;
     let fontSize = 15;
     ctx.font = `700 ${fontSize}px Inter, sans-serif`;
-    while (fontSize > 10 && ctx.measureText(text).width > maxWidth) {
+    while (fontSize > 10 && measureTextWidth(text, ctx.font) > maxWidth) {
       fontSize -= 1;
       ctx.font = `700 ${fontSize}px Inter, sans-serif`;
     }
     let label = text;
-    while (label.length > 3 && ctx.measureText(`${label}...`).width > maxWidth) {
+    while (label.length > 3 && measureTextWidth(`${label}...`, ctx.font) > maxWidth) {
       label = label.slice(0, -1);
     }
     ctx.fillText(label === text ? text : `${label}...`, x + w / 2, y + h / 2 + 1);
@@ -12328,8 +12500,8 @@
       const coinText = String(button.coinAmount);
       const font = isSellButton ? "900 14px Inter, sans-serif" : "800 16px Inter, sans-serif";
       ctx.font = font;
-      const labelWidth = ctx.measureText(label).width;
-      const coinTextWidth = ctx.measureText(coinText).width;
+      const labelWidth = measureTextWidth(label, ctx.font);
+      const coinTextWidth = measureTextWidth(coinText, ctx.font);
       const iconSize = isSellButton ? 16 : 18;
       const atlasWidth = hasAtlasIcon ? iconSize + 6 : 0;
       const labelGap = isSellButton ? 7 : 10;
@@ -12353,7 +12525,7 @@
     } else {
       const iconSize = 18;
       if (hasAtlasIcon) {
-        const labelWidth = ctx.measureText(label).width;
+        const labelWidth = measureTextWidth(label, ctx.font);
         const totalWidth = iconSize + 6 + labelWidth;
         let cursor = button.x + button.w / 2 - totalWidth / 2;
         ctx.textAlign = "left";
@@ -12556,7 +12728,7 @@
     ctx.textBaseline = "middle";
     const iconSize = 11;
     const gap = 3;
-    const textWidth = ctx.measureText(text).width;
+    const textWidth = measureTextWidth(text, ctx.font);
     const totalWidth = iconSize + gap + textWidth;
     const startX = centerX - totalWidth / 2;
     if (coinImage && coinImage.complete && coinImage.naturalWidth > 0) {
@@ -12578,7 +12750,7 @@
     ctx.textBaseline = "middle";
     const iconSize = 11;
     const gap = 2;
-    const textWidth = ctx.measureText(text).width;
+    const textWidth = measureTextWidth(text, ctx.font);
     const totalWidth = iconSize + gap + textWidth;
     const startX = rightX - totalWidth;
     ctx.globalAlpha = enabled ? 1 : 0.62;
@@ -13576,7 +13748,7 @@
       const info = traitInfo(traitId);
       const text = traitDisplayText(traitId);
       ctx.font = `900 ${fontSize}px Inter, sans-serif`;
-      let w = Math.max(minWidth, Math.ceil(ctx.measureText(text).width + 8));
+      let w = Math.max(minWidth, Math.ceil(measureTextWidth(text, ctx.font) + 8));
       if (cursor + w > x + maxWidth) {
         if (row + 1 >= maxRows) return;
         row += 1;
@@ -14253,14 +14425,21 @@
 
   function codexFilterOptionWidth(text) {
     const font = "900 8px Inter, sans-serif";
-    const previousFont = ctx.font;
-    ctx.font = font;
-    const width = Math.ceil(ctx.measureText(text).width) + 14;
-    ctx.font = previousFont;
+    const width = Math.ceil(measureTextWidth(text, font)) + 14;
     return Math.max(32, Math.min(CODEX_LIST.w - 56, width));
   }
 
+  let codexFilterLayoutMemoKey = null;
+  let codexFilterLayoutMemo = null;
+
+  function codexFilterMemoKey(tabId) {
+    const filters = codexFilterState(tabId);
+    return `${currentCopyThemeId()}|${tabId}|${Object.keys(filters).sort().map((key) => `${key}:${filters[key]}`).join("|")}`;
+  }
+
   function codexFilterLayout(tabId = state.codexTab) {
+    const memoKey = codexFilterMemoKey(tabId);
+    if (codexFilterLayoutMemoKey === memoKey && codexFilterLayoutMemo) return codexFilterLayoutMemo;
     const rows = codexFilterRows(tabId);
     const layoutRows = [];
     const chipH = 18;
@@ -14297,7 +14476,10 @@
       layoutRows.push({ ...row, y, h, labelY: y + 17, options });
       y += h + rowGap;
     });
-    return { rows: layoutRows, height: Math.max(0, y - (CODEX_LIST.y + 4) - rowGap) };
+    const layout = { rows: layoutRows, height: Math.max(0, y - (CODEX_LIST.y + 4) - rowGap) };
+    codexFilterLayoutMemoKey = memoKey;
+    codexFilterLayoutMemo = layout;
+    return layout;
   }
 
   function codexFilterOptionRects() {
@@ -14358,8 +14540,18 @@
     });
   }
 
+  let codexEntriesMemoKey = null;
+  let codexEntriesMemo = null;
+
   function codexEntries() {
-    return sortCodexEntries(baseCodexEntries().filter((entry) => entryMatchesCodexFilters(entry)));
+    const tabId = state.codexTab;
+    const filters = codexFilterState(tabId);
+    const memoKey = `${tabId}|${Object.keys(filters).sort().map((key) => `${key}:${filters[key]}`).join("|")}`;
+    if (codexEntriesMemoKey === memoKey && codexEntriesMemo) return codexEntriesMemo;
+    const entries = sortCodexEntries(baseCodexEntries(tabId).filter((entry) => entryMatchesCodexFilters(entry, tabId)));
+    codexEntriesMemoKey = memoKey;
+    codexEntriesMemo = entries;
+    return entries;
   }
 
   function currentCodexEntry() {
@@ -15087,6 +15279,62 @@
     });
   }
 
+  function giraffeBossGlitchPhase(unit) {
+    const battle = visibleBattle();
+    if (!unit?.glitchToRobot || unit.dead || !battle) return { active: false, alpha: 0, jitterX: 0, jitterY: 0, seed: 0 };
+    const t = battle.elapsed || 0;
+    if (t < 0.6) return { active: false, alpha: 0, jitterX: 0, jitterY: 0, seed: 0 };
+    const seedBase = Math.floor(t * 12) + (unit.uid || 0) * 17;
+    const ramp = clamp((t - 0.6) / 7, 0, 1);
+    const pulse = Math.sin(t * (5.4 + ramp * 2.2) + (unit.uid || 0) * 0.13) > 0.4;
+    const noiseGate = glitchNoise(seedBase * 47 + 19) > 0.68 - ramp * 0.16;
+    const active = pulse || noiseGate;
+    const alpha = active ? clamp(0.18 + ramp * 0.22 + glitchNoise(seedBase * 73 + 11) * 0.2, 0.18, 0.58) : 0;
+    return {
+      active,
+      alpha,
+      jitterX: Math.round((glitchNoise(seedBase * 97 + 5) - 0.5) * (4 + ramp * 8)),
+      jitterY: Math.round((glitchNoise(seedBase * 131 + 7) - 0.5) * (2 + ramp * 4)),
+      seed: seedBase,
+    };
+  }
+
+  function drawGiraffeBossRobotGlitchOverlay(unit, x, y, r, facingRight, drawScale, rotation, options = {}) {
+    const phase = giraffeBossGlitchPhase(unit);
+    if (!phase.active) return;
+    const robotSprite = getRuntimeSprite(unit, { horror: true });
+    if (!spriteImageReady(robotSprite)) return;
+    const presentationScale = Math.max(0.01, options.presentationScale || 1);
+    const preserveBase = Boolean(options.preserveBase && presentationScale !== 1);
+    const robotFacingRight = runtimeSpriteFacingRight(unit, facingRight, { horror: true });
+    const effectRadius = r * presentationScale;
+
+    ctx.save();
+    ctx.globalAlpha = phase.alpha;
+    drawRuntimeFoodAnimal(robotSprite, x + phase.jitterX, y + phase.jitterY, r, robotFacingRight, drawScale, rotation, 0, {
+      presentationScale,
+      preserveBase,
+    });
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 5; i += 1) {
+      const gate = glitchNoise(phase.seed * 173 + i * 29);
+      if (gate < 0.34) continue;
+      const barX = Math.round(x - effectRadius * 1.35 + glitchNoise(phase.seed * 211 + i * 31) * effectRadius * 2.7);
+      const barY = Math.round(y - effectRadius * 1.24 + glitchNoise(phase.seed * 227 + i * 37) * effectRadius * 2.45);
+      const barW = Math.round(8 + glitchNoise(phase.seed * 241 + i * 41) * effectRadius * 0.85);
+      const barH = Math.max(2, Math.round(2 + glitchNoise(phase.seed * 257 + i * 43) * 5));
+      const offset = Math.round((glitchNoise(phase.seed * 269 + i * 47) - 0.5) * 12);
+      ctx.fillStyle = `rgba(0, 236, 255, ${0.1 + phase.alpha * 0.22})`;
+      ctx.fillRect(barX + offset, barY, barW, barH);
+      ctx.fillStyle = `rgba(255, 35, 83, ${0.08 + phase.alpha * 0.18})`;
+      ctx.fillRect(barX - offset, barY + barH + 1, Math.max(5, Math.round(barW * 0.65)), 2);
+    }
+    ctx.restore();
+  }
+
   function drawFoodAnimal(unit, x, y, r, facingRight = false, options = {}) {
     const breath = idleBreathForUnit(unit);
     const combatMotion = combatMotionForUnit(unit);
@@ -15099,10 +15347,16 @@
       scaleY: breath.scaleY * combatMotion.scaleY,
     };
     const bleed = contentBleedPhase("unit", unit);
-    const runtimeSprite = getRuntimeSprite(unit, { cozy: bleed.phase === "flash" });
-    const runtimeFacingRight = runtimeSpriteFacingRight(unit, facingRight, { cozy: bleed.phase === "flash" });
+    const forceCozyRuntime = Boolean(unit?.giraffeBossUnit || isGiraffeBossUnitType(unit?.typeId));
+    const cozyRuntime = forceCozyRuntime || bleed.phase === "flash";
+    const runtimeSprite = getRuntimeSprite(unit, { cozy: cozyRuntime });
+    const runtimeFacingRight = runtimeSpriteFacingRight(unit, facingRight, { cozy: cozyRuntime });
     if (spriteImageReady(runtimeSprite)) {
       drawRuntimeFoodAnimal(runtimeSprite, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash, {
+        presentationScale,
+        preserveBase,
+      });
+      drawGiraffeBossRobotGlitchOverlay(unit, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, {
         presentationScale,
         preserveBase,
       });
@@ -15379,7 +15633,7 @@
   function defeatStillSpriteSrcFor(unit) {
     const typeId = unit?.typeId || unit?.id;
     const tier = Math.max(1, unit?.tier || 1);
-    return (realityBroken() ? defeatStillSpriteFromEntry(REALITY_DEFEAT_STILL_SPRITES[typeId], tier) : null) || defeatStillSpriteFromEntry(DEFEAT_STILL_SPRITES[typeId], tier);
+    return (realityBroken() || unit?.forceRealityDefeatStill ? defeatStillSpriteFromEntry(REALITY_DEFEAT_STILL_SPRITES[typeId], tier) : null) || defeatStillSpriteFromEntry(DEFEAT_STILL_SPRITES[typeId], tier);
   }
 
   function getRuntimeSprite(unit, options = {}) {
@@ -15404,14 +15658,14 @@
     const image = new Image();
     image.decoding = "async";
     image.dataset.loadState = "loading";
-    image.onload = () => {
-      image.dataset.loadState = "loaded";
-      draw();
-    };
-    image.onerror = () => {
-      image.dataset.loadState = "failed";
-      draw();
-    };
+      image.onload = () => {
+        image.dataset.loadState = "loaded";
+        requestDraw();
+      };
+      image.onerror = () => {
+        image.dataset.loadState = "failed";
+        requestDraw();
+      };
     image.src = src;
     return image;
   }
@@ -15463,7 +15717,7 @@
     if (!src) return null;
     if (attackParticleSpriteCache.has(src)) return attackParticleSpriteCache.get(src);
     const image = new Image();
-    image.onload = draw;
+    image.onload = requestDraw;
     image.src = src;
     attackParticleSpriteCache.set(src, image);
     return image;
@@ -15478,7 +15732,7 @@
     if (!src) return null;
     if (drinkThrowableSpriteCache.has(src)) return drinkThrowableSpriteCache.get(src);
     const image = new Image();
-    image.onload = draw;
+    image.onload = requestDraw;
     image.src = src;
     drinkThrowableSpriteCache.set(src, image);
     return image;
@@ -15488,7 +15742,7 @@
     if (!src) return null;
     if (particleSpriteCache.has(src)) return particleSpriteCache.get(src);
     const image = new Image();
-    image.onload = draw;
+    image.onload = requestDraw;
     image.src = src;
     particleSpriteCache.set(src, image);
     return image;
@@ -15542,7 +15796,7 @@
     if (!src) return null;
     if (statusEffectSpriteCache.has(src)) return statusEffectSpriteCache.get(src);
     const image = new Image();
-    image.onload = draw;
+    image.onload = requestDraw;
     image.src = src;
     statusEffectSpriteCache.set(src, image);
     return image;
@@ -15552,7 +15806,7 @@
     if (!src) return null;
     if (uiSpriteCache.has(src)) return uiSpriteCache.get(src);
     const image = new Image();
-    image.onload = draw;
+    image.onload = requestDraw;
     image.src = src;
     uiSpriteCache.set(src, image);
     return image;
@@ -15623,10 +15877,10 @@
     const bodyFont = "700 10px Inter, sans-serif";
     ctx.save();
     ctx.font = "900 11px Inter, sans-serif";
-    const titleW = Math.min(maxW - pad * 2, ctx.measureText(tip.title).width);
+    const titleW = Math.min(maxW - pad * 2, measureTextWidth(tip.title, ctx.font));
     ctx.font = bodyFont;
     const bodyLines = tip.body ? wrappedTextLines(tip.body, maxW - pad * 2).slice(0, 3) : [];
-    const bodyW = bodyLines.reduce((width, line) => Math.max(width, Math.min(maxW - pad * 2, ctx.measureText(line).width)), 0);
+    const bodyW = bodyLines.reduce((width, line) => Math.max(width, Math.min(maxW - pad * 2, measureTextWidth(line, ctx.font))), 0);
     const w = Math.max(86, Math.min(maxW, Math.ceil(Math.max(titleW, bodyW) + pad * 2)));
     const h = bodyLines.length ? 32 + bodyLines.length * 13 : 30;
     let x = Math.round((state.pointer?.x || 0) + 14);
@@ -17583,12 +17837,16 @@
   }
 
   function wrappedTextLines(text, maxWidth) {
-    const words = String(text || "").split(/\s+/).filter(Boolean);
+    const value = String(text || "");
+    const font = ctx.font;
+    const key = `${font}\n${Math.round(maxWidth * 10) / 10}\n${value}`;
+    if (wrappedTextCache.has(key)) return wrappedTextCache.get(key);
+    const words = value.split(/\s+/).filter(Boolean);
     const lines = [];
     let line = "";
     for (const word of words) {
       const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxWidth && line) {
+      if (measureTextWidth(test, font) > maxWidth && line) {
         lines.push(line);
         line = word;
       } else {
@@ -17596,7 +17854,7 @@
       }
     }
     if (line) lines.push(line);
-    return lines.length ? lines : [""];
+    return rememberCacheEntry(wrappedTextCache, key, lines.length ? lines : [""]);
   }
 
   function drawWrappedTextFull(text, x, y, maxWidth, lineHeight) {
@@ -17614,7 +17872,7 @@
     for (let i = 0; i < words.length; i++) {
       const word = words[i];
       const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxWidth && line) {
+      if (measureTextWidth(test, ctx.font) > maxWidth && line) {
         lines += 1;
         if (lines >= maxLines) {
           fitText(`${line}...`, x, y, maxWidth, ctx.font, ctx.fillStyle);
@@ -17645,7 +17903,7 @@
     const basePx = canvasFontPx(font);
     let px = basePx;
     ctx.font = font;
-    while (px > minPx && ctx.measureText(value).width > maxWidth) {
+    while (px > minPx && measureTextWidth(value, ctx.font) > maxWidth) {
       px = Math.max(minPx, px - 0.5);
       ctx.font = scaledCanvasFont(font, px);
     }
@@ -17653,16 +17911,24 @@
   }
 
   function fitText(text, x, y, maxWidth, font, color) {
+    const value = String(text ?? "");
     ctx.fillStyle = color;
     ctx.font = font;
-    if (ctx.measureText(text).width <= maxWidth) {
-      ctx.fillText(text, x, y);
+    if (measureTextWidth(value, font) <= maxWidth) {
+      ctx.fillText(value, x, y);
       return;
     }
-    let clipped = text;
-    while (clipped.length > 3 && ctx.measureText(`${clipped}...`).width > maxWidth) {
-      clipped = clipped.slice(0, -1);
+    let lo = 0;
+    let hi = value.length;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (measureTextWidth(`${value.slice(0, mid)}...`, font) <= maxWidth) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
     }
+    const clipped = value.slice(0, Math.max(0, lo)).trimEnd();
     ctx.fillText(`${clipped}...`, x, y);
   }
 
@@ -17687,6 +17953,19 @@
     (battle.drinkTosses || []).forEach((toss) => drawDrinkToss(toss, battle));
     drawBattleMoldPanel(battle);
     drawArenaBattlePanel();
+  }
+
+  function battleUnitByUid(battle, uid) {
+    if (!battle || uid == null) return null;
+    const unitCount = (battle.allies?.length || 0) + (battle.enemies?.length || 0);
+    if (!battle.unitLookup || battle.unitLookupSize !== unitCount) {
+      const lookup = new Map();
+      (battle.allies || []).forEach((unit) => lookup.set(unit.uid, unit));
+      (battle.enemies || []).forEach((unit) => lookup.set(unit.uid, unit));
+      battle.unitLookup = lookup;
+      battle.unitLookupSize = unitCount;
+    }
+    return battle.unitLookup.get(uid) || null;
   }
 
   function drawBattleFieldBackdrop() {
@@ -17754,9 +18033,8 @@
   }
 
   function drawAttackProjectile(attack, battle) {
-    const units = [...battle.allies, ...battle.enemies];
-    const from = units.find((u) => u.uid === attack.from);
-    const to = units.find((u) => u.uid === attack.to);
+    const from = battleUnitByUid(battle, attack.from);
+    const to = battleUnitByUid(battle, attack.to);
     if (!from || !to) return;
 
     const duration = attack.duration || ATTACK_ANIMATION_SECONDS;
@@ -17798,8 +18076,7 @@
   }
 
   function drawDrinkToss(toss, battle) {
-    const units = [...battle.allies, ...battle.enemies];
-    const to = units.find((u) => u.uid === toss.to);
+    const to = battleUnitByUid(battle, toss.to);
     if (!to) return;
 
     const duration = toss.duration || DRINK_TOSS_ANIMATION_SECONDS;
@@ -17831,8 +18108,7 @@
 
   function drinkTossImpact(toss, battle) {
     if (!toss || !battle) return;
-    const units = [...battle.allies, ...battle.enemies];
-    const target = units.find((u) => u.uid === toss.to);
+    const target = battleUnitByUid(battle, toss.to);
     if (!target) return;
     burst({ x: target.x, y: target.y - 4 }, toss.color || "#7ec7e8", {
       food: true,
@@ -18015,7 +18291,7 @@
     if (!(image && image.complete && image.naturalWidth > 0)) return;
     const radius = 28 + unit.tier * 4;
     const baseSize = Math.round(radius * 2.7);
-    const scale = realityBroken() ? HORROR_DEFEAT_STILL_SCALE : 1;
+    const scale = unit.defeatStillScale || (realityBroken() ? HORROR_DEFEAT_STILL_SCALE : 1);
     const size = Math.round(baseSize * scale);
     const y = unit.y + radius * 0.08;
     const baseY = y + baseSize / 2;
@@ -19176,7 +19452,8 @@
       lineName: displayUnitLineName(unit),
       formName: displayUnitFormName(unit),
       name: displayUnitShort(unit),
-      spriteSrc: runtimeSpriteSrcFor(unit),
+      spriteSrc: unit.giraffeBossUnit ? runtimeSpriteSrcFor(unit, { cozy: true }) : runtimeSpriteSrcFor(unit),
+      glitchSpriteSrc: unit.giraffeBossUnit ? runtimeSpriteSrcFor(unit, { horror: true }) : undefined,
       attackParticleSrc: attackParticleSpriteSrcFor(unit.typeId || unit.id),
       defeatStillSrc: defeatStillSpriteSrcFor(unit),
       rarity: unit.rarity,

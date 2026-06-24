@@ -310,6 +310,14 @@ Green Juice Goose was added as a Breakfast/Fresh gap-filler using a flat `#ff00f
 
 The presentable meal still is intentionally a brunch plate, not a defeated character: source `source/green-juice-goose-meal-v1-preview.png`, cleaned alpha `transparent/green-juice-goose-meal-v1-transparent.png`, runtime `runtime/defeat-stills/green-juice-goose-defeat-food-v1.png`.
 
+## Level 10 Boss Concept V1
+
+Banana Split Giraffe was added as a cozy level 10 boss concept. The food identity uses a banana split dessert: banana body and neck, chocolate-sauce giraffe spots, whipped-cream ossicones, cherry crown, wafer accents, ice cream scoops, caramel glaze, and sprinkle pixels. The source is `source/banana-split-giraffe-boss-v1-chromakey.png`, the transparent source is `transparent/banana-split-giraffe-boss-v1-transparent.png`, and the single 192x192 runtime sticker lives under `runtime/banana-split-giraffe-boss-v1/`.
+
+## Level 10 Boss Future-War Variant V1
+
+Banana Split Giraffe now has a dark robot future-war variant: Holograph Projector Giraffe. The boss keeps the tall giraffe silhouette but converts it into a pure mechanical war machine with a holograph-projector head, neon cyan/magenta scan glow, gunmetal armor, battle damage, and a camera module on the tail. The generated three-cell source includes the 192x192 idle boss, a disabled wreck defeat still, and a static 96x96 holograph-camera pulse particle. The source is `source/war-machine-banana-split-giraffe-boss-v1-chromakey.png`, the transparent source is `transparent/war-machine-banana-split-giraffe-boss-v1-transparent.png`, the runtime frame lives under `runtime/war-machine-banana-split-giraffe-boss-v1/`, the particle is `../particles/runtime/war-machine-banana-split-giraffe-boss-holograph-camera-pulse-core-v1.png`, and the defeat still is `runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v1.png`.
+
 ## Rare Evolution Lines V1
 
 The first Rare animal lines follow the same four-form chroma-key-to-transparent workflow:
