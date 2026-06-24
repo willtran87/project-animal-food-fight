@@ -22,6 +22,7 @@
   const COMBAT_SUPPORT_LIFT_PIXELS = 8;
   const COMBAT_HIT_RECOIL_PIXELS = 10;
   const HORROR_PLATE_BENCH_UNIT_SCALE = 1.3;
+  const HORROR_DEFEAT_STILL_SCALE = 1.3;
   const FINAL_VICTORY_ROUND = 20;
   const FINAL_BOSS_TYPE_ID = "cyber_brain_final_boss";
   const FINAL_BOSS_MINION_TYPE_ID = "brainstem_wire_minion";
@@ -8514,8 +8515,8 @@
         units
           .filter((ally) => !ally.dead && isAdjacentSlot(unit, ally))
           .forEach((ally) => {
-            grantShield(ally, Math.max(1, Math.round(unit.maxHp * unit.item.adjacentStartShieldPct)));
-            burst({ x: ally.x, y: ally.y }, unit.item.accent || "#9a5b1d");
+            const shielded = grantShield(ally, Math.max(1, Math.round(unit.maxHp * unit.item.adjacentStartShieldPct)));
+            if (shielded > 0) emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#9a5b1d");
           });
       }
       if (unit.item.adjacentStartAttackBuffPct) {
@@ -8526,12 +8527,13 @@
               remaining: unit.item.adjacentStartBuffDuration || 4,
               pct: unit.item.adjacentStartAttackBuffPct,
             };
-            burst({ x: ally.x, y: ally.y }, unit.item.accent || "#d7a64e");
+            emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#d7a64e");
           });
       }
       if (unit.item.decoyHpPct) {
         const decoy = makeItemDecoy(unit);
         units.push(decoy);
+        emitSupportFeedback(unit, decoy, state.battle, unit.item.accent || "#d6b88a");
       }
     });
   }
@@ -10286,8 +10288,8 @@
       allies
         .filter((rowAlly) => rowAlly.uid !== ally.uid && rowAlly.row === ally.row)
         .forEach((rowAlly) => {
-          grantShield(rowAlly, echoShield, { noShare: true });
-          burst({ x: rowAlly.x, y: rowAlly.y }, source.item.accent || "#f2c94c");
+          const shielded = grantShield(rowAlly, echoShield, { noShare: true });
+          if (shielded > 0) emitSupportFeedback(source, rowAlly, state.battle, source.item.accent || "#f2c94c");
         });
     }
   }
@@ -10298,9 +10300,9 @@
       .filter((ally) => ally.uid !== primary.uid && !ally.dead && ally.hp < ally.maxHp && isAdjacentSlot(primary, ally))
       .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
     if (!target) return;
-    healUnit(target, Math.max(1, Math.round(healed * source.item.extraAdjacentHealPct)));
+    const applied = healUnit(target, Math.max(1, Math.round(healed * source.item.extraAdjacentHealPct)));
     applySupportItem(source, target);
-    burst({ x: target.x, y: target.y }, source.item.accent || "#7a5635");
+    if (applied > 0) emitSupportFeedback(source, target, state.battle, source.item.accent || "#7a5635");
   }
 
   function isAdjacentSlot(a, b) {
@@ -10497,7 +10499,8 @@
       source?.item?.lowHpLifestealPct &&
       source.hp / source.maxHp <= (source.item.lowHpThreshold || 0.5)
     ) {
-      healUnit(source, Math.max(1, Math.round(damage * source.item.lowHpLifestealPct)));
+      const healed = healUnit(source, Math.max(1, Math.round(damage * source.item.lowHpLifestealPct)));
+      if (healed > 0) burst({ x: source.x, y: source.y }, source.item.accent || "#4f8d2b");
     }
     if (damage > 0 && target.item?.onHitShieldPct && !target.dead) {
       const shield = Math.max(1, Math.round(target.maxHp * target.item.onHitShieldPct + target.abilityPower * 0.14));
@@ -10568,6 +10571,16 @@
     });
   }
 
+  function emitSupportFeedback(source, target, battle, color = "#55a375", options = {}) {
+    if (!source || !target || !battle || source.dead || target.dead) return;
+    if (source.uid === target.uid) {
+      triggerCombatSupportMotion(source, target, battle);
+    } else {
+      emitSupportProjectile(source, target, battle, color);
+    }
+    if (options.burst !== false) burst({ x: target.x, y: target.y }, color);
+  }
+
   function healUnit(unit, amount, options = {}) {
     const reduction = unit.antiSupport?.reductionPct || 0;
     const before = unit.hp;
@@ -10577,7 +10590,8 @@
     if (applied > 0) recordCombatSupport(unit, applied, "heal");
     const overheal = Math.max(0, before + adjusted - unit.maxHp);
     if (overheal > 0 && unit.item?.overhealShieldPct) {
-      grantShield(unit, Math.max(1, Math.round(overheal * unit.item.overhealShieldPct)), { noShare: true });
+      const shielded = grantShield(unit, Math.max(1, Math.round(overheal * unit.item.overhealShieldPct)), { noShare: true });
+      if (shielded > 0 && state.battle) emitSupportFeedback(unit, unit, state.battle, unit.item.accent || "#63b7d6");
     }
     if (overheal > 0 && unit.item?.teamOverhealShieldPct && state.battle) {
       const allies = unit.side === "enemy" ? state.battle.enemies : state.battle.allies;
@@ -10585,8 +10599,8 @@
       allies
         .filter((ally) => ally.uid !== unit.uid && !ally.dead && isAdjacentSlot(unit, ally))
         .forEach((ally) => {
-          grantShield(ally, shield, { noShare: true });
-          burst({ x: ally.x, y: ally.y }, unit.item.accent || "#63b7d6");
+          const shielded = grantShield(ally, shield, { noShare: true });
+          if (shielded > 0) emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#63b7d6");
         });
     }
     if (applied > 0 && !options.noShare) shareReceivedSupport(unit, applied, "heal");
@@ -10611,9 +10625,12 @@
     allies
       .filter((ally) => ally.uid !== unit.uid && !ally.dead && isAdjacentSlot(unit, ally))
       .forEach((ally) => {
-        if (kind === "heal") healUnit(ally, share, { noShare: true });
-        if (kind === "shield") grantShield(ally, share, { noShare: true });
-        burst({ x: ally.x, y: ally.y }, unit.item.accent || "#2b2b25");
+        const applied = kind === "heal"
+          ? healUnit(ally, share, { noShare: true })
+          : kind === "shield"
+          ? grantShield(ally, share, { noShare: true })
+          : 0;
+        if (applied > 0) emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#2b2b25");
       });
   }
 
@@ -17960,14 +17977,17 @@
     const image = getDefeatStillSprite(unit);
     if (!(image && image.complete && image.naturalWidth > 0)) return;
     const radius = 28 + unit.tier * 4;
-    const size = Math.round(radius * 2.7);
+    const baseSize = Math.round(radius * 2.7);
+    const scale = realityBroken() ? HORROR_DEFEAT_STILL_SCALE : 1;
+    const size = Math.round(baseSize * scale);
     const y = unit.y + radius * 0.08;
+    const baseY = y + baseSize / 2;
     const facingRight = realityBroken() && unit.side === "ally";
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.86;
-    drawImageFacing(image, Math.round(unit.x - size / 2), Math.round(y - size / 2), size, size, facingRight);
+    drawImageFacing(image, Math.round(unit.x - size / 2), Math.round(baseY - size), size, size, facingRight);
     ctx.restore();
     ctx.imageSmoothingEnabled = true;
   }
@@ -19252,8 +19272,95 @@
     return true;
   }
 
+  function equipRouteUnit(unit, itemId, itemTierValue = MAX_ITEM_TIER) {
+    if (!isUnit(unit) || !itemId) return unit;
+    unit.item = makeItem(itemId, itemTierValue);
+    refreshUnitItemStats(unit);
+    return unit;
+  }
+
+  function makeFinalFightRouteUnit(typeId, tier, itemId) {
+    return equipRouteUnit(makeUnit(typeId, tier), itemId);
+  }
+
+  function finalFightRouteShouldStartBattle() {
+    const phase = routeParam("phase") || routeParam("start") || routeParam("mode");
+    return !["prep", "setup", "team", "false", "0", "no"].includes(phase);
+  }
+
+  function applyFinalFightRoute() {
+    state.phase = "prep";
+    state.round = FINAL_VICTORY_ROUND;
+    state.gold = ECONOMY.maxGold;
+    state.hearts = 10;
+    state.shopLevel = MAX_SHOP_LEVEL;
+    state.message = "Final fight ready";
+    state.shopFrozen = Array(shopSlots.length).fill(false);
+    state.shopSales = Array(shopSlots.length).fill(false);
+    state.shopUnlocked = shopSlots.map(() => true);
+    state.bench = Array(8).fill(null);
+    state.itemBench = Array(itemBenchSlots.length).fill(null);
+    state.board = Array(boardSlots.length).fill(null);
+    state.drinks = Array(drinkSlots.length).fill(null);
+    state.selected = null;
+    state.codexOpen = false;
+    state.hover = null;
+    state.pointer = null;
+    state.drag = null;
+    state.battle = null;
+    state.postCombatBattle = null;
+    state.arenaId = "blackout_street_carnival";
+    state.keepArenaNextRound = false;
+    state.arenaScout = null;
+    state.arenaPrepBuff = null;
+    state.enemyPreview = null;
+    state.rewardChoices = [];
+    state.lastCombatLedger = null;
+    state.freeRolls = startingFreeRollsForShopLevel(MAX_SHOP_LEVEL);
+    state.rollsThisRound = 0;
+    state.nextShopUpgradeDiscountGold = 0;
+    state.winStreak = 6;
+    state.lossStreak = 0;
+    state.lastIncome = null;
+    state.itemDiscountUsed = false;
+    state.battleSpeedIndex = 1;
+    state.realityOverride = true;
+    state.realityBroken = true;
+    state.realityBreakTimer = 0;
+    state.rebootTransition = null;
+    state.finalVictoryTransition = null;
+    state.victoryCutscene = null;
+    clearParticles();
+
+    state.board[0] = makeFinalFightRouteUnit("croissant_kraken", 4, "golden_truffle_crown");
+    state.board[1] = makeFinalFightRouteUnit("gingerbread_golem", 4, "royal_icing_crest");
+    state.board[2] = makeFinalFightRouteUnit("mochi_mammoth", 4, "rainbow_mochi");
+    state.board[3] = makeFinalFightRouteUnit("taco_tiger", 4, "hot_sauce_bottle");
+    state.board[4] = makeFinalFightRouteUnit("toast_tortoise", 4, "bacon_strips");
+    state.board[5] = makeFinalFightRouteUnit("dumpling_armadillo", 4, "soup_ladle");
+    state.board[6] = makeFinalFightRouteUnit("boba_basilisk", 4, "milk_tea_foam");
+    state.board[7] = makeFinalFightRouteUnit("sushi_seal", 4, "seaweed_wrap");
+    state.board[8] = makeFinalFightRouteUnit("lemon_meringue_lynx", 4, "lemon_wedge");
+    state.drinks[0] = makeItem("bean_brew", 3);
+    state.drinks[1] = makeItem("berry_fizz", 3);
+    state.drinks[2] = makeItem("citrus_tea", 3);
+    state.drinks[3] = makeItem("tidepool_espresso", 3);
+    state.drinks[4] = makeItem("pearl_biscuit_latte", 3);
+    state.drinks[5] = makeItem("boba_night_tea", 3);
+
+    refreshShop(true);
+    ensureEnemyPreview();
+    state.log = ["Review route: Neural Overmind final fight"];
+    if (finalFightRouteShouldStartBattle()) startBattle();
+    if (state.phase === "prep") state.message = "Final fight ready";
+    return true;
+  }
+
   function applyInitialRouteScreen() {
     const screen = routeParam("screen") || routeParam("scene");
+    if (screen === "final-fight" || screen === "final-boss" || screen === "overmind") {
+      return applyFinalFightRoute();
+    }
     if (screen === "victory-epilogue" || screen === "victory-cutscene" || screen === "final-victory") {
       return applyVictoryEpilogueRoute();
     }
