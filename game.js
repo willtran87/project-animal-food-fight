@@ -1935,18 +1935,6 @@
     mold: "assets/status-effects/runtime/status-flash-effect_mold_idle_SW_00.png",
     radiation: "assets/status-effects/runtime/status-flash-effect_radiation_idle_SW_00.png?v=1",
   };
-  const HORROR_STATUS_EFFECT_SPRITES = {
-    burn: "assets/status-effects/runtime/status-horror-effect_burn_idle_FRONT_00.png",
-    mark: "assets/status-effects/runtime/status-horror-effect_mark_idle_FRONT_00.png",
-    teamVulnerable: "assets/status-effects/runtime/status-horror-effect_team_vulnerable_idle_FRONT_00.png",
-    haste: "assets/status-effects/runtime/status-horror-effect_haste_idle_FRONT_00.png",
-    attackBoost: "assets/status-effects/runtime/status-horror-effect_attack_boost_idle_FRONT_00.png",
-    attackSlow: "assets/status-effects/runtime/status-horror-effect_attack_slow_idle_FRONT_00.png",
-    antiSupport: "assets/status-effects/runtime/status-horror-effect_anti_support_idle_FRONT_00.png",
-    slowed: "assets/status-effects/runtime/status-horror-effect_slowed_idle_FRONT_00.png",
-    lateFightStacks: "assets/status-effects/runtime/status-horror-effect_late_fight_stacks_idle_FRONT_00.png",
-    radiation: "assets/status-effects/runtime/status-horror-effect_radiation_idle_FRONT_00.png",
-  };
   const RARITIES = {
     common: {
       id: "common",
@@ -15530,8 +15518,7 @@
   }
 
   function getStatusEffectSprite(effectId) {
-    const horrorSrc = realityBroken() ? HORROR_STATUS_EFFECT_SPRITES[effectId] : null;
-    const src = horrorSrc || STATUS_EFFECT_SPRITES[effectId];
+    const src = STATUS_EFFECT_SPRITES[effectId];
     if (!src) return null;
     if (statusEffectSpriteCache.has(src)) return statusEffectSpriteCache.get(src);
     const image = new Image();
@@ -18695,17 +18682,18 @@
   }
 
   function onKeyDown(event) {
-    if (state.finalVictoryTransition || state.phase === "victoryCutscene") {
+    const key = event.key.toLowerCase();
+    if (state.rebootTransition || state.finalVictoryTransition || state.phase === "victoryCutscene") {
       if (event.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) canvas.requestFullscreen?.();
         else document.exitFullscreen?.();
-      } else if (state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || event.key.toLowerCase() === "r")) {
+      } else if (state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || key === "r")) {
         rebootFromVictoryCutscene();
       }
       event.preventDefault();
       return;
     }
-    if (event.key.toLowerCase() === "f") {
+    if (key === "f") {
       if (!document.fullscreenElement) canvas.requestFullscreen?.();
       else document.exitFullscreen?.();
     }
@@ -18718,20 +18706,24 @@
       }
       state.selected = null;
     }
+    if (state.codexOpen) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === " " && state.phase === "prep") {
       event.preventDefault();
       startBattle();
     }
-    if (event.key.toLowerCase() === "r" && state.phase === "prep") {
+    if (key === "r" && state.phase === "prep") {
       refreshShop(false);
     }
-    if (event.key.toLowerCase() === "u" && state.phase === "prep") {
+    if (key === "u" && state.phase === "prep") {
       upgradeShop();
     }
-    if (event.key.toLowerCase() === "s" && state.phase === "battle") {
+    if (key === "s" && state.phase === "battle") {
       cycleBattleSpeed();
     }
-    if (event.key.toLowerCase() === "h") {
+    if (key === "h") {
       cycleRealityThemeOverride();
     }
   }
