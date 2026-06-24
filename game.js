@@ -5458,7 +5458,7 @@
   }
 
   function itemCardText(item) {
-    return itemPrimaryCardText(item) || item?.cardText || item?.abilityText || displayEntryTypeLabel(item);
+    return themedGeneratedText(itemPrimaryCardText(item) || item?.cardText || item?.abilityText || displayEntryTypeLabel(item));
   }
 
   function percentText(value) {
@@ -5572,11 +5572,11 @@
   }
 
   function itemSpecLines(item) {
-    if (!item) return ["No topping specs"];
+    if (!item) return [`No ${toppingTerm({ lower: true })} specs`];
     const lines = [];
-    if (item.drinkAttackSpeedPct) lines.push(`Drink line: attack speed +${percentText(item.drinkAttackSpeedPct)}`);
-    if (item.drinkMaxHpPct) lines.push(`Drink line: max HP +${percentText(item.drinkMaxHpPct)}`);
-    if (item.drinkAbilityPowerPct) lines.push(`Drink line: ability power +${percentText(item.drinkAbilityPowerPct)}`);
+    if (item.drinkAttackSpeedPct) lines.push(`${drinkLineTerm()}: attack speed +${percentText(item.drinkAttackSpeedPct)}`);
+    if (item.drinkMaxHpPct) lines.push(`${drinkLineTerm()}: max HP +${percentText(item.drinkMaxHpPct)}`);
+    if (item.drinkAbilityPowerPct) lines.push(`${drinkLineTerm()}: ability power +${percentText(item.drinkAbilityPowerPct)}`);
     const pairLine = drinkPairSpecLine(item);
     if (pairLine) lines.push(pairLine);
     const pulseLine = drinkPulseSpecLine(item, drinkPulseUnlocked(item));
@@ -5621,10 +5621,10 @@
     if (item.decoyHpPct) lines.push(`Battle start: summon decoy with ${percentText(item.decoyHpPct)} max HP`);
     if (item.firstHitRedirect) lines.push(`First direct hit is redirected once`);
     if (item.periodicDamage) lines.push(`Every ${item.periodicInterval || 3}s: random chip damage scales from ${item.periodicDamage} + ${percentText(item.periodicDamagePct || 0)} PWR`);
-    if (item.sellBonusGold) lines.push(`Sell value +${item.sellBonusGold} coins`);
-    if (item.surviveGold) lines.push(`Survive battle: +${item.surviveGold} coins`);
-    if (item.firstItemDiscountGold) lines.push(`First topping each round costs ${item.firstItemDiscountGold} fewer coins`);
-    if (item.sameLineShopChancePct) lines.push(`Shop owned-line chance +${percentText(item.sameLineShopChancePct)}`);
+    if (item.sellBonusGold) lines.push(`Sell value +${item.sellBonusGold} ${currencyTerm({ lower: true })}`);
+    if (item.surviveGold) lines.push(`Survive battle: +${item.surviveGold} ${currencyTerm({ lower: true })}`);
+    if (item.firstItemDiscountGold) lines.push(`First ${toppingTerm({ lower: true })} each round costs ${item.firstItemDiscountGold} fewer ${currencyTerm({ lower: true })}`);
+    if (item.sameLineShopChancePct) lines.push(`${realityBroken() ? "Scan" : "Shop"} owned-line chance +${percentText(item.sameLineShopChancePct)}`);
     if (item.extraAdjacentHealPct) lines.push(`Healing splashes ${percentText(item.extraAdjacentHealPct)} to one adjacent ally`);
     if (item.shieldCapBonusPct) lines.push(`Holder shield cap +${percentText(item.shieldCapBonusPct)}`);
     if (item.statusDurationBonusPct) lines.push(`Inflicted statuses last +${percentText(item.statusDurationBonusPct)}`);
@@ -5640,11 +5640,11 @@
     if (item.teamOverhealShieldPct) lines.push(`Overhealing holder shields adjacent allies at ${percentText(item.teamOverhealShieldPct)}`);
     if (item.teamHastePct) lines.push(`Every ${item.teamHasteInterval || 5}s: team +${percentText(item.teamHastePct)} speed for ${item.teamHasteDuration || 2.5}s`);
     if (item.supportRowEchoPct) lines.push(`Support echoes row shield for ${percentText(item.supportRowEchoPct)} PWR`);
-    return lines.length ? lines : [item.abilityText || item.cardText || "Single-use topping effect"];
+    return lines.length ? lines : [themedGeneratedText(item.abilityText || item.cardText || `Single-use ${toppingTerm({ lower: true })} effect`)];
   }
 
   function itemCompactSpecLine(item) {
-    if (!item) return "No topping specs";
+    if (!item) return `No ${toppingTerm({ lower: true })} specs`;
     if (isDrink(item) && item.pairTraits?.length) {
       const effect = item.drinkAttackSpeedPct ? "speed" : item.drinkMaxHpPct ? "HP" : item.drinkAbilityPowerPct ? "PWR" : "buff";
       return `${drinkPairLabel(item)} ${effect}`;
@@ -5691,10 +5691,10 @@
     if (item.decoyHpPct) return `start decoy ${percentText(item.decoyHpPct)} HP`;
     if (item.firstHitRedirect) return `redirect first hit`;
     if (item.periodicDamage) return `pop damage every ${item.periodicInterval || 3}s`;
-    if (item.sellBonusGold) return `sell value +${item.sellBonusGold} coins`;
-    if (item.surviveGold) return `survive +${item.surviveGold} coins`;
-    if (item.firstItemDiscountGold) return `first topping -${item.firstItemDiscountGold} coins`;
-    if (item.sameLineShopChancePct) return `owned-line shop +${percentText(item.sameLineShopChancePct)}`;
+    if (item.sellBonusGold) return `sell value +${item.sellBonusGold} ${currencyTerm({ lower: true })}`;
+    if (item.surviveGold) return `survive +${item.surviveGold} ${currencyTerm({ lower: true })}`;
+    if (item.firstItemDiscountGold) return `first ${toppingTerm({ lower: true })} -${item.firstItemDiscountGold} ${currencyTerm({ lower: true })}`;
+    if (item.sameLineShopChancePct) return `owned-line ${realityBroken() ? "scan" : "shop"} +${percentText(item.sameLineShopChancePct)}`;
     if (item.extraAdjacentHealPct) return `heal splash ${percentText(item.extraAdjacentHealPct)}`;
     if (item.shieldCapBonusPct) return `shield cap +${percentText(item.shieldCapBonusPct)}`;
     if (item.statusDurationBonusPct) return `statuses last +${percentText(item.statusDurationBonusPct)}`;
@@ -5707,7 +5707,7 @@
     if (item.teamOverhealShieldPct) return `overheal team shield ${percentText(item.teamOverhealShieldPct)}`;
     if (item.teamHastePct) return `team haste +${percentText(item.teamHastePct)}`;
     if (item.supportRowEchoPct) return `row echo ${percentText(item.supportRowEchoPct)} PWR`;
-    return item.cardText || item.abilityText || "single-use effect";
+    return themedGeneratedText(item.cardText || item.abilityText || "single-use effect");
   }
 
   function itemPrimaryStat(item) {
@@ -6038,6 +6038,93 @@
     return "Entry";
   }
 
+  function copyTerm(path, fallback, { lower = false } = {}) {
+    const term = copy(path, fallback);
+    return lower ? String(term).toLowerCase() : term;
+  }
+
+  function foodTerm(options = {}) {
+    return copyTerm("ui.types.food", "food animal", options);
+  }
+
+  function foodPluralTerm(options = {}) {
+    return copyTerm("ui.panels.food", "food animals", options);
+  }
+
+  function toppingTerm(options = {}) {
+    return copyTerm("ui.types.topping", "Topping", options);
+  }
+
+  function toppingPluralTerm(options = {}) {
+    return copyTerm("ui.panels.toppings", "Toppings", options);
+  }
+
+  function drinkTerm(options = {}) {
+    return copyTerm("ui.types.drink", "Drink", options);
+  }
+
+  function drinkPluralTerm(options = {}) {
+    return copyTerm("ui.panels.drinks", "drinks", options);
+  }
+
+  function currencyTerm(options = {}) {
+    return copyTerm("ui.status.Coins", "coins", options);
+  }
+
+  function rollTerm(options = {}) {
+    return copyTerm("ui.actions.Roll", "Roll", options);
+  }
+
+  function upgradeTerm(options = {}) {
+    return copyTerm("ui.actions.Upgrade", "Upgrade", options);
+  }
+
+  function arenaTerm(options = {}) {
+    return copyTerm("ui.panels.arena", "Arena", options);
+  }
+
+  function drinkLineTerm({ lower = false } = {}) {
+    const term = `${drinkTerm()} line`;
+    return lower ? term.toLowerCase() : term;
+  }
+
+  function themedGeneratedText(text) {
+    if (!realityBroken() || text === null || text === undefined) return text;
+    const replacements = [
+      [/\bfood animals\b/gi, foodPluralTerm({ lower: true })],
+      [/\bfood animal\b/gi, foodTerm({ lower: true })],
+      [/\banimals\b/gi, foodPluralTerm({ lower: true })],
+      [/\banimal\b/gi, foodTerm({ lower: true })],
+      [/\btoppings\b/gi, toppingPluralTerm({ lower: true })],
+      [/\btopping\b/gi, toppingTerm({ lower: true })],
+      [/\bdrinks\b/gi, drinkPluralTerm({ lower: true })],
+      [/\bdrink\b/gi, drinkTerm({ lower: true })],
+      [/\bcoins?\b/gi, currencyTerm({ lower: true })],
+      [/\bgold\b/gi, currencyTerm({ lower: true })],
+      [/\bshops\b/gi, "scans"],
+      [/\bshop\b/gi, "scan"],
+      [/\barenas\b/gi, `${arenaTerm({ lower: true })}s`],
+      [/\barena\b/gi, arenaTerm({ lower: true })],
+      [/\brolls\b/gi, `${rollTerm({ lower: true })}s`],
+      [/\broll\b/gi, rollTerm({ lower: true })],
+    ];
+    return replacements.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), String(text));
+  }
+
+  function itemDescriptionText(item) {
+    if (isDrink(item)) return drinkTechnicalDescription(item);
+    if (realityBroken()) return itemSpecLines(item).map((line) => `- ${line}`).join("\n");
+    return item.description;
+  }
+
+  function themedTextObject(payload, fields = ["title", "body"]) {
+    if (!payload || !realityBroken()) return payload;
+    return Object.fromEntries(Object.entries(payload).map(([key, value]) => [
+      key,
+      fields.includes(key) && typeof value === "string" ? themedGeneratedText(value) : value,
+    ]));
+  }
+
   function displayRoleLabel(role) {
     return copy(["roles", role], role || "");
   }
@@ -6267,7 +6354,10 @@
       label: override.label || base.label,
       short: override.short || base.short,
       color: realityBroken() ? (HORROR_TRAIT_COLORS[traitId] || base.color) : base.color,
-      thresholds: override.thresholds || base.thresholds,
+      thresholds: (override.thresholds || base.thresholds).map((threshold) => ({
+        ...threshold,
+        text: themedGeneratedText(threshold.text),
+      })),
     };
   }
 
@@ -6288,7 +6378,7 @@
     if (traitId === "breakfast") {
       return stage >= 2 ? "Shield +9%; BRK haste +10%/2.5s" : "Team shield +5.5% max HP";
     }
-    if (traitId === "bakery") return `Survivor: +${bakeryIncomeForStage(stage)} coins after battle`;
+    if (traitId === "bakery") return `Survivor: +${bakeryIncomeForStage(stage)} ${currencyTerm({ lower: true })} after battle`;
     if (traitId === "ocean") return stage >= 2 ? "Foes +0.30s CD; slow 2s" : "Foes +0.14s CD; slow 1.2s";
     if (traitId === "sweet") return `Support +${[0, 12, 22, 32][stage] || 32}%`;
     if (traitId === "spicy") return stage >= 2 ? "Attack +16%; burn 16% ATK" : "Attack +8%";
@@ -6383,7 +6473,7 @@
       itemId: favorite.itemId,
       itemName: displayItemName(item),
       itemShort: displayItemShort(item),
-      bonus: favorite.bonus,
+      bonus: themedGeneratedText(favorite.bonus),
       specs: favoriteToppingSpecLines(unit),
       technicalSpecs: favoriteToppingTechnicalSpecLines(unit),
       unlocked: hasFavoriteTopping(unit),
@@ -6417,7 +6507,7 @@
   function favoriteToppingSpecLines(unit) {
     if (!unit) return [];
     const favorite = FAVORITE_TOPPINGS[unit.typeId];
-    const comboSpecs = FAVORITE_COMBO_SPECS[unit.typeId] || (favorite?.bonus ? [`Combo: ${favorite.bonus}`] : []);
+    const comboSpecs = (FAVORITE_COMBO_SPECS[unit.typeId] || (favorite?.bonus ? [`Combo: ${favorite.bonus}`] : [])).map(themedGeneratedText);
     return [...comboSpecs, ...favoriteToppingTechnicalSpecLines(unit)];
   }
 
@@ -6621,7 +6711,7 @@
       state.arenaScout.shopsRemaining -= 1;
       if (state.arenaScout.shopsRemaining <= 0) state.arenaScout = null;
     }
-    state.message = free ? currentArena().short : cost === 0 ? "Free roll" : `Rolled -${cost} coins`;
+    state.message = free ? currentArena().short : cost === 0 ? `Free ${rollTerm({ lower: true })}` : `${rollTerm()} -${cost} ${currencyTerm({ lower: true })}`;
   }
 
   function purchaseShopSlot(index) {
@@ -6633,13 +6723,13 @@
     }
     const cost = shopSlotUnlockCost(index);
     if (state.gold < cost) {
-      state.message = `Need ${cost} coins`;
+      state.message = `Need ${cost} ${currencyTerm({ lower: true })}`;
       return false;
     }
     state.gold -= cost;
     openShopSlot(index);
     state.message = `Opened slot ${index + 1}`;
-    state.log.unshift(`Opened shop slot ${index + 1}`);
+    state.log.unshift(`${realityBroken() ? "Opened scan slot" : "Opened shop slot"} ${index + 1}`);
     return true;
   }
 
@@ -6685,11 +6775,11 @@
     if (state.phase !== "prep") return false;
     const cost = nextShopUpgradeCost();
     if (cost === null) {
-      state.message = "Shop maxed";
+      state.message = realityBroken() ? "Rig maxed" : "Shop maxed";
       return false;
     }
     if (state.gold < cost) {
-      state.message = "Need gold";
+      state.message = `Need ${currencyTerm({ lower: true })}`;
       return false;
     }
     state.gold -= cost;
@@ -6704,8 +6794,8 @@
       return rollShopSlotSale(index, state.shop[index]);
     });
     state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(isShopSlotUnlocked(index) && frozen && state.shop[index]));
-    state.message = "Odds up +1 roll";
-    state.log.unshift(`Upgraded shop to level ${state.shopLevel}`);
+    state.message = `Odds up +1 ${rollTerm({ lower: true })}`;
+    state.log.unshift(`${upgradeTerm()} ${realityBroken() ? "rig" : "shop"} to level ${state.shopLevel}`);
     return true;
   }
 
@@ -6828,9 +6918,9 @@
     if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
     state.selected = null;
     state.drag = null;
-    state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} coins` : ""}`;
+    state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
     mergeExplosion(itemRefSlot(keeper), evolved);
-    state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} coins` : ""}`);
+    state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
     return true;
   }
 
@@ -6970,7 +7060,7 @@
     if (!entry || !canMergeShopEntryIntoSlot(entry, targetArea, targetIndex)) return false;
     const cost = purchaseCost(entry, shopIndex);
     if (state.gold < cost) {
-      state.message = "Need gold";
+      state.message = `Need ${currencyTerm({ lower: true })}`;
       return false;
     }
     state.gold -= cost;
@@ -6987,9 +7077,9 @@
       if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
       state.selected = null;
       state.drag = null;
-      state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} coins` : ""}`;
+      state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
       mergeExplosion(itemRefSlot(keeper), evolved);
-      state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} coins` : ""}`);
+      state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
       resolveItemMerges();
       return true;
     }
@@ -7012,9 +7102,9 @@
     if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
     state.selected = null;
     state.drag = null;
-    state.message = `${evolved.short} evolved${reward ? ` +${reward} coins` : ""}`;
+    state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
     mergeExplosion(targetArea === "board" ? boardSlots[targetIndex] : benchSlots[targetIndex], evolved);
-    state.log.unshift(`${evolved.name} reached ${evolved.tier} stars${reward ? ` and earned ${reward} coins` : ""}`);
+    state.log.unshift(`${evolved.name} reached ${evolved.tier} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
     resolveItemMerges();
     resolveMerges();
     return true;
@@ -7077,9 +7167,9 @@
     if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
     state.selected = null;
     state.drag = null;
-    state.message = `${evolved.short} evolved${reward ? ` +${reward} coins` : ""}`;
+    state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
     mergeExplosion(keeper.area === "board" ? boardSlots[keeper.index] : benchSlots[keeper.index], evolved);
-    state.log.unshift(`${evolved.name} reached ${tier + 1} stars${reward ? ` and earned ${reward} coins` : ""}`);
+    state.log.unshift(`${evolved.name} reached ${tier + 1} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
     resolveItemMerges();
     return true;
   }
@@ -7137,17 +7227,17 @@
     }
     const cost = purchaseCost(entry, shopIndex);
     if (state.gold < cost) {
-      state.message = "Need gold";
+      state.message = `Need ${currencyTerm({ lower: true })}`;
       return false;
     }
     if (isItem(entry)) {
       if (isDrink(entry)) {
         if (targetArea !== "bench" && targetArea !== "drinks" && targetArea !== "itemBench") {
-          state.message = `Drop ${copy("ui.types.drink", "drinks")} on rails`;
+          state.message = `Drop ${drinkPluralTerm({ lower: true })} on rails`;
           return false;
         }
       } else if (targetArea !== "bench" && targetArea !== "itemBench") {
-        state.message = `Store ${copy("ui.types.topping", "toppings")} on bench`;
+        state.message = `Store ${toppingPluralTerm({ lower: true })} on bench`;
         return false;
       }
       if (targetArea === "itemBench" && !itemBenchSlotAccepts(targetIndex, entry)) {
@@ -7187,12 +7277,12 @@
     const item = state.shop[shopIndex];
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
-      state.message = `Pick a ${copy("ui.types.topping", "topping")}`;
+      state.message = `Pick a ${toppingTerm({ lower: true })}`;
       return false;
     }
     const cost = purchaseCost(item, shopIndex);
     if (state.gold < cost) {
-      state.message = "Need gold";
+      state.message = `Need ${currencyTerm({ lower: true })}`;
       return false;
     }
     if (targetArea !== "bench" && targetArea !== "board") {
@@ -7275,7 +7365,7 @@
       return false;
     }
     if (!isItem(ref.entry)) {
-      state.message = "Sell toppings only";
+      state.message = `Sell ${toppingPluralTerm({ lower: true })} only`;
       return false;
     }
     return sellOwnedItem(ref.area, ref.index);
@@ -7286,7 +7376,7 @@
     const item = state[sourceArea]?.[itemIndex];
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
-      state.message = `Pick a ${copy("ui.types.topping", "topping")}`;
+      state.message = `Pick a ${toppingTerm({ lower: true })}`;
       return false;
     }
     if (!isUnit(unit)) {
@@ -7373,15 +7463,15 @@
     if (state.phase !== "prep") return false;
     const item = state[sourceArea]?.[itemIndex];
     if (!isDrink(item)) {
-      state.message = `Pick a ${copy("ui.types.drink", "drink")}`;
+      state.message = `Pick a ${drinkTerm({ lower: true })}`;
       return false;
     }
     if (!drinkSlots[drinkIndex]) {
-      state.message = `Drop on ${copy("ui.types.drink", "drink")} rail`;
+      state.message = `Drop on ${drinkTerm({ lower: true })} rail`;
       return false;
     }
     if (state.drinks[drinkIndex]) {
-      state.message = `${copy("ui.types.drink", "Drink")} slot full`;
+      state.message = `${drinkTerm()} slot full`;
       return false;
     }
     state[sourceArea][itemIndex] = null;
@@ -7438,8 +7528,8 @@
     if (item) moveItemToBench(item);
     state.selected = null;
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
-    state.message = `${displayUnitShort(unit)} sold +${value} coins`;
-    state.log.unshift(`Sold ${displayUnitFormName(unit)} for ${value} coins`);
+    state.message = `${displayUnitShort(unit)} sold +${value} ${currencyTerm({ lower: true })}`;
+    state.log.unshift(`Sold ${displayUnitFormName(unit)} for ${value} ${currencyTerm({ lower: true })}`);
     return true;
   }
 
@@ -7454,8 +7544,8 @@
     state[area][index] = null;
     state.selected = null;
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
-    state.message = `${displayItemShort(item)} sold +${value} coins`;
-    state.log.unshift(`Sold ${displayItemName(item)} for ${value} coins`);
+    state.message = `${displayItemShort(item)} sold +${value} ${currencyTerm({ lower: true })}`;
+    state.log.unshift(`Sold ${displayItemName(item)} for ${value} ${currencyTerm({ lower: true })}`);
     return true;
   }
 
@@ -7463,7 +7553,7 @@
     if (state.phase !== "prep") return false;
     const source = selectedEquipmentTargetRef(drag);
     if (!source?.unit?.item) {
-      state.message = "No topping";
+      state.message = `No ${toppingTerm({ lower: true })}`;
       return false;
     }
     const item = source.unit.item;
@@ -7472,8 +7562,8 @@
     refreshUnitItemStats(source.unit);
     state.selected = { area: source.area, index: source.index };
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
-    state.message = `${displayItemShort(item)} sold +${value} coins`;
-    state.log.unshift(`Sold ${displayItemName(item)} for ${value} coins`);
+    state.message = `${displayItemShort(item)} sold +${value} ${currencyTerm({ lower: true })}`;
+    state.log.unshift(`Sold ${displayItemName(item)} for ${value} ${currencyTerm({ lower: true })}`);
     return true;
   }
 
@@ -7589,7 +7679,7 @@
         return;
       }
       if (isDrink(moving)) {
-        state.message = `Drop on ${copy("ui.types.drink", "drink")} rail`;
+        state.message = `Drop on ${drinkTerm({ lower: true })} rail`;
         return;
       }
       attachItemFromStorage(from.area, from.index, area, index);
@@ -7626,11 +7716,11 @@
           resolveItemMerges();
           return true;
         }
-        state.message = `${copy("ui.types.drink", "Drink")} slot full`;
+        state.message = `${drinkTerm()} slot full`;
         return false;
       }
       if (!isItemStorageArea(toArea)) {
-        state.message = isDrink(moving) ? `Drop on ${copy("ui.types.drink", "drink")} rail` : `${copy("ui.types.topping", "Toppings")} stay on bench`;
+        state.message = isDrink(moving) ? `Drop on ${drinkTerm({ lower: true })} rail` : `${toppingPluralTerm()} stay on bench`;
         return false;
       }
       if (fromArea === toArea && fromIndex === toIndex) {
@@ -8661,7 +8751,7 @@
       typeId: base.id,
       traitId,
       title: source === "arena" ? `${themedArena(currentArena()).short}: ${displayUnitShort(unit)}` : `${label}: ${displayUnitShort(unit)}`,
-      body: source === "arena" ? `Arena-favored ${label} copy.` : `Helps push your ${label} tier.`,
+      body: source === "arena" ? `${arenaTerm()}-favored ${label} copy.` : `Helps push your ${label} tier.`,
       key: `copy:${source}:${traitId}:${base.id}`,
     };
   }
@@ -8676,7 +8766,7 @@
       type: "copy",
       typeId: base.id,
       title: `Pivot: ${displayUnitShort(unit)}`,
-      body: "Off-arena copy for changing lanes.",
+      body: `Off-${arenaTerm({ lower: true })} copy for changing lanes.`,
       key: `copy:pivot:${base.id}`,
     };
   }
@@ -8694,7 +8784,7 @@
       type: "item",
       itemId: item.id,
       title: `${displayItemShort(item)} Favorite`,
-      body: `${displayUnitShort(unit)}'s favorite topping.`,
+      body: `${displayUnitShort(unit)}'s favorite ${toppingTerm({ lower: true })}.`,
       key: `favorite:${unit.typeId}:${item.id}`,
     };
   }
@@ -8714,7 +8804,7 @@
       type: "item",
       itemId: item.id,
       title: `${themedArena(currentArena()).short}: ${displayItemShort(item)}`,
-      body: `Topping fits this arena.`,
+      body: `${toppingTerm()} fits this ${arenaTerm({ lower: true })}.`,
       key: `arena-item:${currentArena().id}:${item.id}`,
     };
   }
@@ -8739,7 +8829,7 @@
       type: "item",
       itemId: item.id,
       title: `Free ${displayItemShort(item)}`,
-      body: `${rarityInfo(item.rarity).label} topping.`,
+      body: `${rarityInfo(item.rarity).label} ${toppingTerm({ lower: true })}.`,
       key: `item:${item.id}`,
     };
   }
@@ -8749,8 +8839,8 @@
     return {
       type: "freeRolls",
       amount,
-      title: `${amount} Free ${amount === 1 ? "Roll" : "Rolls"}`,
-      body: "Scout shops next round.",
+      title: `${amount} Free ${amount === 1 ? rollTerm() : `${rollTerm()}s`}`,
+      body: realityBroken() ? "Scan war stock next wave." : "Scout shops next round.",
       key: "freeRolls",
     };
   }
@@ -8760,8 +8850,8 @@
     return {
       type: "gold",
       amount,
-      title: `+${amount} Coins`,
-      body: "Flexible coins for upgrades and pivots.",
+      title: `+${amount} ${currencyTerm()}`,
+      body: `Flexible ${currencyTerm({ lower: true })} for ${upgradeTerm({ lower: true })}s and pivots.`,
       key: "gold",
     };
   }
@@ -8779,7 +8869,7 @@
       shopsRemaining: 2,
       freeRolls: 1,
       title: `${displayArena.short} Scout`,
-      body: "+1 roll; next 2 shops favor arena traits.",
+      body: `+1 ${rollTerm({ lower: true })}; next 2 ${realityBroken() ? "scans" : "shops"} favor ${arenaTerm({ lower: true })} traits.`,
       key: `arena-scout:${arena.id}`,
     };
   }
@@ -8813,7 +8903,7 @@
       arenaShort: displayArena.short,
       freeRolls: 1,
       title: `Hold ${displayArena.short}`,
-      body: "Keep this arena next battle; +1 roll.",
+      body: `Keep this ${arenaTerm({ lower: true })} next battle; +1 ${rollTerm({ lower: true })}.`,
       key: `arena-hold:${arena.id}`,
     };
   }
@@ -8828,7 +8918,7 @@
       amount,
       freeRolls: 1,
       title: `${displayArena.short} Purse`,
-      body: `Gain ${amount} coins and 1 free roll.`,
+      body: `Gain ${amount} ${currencyTerm({ lower: true })} and 1 free ${rollTerm({ lower: true })}.`,
       key: `arena-purse:${arena.id}`,
     };
   }
@@ -8842,7 +8932,7 @@
       slotIndex,
       amount: cost,
       title: `Open Slot ${slotIndex + 1}`,
-      body: `Unlock next shop slot; saves ${cost} coins.`,
+      body: `Unlock next ${realityBroken() ? "war stock" : "shop"} slot; saves ${cost} ${currencyTerm({ lower: true })}.`,
       key: `slot-unlock:${slotIndex}`,
     };
   }
@@ -8854,8 +8944,8 @@
     return {
       type: "upgradeDiscount",
       amount,
-      title: "Upgrade Coupon",
-      body: `Next shop upgrade costs ${amount} fewer coins.`,
+      title: `${upgradeTerm()} Coupon`,
+      body: `Next ${realityBroken() ? "rig" : "shop upgrade"} costs ${amount} fewer ${currencyTerm({ lower: true })}.`,
       key: `upgrade-discount:${state.shopLevel}:${amount}`,
     };
   }
@@ -11241,7 +11331,7 @@
 
   function drawTopBar() {
     drawChalkStatusBoard(currentStatusBoardSrc("course"), 9, 4, 126, 52, statusLabel("Course"), `${state.round}`, `Course ${state.round}`);
-    drawChalkStatusBoard(currentStatusBoardSrc("coins"), 149, 4, 104, 52, statusLabel("Coins"), `${state.gold}`, `${state.gold} coins`);
+    drawChalkStatusBoard(currentStatusBoardSrc("coins"), 149, 4, 104, 52, statusLabel("Coins"), `${state.gold}`, `${state.gold} ${currencyTerm({ lower: true })}`);
     drawChalkStatusBoard(currentStatusBoardSrc("health"), 266, 4, 104, 52, statusLabel("Health"), `${state.hearts}`, healthStatusTooltip());
 
     if (state.phase === "prep") {
@@ -11869,7 +11959,7 @@
     const image = getUiSprite(STATUS_COIN_SRC);
     const text = currencyLabel(amount, sign);
     if (!(image && image.complete && image.naturalWidth > 0)) {
-      const fallback = `${text} coins`;
+      const fallback = `${text} ${currencyTerm({ lower: true })}`;
       if (Number.isFinite(maxWidth)) {
         fitText(fallback, x, y + 4, maxWidth, font, color);
       } else {
@@ -11906,7 +11996,7 @@
     const suffixText = suffix ? ` ${suffix}` : "";
     const image = getUiSprite(STATUS_COIN_SRC);
     if (!(image && image.complete && image.naturalWidth > 0)) {
-      fitText(`${amountText} coins${suffixText}`, x, y, maxWidth, font, color);
+      fitText(`${amountText} ${currencyTerm({ lower: true })}${suffixText}`, x, y, maxWidth, font, color);
       return;
     }
     const gap = 4;
@@ -11995,7 +12085,7 @@
         cursor += iconSize + coinGap;
         ctx.fillText(coinText, cursor, button.y + button.h / 2 + 1);
       } else {
-        ctx.fillText(`${coinText} coins`, cursor, button.y + button.h / 2 + 1);
+        ctx.fillText(`${coinText} ${currencyTerm({ lower: true })}`, cursor, button.y + button.h / 2 + 1);
       }
     } else {
       const iconSize = 18;
@@ -12255,27 +12345,27 @@
     const label = String(button.label || "");
     if (button === buttons.shopUpgrade || label.startsWith("Lv ") || label === "Max Lv") {
       return {
-        title: label === "Max Lv" ? "Shop maxed" : "Upgrade shop",
-        body: enabled ? "Raises shop level and improves rarity odds." : "Need more coins or already at max level.",
+        title: label === "Max Lv" ? (realityBroken() ? "Rig maxed" : "Shop maxed") : `${upgradeTerm()} ${realityBroken() ? "rig" : "shop"}`,
+        body: enabled ? `Raises ${realityBroken() ? "rig" : "shop"} level and improves rarity odds.` : `Need more ${currencyTerm({ lower: true })} or already at max level.`,
       };
     }
     if (button === buttons.roll || label === "Roll") {
       return {
-        title: "Roll shop",
-        body: enabled ? "Refreshes unlocked shop slots." : "Need more coins to roll.",
+        title: `${rollTerm()} ${realityBroken() ? "scan" : "shop"}`,
+        body: enabled ? `Refreshes unlocked ${realityBroken() ? "scan" : "shop"} slots.` : `Need more ${currencyTerm({ lower: true })} to ${rollTerm({ lower: true })}.`,
       };
     }
     if (button === buttons.battle || label === "Battle") {
       return {
         title: realityBroken() ? "Deploy wave" : "Start battle",
-        body: enabled ? "Fight the next enemy team." : `Place at least one ${copy("ui.types.food", "food animal")} first.`,
+        body: enabled ? "Fight the next enemy team." : `Place at least one ${foodTerm({ lower: true })} first.`,
       };
     }
     if (button === buttons.battleSpeed || label.startsWith("Speed")) {
       return { title: "Battle speed", body: "Cycles combat playback speed." };
     }
     if (label.startsWith("Sell") || label.startsWith("Scrap")) return { title: realityBroken() ? "Scrap" : "Sell", body: "Refunds part of this entry's value." };
-    if (label.startsWith("Detach") || label.startsWith("Strip") || button.iconId === "action_detach") return { title: realityBroken() ? "Strip weapon" : "Detach topping", body: `Moves the equipped ${copy("ui.types.topping", "topping")} to an open bench slot.` };
+    if (label.startsWith("Detach") || label.startsWith("Strip") || button.iconId === "action_detach") return { title: realityBroken() ? "Strip weapon" : "Detach topping", body: `Moves the equipped ${toppingTerm({ lower: true })} to an open bench slot.` };
     if (label === "Next" || label === "Restart") return { title: label, body: label === "Restart" ? "Starts a new run." : "Moves to the next prep round." };
     return label ? { title: label, body: "" } : null;
   }
@@ -12331,7 +12421,7 @@
     const image = getUiSprite(currentCodexMenuButtonSrc());
     registerTooltip(rect.x, rect.y, rect.w, rect.h, {
       title: copy("ui.panels.foodMenu", "Food menu"),
-      body: `Open the ${copy("ui.panels.food", "food")}, ${copy("ui.panels.toppings", "toppings")}, and ${copy("ui.panels.drinks", "drinks")} menu.`,
+      body: `Open the ${foodPluralTerm({ lower: true })}, ${toppingPluralTerm({ lower: true })}, and ${drinkPluralTerm({ lower: true })} menu.`,
     });
     ctx.save();
     if (image && image.complete && image.naturalWidth > 0) {
@@ -12391,7 +12481,7 @@
     const sellValue = state.drag && canSellDrag(state.drag) ? dragSellValue(state.drag) : null;
     registerTooltip(rect.x, rect.y, rect.w, rect.h, {
       title: "Shopkeeper",
-      body: sellValue === null ? "Drag owned food, toppings, or drinks here to sell." : `Release here to sell for ${sellValue} coins.`,
+      body: sellValue === null ? `Drag owned ${foodPluralTerm({ lower: true })}, ${toppingPluralTerm({ lower: true })}, or ${drinkPluralTerm({ lower: true })} here to sell.` : `Release here to sell for ${sellValue} ${currencyTerm({ lower: true })}.`,
     });
   }
 
@@ -12751,8 +12841,8 @@
       maxWidth: 56,
     });
     registerTooltip(x - w / 2, y - h / 2, w, h, {
-      title: `Open shop slot ${index + 1}`,
-      body: `Spend ${cost} coins to add this shop slot.`,
+      title: `Open ${realityBroken() ? "scan" : "shop"} slot ${index + 1}`,
+      body: `Spend ${cost} ${currencyTerm({ lower: true })} to add this ${realityBroken() ? "scan" : "shop"} slot.`,
     });
   }
 
@@ -12839,7 +12929,7 @@
     if (state.drinks[index]) return;
     const slotTooltip = {
       title: realityBroken() ? "Fuel rail" : "Combat coaster",
-      body: `Place a ${copy("ui.types.drink", "drink")} here.`,
+      body: `Place a ${drinkTerm({ lower: true })} here.`,
     };
     registerTooltip(slot.x - DRINK_SLOT_SIZE / 2, slot.y - DRINK_SLOT_SIZE / 2, DRINK_SLOT_SIZE, DRINK_SLOT_SIZE, slotTooltip);
   }
@@ -12849,7 +12939,7 @@
     if (state.board[index]) return;
     registerTooltip(slot.x - 36, slot.y - 36, 72, 72, {
       title: realityBroken() ? "Deployment grid" : "Combat plate",
-      body: `Place a ${copy("ui.types.food", "food animal")} here.`,
+      body: `Place a ${foodTerm({ lower: true })} here.`,
     });
   }
 
@@ -12858,15 +12948,15 @@
     if (state.bench[index]) return;
     registerTooltip(slot.x - 36, slot.y - 36, 72, 72, {
       title: "General bench",
-      body: `Store ${copy("ui.panels.food", "food")}, ${copy("ui.panels.toppings", "toppings")}, or ${copy("ui.panels.drinks", "drinks")} here.`,
+      body: `Store ${foodPluralTerm({ lower: true })}, ${toppingPluralTerm({ lower: true })}, or ${drinkPluralTerm({ lower: true })} here.`,
     });
   }
 
   function drawItemBenchSlot(slot, index) {
     drawSlot(slot.x, slot.y, ITEM_BENCH_SLOT_SIZE, ITEM_BENCH_SLOT_SIZE, state.itemBench[index], "itemBench", index);
     if (state.itemBench[index]) return;
-    const title = slot.kind === "drink" ? `${copy("ui.types.drink", "Drink")} storage` : `${copy("ui.types.topping", "Topping")} storage`;
-    const body = slot.kind === "drink" ? `Store spare ${copy("ui.types.drink", "drinks")} here.` : `Store spare ${copy("ui.types.topping", "toppings")} here.`;
+    const title = slot.kind === "drink" ? `${drinkTerm()} storage` : `${toppingTerm()} storage`;
+    const body = slot.kind === "drink" ? `Store spare ${drinkPluralTerm({ lower: true })} here.` : `Store spare ${toppingPluralTerm({ lower: true })} here.`;
     registerTooltip(
       slot.x - ITEM_BENCH_SLOT_SIZE / 2,
       slot.y - ITEM_BENCH_SLOT_SIZE / 2,
@@ -13363,7 +13453,7 @@
       ctx.fillStyle = colors.fill;
       ctx.fill();
       registerTooltip(chipX, chipY - 9, chipW, 12, {
-        title: helpful ? "Arena help" : "Arena pressure",
+        title: helpful ? copy("ui.panels.arenaHelp", realityBroken() ? "Zone advantage" : "Arena help") : copy("ui.panels.arenaPressure", realityBroken() ? "Zone hazard" : "Arena pressure"),
         body: effect.text,
       });
       ctx.fillStyle = colors.label;
@@ -16817,7 +16907,7 @@
     if (reward.type === "copy") return realityBroken() ? "UNIT" : "COPY";
     if (reward.type === "upgradeDiscount") return realityBroken() ? "RIG" : "UPG";
     if (reward.type === "shopSlotUnlock") return "SLOT";
-    if (reward.type?.startsWith("arena")) return "ARENA";
+    if (reward.type?.startsWith("arena")) return realityBroken() ? "ZONE" : "ARENA";
     return "REWARD";
   }
 
@@ -16909,7 +16999,7 @@
     if (unit.ability === "armor_break") return `+${armorBreakBonus(unit)} dmg vs front/shield/high-HP`;
     if (unit.ability === "shield_breaker") return `Steal up to ${shieldBreakSteal(unit)} shield; +${shieldBreakBonus(unit)} dmg`;
     if (unit.ability === "bagel_build") return `Hit: 2 allies get ${supportAmount(unit, bagelBuildShield(unit))} shield`;
-    if (unit.ability === "treat_income") return `Survive battle: +${donutTreatGold(unit)} coins`;
+    if (unit.ability === "treat_income") return `Survive battle: +${donutTreatGold(unit)} ${currencyTerm({ lower: true })}`;
     if (unit.ability === "status_spread") return `Hit: burn ${kimchiBurnDamage(unit)}/s; mark +${percentText(kimchiMarkPct(unit))} dmg`;
     if (unit.ability === "sticky_lane") return `Hit: target column CD +${waffleLaneDelay(unit)}s`;
     if (unit.ability === "kernel_combo") return `Stack: +${popcornDamagePerStack(unit)} dmg, +${percentText(popcornStackHaste(unit))} spd`;
@@ -17017,8 +17107,8 @@
     }
     if (unit.ability === "treat_income") {
       return {
-        title: "Spec: Treat Income",
-        body: `If alive when battle ends, next income payout gains +${donutTreatGold(unit)} coins.`,
+        title: realityBroken() ? "Spec: Salvage Income" : "Spec: Treat Income",
+        body: `If alive when battle ends, next income payout gains +${donutTreatGold(unit)} ${currencyTerm({ lower: true })}.`,
       };
     }
     if (unit.ability === "status_spread") {
@@ -17082,7 +17172,7 @@
     if (unit.ability === "copy_luck") {
       return {
         title: "Spec: Fortune Copies",
-        body: `Owned-line shop odds +${percentText(fortuneShopChance(unit))}. Tier 2+: this line counts as +1 phantom copy for its own merge.`,
+        body: `Owned-line ${realityBroken() ? "scan" : "shop"} odds +${percentText(fortuneShopChance(unit))}. Tier 2+: this line counts as +1 phantom copy for its own merge.`,
       };
     }
     if (unit.ability === "survive_scale") {
@@ -18100,7 +18190,7 @@
     const cost = purchaseCost(unit, index);
     if (state.gold < cost) {
       state.selected = { area: "shop", index };
-      state.message = "Need gold";
+      state.message = `Need ${currencyTerm({ lower: true })}`;
       return;
     }
     if (isItem(unit) && !hasShopItemTarget(unit)) {
@@ -18122,7 +18212,7 @@
       over: null,
       valid: false,
     };
-    state.message = isDrink(unit) ? `Drag to ${copy("ui.types.drink", "drink")} rail` : isItem(unit) ? (realityBroken() ? "Drag to machine" : "Drag to animal") : "Drag to grid";
+    state.message = isDrink(unit) ? `Drag to ${drinkTerm({ lower: true })} rail` : isItem(unit) ? (realityBroken() ? "Drag to machine" : "Drag to animal") : "Drag to grid";
   }
 
   function startUnitDrag(area, index, pos) {
@@ -18143,13 +18233,13 @@
       over: null,
       valid: false,
     };
-    state.message = isDrink(unit) ? `Drag to ${copy("ui.types.drink", "drink")} rail` : isItem(unit) ? (realityBroken() ? "Arm a machine" : "Top an animal") : area === "bench" ? "Drag to board" : "Drag to slot";
+    state.message = isDrink(unit) ? `Drag to ${drinkTerm({ lower: true })} rail` : isItem(unit) ? (realityBroken() ? "Arm a machine" : "Top an animal") : area === "bench" ? "Drag to board" : "Drag to slot";
   }
 
   function startEquipmentDrag(pos) {
     const source = selectedEquipmentTargetRef();
     if (!source?.unit?.item) {
-      state.message = `Drop ${copy("ui.types.topping", "topping")} here`;
+      state.message = `Drop ${toppingTerm({ lower: true })} here`;
       return;
     }
     state.drag = {
@@ -18165,7 +18255,7 @@
       over: null,
       valid: false,
     };
-    state.message = `Drag ${copy("ui.types.topping", "topping")} out`;
+    state.message = `Drag ${toppingTerm({ lower: true })} out`;
   }
 
   function updateDrag(pos, hit) {
@@ -18202,7 +18292,7 @@
     }
     if (drag.area === "shop") {
       if (!hit || !isPotentialDropTarget(drag, hit.area, hit.index)) {
-        state.message = isDrink(drag.unit) ? `Drop on ${copy("ui.types.drink", "drink")} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : "Drop on grid";
+        state.message = isDrink(drag.unit) ? `Drop on ${drinkTerm({ lower: true })} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : "Drop on grid";
         return;
       }
       if (isItem(drag.unit) && isUnit(state[hit.area]?.[hit.index])) {
@@ -18221,7 +18311,7 @@
       return;
     }
     if (!hit || !isPotentialDropTarget(drag, hit.area, hit.index)) {
-      state.message = isDrink(drag.unit) ? `Drop on ${copy("ui.types.drink", "drink")} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : drag.area === "bench" ? "Drop on board" : "Drop on slot";
+      state.message = isDrink(drag.unit) ? `Drop on ${drinkTerm({ lower: true })} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : drag.area === "bench" ? "Drop on board" : "Drop on slot";
       return;
     }
     if (!canDropDrag(drag, hit.area, hit.index)) {
@@ -18456,7 +18546,7 @@
       traits: Object.fromEntries(Object.entries(TRAITS).map(([id, trait]) => [id, {
         label: traitInfo(id).label,
         short: traitInfo(id).short,
-        thresholds: trait.thresholds,
+      thresholds: traitInfo(id).thresholds,
       }])),
       activeTraits: activePlayerTraits(),
       rarities: Object.fromEntries(Object.entries(RARITIES).map(([id, rarity]) => [id, {
@@ -18700,11 +18790,11 @@
       supportRowEchoPct: item.supportRowEchoPct,
       adjacentStartAttackBuffPct: item.adjacentStartAttackBuffPct,
       adjacentStartBuffDuration: item.adjacentStartBuffDuration,
-      abilityText: item.abilityText,
-      cardText: itemCardText(item),
-      baseCardText: item.cardText,
-      description: isDrink(item) ? drinkTechnicalDescription(item) : item.description,
-      specs: itemSpecLines(item),
+      abilityText: themedGeneratedText(item.abilityText),
+      cardText: themedGeneratedText(itemCardText(item)),
+      baseCardText: themedGeneratedText(item.cardText),
+      description: itemDescriptionText(item),
+      specs: itemSpecLines(item).map(themedGeneratedText),
       favoriteFor: favoriteUsersForItem(item.id),
     };
   }
@@ -18738,10 +18828,10 @@
       abilityPower: unit.abilityPower,
       permanentHpBonus: unit.permanentHpBonus || 0,
       ability: unit.ability,
-      abilityText: abilitySpecLine(unit),
-      abilityLabel: unit.abilityText,
+      abilityText: themedGeneratedText(abilitySpecLine(unit)),
+      abilityLabel: themedGeneratedText(unit.abilityText),
       favoriteTopping: favoriteToppingFor(unit),
-      specialEffect: specialEffectFor(unit),
+      specialEffect: themedTextObject(specialEffectFor(unit)),
       shield: unit.shield || 0,
       burn: unit.burn ? { remaining: Number(unit.burn.remaining.toFixed(2)), damage: unit.burn.damage } : null,
       mark: unit.mark ? { remaining: Number(unit.mark.remaining.toFixed(2)), sourceUid: unit.mark.sourceUid, damagePct: unit.mark.damagePct } : null,
@@ -18755,7 +18845,7 @@
       lateFightStacks: unit.lateFightStacks || 0,
       moldStacks: unit.moldStacks || 0,
       kernelStacks: unit.kernelStacks || 0,
-      abilitySpec: abilitySpecLine(unit),
+      abilitySpec: themedGeneratedText(abilitySpecLine(unit)),
       drinkAttackSpeedPct: unit.drinkAttackSpeedPct || 0,
       drinkEffects: unit.drinkEffects || [],
       item: unit.item ? itemText(unit.item) : null,
@@ -18882,6 +18972,90 @@
     return true;
   }
 
+  function collectLanguageAuditText(sampleCount = 120) {
+    const texts = [];
+    const skipKeys = new Set([
+      "id", "typeId", "itemId", "arenaId", "key", "uid", "sourceUid", "area", "kind", "type",
+      "family", "particleType", "cacheKind", "spriteKind", "copyTheme", "copyThemeLabel",
+      "phase", "source", "color", "accent", "backgroundSrc", "fallbackBackgroundSrc",
+    ]);
+    const shouldSkipKey = (key) => {
+      const lower = String(key || "").toLowerCase();
+      return skipKeys.has(key) || lower.endsWith("src") || lower.endsWith("srcs") || lower.includes("sprite") || lower.includes("asset");
+    };
+    const add = (value, key = "") => {
+      if (value === null || value === undefined || shouldSkipKey(key)) return;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed) texts.push(trimmed);
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.forEach((entry) => add(entry, key));
+        return;
+      }
+      if (typeof value === "object") {
+        Object.entries(value).forEach(([childKey, childValue]) => add(childValue, childKey));
+      }
+    };
+
+    add({
+      terms: {
+        food: foodTerm(),
+        foods: foodPluralTerm(),
+        topping: toppingTerm(),
+        toppings: toppingPluralTerm(),
+        drink: drinkTerm(),
+        drinks: drinkPluralTerm(),
+        currency: currencyTerm(),
+        roll: rollTerm(),
+        upgrade: upgradeTerm(),
+        arena: arenaTerm(),
+      },
+      status: {
+        needCurrency: `Need ${currencyTerm({ lower: true })}`,
+        rolled: `${rollTerm()} -1 ${currencyTerm({ lower: true })}`,
+        freeRoll: `Free ${rollTerm({ lower: true })}`,
+        slot: `Open ${realityBroken() ? "scan" : "shop"} slot`,
+        upgrade: `${upgradeTerm()} ${realityBroken() ? "rig" : "shop"}`,
+      },
+      tooltips: [
+        buttonTooltip(buttons.shopUpgrade, true),
+        buttonTooltip(buttons.shopUpgrade, false),
+        buttonTooltip(buttons.roll, true),
+        buttonTooltip(buttons.roll, false),
+        buttonTooltip(buttons.battle, false),
+      ],
+      arena: ARENAS.map((arena) => arenaText(arena)),
+      traits: Object.fromEntries(Object.keys(TRAITS).map((id) => [id, traitInfo(id)])),
+      items: ITEMS.flatMap((item) => [itemText(makeItem(item.id, 1)), itemText(makeItem(item.id, MAX_ITEM_TIER))]),
+      units: CATALOG.flatMap((unit) => [
+        unitText(makeUnit(unit.id, 1)),
+        unitText(makeUnit(unit.id, unit.forms.length)),
+      ]),
+      rewards: [
+        goldReward(true),
+        goldReward(false),
+        freeRollReward(true),
+        freeRollReward(false),
+        favoriteToppingReward(),
+        arenaToppingReward(),
+        arenaScoutReward(),
+        arenaPrepBuffReward(),
+        arenaHoldReward(),
+        arenaPurseReward(true),
+        arenaPurseReward(false),
+        shopSlotUnlockReward(),
+        upgradeDiscountReward(),
+        freeItemReward(),
+        ownedCopyReward(),
+        pivotCopyReward(),
+        ...Array.from({ length: Math.max(0, sampleCount) }, (_, index) => generateRewardChoices(index % 2 === 0)),
+      ],
+    });
+    return { theme: currentCopyThemeId(), broken: realityBroken(), texts };
+  }
+
   window.render_game_to_text = renderGameToText;
   window.advanceTime = (ms) => {
     const steps = Math.max(1, Math.round(ms / (1000 / 60)));
@@ -18947,6 +19121,7 @@
     itemMergeProgressCount,
     positionBattleUnit,
     applySmokeScenario,
+    collectLanguageAuditText,
   };
 
   canvas.addEventListener("pointerdown", onPointerDown);
