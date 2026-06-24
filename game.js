@@ -11094,6 +11094,7 @@
   }
 
   function combatEndExplosion(won) {
+    const horror = realityBroken();
     const center = {
       x: BATTLE_FIELD.x + BATTLE_FIELD.w * 0.42,
       y: BATTLE_FIELD.y + BATTLE_FIELD.h * 0.46,
@@ -11111,7 +11112,9 @@
         sizeMax: 116,
       });
     }
-    burst(center, won ? "#f0d56b" : "#d9573c", { count: 72, spread: 102, life: 1.15, speedMin: 150, speedMax: 340 });
+    if (!horror) {
+      burst(center, won ? "#f0d56b" : "#d9573c", { count: 72, spread: 102, life: 1.15, speedMin: 150, speedMax: 340 });
+    }
 
     const sideBursts = [
       { x: 0.18, y: 0.28, count: 48, spread: 48, sizeMin: 28, sizeMax: 58, speedMin: 190, speedMax: 430, life: 1.22, sparkles: 18 },
@@ -11137,13 +11140,15 @@
           sizeMax: config.sizeMax,
         });
       }
-      burst(pos, won ? "#f0d56b" : "#d9573c", {
-        count: config.sparkles,
-        spread: config.spread * 0.72,
-        life: 0.72 + Math.random() * 0.22,
-        speedMin: config.speedMin * 0.42,
-        speedMax: config.speedMax * 0.52,
-      });
+      if (!horror) {
+        burst(pos, won ? "#f0d56b" : "#d9573c", {
+          count: config.sparkles,
+          spread: config.spread * 0.72,
+          life: 0.72 + Math.random() * 0.22,
+          speedMin: config.speedMin * 0.42,
+          speedMax: config.speedMax * 0.52,
+        });
+      }
     });
   }
 
@@ -19283,20 +19288,9 @@
     return true;
   }
 
-  function equipRouteUnit(unit, itemId, itemTierValue = MAX_ITEM_TIER) {
-    if (!isUnit(unit) || !itemId) return unit;
-    unit.item = makeItem(itemId, itemTierValue);
-    refreshUnitItemStats(unit);
-    return unit;
-  }
-
-  function makeFinalFightRouteUnit(typeId, tier, itemId) {
-    return equipRouteUnit(makeUnit(typeId, tier), itemId);
-  }
-
   function finalFightRouteShouldStartBattle() {
     const phase = routeParam("phase") || routeParam("start") || routeParam("mode");
-    return !["prep", "setup", "team", "false", "0", "no"].includes(phase);
+    return ["battle", "start", "true", "1", "yes", "auto"].includes(phase);
   }
 
   function applyFinalFightRoute() {
@@ -19343,21 +19337,15 @@
     state.victoryCutscene = null;
     clearParticles();
 
-    state.board[0] = makeFinalFightRouteUnit("croissant_kraken", 4, "golden_truffle_crown");
-    state.board[1] = makeFinalFightRouteUnit("gingerbread_golem", 4, "royal_icing_crest");
-    state.board[2] = makeFinalFightRouteUnit("mochi_mammoth", 4, "rainbow_mochi");
-    state.board[3] = makeFinalFightRouteUnit("taco_tiger", 4, "hot_sauce_bottle");
-    state.board[4] = makeFinalFightRouteUnit("toast_tortoise", 4, "bacon_strips");
-    state.board[5] = makeFinalFightRouteUnit("dumpling_armadillo", 4, "soup_ladle");
-    state.board[6] = makeFinalFightRouteUnit("boba_basilisk", 4, "milk_tea_foam");
-    state.board[7] = makeFinalFightRouteUnit("sushi_seal", 4, "seaweed_wrap");
-    state.board[8] = makeFinalFightRouteUnit("lemon_meringue_lynx", 4, "lemon_wedge");
-    state.drinks[0] = makeItem("bean_brew", 3);
-    state.drinks[1] = makeItem("berry_fizz", 3);
-    state.drinks[2] = makeItem("citrus_tea", 3);
-    state.drinks[3] = makeItem("tidepool_espresso", 3);
-    state.drinks[4] = makeItem("pearl_biscuit_latte", 3);
-    state.drinks[5] = makeItem("boba_night_tea", 3);
+    state.board[0] = makeUnit("toast_tortoise", 2);
+    state.board[1] = makeUnit("taco_tiger", 2);
+    state.board[2] = makeUnit("mochi_mammoth", 2);
+    state.board[3] = makeUnit("shakshuka_shark", 2);
+    state.board[4] = makeUnit("boba_basilisk", 2);
+    state.board[5] = makeUnit("croissant_kraken", 2);
+    state.board[6] = makeUnit("caesar_salamander", 2);
+    state.board[7] = makeUnit("caprese_capybara", 2);
+    state.board[8] = makeUnit("noodle_newt", 2);
 
     refreshShop(true);
     ensureEnemyPreview();
