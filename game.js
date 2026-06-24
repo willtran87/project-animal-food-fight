@@ -1935,6 +1935,18 @@
     mold: "assets/status-effects/runtime/status-flash-effect_mold_idle_SW_00.png",
     radiation: "assets/status-effects/runtime/status-flash-effect_radiation_idle_SW_00.png?v=1",
   };
+  const HORROR_STATUS_EFFECT_SPRITES = {
+    burn: "assets/status-effects/runtime/status-horror-effect_burn_idle_FRONT_00.png",
+    mark: "assets/status-effects/runtime/status-horror-effect_mark_idle_FRONT_00.png",
+    teamVulnerable: "assets/status-effects/runtime/status-horror-effect_team_vulnerable_idle_FRONT_00.png",
+    haste: "assets/status-effects/runtime/status-horror-effect_haste_idle_FRONT_00.png",
+    attackBoost: "assets/status-effects/runtime/status-horror-effect_attack_boost_idle_FRONT_00.png",
+    attackSlow: "assets/status-effects/runtime/status-horror-effect_attack_slow_idle_FRONT_00.png",
+    antiSupport: "assets/status-effects/runtime/status-horror-effect_anti_support_idle_FRONT_00.png",
+    slowed: "assets/status-effects/runtime/status-horror-effect_slowed_idle_FRONT_00.png",
+    lateFightStacks: "assets/status-effects/runtime/status-horror-effect_late_fight_stacks_idle_FRONT_00.png",
+    radiation: "assets/status-effects/runtime/status-horror-effect_radiation_idle_FRONT_00.png",
+  };
   const RARITIES = {
     common: {
       id: "common",
@@ -9297,6 +9309,7 @@
     state.lossStreak = 0;
     state.lastIncome = null;
     state.itemDiscountUsed = false;
+    state.realityOverride = initialRealityOverride();
     state.realityBroken = false;
     state.realityBreakTimer = 0;
     state.rebootTransition = null;
@@ -15517,7 +15530,8 @@
   }
 
   function getStatusEffectSprite(effectId) {
-    const src = STATUS_EFFECT_SPRITES[effectId];
+    const horrorSrc = realityBroken() ? HORROR_STATUS_EFFECT_SPRITES[effectId] : null;
+    const src = horrorSrc || STATUS_EFFECT_SPRITES[effectId];
     if (!src) return null;
     if (statusEffectSpriteCache.has(src)) return statusEffectSpriteCache.get(src);
     const image = new Image();
