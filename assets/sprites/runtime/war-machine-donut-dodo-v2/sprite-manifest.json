@@ -1,0 +1,23 @@
+{
+  "packageId": "war-machine-donut-dodo-v2",
+  "packageStatus": "horror-theme-metallic-palette-spacing-redo-evolution-munition-defeat-pass",
+  "unitId": "donut_dodo",
+  "sourceChromaKey": "assets/sprites/source/war-machine-donut-dodo-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-donut-dodo-evolution-v2-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "particleFrameSize": { "w": 96, "h": 96 },
+  "theme": "horror",
+  "forms": [
+    { "tier": 1, "formName": "Scrap Bomber Drone", "frame": "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk1_idle_SW_00.png" },
+    { "tier": 2, "formName": "Phoenix Wing Bomber", "frame": "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk2_idle_SW_00.png" },
+    { "tier": 3, "formName": "Phoenix Bomber Mech", "frame": "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk3_idle_SW_00.png" },
+    { "tier": 4, "formName": "Phoenix Scrap Titan", "frame": "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk4_idle_SW_00.png" }
+  ],
+  "attackParticle": "assets/particles/runtime/war-machine-donut-dodo-scrap-charge-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/donut-dodo-war-machine-defeat-v2.png",
+  "notes": [
+    "V1 was rejected because the first two evolution forms merged during alpha grouping. V2 uses larger source gutters.",
+    "The prompt translated the pink and gold reference palette into pink enamel armor, gold wing plates, and dark gunmetal machinery.",
+    "The accepted transparent alpha scan found exactly six groups with source gutters of 95, 106, 77, 39, and 65 pixels."
+  ]
+}

@@ -333,3 +333,80 @@ Packaging notes:
 - Berry Fizz was replaced with a brighter green-key v3 source at `source/drink-buff-throwable-berry-fizz-v3-chromakey.png` and `transparent/drink-buff-throwable-berry-fizz-v3-transparent.png` so it reads as magenta berry soda instead of a dark boba pearl.
 - Night Bite Energy was added as a standalone magenta-key source. The current v2 orb source lives at `source/drink-buff-throwable-night-bite-energy-v2-orb-chromakey.png` and `transparent/drink-buff-throwable-night-bite-energy-v2-orb-transparent.png`. The runtime frame is a single static neon-green watery ball with no baked-in trails, splashes, or loose particles.
 - Contact/report artifacts: `output/drink-buff-throwables-v1-contact.png` and `output/drink-buff-throwables-v1-report.json`.
+
+## Horror Power Associated Particles Batch 2 V1
+
+The second horror power-source batch has separate associated static particles for `neutron_arsenal_core`, `grav_rail_battery`, `ion_bastion_reactor`, and `obsidian_missile_forge`. These are pure robotic munition icons rather than drink art; they use the same cyan, magenta, violet, gunmetal, and brushed-metal palette as the power centers. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, and loose extra particles.
+
+- Source chroma-key sheet: `source/horror-power-associated-particles-batch2-v1-chromakey.png`
+- Transparent source sheet: `transparent/horror-power-associated-particles-batch2-v1-transparent.png`
+- Runtime preview sheet: `runtime/horror-power-particle_batch2-v1-sheet.png`
+- Runtime frames:
+  - `runtime/horror-power-particle_neutron_arsenal_core_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_grav_rail_battery_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_ion_bastion_reactor_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_obsidian_missile_forge_static_idle_SW_00.png`
+
+Horror-mode runtime wiring uses these as drink/fuel throwables for `garden_spritz`, `bean_brew`, `berry_fizz`, and `citrus_tea` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+## Horror Power Associated Particles Batch 3 V1
+
+The third horror power-source batch has separate associated static particles for `ignition_barrage_core`, `pressure_bulwark_reactor`, `abyssal_tide_singularity`, and `cryo_guard_battery`. These are pure robotic munition icons rather than drink art; they use the same cyan, magenta, violet, gunmetal, and brushed-metal palette as the power centers. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, and loose extra particles.
+
+- Source chroma-key sheet: `source/horror-power-associated-particles-batch3-v1-chromakey.png`
+- Transparent source sheet: `transparent/horror-power-associated-particles-batch3-v1-transparent.png`
+- Runtime preview sheet: `runtime/horror-power-particle_batch3-v1-sheet.png`
+- Runtime frames:
+  - `runtime/horror-power-particle_ignition_barrage_core_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_pressure_bulwark_reactor_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_abyssal_tide_singularity_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_cryo_guard_battery_static_idle_SW_00.png`
+
+Horror-mode runtime wiring uses these as drink/fuel throwables for `chili_crunch_cola`, `pepper_broth`, `abyssal_shake`, and `cream_soda_float` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+## Horror Power Associated Particles Batch 4 V1
+
+The fourth horror power-source batch has separate associated static particles for `tide_turbo_source`, `pit_repair_reservoir`, `thermal_brine_reactor`, and `convoy_overcharger`. These are pure robotic munition icons rather than drink art; they use the same teal/cyan/brass, green/cream/gunmetal, red-orange/cyan/black steel, and amber/orange/brass palettes as the power centers. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, repeated afterimages, smoke, and loose extra particles.
+
+- Source chroma-key sheet: `source/horror-power-associated-particles-batch4-v1-chromakey.png`
+- Transparent source sheet: `transparent/horror-power-associated-particles-batch4-v1-transparent.png`
+- Runtime preview sheet: `runtime/horror-power-particle_batch4-v1-sheet.png`
+- Runtime frames:
+  - `runtime/horror-power-particle_tide_turbo_source_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_pit_repair_reservoir_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_thermal_brine_reactor_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_convoy_overcharger_static_idle_SW_00.png`
+
+Horror-mode runtime wiring uses these as drink/fuel throwables for `tidepool_espresso`, `avocado_lassi`, `chili_brine_tonic`, and `market_malt` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+## Horror Power Associated Particles Batch 5 V1
+
+The fifth horror power-source batch has separate associated static particles for `maple_cloud_reactor`, `pearl_armor_core`, `kelp_turbo_cooler`, `nori_pop_powercell`, `harissa_brine_ampoule`, and `pretzel_shield_reservoir`. These are pure robotic munition icons rather than drink art, and each uses a different silhouette to preserve the original drink identity while avoiding same-looking capsule particles: amber dome capacitor, pearl shield capsule, green fin cartridge, folded graphite powercell, red hazard ampoule, and bronze knot-ring shield capacitor. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, repeated afterimages, smoke, and loose extra particles.
+
+- Source chroma-key sheet: `source/horror-power-associated-particles-batch5-v1-chromakey.png`
+- Transparent source sheet: `transparent/horror-power-associated-particles-batch5-v1-transparent.png`
+- Runtime preview sheet: `runtime/horror-power-particle_batch5-v1-sheet.png`
+- Runtime frames:
+  - `runtime/horror-power-particle_maple_cloud_reactor_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_pearl_armor_core_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_kelp_turbo_cooler_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_nori_pop_powercell_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_harissa_brine_ampoule_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_pretzel_shield_reservoir_static_idle_SW_00.png`
+
+Horror-mode runtime wiring uses these as drink/fuel throwables for `maple_cloud_cocoa`, `pearl_biscuit_latte`, `kelp_cucumber_cooler`, `nori_pop_slush`, `harissa_morning_shot`, and `pretzel_cream_soda` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+## Horror Power Associated Particles Batch 6 V1
+
+The sixth horror power-source batch has separate associated static particles for regenerated `pit_repair_reservoir` plus `boba_night_overdrive`, `pico_lime_repair_well`, and `night_bite_warcell`. These are pure robotic munition icons rather than drink art, and each keeps a different silhouette: clean medical repair canister, violet orb-capacitor, lime repair pylon cartridge, and black acid-green warcell. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, repeated afterimages, smoke, loose extra particles, and black alpha-damaged holes in the pit repair particle.
+
+- Source chroma-key sheet: `source/horror-power-associated-particles-batch6-v1-chromakey.png`
+- Transparent source sheet: `transparent/horror-power-associated-particles-batch6-v1-transparent.png`
+- Runtime preview sheet: `runtime/horror-power-particle_batch6-v1-sheet.png`
+- Runtime frames:
+  - `runtime/horror-power-particle_pit_repair_reservoir_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_boba_night_overdrive_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_pico_lime_repair_well_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_night_bite_warcell_static_idle_SW_00.png`
+
+Horror-mode runtime wiring uses these as drink/fuel throwables for `avocado_lassi`, `boba_night_tea`, `pico_lime_agua`, and `night_bite_energy` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.

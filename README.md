@@ -20,6 +20,14 @@ Then visit:
 http://127.0.0.1:8173
 ```
 
+## Smoke Test
+
+Use the deterministic smoke scenario when running `test-actions-basic.json`:
+
+```text
+http://127.0.0.1:8173/?smoke=basic
+```
+
 ## Contents
 
 - `index.html`, `styles.css`, `game.js`: the playable game

@@ -1,0 +1,22 @@
+{
+  "theme": "horror_future_war",
+  "typeId": "dumpling_armadillo",
+  "lineName": "Steam-Bastion Dozer",
+  "version": "v3",
+  "sourceSheet": "assets/sprites/source/war-machine-dumpling-armadillo-evolution-v3-chromakey.png",
+  "transparentSheet": "assets/sprites/transparent/war-machine-dumpling-armadillo-evolution-v3-transparent.png",
+  "runtimeFrames": {
+    "1": "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk1_idle_SW_00.png",
+    "2": "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk2_idle_SW_00.png",
+    "3": "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk3_idle_SW_00.png",
+    "4": "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk4_idle_SW_00.png"
+  },
+  "attackParticle": "assets/particles/runtime/war-machine-dumpling-armadillo-pressure-canister-v3.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/dumpling-armadillo-war-machine-defeat-v3.png",
+  "contactPreview": "output/war-machine-dumpling-armadillo-v3-contact.png",
+  "notes": [
+    "Active same-scale high-detail regeneration pass: forms 1-4 occupy similar runtime footprint and use final-form detail density.",
+    "Evolution is expressed through added armor, weapons, reactors, and command modules rather than major size changes.",
+    "Sliced from six separated alpha groups; particle is group 5 and defeat wreck is group 6."
+  ]
+}

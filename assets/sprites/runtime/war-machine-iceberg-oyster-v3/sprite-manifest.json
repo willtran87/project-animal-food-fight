@@ -1,0 +1,22 @@
+{
+  "theme": "horror_future_war",
+  "typeId": "iceberg_oyster",
+  "lineName": "Abyssal Lock Core",
+  "version": "v3",
+  "sourceSheet": "assets/sprites/source/war-machine-iceberg-oyster-evolution-v3-chromakey.png",
+  "transparentSheet": "assets/sprites/transparent/war-machine-iceberg-oyster-evolution-v3-transparent.png",
+  "runtimeFrames": {
+    "1": "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk1_idle_SW_00.png",
+    "2": "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk2_idle_SW_00.png",
+    "3": "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk3_idle_SW_00.png",
+    "4": "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk4_idle_SW_00.png"
+  },
+  "attackParticle": "assets/particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v3.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v3.png",
+  "contactPreview": "output/war-machine-iceberg-oyster-v3-contact.png",
+  "notes": [
+    "Active same-scale high-detail regeneration pass: forms 1-4 occupy similar runtime footprint and use final-form detail density.",
+    "Evolution is expressed through added armor, weapons, reactors, and command modules rather than major size changes.",
+    "Sliced from six separated alpha groups; particle is group 5 and defeat wreck is group 6."
+  ]
+}

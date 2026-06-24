@@ -15,6 +15,385 @@
     scaleY: 0.02,
     bob: 0.95,
   };
+  const COMBAT_ATTACK_MOTION_SECONDS = 0.38;
+  const COMBAT_HIT_MOTION_SECONDS = 0.3;
+  const COMBAT_ATTACK_LUNGE_PIXELS = 15;
+  const COMBAT_HIT_RECOIL_PIXELS = 10;
+  const FINAL_VICTORY_ROUND = 20;
+  const REBOOT_STATIC_FADE_SECONDS = 1.28;
+  const REBOOT_STATIC_RESET_AT = 0.58;
+  const FINAL_VICTORY_STATIC_FADE_SECONDS = REBOOT_STATIC_FADE_SECONDS;
+  const FINAL_VICTORY_STATIC_RESET_AT = REBOOT_STATIC_RESET_AT;
+  const VICTORY_CRAWL_START_SECONDS = 3.6;
+  const VICTORY_CRAWL_PIXELS_PER_SECOND = 18;
+  const VICTORY_IDEAL_FADE_START_SECONDS = 24;
+  const VICTORY_IDEAL_FADE_SECONDS = 2.4;
+  const VICTORY_REBOOT_BUTTON = { x: 422, y: 544, w: 180, h: 44, label: "Reboot" };
+  const VICTORY_CRAWL_LINES = [
+    "Humanity is gone.",
+    "The market lights remember hands that will not return.",
+    "The food war continues in empty lanes and echoing kitchens.",
+    "Machines still march. Recipes still collide.",
+    "Somewhere beneath the static, something gentle survives.",
+    "A seed in a cracked plaza. A lantern left burning.",
+    "A table set for tomorrow, even when no one is certain tomorrow will come.",
+    "There is still always hope.",
+  ];
+
+  function normalizeRealityOverride(value) {
+    if (value === true || value === false || value === null) return value;
+    const mode = String(value || "").trim().toLowerCase();
+    if (!mode || mode === "auto" || mode === "story") return null;
+    if (["horror", "war", "broken", "reality", "future"].includes(mode)) return true;
+    if (["cozy", "normal", "illusion", "safe"].includes(mode)) return false;
+    return null;
+  }
+
+  function initialRealityOverride() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return normalizeRealityOverride(params.get("theme") || params.get("reality"));
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  const COPY_THEMES = {
+    horror: {
+      meta: {
+        id: "horror",
+        label: "Horror / war layer",
+      },
+      ui: {
+        actions: {
+          Battle: "Deploy",
+          Roll: "Scan",
+          Restart: "Reboot",
+          Upgrade: "Rig",
+          "Max Lv": "Max Rig",
+          Sell: "Scrap",
+          Detach: "Strip",
+        },
+        status: {
+          Course: "Wave",
+          Coins: "Scrap",
+          Health: "Hull",
+        },
+        panels: {
+          teamIntel: "War Intel",
+          foodMenu: "War Manifest",
+          food: "War Machines",
+          toppings: "Weapons",
+          drinks: "Fuel Sources",
+          arena: "ZONE",
+          arenaHelp: "Zone advantage",
+          arenaPressure: "Zone hazard",
+        },
+        types: {
+          food: "Machine",
+          topping: "Weapon",
+          drink: "Fuel",
+        },
+        result: {
+          runOver: "System Down",
+          victory: "Objective Secured",
+          defeat: "Unit Loss",
+          reward: "SALVAGE",
+          payout: "COMBAT PAYOUT",
+          chooseReward: "Choose 1 Salvage",
+          claimReward: "Claim one to rearm next wave",
+          rewardTooltipTitle: "Post-battle salvage",
+          rewardTooltipBody: "Pick one salvage option before the next wave starts.",
+          ledger: "Combat ledger",
+          noLedger: "No combat details captured.",
+          rewardClaimed: "Salvage claimed.",
+          runEnded: "Hull failed. Reboot from the top bar.",
+        },
+        reality: {
+          revealTitle: "ILLUSION FAILURE // WAR LAYER EXPOSED",
+          revealBody: "Cozy market shell compromised. Machine conflict visible beneath.",
+          activeTitle: "SIMULATION MALFUNCTION",
+          activeBody: "",
+          forcedHorror: "Horror layer forced",
+          forcedCozy: "Cozy illusion forced",
+          autoBroken: "Combat layer active",
+          autoCozy: "Auto theme",
+          triggerMessage: "ILLUSION FAILURE - combat layer exposed",
+          triggerLog: "Illusion failed: future war layer exposed",
+        },
+      },
+      traits: {
+        breakfast: { label: "Dawn", short: "DWN" },
+        bakery: { label: "Foundry", short: "FND" },
+        ocean: { label: "Flood", short: "FLD" },
+        sweet: { label: "Serum", short: "SRM" },
+        spicy: { label: "Thermal", short: "THR" },
+        street_food: { label: "Convoy", short: "CNV" },
+        snack: { label: "Shrapnel", short: "SHP" },
+        fresh: { label: "Cleanroom", short: "CLN" },
+      },
+      families: {
+        bakery: "Foundry Chassis",
+        seafood: "Tideframe",
+        savory: "Assault Frame",
+        fruit: "Vita Core",
+        snack: "Shrapnel Platform",
+        breakfast: "Dawn Division",
+        spice: "Thermal Frame",
+        dairy: "Cryo Frame",
+        "dim-sum": "Steamworks",
+        dessert: "Serum Frame",
+        fermented: "Biohazard Camo",
+        drink: "Fuel System",
+        salad: "Cleanroom Frame",
+        salsa: "Market Warframe",
+        meal: "War Machine",
+      },
+      roles: {
+        "Table Guardian": "Bulwark Defender",
+        Finisher: "Execution Rig",
+        Brawler: "Assault Rig",
+        Volley: "Volley Drone",
+        Healer: "Repair Core",
+        Skirmisher: "Raid Unit",
+        "Crunch Carry": "Kettlefire Carry",
+        "Syrup Support": "Shield Support",
+        "Brunch Breaker": "Breach Engine",
+        Control: "Suppression",
+        Breaker: "Armor Breaker",
+        Carry: "Main Battery",
+        "Anti-Support": "Counter-Repair",
+        "Builder Support": "Fabricator Support",
+        "Cart Builder": "Convoy Fabricator",
+        Greed: "Salvage Engine",
+        Fermenter: "Biohazard Camo",
+        "Lane Control": "Lane Lockdown",
+        "Row Guard": "Line Guard",
+        Cleanser: "Purge Unit",
+        "Burn Brawler": "Thermal Bruiser",
+        "Taffy Control": "Bind Control",
+        Disruptor: "Signal Disruptor",
+        "Copy Oracle": "Clone Oracle",
+        Scaler: "Growth Engine",
+        Summoner: "Drone Spawner",
+        Stunner: "Shock Unit",
+        "Tempo Control": "Tempo Jammer",
+        "Chili Sugar": "Thermal Stim",
+        "Trail Greed": "Salvage Runner",
+        "Street Brawler": "Convoy Brawler",
+        "Crisp Healer": "Repair Medic",
+        "Cool Control": "Cryo Control",
+        "Pit Thorns": "Reactive Armor",
+        "Garden Opener": "Cleanroom Opener",
+        "Garden Volley": "Cleanroom Volley",
+        "Plate Captain": "Command Platform",
+        "Sharp Dressing": "Corrosive Edge",
+        "Tide Bind": "Tide Snare",
+        "Mint Cleanser": "Cleanse Unit",
+        "Crisp Finisher": "Clean Execution",
+        "Shell Cracker": "Hull Cracker",
+        "Salsa Splash": "Market Splash",
+      },
+      arenas: {
+        sunny_breakfast_patio: {
+          name: "Solar Ration Patio",
+          short: "Ration",
+          mood: "Dead breakfast lanes feed the culling protocol.",
+          backgroundSrc: "assets/backgrounds/horror/arena-solar-ration-patio-v1.png?v=1",
+          effects: [
+            { tag: "HELP", text: "Dawn units start accelerated." },
+            { tag: "HELP", text: "Foundry units start armored." },
+            { tag: "HURT", text: "Serum support is degraded." },
+          ],
+        },
+        rainy_fish_market: {
+          name: "Flooded Protein Docks",
+          short: "Docks",
+          mood: "Black water and dock machines reward flood pressure.",
+          backgroundSrc: "assets/backgrounds/horror/arena-flooded-protein-docks-v1.png?v=1",
+          effects: [
+            { tag: "HELP", text: "Flood attacks cycle faster." },
+            { tag: "HELP", text: "Flood teams delay targets." },
+            { tag: "HURT", text: "Foundry units spool slower." },
+          ],
+        },
+        street_festival: {
+          name: "Blackout Street Carnival",
+          short: "Blackout",
+          mood: "Festival grids rot into convoy signal noise.",
+          backgroundSrc: "assets/backgrounds/horror/arena-blackout-street-carnival-v1.png?v=1",
+          effects: [
+            { tag: "HELP", text: "Convoy/Thermal/Shrapnel faster." },
+            { tag: "HELP", text: "Opening hits strike harder." },
+            { tag: "HURT", text: "Front rows are exposed." },
+          ],
+        },
+        spice_bazaar: {
+          name: "Ember Spice Foundry",
+          short: "Foundry",
+          mood: "Furnace dust makes hostile statuses linger.",
+          backgroundSrc: "assets/backgrounds/horror/arena-ember-spice-foundry-v1.png?v=1",
+          effects: [
+            { tag: "HELP", text: "Thermal/Convoy damage rises." },
+            { tag: "HELP", text: "Their statuses last longer." },
+            { tag: "HURT", text: "Serum units take more damage." },
+          ],
+        },
+        frozen_parfait_peak: {
+          name: "Cryo-Dairy Vault",
+          short: "Cryo",
+          mood: "Frozen clone vaults reward patient scaling.",
+          backgroundSrc: "assets/backgrounds/horror/arena-cryo-dairy-vault-v1.png?v=1",
+          effects: [
+            { tag: "HELP", text: "Serum starts armored." },
+            { tag: "HELP", text: "Serum ramps after 6s." },
+            { tag: "HURT", text: "Flood/Convoy attack slower." },
+          ],
+        },
+        dim_sum_kitchen: {
+          name: "Steam Canteen Block",
+          short: "Canteen",
+          mood: "Armored steam lets front lines hold.",
+          backgroundSrc: "assets/backgrounds/horror/arena-steam-canteen-block-v1.png?v=1",
+          effects: [
+            { tag: "HELP", text: "Shrapnel/Dawn fronts hold." },
+            { tag: "HELP", text: "Convoy support strengthens." },
+            { tag: "HURT", text: "Back-row Serum softened." },
+          ],
+        },
+      },
+      units: {
+        toast_tortoise: { lineName: "Bulwark Siege Tank", short: "Bulwark", forms: { 1: { name: "Toastlet Shell Tank", short: "Shell" }, 2: { name: "Butterback Guard Tank", short: "Guard" }, 3: { name: "Clubshell Bastion", short: "Bastion" }, 4: { name: "Banquet Bunker Titan", short: "Bunker" } } },
+        sushi_seal: { lineName: "Tide Recon Drone", short: "Recon", forms: { 1: { name: "Tide Scout Drone", short: "Scout" }, 2: { name: "Abyss Strike Drone", short: "Striker" }, 3: { name: "Depth Gunship", short: "Gunship" }, 4: { name: "Phantom Command Subrig", short: "Phantom" } } },
+        taco_tiger: { lineName: "Shellbreaker Assault Rig", short: "Breaker", forms: { 1: { name: "Taco Cadet Rig", short: "Cadet" }, 2: { name: "Loaded Fang APC", short: "Fang" }, 3: { name: "Fiesta Breach Engine", short: "Breach" }, 4: { name: "Carnival Predator Tank", short: "Predator" } } },
+        berry_bat: { lineName: "Nightwing Swarm Drone", short: "Nightwing", forms: { 1: { name: "Micro Nightwing Drone", short: "Drone" }, 2: { name: "Razorwing Interceptor", short: "Wing" }, 3: { name: "Nightshade Bomber", short: "Shade" }, 4: { name: "Nightwing Command Carrier", short: "Carrier" } } },
+        noodle_newt: { lineName: "Serpent Medic Rig", short: "Medic", forms: { 1: { name: "Serpent Field Crawler", short: "Tech" }, 2: { name: "Serpent Repair Rig", short: "Repair" }, 3: { name: "Combat Surgeon Engine", short: "Surgeon" }, 4: { name: "Recovery Core Siege Rig", short: "Core" } } },
+        pepper_prawn: { lineName: "Thermal Lance Drone", short: "Lance" },
+        hot_chip_hamster: { lineName: "Kettlefire Wheel Tank", short: "Wheel" },
+        pancake_penguin: { lineName: "Dawn Shield Walker", short: "Shield", forms: { 1: { name: "Dawn Shield Scout", short: "Scout" }, 2: { name: "Aegis Support Walker", short: "Aegis" }, 3: { name: "Crown Bulwark Mech", short: "Bulwark" }, 4: { name: "Dawn Aegis Siege Walker", short: "Siege" } } },
+        benedict_lobster: { lineName: "Brunchbreaker Siege Rig", short: "Breaker" },
+        pretzel_python: { lineName: "Knotwire Serpent Engine", short: "Knotwire", forms: { 1: { name: "Knotwire Coil Drone", short: "Coil" }, 2: { name: "Bronze Control Engine", short: "Control" }, 3: { name: "Constrictor Siege Engine", short: "Siege" }, 4: { name: "Crowned Knotwire War Engine", short: "Crown" } } },
+        curry_crab: { lineName: "Masala Claw Crawler", short: "Claw" },
+        popcorn_porcupine: { lineName: "Shrapnel Quill Battery", short: "Quill", forms: { 1: { name: "Quill Battery Drone", short: "Drone" }, 2: { name: "Needleback Artillery Rig", short: "Needle" }, 3: { name: "Shrapnel Rack Platform", short: "Rack" }, 4: { name: "Shrapnel Citadel Battery", short: "Citadel" } } },
+        yogurt_yeti: { lineName: "Cryo Support Golem", short: "Cryo", forms: { 1: { name: "Cryo Scout Crawler", short: "Scout" }, 2: { name: "Frostline Repair Golem", short: "Repair" }, 3: { name: "Glacier Support Engine", short: "Glacier" }, 4: { name: "Cryo Bastion Golem", short: "Bastion" } } },
+        bagel_beaver: { lineName: "Foundry Dam Engine", short: "Foundry", forms: { 1: { name: "Foundry Scout Drone", short: "Scout" }, 2: { name: "Dam Builder Rig", short: "Builder" }, 3: { name: "Foundry Barricade Engine", short: "Barricade" }, 4: { name: "Fortress Foundry Engine", short: "Fortress" } } },
+        bao_bun_badger: { lineName: "Steamcart Bulwark", short: "Steamcart", forms: { 1: { name: "Steamcart Scout", short: "Scout" }, 2: { name: "Steamcart Guard Rig", short: "Guard" }, 3: { name: "Convoy Bulwark Engine", short: "Convoy" }, 4: { name: "Night Siege Cart", short: "Siege" } } },
+        donut_dodo: { lineName: "Phoenix Scrap Bomber", short: "Bomber", forms: { 1: { name: "Scrap Bomber Drone", short: "Drone" }, 2: { name: "Phoenix Wing Bomber", short: "Wing" }, 3: { name: "Phoenix Bomber Mech", short: "Mech" }, 4: { name: "Phoenix Scrap Titan", short: "Titan" } } },
+        kimchi_chameleon: { lineName: "Thermal Camo Unit", short: "Camo", forms: { 1: { name: "Camo Scout Unit", short: "Scout" }, 2: { name: "Camo Skirmisher Drone", short: "Skirmish" }, 3: { name: "Adaptive Camo Engine", short: "Adaptive" }, 4: { name: "Thermal Dragon Camo Engine", short: "Dragon" } } },
+        waffle_walrus: { lineName: "Lattice-Tusk Siege Engine", short: "Tusk", forms: { 1: { name: "Tusk Drill Drone", short: "Drone" }, 2: { name: "Tusk Assault Rig", short: "Assault" }, 3: { name: "Lattice Breaker Engine", short: "Breaker" }, 4: { name: "Lattice Behemoth Siege Engine", short: "Behemoth" } } },
+        dumpling_armadillo: { lineName: "Steam-Bastion Dozer", short: "Dozer", forms: { 1: { name: "Steam Scout Dozer", short: "Scout" }, 2: { name: "Armored Steam Dozer", short: "Armor" }, 3: { name: "Pressure Shield Dozer", short: "Shield" }, 4: { name: "Steam-Bastion Siege Dozer", short: "Bastion" } } },
+        lemon_meringue_lynx: { lineName: "Acid Cleanser Stalker", short: "Stalker", forms: { 1: { name: "Acid Cleanser Scout", short: "Scout" }, 2: { name: "Foam Cleanser Stalker", short: "Cleanser" }, 3: { name: "Corrosive Panther Rig", short: "Panther" }, 4: { name: "Citadel Cleanser Sphinx", short: "Sphinx" } } },
+        shakshuka_shark: { lineName: "Thermal Megalodon Subtank", short: "Subtank", forms: { 1: { name: "Thermal Shark Drone", short: "Drone" }, 2: { name: "Thermal Strike Shark", short: "Striker" }, 3: { name: "Furnacefin Subtank", short: "Furnace" }, 4: { name: "Megalodon Siege Subtank", short: "Megalodon" } } },
+        saltwater_taffy_otter: { lineName: "Tide Bind Strider", short: "Binder", forms: { 1: { name: "Tide Pup Drone", short: "Drone" }, 2: { name: "Bind Strider", short: "Strider" }, 3: { name: "Coil Bind Strider", short: "Coil" }, 4: { name: "Tide Control Strider", short: "Control" } } },
+        croissant_kraken: { lineName: "Layered Leviathan Rig", short: "Leviathan", forms: { 1: { name: "Abyss Squid Drone", short: "Drone" }, 2: { name: "Kraken Rig", short: "Kraken" }, 3: { name: "Layered Leviathan", short: "Layered" }, 4: { name: "Abyssal Leviathan Rig", short: "Abyss" } } },
+        fortune_cookie_fox: { lineName: "Oracle Chance Engine", short: "Oracle", forms: { 1: { name: "Oracle Scout Kit", short: "Scout" }, 2: { name: "Copy Chance Engine", short: "Copy" }, 3: { name: "Prophecy Vixen Rig", short: "Prophecy" }, 4: { name: "Oracle Kitsune Engine", short: "Kitsune" } } },
+        mochi_mammoth: { lineName: "Festival Colossus Walker", short: "Colossus", forms: { 1: { name: "Colossus Scout Walker", short: "Scout" }, 2: { name: "Support Mammoth Rig", short: "Support" }, 3: { name: "Moonshield Mastodon", short: "Mastodon" }, 4: { name: "Festival Colossus Walker", short: "Colossus" } } },
+        gingerbread_golem: { lineName: "Citadel Decoy Guardian", short: "Guardian", forms: { 1: { name: "Decoy Guardian Drone", short: "Drone" }, 2: { name: "Guardian Golem", short: "Golem" }, 3: { name: "Frostline Guardian", short: "Frostline" }, 4: { name: "Citadel Decoy Colossus", short: "Citadel" } } },
+        boba_basilisk: { lineName: "Pearl Gorgon Artillery", short: "Gorgon", forms: { 1: { name: "Pearl Newt Drone", short: "Drone" }, 2: { name: "Pearl Basilisk Rig", short: "Basilisk" }, 3: { name: "Pearl Gorgon Battery", short: "Battery" }, 4: { name: "Hydra Artillery Core", short: "Hydra" } } },
+        iceberg_oyster: { lineName: "Abyssal Lock Core", short: "Lock Core", forms: { 1: { name: "Pearl Lock Drone", short: "Drone" }, 2: { name: "Iceberg Lock Core", short: "Lock" }, 3: { name: "Glacier Shell Engine", short: "Glacier" }, 4: { name: "Abyssal Lock Core", short: "Abyssal" } } },
+        churro_cheetah: { lineName: "Dulce Firecat Runner", short: "Runner" },
+        granola_goat: { lineName: "Harvest Ram Breaker", short: "Ram" },
+        breakfast_burrito_boar: { lineName: "Brunch Cart Ram", short: "Cart Ram" },
+        caesar_salamander: { lineName: "Caesar Cleanser Rig", short: "Cleanser" },
+        cucumber_cobra: { lineName: "Garden Coil Hydra", short: "Hydra" },
+        avocado_axolotl: { lineName: "Pitguard Reactor", short: "Pitguard" },
+        herb_hare: { lineName: "Greenhouse Jumper Rig", short: "Jumper" },
+        green_juice_goose: { lineName: "Garden Volley Gunship", short: "Gunship" },
+        caprese_capybara: { lineName: "Antipasto Harbor Platform", short: "Harbor" },
+        vinaigrette_viper: { lineName: "Dressing Dragon Coil", short: "Coil" },
+        kelp_koala: { lineName: "Tide-Grove Lock Drone", short: "Lockdrone" },
+        melon_mint_mantis: { lineName: "Melon-Grove Reaper", short: "Reaper" },
+        coconut_shrimp_sheep: { lineName: "Island Ram Artillery", short: "Artillery" },
+        crab_cake_caterpillar: { lineName: "Boardwalk Moth Tank", short: "Moth Tank" },
+        pico_de_gallo_gecko: { lineName: "Market-Bowl Basilisk", short: "Basilisk" },
+      },
+      items: {
+        bean_brew: { name: "Caffeine Reactor", short: "Reactor" },
+        berry_fizz: { name: "Berry Shield Cell", short: "Shield Cell" },
+        garden_spritz: { name: "Cleanroom Repair Source", short: "Repair" },
+        citrus_tea: { name: "Citrus Brine Battery", short: "Brine" },
+        chili_crunch_cola: { name: "Thermal Overdrive Tank", short: "Overdrive" },
+        pepper_broth: { name: "Pepper Armor Station", short: "Armor Fuel" },
+        abyssal_shake: { name: "Abyssal Coolant Core", short: "Coolant" },
+        cream_soda_float: { name: "Foam Shield Station", short: "Foam Cell" },
+        tidepool_espresso: { name: "Tidepool Turbo Source", short: "Turbo" },
+        avocado_lassi: { name: "Pit Repair Reservoir", short: "Reservoir" },
+        chili_brine_tonic: { name: "Chili Brine Source", short: "Brine Tank" },
+        market_malt: { name: "Market Malt Overcharger", short: "Overcharger" },
+        maple_cloud_cocoa: { name: "Maple Cloud Reactor", short: "Cloud Core" },
+        pearl_biscuit_latte: { name: "Pearl Armor Latte", short: "Pearl Core" },
+        kelp_cucumber_cooler: { name: "Kelp Turbo Cooler", short: "Kelp Fuel" },
+        nori_pop_slush: { name: "Nori Pop Powercell", short: "Powercell" },
+        harissa_morning_shot: { name: "Harissa Brine Ampoule", short: "Ampoule" },
+        pretzel_cream_soda: { name: "Pretzel Shield Reservoir", short: "Shield Res" },
+        boba_night_tea: { name: "Boba Night Overdrive", short: "Night Core" },
+        pico_lime_agua: { name: "Pico Lime Repair Well", short: "Repair Well" },
+        night_bite_energy: { name: "Night Bite Warcell", short: "Warcell" },
+        sunny_side_egg: { name: "Solar Warhead", short: "Warhead" },
+        butter_pat: { name: "Grease Armor Plate", short: "Grease" },
+        cheese_star: { name: "Star Shrapnel", short: "Shrapnel" },
+        bacon_strips: { name: "Reactive Armor Strips", short: "Armor" },
+        cherry_tomato: { name: "Red Micro-Missile", short: "Missile" },
+        pickle_chip: { name: "Brine Shard", short: "Shard" },
+        mushroom_cap: { name: "Spore Mine", short: "Mine" },
+        pepperoni_slice: { name: "Disc Saw", short: "Saw" },
+        lemon_wedge: { name: "Acid Wedge", short: "Acid" },
+        olive_ring: { name: "Targeting Ring", short: "Target" },
+        chili_pepper: { name: "Thermal Spike", short: "Spike" },
+        avocado_fan: { name: "Pit Guard Shield", short: "Pit Shield" },
+        jam_dollop: { name: "Viscous Charge", short: "Charge" },
+        caramel_crown: { name: "Crown Clamp", short: "Clamp" },
+        whipped_cream_puff: { name: "Foam Sealant", short: "Sealant" },
+        basil_leaf: { name: "Sensor Blade Array", short: "Sensor" },
+        honey_drizzle: { name: "Adhesive Gel", short: "Gel" },
+        garlic_clove: { name: "Repulsor Module", short: "Repulsor" },
+        rice_ball: { name: "Impact Pellet", short: "Pellet" },
+        onion_ring: { name: "Razor Ring", short: "Razor" },
+        maple_leaf: { name: "Amber Reservoir", short: "Reservoir" },
+        marshmallow_cube: { name: "Soft Armor Cube", short: "Armor Cube" },
+        cookie_crumb: { name: "Phantom Copy Chip", short: "Copy Chip" },
+        seaweed_wrap: { name: "Tide Snare", short: "Snare" },
+        pretzel_stick: { name: "Knotwire Spike", short: "Knotwire" },
+        waffle_cone: { name: "Sabot Cone", short: "Sabot" },
+        skewer: { name: "Rail Spear", short: "Rail" },
+        hot_sauce_bottle: { name: "Thermal Spray", short: "Thermal" },
+        sugar_cube: { name: "Stim Cube", short: "Stim" },
+        mint_leaf: { name: "Decon Patch", short: "Patch" },
+        soda_pop: { name: "Fizz Capacitor", short: "Capacitor" },
+        salt_shaker: { name: "Crystalline Flak", short: "Flak" },
+        vinegar_splash: { name: "Corrosive Sprayer", short: "Corrosive" },
+        cucumber_slice: { name: "Delay Module", short: "Delay" },
+        cracker_plate: { name: "Shieldbreaker Plate", short: "Breaker" },
+        cherry_pit: { name: "Red Charge Mine", short: "Mine" },
+        breadstick_dummy: { name: "Guard Pike", short: "Pike" },
+        popcorn_kernel: { name: "Kernel Flak", short: "Flak" },
+        coupon_clip: { name: "Probability Decoder", short: "Decoder" },
+        lucky_grape: { name: "Luck Core", short: "Luck Core" },
+        shopping_bag: { name: "Golden Supply Pod", short: "Supply" },
+        recipe_card: { name: "Protocol Breaker", short: "Protocol" },
+        soup_ladle: { name: "Sustain Injector", short: "Injector" },
+        gravy_boat: { name: "Viscous Armor Reservoir", short: "Reservoir" },
+        spice_jar: { name: "Hazard Grenade", short: "Grenade" },
+        serving_tray: { name: "Signal Relay", short: "Relay" },
+        glass_candy: { name: "Glass Shard", short: "Shard" },
+        wasabi_pea: { name: "Wasabi Piercer", short: "Piercer" },
+        molten_cheese: { name: "Molten Rounds", short: "Rounds" },
+        brittle_cracker: { name: "Shellbreaker Rack", short: "Shellbreak" },
+        golden_truffle_crown: { name: "Command Crown", short: "Command" },
+        dragonfruit_star: { name: "Dragon Starblade", short: "Starblade" },
+        rainbow_mochi: { name: "Prism Armor Node", short: "Node" },
+        caviar_pearls: { name: "Cluster Mines", short: "Clusters" },
+        saffron_threads: { name: "Signal Filaments", short: "Filaments" },
+        scallion_oil: { name: "Vector Oil Slick", short: "Slick" },
+        gochugaru_flakes: { name: "Red Flak", short: "Flak" },
+        dill_sprig: { name: "Signal Mast", short: "Signal" },
+        sesame_seeds: { name: "Scattershot Pods", short: "Scatter" },
+        cinnamon_sugar: { name: "Burn Charge", short: "Burn" },
+        milk_tea_foam: { name: "Foam Coolant", short: "Coolant" },
+        royal_icing_crest: { name: "Royal Aegis Crest", short: "Aegis" },
+      },
+    },
+  };
 
   canvas.width = Math.round(W * BACKING_SCALE);
   canvas.height = Math.round(H * BACKING_SCALE);
@@ -1100,6 +1479,16 @@
       ],
     },
   };
+  const HORROR_TRAIT_COLORS = {
+    breakfast: "#ffd84d",
+    bakery: "#b7ff3b",
+    ocean: "#41e9ff",
+    sweet: "#ff58d2",
+    spicy: "#ff5a3d",
+    street_food: "#ff3f6d",
+    snack: "#f6ff45",
+    fresh: "#52ffb8",
+  };
 
   const FAVORITE_TOPPINGS = {
     toast_tortoise: { itemId: "bacon_strips", bonus: "Taunt shields and bacon crackle are stronger" },
@@ -1273,6 +1662,14 @@
       ],
     },
   ];
+  const HORROR_ARENA_COLORS = {
+    sunny_breakfast_patio: "#ffd15b",
+    rainy_fish_market: "#58ddff",
+    street_festival: "#ff5f6d",
+    spice_bazaar: "#ff933d",
+    frozen_parfait_peak: "#a7f4ff",
+    dim_sum_kitchen: "#b6c8c9",
+  };
 
   const BOARD_COLS = 3;
   const BOARD_ROWS = 3;
@@ -1282,17 +1679,33 @@
   const SHOP_SLOT_UNLOCK_COSTS = [0, 0, 0, 0, 30, 45, 60, 75];
   const INFO_PANEL = { x: 670, y: 244, w: 338, h: 392 };
   const TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-bg-v1.webp?v=1";
+  const REALITY_TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-war-v2.webp?v=1";
   const FOOD_MENU_BG_SRC = "assets/ui/runtime/food-menu-bg-v1.webp?v=1";
+  const REALITY_FOOD_MENU_BG_SRC = "assets/ui/runtime/war-manifest-bg-v2.webp?v=1";
   const SHOP_SLOT_BG_SRC = "assets/ui/runtime/shop-slot-card-bg-v1.png?v=1";
+  const REALITY_SHOP_SLOT_BG_SRC = "assets/ui/runtime/shop-slot-card-war-v2.png?v=1";
   const SHOP_LOCK_CLOTH_BG_SRC = "assets/ui/runtime/shop-lock-cloth-bg-v2.webp?v=1";
+  const REALITY_SHOP_LOCK_CLOTH_BG_SRC = "assets/ui/runtime/shop-lock-cloth-war-v1.webp?v=1";
   const BENCH_SLOT_BG_SRC = "assets/ui/runtime/bench-countertop-cream-stone-v1.png?v=1";
+  const REALITY_BENCH_SLOT_BG_SRC = "assets/ui/runtime/bench-slot-card-war-v1.png?v=1";
   const BENCH_SLOT_BG_SCALE = 1.12;
   const BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-picnic-blanket-v1.webp?v=3";
+  const REALITY_BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-war-grid-v1.webp?v=1";
   const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
   const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";
+  const REALITY_BANNER_BOARD_SRC = "assets/ui/runtime/reality-banner-war-v1.webp?v=1";
+  const REALITY_COMMAND_RIG_SRC = "assets/ui/runtime/command-war-rig-v2.webp?v=1";
+  const REALITY_COMMAND_SCAN_SRC = "assets/ui/runtime/command-war-scan-v2.webp?v=1";
+  const REALITY_COMMAND_DEPLOY_SRC = "assets/ui/runtime/command-war-deploy-v2.webp?v=1";
+  const REALITY_COMMAND_SPEED_SRC = "assets/ui/runtime/command-war-speed-v2.webp?v=1";
+  const REALITY_COMMAND_REBOOT_SRC = "assets/ui/runtime/command-war-reboot-v2.webp?v=1";
   const SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/food-animal-stall-forward-facing-v1.webp";
+  const REALITY_SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/war-future-market-stall-v3-native-cutout.png?v=1";
   const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.webp";
+  const REALITY_BREAK_ROUND = 10;
+  const REALITY_SHOPKEEPER_SRC = "assets/shopkeeper/runtime/black-outline-horror-terminator-shopkeeper-kitten-v3-alpha.png?v=1";
   const CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/beat-up-food-menu-button-v2.png";
+  const REALITY_CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/horror-food-menu-hanging-sign-v1.png?v=3";
   const SHOPKEEPER_LEVEL_SRCS = [
     SHOPKEEPER_SRC,
     "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-teen-lv2-v3.webp",
@@ -1303,6 +1716,7 @@
     stall: { x: 720, y: 54, w: 258, h: 206 },
     keeper: { x: 796, y: 93, w: 111, h: 126 },
     codexButton: { x: 932, y: 92, w: 76, h: 76 },
+    realityCodexButton: { x: 928, y: 105, w: 94, h: 110 },
     breathPeriod: 3.4,
     breathScaleX: 0.01,
     breathScaleY: 0.018,
@@ -1446,22 +1860,20 @@
     },
   };
   const ENEMY_ARCHETYPES = [
-    { id: "balanced", label: "Balanced", weight: 5, countBias: 0, tierBias: 0, tier3Bias: 0, statBias: 0, itemBias: 0, drinkBias: 0, traitFocus: 0.35 },
-    { id: "swarm", label: "Swarm", weight: 3, minRound: 2, countBias: 1, tierBias: -0.12, tier3Bias: -0.05, statBias: -0.04, itemBias: -1, drinkBias: 0, traitFocus: 0.25 },
-    { id: "elite", label: "Elite", weight: 3, minRound: 4, countBias: -1, tierBias: 0.18, tier3Bias: 0.08, statBias: 0.06, itemBias: 1, drinkBias: -1, traitFocus: 0.45 },
-    { id: "trait", label: "Trait Pack", weight: 4, minRound: 3, countBias: 0, tierBias: 0.04, tier3Bias: 0.02, statBias: 0, itemBias: 0, drinkBias: 0, traitFocus: 0.9 },
-    { id: "loaded", label: "Loaded", weight: 3, minRound: 5, countBias: -1, tierBias: 0.02, tier3Bias: 0.03, statBias: 0.02, itemBias: 1, drinkBias: 1, traitFocus: 0.55 },
+    { id: "horde", label: "Horde", weight: 4, minRound: 1, countBias: 1, tierBias: -0.11, tier3Bias: -0.045, statBias: -0.035, itemBias: -1, drinkBias: 0, traitFocus: 0.28 },
+    { id: "juggernaut", label: "Juggernaut", weight: 3, minRound: 2, countBias: -1, tierBias: 0.13, tier3Bias: 0.045, statBias: 0.035, itemBias: 1, drinkBias: -1, traitFocus: 0.42 },
+    { id: "arsenal", label: "Arsenal", weight: 4, minRound: 3, countBias: 0, tierBias: 0.035, tier3Bias: 0.018, statBias: 0, itemBias: 1, drinkBias: 1, traitFocus: 0.72 },
   ];
-  const ENEMY_ARCHETYPE_PRIMARY_SHARE = 0.64;
+  const ENEMY_ARCHETYPE_PRIMARY_SHARE = 0.72;
   const ENEMY_ARCHETYPE_NOISE = {
-    countBias: 0.38,
-    tierBias: 0.045,
-    tier3Bias: 0.025,
-    statBias: 0.022,
-    itemBias: 0.38,
-    drinkBias: 0.38,
-    traitFocus: 0.14,
-    rarityBias: 0.34,
+    countBias: 0.46,
+    tierBias: 0.04,
+    tier3Bias: 0.02,
+    statBias: 0.018,
+    itemBias: 0.46,
+    drinkBias: 0.46,
+    traitFocus: 0.18,
+    rarityBias: 0.28,
   };
   const TIER_SCALING = [
     null,
@@ -1496,7 +1908,8 @@
     slowed: { color: "#5aa832", accent: "#d8f2a2", kind: "vine" },
     lateFightStacks: { color: "#e39b22", accent: "#fff0a8", kind: "crown" },
     teamVulnerable: { color: "#d9a12c", accent: "#fff1a4", kind: "target" },
-    mold: { color: "#668f44", accent: "#c8df73", kind: "mold" },
+    mold: { color: "#6f9231", accent: "#b7e033", kind: "mold" },
+    radiation: { color: "#b7e033", accent: "#fff36a", kind: "radiation" },
   };
   const STATUS_EFFECT_SPRITES = {
     burn: "assets/status-effects/runtime/status-flash-effect_burn_idle_SW_00.png",
@@ -1509,6 +1922,7 @@
     slowed: "assets/status-effects/runtime/status-flash-effect_slowed_idle_SW_00.png",
     lateFightStacks: "assets/status-effects/runtime/status-flash-effect_late_fight_stacks_idle_SW_00.png",
     mold: "assets/status-effects/runtime/status-flash-effect_mold_idle_SW_00.png",
+    radiation: "assets/status-effects/runtime/status-flash-effect_radiation_idle_SW_00.png?v=1",
   };
   const RARITIES = {
     common: {
@@ -1546,6 +1960,32 @@
       fill: "#9a5bbf",
       text: "#f8f5df",
       stroke: "#16392d",
+    },
+  };
+  const HORROR_RARITIES = {
+    common: {
+      fill: "#76ff55",
+      text: "#06100c",
+      stroke: "#c8ff8a",
+      glow: "rgba(118, 255, 85, 0.28)",
+    },
+    uncommon: {
+      fill: "#31f8ff",
+      text: "#06100c",
+      stroke: "#b8ffff",
+      glow: "rgba(49, 248, 255, 0.38)",
+    },
+    rare: {
+      fill: "#4d7dff",
+      text: "#f4fff6",
+      stroke: "#9cc2ff",
+      glow: "rgba(77, 125, 255, 0.52)",
+    },
+    epic: {
+      fill: "#ff4dff",
+      text: "#06100c",
+      stroke: "#ffc8ff",
+      glow: "rgba(255, 77, 255, 0.58)",
     },
   };
   const SHOP_LEVELS = [
@@ -3584,6 +4024,425 @@
       3: "assets/items/runtime/royal_icing_crest-sticker-v1-lv3.png?v=1",
     },
   };
+  const REALITY_ITEM_SPRITES = {
+    bean_brew: "assets/items/runtime/item-horror-power_grav_rail_battery_lv1_idle_SW_00.png?v=1",
+    berry_fizz: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv1_idle_SW_00.png?v=1",
+    garden_spritz: "assets/items/runtime/item-horror-power_neutron_arsenal_core_lv1_idle_SW_00.png?v=1",
+    citrus_tea: "assets/items/runtime/item-horror-power_obsidian_missile_forge_lv1_idle_SW_00.png?v=1",
+    chili_crunch_cola: "assets/items/runtime/item-horror-power_ignition_barrage_core_lv1_idle_SW_00.png?v=1",
+    pepper_broth: "assets/items/runtime/item-horror-power_pressure_bulwark_reactor_lv1_idle_SW_00.png?v=1",
+    abyssal_shake: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv1_idle_SW_00.png?v=1",
+    cream_soda_float: "assets/items/runtime/item-horror-power_cryo_guard_battery_lv1_idle_SW_00.png?v=1",
+    tidepool_espresso: "assets/items/runtime/item-horror-power_tide_turbo_source_lv1_idle_SW_00.png?v=1",
+    avocado_lassi: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv1_idle_SW_00.png?v=1",
+    chili_brine_tonic: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv1_idle_SW_00.png?v=1",
+    market_malt: "assets/items/runtime/item-horror-power_convoy_overcharger_lv1_idle_SW_00.png?v=1",
+    maple_cloud_cocoa: "assets/items/runtime/item-horror-power_maple_cloud_reactor_lv1_idle_SW_00.png?v=1",
+    pearl_biscuit_latte: "assets/items/runtime/item-horror-power_pearl_armor_core_lv1_idle_SW_00.png?v=1",
+    kelp_cucumber_cooler: "assets/items/runtime/item-horror-power_kelp_turbo_cooler_lv1_idle_SW_00.png?v=1",
+    nori_pop_slush: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv1_idle_SW_00.png?v=1",
+    harissa_morning_shot: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv1_idle_SW_00.png?v=1",
+    pretzel_cream_soda: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv1_idle_SW_00.png?v=1",
+    boba_night_tea: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv1_idle_SW_00.png?v=1",
+    pico_lime_agua: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv1_idle_SW_00.png?v=1",
+    night_bite_energy: "assets/items/runtime/item-horror-power_night_bite_warcell_lv1_idle_SW_00.png?v=1",
+    sunny_side_egg: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv1.png?v=1",
+    butter_pat: "assets/items/runtime/grease_armor_plate-horror-evolution-v1-lv1.png?v=1",
+    cheese_star: "assets/items/runtime/star_shrapnel-horror-evolution-v1-lv1.png?v=1",
+    bacon_strips: "assets/items/runtime/reactive_armor_strips-horror-evolution-v1-lv1.png?v=1",
+    cherry_tomato: "assets/items/runtime/red_micro_missile-horror-evolution-v1-lv1.png?v=1",
+    pickle_chip: "assets/items/runtime/brine_shard-horror-evolution-v1-lv1.png?v=1",
+    mushroom_cap: "assets/items/runtime/spore_mine-horror-evolution-v1-lv1.png?v=1",
+    pepperoni_slice: "assets/items/runtime/disc_saw-horror-evolution-v1-lv1.png?v=1",
+    lemon_wedge: "assets/items/runtime/acid_wedge-horror-evolution-v1-lv1.png?v=1",
+    olive_ring: "assets/items/runtime/targeting_ring-horror-evolution-v1-lv1.png?v=1",
+    chili_pepper: "assets/items/runtime/thermal_spike-horror-evolution-v1-lv1.png?v=1",
+    avocado_fan: "assets/items/runtime/pit_guard_shield-horror-evolution-v1-lv1.png?v=1",
+    jam_dollop: "assets/items/runtime/viscous_charge-horror-evolution-v1-lv1.png?v=1",
+    caramel_crown: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv1.png?v=1",
+    whipped_cream_puff: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv1.png?v=1",
+    basil_leaf: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv1.png?v=1",
+    honey_drizzle: "assets/items/runtime/adhesive_gel-horror-evolution-v1-lv1.png?v=1",
+    garlic_clove: "assets/items/runtime/repulsor_module-horror-evolution-v1-lv1.png?v=1",
+    rice_ball: "assets/items/runtime/impact_pellet-horror-evolution-v1-lv1.png?v=1",
+    onion_ring: "assets/items/runtime/razor_ring-horror-evolution-v1-lv1.png?v=1",
+    maple_leaf: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv1.png?v=1",
+    marshmallow_cube: "assets/items/runtime/soft_armor_cube-horror-evolution-v1-lv1.png?v=1",
+    cookie_crumb: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv1.png?v=1",
+    seaweed_wrap: "assets/items/runtime/tide_snare-horror-evolution-v1-lv1.png?v=1",
+    pretzel_stick: "assets/items/runtime/knotwire_spike-horror-evolution-v1-lv1.png?v=1",
+    waffle_cone: "assets/items/runtime/sabot_cone-horror-evolution-v1-lv1.png?v=1",
+    skewer: "assets/items/runtime/rail_spear-horror-evolution-v1-lv1.png?v=1",
+    hot_sauce_bottle: "assets/items/runtime/thermal_spray-horror-evolution-v1-lv1.png?v=1",
+    sugar_cube: "assets/items/runtime/stim_cube-horror-evolution-v1-lv1.png?v=1",
+    mint_leaf: "assets/items/runtime/decon_patch-horror-evolution-v1-lv1.png?v=1",
+    soda_pop: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv1.png?v=1",
+    salt_shaker: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv1.png?v=1",
+    vinegar_splash: "assets/items/runtime/corrosive_sprayer-horror-evolution-v1-lv1.png?v=1",
+    cucumber_slice: "assets/items/runtime/delay_module-horror-evolution-v1-lv1.png?v=1",
+    cracker_plate: "assets/items/runtime/shieldbreaker_plate-horror-evolution-v1-lv1.png?v=1",
+    cherry_pit: "assets/items/runtime/red_charge_mine-horror-evolution-v1-lv1.png?v=1",
+    breadstick_dummy: "assets/items/runtime/guard_pike-horror-evolution-v1-lv1.png?v=1",
+    popcorn_kernel: "assets/items/runtime/kernel_flak-horror-evolution-v1-lv1.png?v=1",
+    coupon_clip: "assets/items/runtime/probability_decoder-horror-evolution-v1-lv1.png?v=1",
+    lucky_grape: "assets/items/runtime/luck_core-horror-evolution-v1-lv1.png?v=1",
+    shopping_bag: "assets/items/runtime/golden_supply_pod-horror-evolution-v1-lv1.png?v=1",
+    recipe_card: "assets/items/runtime/protocol_breaker-horror-evolution-v1-lv1.png?v=1",
+    soup_ladle: "assets/items/runtime/sustain_injector-horror-evolution-v1-lv1.png?v=1",
+    gravy_boat: "assets/items/runtime/viscous_armor_reservoir-horror-evolution-v1-lv1.png?v=1",
+    spice_jar: "assets/items/runtime/hazard_grenade-horror-evolution-v1-lv1.png?v=1",
+    serving_tray: "assets/items/runtime/signal_relay-horror-evolution-v1-lv1.png?v=1",
+    glass_candy: "assets/items/runtime/glass_shard-horror-evolution-v1-lv1.png?v=1",
+    wasabi_pea: "assets/items/runtime/wasabi_piercer-horror-evolution-v1-lv1.png?v=1",
+    molten_cheese: "assets/items/runtime/molten_rounds-horror-evolution-v1-lv1.png?v=1",
+    brittle_cracker: "assets/items/runtime/shellbreaker_rack-horror-evolution-v1-lv1.png?v=1",
+    golden_truffle_crown: "assets/items/runtime/command_crown-horror-evolution-v1-lv1.png?v=1",
+    dragonfruit_star: "assets/items/runtime/dragon_starblade-horror-evolution-v1-lv1.png?v=1",
+    rainbow_mochi: "assets/items/runtime/prism_armor_node-horror-evolution-v1-lv1.png?v=1",
+    caviar_pearls: "assets/items/runtime/cluster_mines-horror-evolution-v1-lv1.png?v=1",
+    saffron_threads: "assets/items/runtime/signal_filaments-horror-evolution-v1-lv1.png?v=1",
+    scallion_oil: "assets/items/runtime/vector_oil_slick-horror-evolution-v1-lv1.png?v=1",
+    gochugaru_flakes: "assets/items/runtime/red_flak-horror-evolution-v1-lv1.png?v=1",
+    dill_sprig: "assets/items/runtime/signal_mast-horror-evolution-v1-lv1.png?v=1",
+    sesame_seeds: "assets/items/runtime/scattershot_pods-horror-evolution-v1-lv1.png?v=1",
+    cinnamon_sugar: "assets/items/runtime/burn_charge-horror-evolution-v1-lv1.png?v=1",
+    milk_tea_foam: "assets/items/runtime/foam_coolant-horror-evolution-v1-lv1.png?v=1",
+    royal_icing_crest: "assets/items/runtime/royal_aegis_crest-horror-evolution-v1-lv1.png?v=1",
+  };
+  const REALITY_ITEM_TIER_SPRITES = {
+    bean_brew: {
+      2: "assets/items/runtime/item-horror-power_grav_rail_battery_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_grav_rail_battery_lv3_idle_SW_00.png?v=1",
+    },
+    berry_fizz: {
+      2: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv3_idle_SW_00.png?v=1",
+    },
+    garden_spritz: {
+      2: "assets/items/runtime/item-horror-power_neutron_arsenal_core_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_neutron_arsenal_core_lv3_idle_SW_00.png?v=1",
+    },
+    citrus_tea: {
+      2: "assets/items/runtime/item-horror-power_obsidian_missile_forge_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_obsidian_missile_forge_lv3_idle_SW_00.png?v=1",
+    },
+    chili_crunch_cola: {
+      2: "assets/items/runtime/item-horror-power_ignition_barrage_core_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_ignition_barrage_core_lv3_idle_SW_00.png?v=1",
+    },
+    pepper_broth: {
+      2: "assets/items/runtime/item-horror-power_pressure_bulwark_reactor_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_pressure_bulwark_reactor_lv3_idle_SW_00.png?v=1",
+    },
+    abyssal_shake: {
+      2: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv3_idle_SW_00.png?v=1",
+    },
+    cream_soda_float: {
+      2: "assets/items/runtime/item-horror-power_cryo_guard_battery_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_cryo_guard_battery_lv3_idle_SW_00.png?v=1",
+    },
+    tidepool_espresso: {
+      2: "assets/items/runtime/item-horror-power_tide_turbo_source_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_tide_turbo_source_lv3_idle_SW_00.png?v=1",
+    },
+    avocado_lassi: {
+      2: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv3_idle_SW_00.png?v=1",
+    },
+    chili_brine_tonic: {
+      2: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv3_idle_SW_00.png?v=1",
+    },
+    market_malt: {
+      2: "assets/items/runtime/item-horror-power_convoy_overcharger_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_convoy_overcharger_lv3_idle_SW_00.png?v=1",
+    },
+    maple_cloud_cocoa: {
+      2: "assets/items/runtime/item-horror-power_maple_cloud_reactor_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_maple_cloud_reactor_lv3_idle_SW_00.png?v=1",
+    },
+    pearl_biscuit_latte: {
+      2: "assets/items/runtime/item-horror-power_pearl_armor_core_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_pearl_armor_core_lv3_idle_SW_00.png?v=1",
+    },
+    kelp_cucumber_cooler: {
+      2: "assets/items/runtime/item-horror-power_kelp_turbo_cooler_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_kelp_turbo_cooler_lv3_idle_SW_00.png?v=1",
+    },
+    nori_pop_slush: {
+      2: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv3_idle_SW_00.png?v=1",
+    },
+    harissa_morning_shot: {
+      2: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv3_idle_SW_00.png?v=1",
+    },
+    pretzel_cream_soda: {
+      2: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv3_idle_SW_00.png?v=1",
+    },
+    boba_night_tea: {
+      2: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv3_idle_SW_00.png?v=1",
+    },
+    pico_lime_agua: {
+      2: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv3_idle_SW_00.png?v=1",
+    },
+    night_bite_energy: {
+      2: "assets/items/runtime/item-horror-power_night_bite_warcell_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_night_bite_warcell_lv3_idle_SW_00.png?v=1",
+    },
+    sunny_side_egg: {
+      2: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv3.png?v=1",
+    },
+    butter_pat: {
+      2: "assets/items/runtime/grease_armor_plate-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/grease_armor_plate-horror-evolution-v1-lv3.png?v=1",
+    },
+    cheese_star: {
+      2: "assets/items/runtime/star_shrapnel-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/star_shrapnel-horror-evolution-v1-lv3.png?v=1",
+    },
+    bacon_strips: {
+      2: "assets/items/runtime/reactive_armor_strips-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/reactive_armor_strips-horror-evolution-v1-lv3.png?v=1",
+    },
+    cherry_tomato: {
+      2: "assets/items/runtime/red_micro_missile-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/red_micro_missile-horror-evolution-v1-lv3.png?v=1",
+    },
+    pickle_chip: {
+      2: "assets/items/runtime/brine_shard-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/brine_shard-horror-evolution-v1-lv3.png?v=1",
+    },
+    mushroom_cap: {
+      2: "assets/items/runtime/spore_mine-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/spore_mine-horror-evolution-v1-lv3.png?v=1",
+    },
+    pepperoni_slice: {
+      2: "assets/items/runtime/disc_saw-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/disc_saw-horror-evolution-v1-lv3.png?v=1",
+    },
+    lemon_wedge: {
+      2: "assets/items/runtime/acid_wedge-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/acid_wedge-horror-evolution-v1-lv3.png?v=1",
+    },
+    olive_ring: {
+      2: "assets/items/runtime/targeting_ring-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/targeting_ring-horror-evolution-v1-lv3.png?v=1",
+    },
+    chili_pepper: {
+      2: "assets/items/runtime/thermal_spike-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/thermal_spike-horror-evolution-v1-lv3.png?v=1",
+    },
+    avocado_fan: {
+      2: "assets/items/runtime/pit_guard_shield-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/pit_guard_shield-horror-evolution-v1-lv3.png?v=1",
+    },
+    jam_dollop: {
+      2: "assets/items/runtime/viscous_charge-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/viscous_charge-horror-evolution-v1-lv3.png?v=1",
+    },
+    caramel_crown: {
+      2: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv3.png?v=1",
+    },
+    whipped_cream_puff: {
+      2: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv3.png?v=1",
+    },
+    basil_leaf: {
+      2: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv3.png?v=1",
+    },
+    honey_drizzle: {
+      2: "assets/items/runtime/adhesive_gel-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/adhesive_gel-horror-evolution-v1-lv3.png?v=1",
+    },
+    garlic_clove: {
+      2: "assets/items/runtime/repulsor_module-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/repulsor_module-horror-evolution-v1-lv3.png?v=1",
+    },
+    rice_ball: {
+      2: "assets/items/runtime/impact_pellet-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/impact_pellet-horror-evolution-v1-lv3.png?v=1",
+    },
+    onion_ring: {
+      2: "assets/items/runtime/razor_ring-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/razor_ring-horror-evolution-v1-lv3.png?v=1",
+    },
+    maple_leaf: {
+      2: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv3.png?v=1",
+    },
+    marshmallow_cube: {
+      2: "assets/items/runtime/soft_armor_cube-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/soft_armor_cube-horror-evolution-v1-lv3.png?v=1",
+    },
+    cookie_crumb: {
+      2: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv3.png?v=1",
+    },
+    seaweed_wrap: {
+      2: "assets/items/runtime/tide_snare-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/tide_snare-horror-evolution-v1-lv3.png?v=1",
+    },
+    pretzel_stick: {
+      2: "assets/items/runtime/knotwire_spike-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/knotwire_spike-horror-evolution-v1-lv3.png?v=1",
+    },
+    waffle_cone: {
+      2: "assets/items/runtime/sabot_cone-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/sabot_cone-horror-evolution-v1-lv3.png?v=1",
+    },
+    skewer: {
+      2: "assets/items/runtime/rail_spear-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/rail_spear-horror-evolution-v1-lv3.png?v=1",
+    },
+    hot_sauce_bottle: {
+      2: "assets/items/runtime/thermal_spray-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/thermal_spray-horror-evolution-v1-lv3.png?v=1",
+    },
+    sugar_cube: {
+      2: "assets/items/runtime/stim_cube-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/stim_cube-horror-evolution-v1-lv3.png?v=1",
+    },
+    mint_leaf: {
+      2: "assets/items/runtime/decon_patch-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/decon_patch-horror-evolution-v1-lv3.png?v=1",
+    },
+    soda_pop: {
+      2: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv3.png?v=1",
+    },
+    salt_shaker: {
+      2: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv3.png?v=1",
+    },
+    vinegar_splash: {
+      2: "assets/items/runtime/corrosive_sprayer-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/corrosive_sprayer-horror-evolution-v1-lv3.png?v=1",
+    },
+    cucumber_slice: {
+      2: "assets/items/runtime/delay_module-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/delay_module-horror-evolution-v1-lv3.png?v=1",
+    },
+    cracker_plate: {
+      2: "assets/items/runtime/shieldbreaker_plate-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/shieldbreaker_plate-horror-evolution-v1-lv3.png?v=1",
+    },
+    cherry_pit: {
+      2: "assets/items/runtime/red_charge_mine-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/red_charge_mine-horror-evolution-v1-lv3.png?v=1",
+    },
+    breadstick_dummy: {
+      2: "assets/items/runtime/guard_pike-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/guard_pike-horror-evolution-v1-lv3.png?v=1",
+    },
+    popcorn_kernel: {
+      2: "assets/items/runtime/kernel_flak-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/kernel_flak-horror-evolution-v1-lv3.png?v=1",
+    },
+    coupon_clip: {
+      2: "assets/items/runtime/probability_decoder-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/probability_decoder-horror-evolution-v1-lv3.png?v=1",
+    },
+    lucky_grape: {
+      2: "assets/items/runtime/luck_core-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/luck_core-horror-evolution-v1-lv3.png?v=1",
+    },
+    shopping_bag: {
+      2: "assets/items/runtime/golden_supply_pod-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/golden_supply_pod-horror-evolution-v1-lv3.png?v=1",
+    },
+    recipe_card: {
+      2: "assets/items/runtime/protocol_breaker-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/protocol_breaker-horror-evolution-v1-lv3.png?v=1",
+    },
+    soup_ladle: {
+      2: "assets/items/runtime/sustain_injector-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/sustain_injector-horror-evolution-v1-lv3.png?v=1",
+    },
+    gravy_boat: {
+      2: "assets/items/runtime/viscous_armor_reservoir-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/viscous_armor_reservoir-horror-evolution-v1-lv3.png?v=1",
+    },
+    spice_jar: {
+      2: "assets/items/runtime/hazard_grenade-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/hazard_grenade-horror-evolution-v1-lv3.png?v=1",
+    },
+    serving_tray: {
+      2: "assets/items/runtime/signal_relay-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/signal_relay-horror-evolution-v1-lv3.png?v=1",
+    },
+    glass_candy: {
+      2: "assets/items/runtime/glass_shard-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/glass_shard-horror-evolution-v1-lv3.png?v=1",
+    },
+    wasabi_pea: {
+      2: "assets/items/runtime/wasabi_piercer-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/wasabi_piercer-horror-evolution-v1-lv3.png?v=1",
+    },
+    molten_cheese: {
+      2: "assets/items/runtime/molten_rounds-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/molten_rounds-horror-evolution-v1-lv3.png?v=1",
+    },
+    brittle_cracker: {
+      2: "assets/items/runtime/shellbreaker_rack-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/shellbreaker_rack-horror-evolution-v1-lv3.png?v=1",
+    },
+    golden_truffle_crown: {
+      2: "assets/items/runtime/command_crown-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/command_crown-horror-evolution-v1-lv3.png?v=1",
+    },
+    dragonfruit_star: {
+      2: "assets/items/runtime/dragon_starblade-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/dragon_starblade-horror-evolution-v1-lv3.png?v=1",
+    },
+    rainbow_mochi: {
+      2: "assets/items/runtime/prism_armor_node-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/prism_armor_node-horror-evolution-v1-lv3.png?v=1",
+    },
+    caviar_pearls: {
+      2: "assets/items/runtime/cluster_mines-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/cluster_mines-horror-evolution-v1-lv3.png?v=1",
+    },
+    saffron_threads: {
+      2: "assets/items/runtime/signal_filaments-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/signal_filaments-horror-evolution-v1-lv3.png?v=1",
+    },
+    scallion_oil: {
+      2: "assets/items/runtime/vector_oil_slick-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/vector_oil_slick-horror-evolution-v1-lv3.png?v=1",
+    },
+    gochugaru_flakes: {
+      2: "assets/items/runtime/red_flak-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/red_flak-horror-evolution-v1-lv3.png?v=1",
+    },
+    dill_sprig: {
+      2: "assets/items/runtime/signal_mast-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/signal_mast-horror-evolution-v1-lv3.png?v=1",
+    },
+    sesame_seeds: {
+      2: "assets/items/runtime/scattershot_pods-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/scattershot_pods-horror-evolution-v1-lv3.png?v=1",
+    },
+    cinnamon_sugar: {
+      2: "assets/items/runtime/burn_charge-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/burn_charge-horror-evolution-v1-lv3.png?v=1",
+    },
+    milk_tea_foam: {
+      2: "assets/items/runtime/foam_coolant-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/foam_coolant-horror-evolution-v1-lv3.png?v=1",
+    },
+    royal_icing_crest: {
+      2: "assets/items/runtime/royal_aegis_crest-horror-evolution-v1-lv2.png?v=1",
+      3: "assets/items/runtime/royal_aegis_crest-horror-evolution-v1-lv3.png?v=1",
+    },
+  };
   const ATTACK_PARTICLE_SPRITES = {
     toast_tortoise: "assets/particles/runtime/food-attack-particle_toast_shard_idle_SW_00.png",
     sushi_seal: "assets/particles/runtime/food-attack-particle_sushi_bite_idle_SW_00.png",
@@ -3629,6 +4488,51 @@
     crab_cake_caterpillar: "assets/particles/runtime/food-attack-particle-gap-fillers_crab_cake_caterpillar_static_idle_SW_00.png",
     pico_de_gallo_gecko: "assets/particles/runtime/food-attack-particle-gap-fillers_pico_de_gallo_gecko_static_idle_SW_00.png",
   };
+  const REALITY_ATTACK_PARTICLE_SPRITES = {
+    toast_tortoise: "assets/particles/runtime/war-machine-toast-tortoise-static-rail-discharge-v3.png?v=1",
+    sushi_seal: "assets/particles/runtime/war-machine-sushi-seal-sonar-charge-v2.png?v=1",
+    taco_tiger: "assets/particles/runtime/war-machine-taco-tiger-static-breacher-charge-v2.png?v=1",
+    berry_bat: "assets/particles/runtime/war-machine-berry-bat-nightwing-pulse-mine-v1.png?v=1",
+    noodle_newt: "assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v1.png?v=1",
+    pancake_penguin: "assets/particles/runtime/war-machine-pancake-penguin-aegis-charge-v1.png?v=1",
+    pretzel_python: "assets/particles/runtime/war-machine-pretzel-python-coil-charge-v1.png?v=1",
+    popcorn_porcupine: "assets/particles/runtime/war-machine-popcorn-porcupine-shrapnel-mine-v1.png?v=1",
+    yogurt_yeti: "assets/particles/runtime/war-machine-yogurt-yeti-cryo-capacitor-v2.png?v=1",
+    bagel_beaver: "assets/particles/runtime/war-machine-bagel-beaver-rivet-mine-v2.png?v=1",
+    bao_bun_badger: "assets/particles/runtime/war-machine-bao-bun-badger-pressure-mine-v1.png?v=1",
+    donut_dodo: "assets/particles/runtime/war-machine-donut-dodo-scrap-charge-v2.png?v=1",
+    kimchi_chameleon: "assets/particles/runtime/war-machine-kimchi-chameleon-camo-mine-v1.png?v=1",
+    waffle_walrus: "assets/particles/runtime/war-machine-waffle-walrus-lattice-charge-v2.png?v=1",
+    dumpling_armadillo: "assets/particles/runtime/war-machine-dumpling-armadillo-pressure-canister-v3.png?v=1",
+    lemon_meringue_lynx: "assets/particles/runtime/war-machine-lemon-meringue-lynx-acid-cleanse-charge-v3.png?v=1",
+    shakshuka_shark: "assets/particles/runtime/war-machine-shakshuka-shark-thermal-brine-charge-v3.png?v=1",
+    saltwater_taffy_otter: "assets/particles/runtime/war-machine-saltwater-taffy-otter-bind-snare-v3.png?v=1",
+    croissant_kraken: "assets/particles/runtime/war-machine-croissant-kraken-crescent-clamp-v3.png?v=1",
+    fortune_cookie_fox: "assets/particles/runtime/war-machine-fortune-cookie-fox-oracle-core-v3.png?v=1",
+    mochi_mammoth: "assets/particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v3.png?v=1",
+    gingerbread_golem: "assets/particles/runtime/war-machine-gingerbread-golem-decoy-core-v3.png?v=1",
+    boba_basilisk: "assets/particles/runtime/war-machine-boba-basilisk-pearl-stun-mine-v3.png?v=1",
+    iceberg_oyster: "assets/particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v3.png?v=1",
+    herb_hare: "assets/particles/runtime/war-machine-herb-hare-lime-discharge-mine-v1.png?v=1",
+    green_juice_goose: "assets/particles/runtime/war-machine-green-juice-goose-plasma-battery-mine-v1.png?v=1",
+    caprese_capybara: "assets/particles/runtime/war-machine-caprese-capybara-repair-well-discharge-v1.png?v=1",
+    vinaigrette_viper: "assets/particles/runtime/war-machine-vinaigrette-viper-corrosive-sprayer-mine-v1.png?v=1",
+    kelp_koala: "assets/particles/runtime/war-machine-kelp-koala-turbo-cooler-powercell-v1.png?v=1",
+    melon_mint_mantis: "assets/particles/runtime/war-machine-melon-mint-mantis-blade-array-charge-v1.png?v=1",
+    coconut_shrimp_sheep: "assets/particles/runtime/war-machine-coconut-shrimp-sheep-pressure-canister-mine-v1.png?v=1",
+    crab_cake_caterpillar: "assets/particles/runtime/war-machine-crab-cake-caterpillar-shellbreaker-rack-mine-v1.png?v=1",
+    pico_de_gallo_gecko: "assets/particles/runtime/war-machine-pico-de-gallo-gecko-sensor-repair-mine-v1.png?v=1",
+    pepper_prawn: "assets/particles/runtime/war-machine-pepper-prawn-thermal-torpedo-cell-v1.png?v=1",
+    hot_chip_hamster: "assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v1.png?v=1",
+    benedict_lobster: "assets/particles/runtime/war-machine-benedict-lobster-claw-charge-pod-v1.png?v=1",
+    curry_crab: "assets/particles/runtime/war-machine-curry-crab-thermal-core-mine-v1.png?v=1",
+    churro_cheetah: "assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v1.png?v=1",
+    granola_goat: "assets/particles/runtime/war-machine-granola-goat-seed-armor-mine-v1.png?v=1",
+    breakfast_burrito_boar: "assets/particles/runtime/war-machine-breakfast-burrito-boar-static-tusk-mine-v1.png?v=1",
+    caesar_salamander: "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v1.png?v=1",
+    cucumber_cobra: "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v1.png?v=1",
+    avocado_axolotl: "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v1.png?v=1",
+  };
   const ATTACK_PARTICLE_TYPES = Object.keys(ATTACK_PARTICLE_SPRITES);
   const DRINK_THROWABLE_SPRITES = {
     bean_brew: "assets/particles/runtime/drink-buff-throwable_bean_brew_idle_SW_00.png?v=1",
@@ -3652,6 +4556,29 @@
     boba_night_tea: "assets/particles/runtime/drink-buff-throwable_boba_night_tea_idle_SW_00.png?v=1",
     pico_lime_agua: "assets/particles/runtime/drink-buff-throwable_pico_lime_agua_idle_SW_00.png?v=1",
     night_bite_energy: "assets/particles/runtime/drink-buff-throwable_night_bite_energy_idle_SW_00.png?v=3",
+  };
+  const REALITY_DRINK_THROWABLE_SPRITES = {
+    bean_brew: "assets/particles/runtime/horror-power-particle_grav_rail_battery_static_idle_SW_00.png?v=1",
+    berry_fizz: "assets/particles/runtime/horror-power-particle_ion_bastion_reactor_static_idle_SW_00.png?v=1",
+    garden_spritz: "assets/particles/runtime/horror-power-particle_neutron_arsenal_core_static_idle_SW_00.png?v=1",
+    citrus_tea: "assets/particles/runtime/horror-power-particle_obsidian_missile_forge_static_idle_SW_00.png?v=1",
+    chili_crunch_cola: "assets/particles/runtime/horror-power-particle_ignition_barrage_core_static_idle_SW_00.png?v=1",
+    pepper_broth: "assets/particles/runtime/horror-power-particle_pressure_bulwark_reactor_static_idle_SW_00.png?v=1",
+    abyssal_shake: "assets/particles/runtime/horror-power-particle_abyssal_tide_singularity_static_idle_SW_00.png?v=1",
+    cream_soda_float: "assets/particles/runtime/horror-power-particle_cryo_guard_battery_static_idle_SW_00.png?v=1",
+    tidepool_espresso: "assets/particles/runtime/horror-power-particle_tide_turbo_source_static_idle_SW_00.png?v=1",
+    avocado_lassi: "assets/particles/runtime/horror-power-particle_pit_repair_reservoir_static_idle_SW_00.png?v=1",
+    chili_brine_tonic: "assets/particles/runtime/horror-power-particle_thermal_brine_reactor_static_idle_SW_00.png?v=1",
+    market_malt: "assets/particles/runtime/horror-power-particle_convoy_overcharger_static_idle_SW_00.png?v=1",
+    maple_cloud_cocoa: "assets/particles/runtime/horror-power-particle_maple_cloud_reactor_static_idle_SW_00.png?v=1",
+    pearl_biscuit_latte: "assets/particles/runtime/horror-power-particle_pearl_armor_core_static_idle_SW_00.png?v=1",
+    kelp_cucumber_cooler: "assets/particles/runtime/horror-power-particle_kelp_turbo_cooler_static_idle_SW_00.png?v=1",
+    nori_pop_slush: "assets/particles/runtime/horror-power-particle_nori_pop_powercell_static_idle_SW_00.png?v=1",
+    harissa_morning_shot: "assets/particles/runtime/horror-power-particle_harissa_brine_ampoule_static_idle_SW_00.png?v=1",
+    pretzel_cream_soda: "assets/particles/runtime/horror-power-particle_pretzel_shield_reservoir_static_idle_SW_00.png?v=1",
+    boba_night_tea: "assets/particles/runtime/horror-power-particle_boba_night_overdrive_static_idle_SW_00.png?v=1",
+    pico_lime_agua: "assets/particles/runtime/horror-power-particle_pico_lime_repair_well_static_idle_SW_00.png?v=1",
+    night_bite_energy: "assets/particles/runtime/horror-power-particle_night_bite_warcell_static_idle_SW_00.png?v=1",
   };
   const DRINK_THROWABLE_TYPES = Object.keys(DRINK_THROWABLE_SPRITES);
 
@@ -3700,6 +4627,12 @@
     lastIncome: null,
     itemDiscountUsed: false,
     battleSpeedIndex: 0,
+    realityBroken: false,
+    realityOverride: initialRealityOverride(),
+    realityBreakTimer: 0,
+    rebootTransition: null,
+    finalVictoryTransition: null,
+    victoryCutscene: null,
     idleTime: 0,
     lastTime: 0,
     particles: [],
@@ -3713,22 +4646,33 @@
   const itemSpriteMetricsCache = new Map();
   const itemSpriteCache = new Map();
   const attackParticleSpriteCache = new Map();
+  const particleSpriteCache = new Map();
   const drinkThrowableSpriteCache = new Map();
   const statusEffectSpriteCache = new Map();
   const uiSpriteCache = new Map();
   const BACKGROUND_SRC = "assets/backgrounds/picnic-arena-background-v1-2048x1280.webp";
+  const REALITY_BACKGROUND_SRC = "assets/backgrounds/war-future-market-v1-2048x1280.webp?v=1";
+  const FINAL_VICTORY_CUTSCENE_SRC = "assets/backgrounds/horror/victory-sunset-cutscene-v2.png?v=1";
+  const FINAL_VICTORY_IDEAL_SRC = "assets/backgrounds/horror/victory-idealized-market-v1.png?v=1";
   const UPGRADE_STAR_SRC = "assets/ui/runtime/upgrade-star-v2.png";
   const SHOP_LOCKED_SRC = "assets/ui/runtime/shop-lock-locked-v1.png";
   const SHOP_UNLOCKED_SRC = "assets/ui/runtime/shop-lock-unlocked-v1.png";
   const STATUS_HEART_SRC = "assets/ui/runtime/status-heart-v1.png";
   const STATUS_COIN_SRC = "assets/ui/runtime/status-coin-v1.png";
   const BOARD_PLATE_SLOT_SRC = "assets/items/runtime/board_plate-minimal-v1.webp?v=1";
+  const REALITY_BOARD_PLATE_SLOT_SRC = "assets/items/runtime/combat_plate-horror-v1.png?v=1";
   const DRINK_COASTER_SLOT_SRC = "assets/items/runtime/drink_coaster-minimal-v1.png?v=1";
+  const REALITY_DRINK_COASTER_SLOT_SRC = "assets/items/runtime/combat_coaster-horror-v1.png?v=1";
   const TOPPING_CUTTING_BOARD_SLOT_SRC = "assets/items/runtime/topping_cutting_board-stall-v2.png?v=1";
+  const REALITY_TOPPING_STORAGE_SLOT_SRC = "assets/items/runtime/topping_storage-horror-v1.png?v=1";
   const UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-v1.png";
+  const REALITY_UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-war-v2.png?v=1";
   const STATUS_CHALK_COURSE_SRC = "assets/ui/runtime/status-chalk-course-v1.webp";
   const STATUS_CHALK_COINS_SRC = "assets/ui/runtime/status-chalk-coins-v1.webp";
   const STATUS_CHALK_HEALTH_SRC = "assets/ui/runtime/status-chalk-health-v1.webp";
+  const REALITY_STATUS_WAVE_SRC = "assets/ui/runtime/status-war-wave-v2.webp?v=1";
+  const REALITY_STATUS_SCRAP_SRC = "assets/ui/runtime/status-war-scrap-v2.webp?v=1";
+  const REALITY_STATUS_HULL_SRC = "assets/ui/runtime/status-war-hull-v2.webp?v=1";
   const UI_ICON_ATLAS_CELL = 64;
   const UI_ICON_ATLAS = {
     trait_breakfast: [0, 0],
@@ -4024,6 +4968,266 @@
       4: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_market-bowl-basilisk_idle_SW_00.png",
     },
   };
+  const REALITY_RUNTIME_SPRITES = {
+    toast_tortoise: {
+      1: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk4_idle_SW_00.png?v=1",
+    },
+    sushi_seal: {
+      1: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk4_idle_SW_00.png?v=1",
+    },
+    taco_tiger: {
+      1: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk4_idle_SW_00.png?v=1",
+    },
+    berry_bat: {
+      1: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk4_idle_SW_00.png?v=1",
+    },
+    noodle_newt: {
+      1: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk4_idle_SW_00.png?v=1",
+    },
+    pancake_penguin: {
+      1: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk4_idle_SW_00.png?v=1",
+    },
+    pretzel_python: {
+      1: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk4_idle_SW_00.png?v=1",
+    },
+    popcorn_porcupine: {
+      1: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk4_idle_SW_00.png?v=1",
+    },
+    yogurt_yeti: {
+      1: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk4_idle_SW_00.png?v=1",
+    },
+    bagel_beaver: {
+      1: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk4_idle_SW_00.png?v=1",
+    },
+    bao_bun_badger: {
+      1: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk4_idle_SW_00.png?v=1",
+    },
+    donut_dodo: {
+      1: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk4_idle_SW_00.png?v=1",
+    },
+    kimchi_chameleon: {
+      1: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk4_idle_SW_00.png?v=1",
+    },
+    waffle_walrus: {
+      1: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk4_idle_SW_00.png?v=1",
+    },
+    dumpling_armadillo: {
+      1: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk4_idle_SW_00.png?v=1",
+    },
+    lemon_meringue_lynx: {
+      1: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk4_idle_SW_00.png?v=1",
+    },
+    shakshuka_shark: {
+      1: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk4_idle_SW_00.png?v=1",
+    },
+    saltwater_taffy_otter: {
+      1: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk4_idle_SW_00.png?v=1",
+    },
+    croissant_kraken: {
+      1: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk4_idle_SW_00.png?v=1",
+    },
+    fortune_cookie_fox: {
+      1: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk4_idle_SW_00.png?v=1",
+    },
+    mochi_mammoth: {
+      1: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk4_idle_SW_00.png?v=1",
+    },
+    gingerbread_golem: {
+      1: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk4_idle_SW_00.png?v=1",
+    },
+    boba_basilisk: {
+      1: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk4_idle_SW_00.png?v=1",
+    },
+    iceberg_oyster: {
+      1: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk4_idle_SW_00.png?v=1",
+    },
+    herb_hare: {
+      1: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk4_idle_SW_00.png?v=1",
+    },
+    green_juice_goose: {
+      1: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk4_idle_SW_00.png?v=1",
+    },
+    caprese_capybara: {
+      1: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk4_idle_SW_00.png?v=1",
+    },
+    vinaigrette_viper: {
+      1: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk4_idle_SW_00.png?v=1",
+    },
+    kelp_koala: {
+      1: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk4_idle_SW_00.png?v=1",
+    },
+    melon_mint_mantis: {
+      1: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk4_idle_SW_00.png?v=1",
+    },
+    coconut_shrimp_sheep: {
+      1: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk4_idle_SW_00.png?v=1",
+    },
+    crab_cake_caterpillar: {
+      1: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk4_idle_SW_00.png?v=1",
+    },
+    pico_de_gallo_gecko: {
+      1: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk4_idle_SW_00.png?v=1",
+    },
+    pepper_prawn: {
+      1: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk4_idle_SW_00.png?v=1",
+    },
+    hot_chip_hamster: {
+      1: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk4_idle_SW_00.png?v=1",
+    },
+    benedict_lobster: {
+      1: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk4_idle_SW_00.png?v=1",
+    },
+    curry_crab: {
+      1: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk4_idle_SW_00.png?v=1",
+    },
+    churro_cheetah: {
+      1: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk4_idle_SW_00.png?v=1",
+    },
+    granola_goat: {
+      1: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk4_idle_SW_00.png?v=1",
+    },
+    breakfast_burrito_boar: {
+      1: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk4_idle_SW_00.png?v=1",
+    },
+    caesar_salamander: {
+      1: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk4_idle_SW_00.png?v=1",
+    },
+    cucumber_cobra: {
+      1: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk4_idle_SW_00.png?v=1",
+    },
+    avocado_axolotl: {
+      1: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk4_idle_SW_00.png?v=1",
+    },
+  };
   const DEFEAT_STILL_SPRITES = {
     toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-defeat-food-v1.png",
     sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-defeat-food-v1.png",
@@ -4069,6 +5273,51 @@
     crab_cake_caterpillar: "assets/sprites/runtime/defeat-stills/crab-cake-caterpillar-defeat-food-v1.png",
     pico_de_gallo_gecko: "assets/sprites/runtime/defeat-stills/pico-de-gallo-gecko-defeat-food-v1.png",
   };
+  const REALITY_DEFEAT_STILL_SPRITES = {
+    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v3.png?v=1",
+    sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-war-machine-defeat-v2.png?v=1",
+    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-war-machine-defeat-v2.png?v=1",
+    berry_bat: "assets/sprites/runtime/defeat-stills/berry-bat-war-machine-defeat-v1.png?v=1",
+    noodle_newt: "assets/sprites/runtime/defeat-stills/noodle-newt-war-machine-defeat-v1.png?v=1",
+    pancake_penguin: "assets/sprites/runtime/defeat-stills/pancake-penguin-war-machine-defeat-v1.png?v=1",
+    pretzel_python: "assets/sprites/runtime/defeat-stills/pretzel-python-war-machine-defeat-v1.png?v=1",
+    popcorn_porcupine: "assets/sprites/runtime/defeat-stills/popcorn-porcupine-war-machine-defeat-v1.png?v=1",
+    yogurt_yeti: "assets/sprites/runtime/defeat-stills/yogurt-yeti-war-machine-defeat-v2.png?v=1",
+    bagel_beaver: "assets/sprites/runtime/defeat-stills/bagel-beaver-war-machine-defeat-v2.png?v=1",
+    bao_bun_badger: "assets/sprites/runtime/defeat-stills/bao-bun-badger-war-machine-defeat-v1.png?v=1",
+    donut_dodo: "assets/sprites/runtime/defeat-stills/donut-dodo-war-machine-defeat-v2.png?v=1",
+    kimchi_chameleon: "assets/sprites/runtime/defeat-stills/kimchi-chameleon-war-machine-defeat-v1.png?v=1",
+    waffle_walrus: "assets/sprites/runtime/defeat-stills/waffle-walrus-war-machine-defeat-v2.png?v=1",
+    dumpling_armadillo: "assets/sprites/runtime/defeat-stills/dumpling-armadillo-war-machine-defeat-v3.png?v=1",
+    lemon_meringue_lynx: "assets/sprites/runtime/defeat-stills/lemon-meringue-lynx-war-machine-defeat-v3.png?v=1",
+    shakshuka_shark: "assets/sprites/runtime/defeat-stills/shakshuka-shark-war-machine-defeat-v3.png?v=1",
+    saltwater_taffy_otter: "assets/sprites/runtime/defeat-stills/saltwater-taffy-otter-war-machine-defeat-v3.png?v=1",
+    croissant_kraken: "assets/sprites/runtime/defeat-stills/croissant-kraken-war-machine-defeat-v3.png?v=1",
+    fortune_cookie_fox: "assets/sprites/runtime/defeat-stills/fortune-cookie-fox-war-machine-defeat-v3.png?v=1",
+    mochi_mammoth: "assets/sprites/runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v3.png?v=1",
+    gingerbread_golem: "assets/sprites/runtime/defeat-stills/gingerbread-golem-war-machine-defeat-v3.png?v=1",
+    boba_basilisk: "assets/sprites/runtime/defeat-stills/boba-basilisk-war-machine-defeat-v3.png?v=1",
+    iceberg_oyster: "assets/sprites/runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v3.png?v=1",
+    herb_hare: "assets/sprites/runtime/defeat-stills/herb-hare-war-machine-defeat-v1.png?v=1",
+    green_juice_goose: "assets/sprites/runtime/defeat-stills/green-juice-goose-war-machine-defeat-v1.png?v=1",
+    caprese_capybara: "assets/sprites/runtime/defeat-stills/caprese-capybara-war-machine-defeat-v1.png?v=1",
+    vinaigrette_viper: "assets/sprites/runtime/defeat-stills/vinaigrette-viper-war-machine-defeat-v1.png?v=1",
+    kelp_koala: "assets/sprites/runtime/defeat-stills/kelp-koala-war-machine-defeat-v1.png?v=1",
+    melon_mint_mantis: "assets/sprites/runtime/defeat-stills/melon-mint-mantis-war-machine-defeat-v1.png?v=1",
+    coconut_shrimp_sheep: "assets/sprites/runtime/defeat-stills/coconut-shrimp-sheep-war-machine-defeat-v1.png?v=1",
+    crab_cake_caterpillar: "assets/sprites/runtime/defeat-stills/crab-cake-caterpillar-war-machine-defeat-v1.png?v=1",
+    pico_de_gallo_gecko: "assets/sprites/runtime/defeat-stills/pico-de-gallo-gecko-war-machine-defeat-v1.png?v=1",
+    pepper_prawn: "assets/sprites/runtime/defeat-stills/pepper-prawn-war-machine-defeat-v1.png?v=1",
+    hot_chip_hamster: "assets/sprites/runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v1.png?v=1",
+    benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v1.png?v=1",
+    curry_crab: "assets/sprites/runtime/defeat-stills/curry-crab-war-machine-defeat-v1.png?v=1",
+    churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v1.png?v=1",
+    granola_goat: "assets/sprites/runtime/defeat-stills/granola-goat-war-machine-defeat-v1.png?v=1",
+    breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v1.png?v=1",
+    caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v1.png?v=1",
+    cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v1.png?v=1",
+    avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v1.png?v=1",
+  };
   let unitSeq = 1;
 
   function randInt(max) {
@@ -4109,7 +5358,8 @@
 
   function itemDisplayShort(item) {
     const tier = itemTier(item?.tier);
-    return tier > 1 ? `${item.short} ${tier}` : item.short;
+    const itemShort = displayItemShort(item);
+    return tier > 1 ? `${itemShort} ${tier}` : itemShort;
   }
 
   function scaleItemForTier(item, tier = 1) {
@@ -4205,7 +5455,7 @@
   }
 
   function itemCardText(item) {
-    return itemPrimaryCardText(item) || item?.cardText || item?.abilityText || "Topping";
+    return itemPrimaryCardText(item) || item?.cardText || item?.abilityText || displayEntryTypeLabel(item);
   }
 
   function percentText(value) {
@@ -4620,8 +5870,287 @@
   }
 
   function currentShopkeeperSrc() {
+    if (realityBroken()) return REALITY_SHOPKEEPER_SRC;
     const index = Math.max(0, Math.min(SHOPKEEPER_LEVEL_SRCS.length - 1, state.shopLevel - 1));
     return SHOPKEEPER_LEVEL_SRCS[index] || SHOPKEEPER_SRC;
+  }
+
+  function currentShopkeeperStallSrc() {
+    return realityBroken() ? REALITY_SHOPKEEPER_STALL_SRC : SHOPKEEPER_STALL_SRC;
+  }
+
+  function currentShopSlotBgSrc() {
+    return realityBroken() ? REALITY_SHOP_SLOT_BG_SRC : SHOP_SLOT_BG_SRC;
+  }
+
+  function currentShopLockClothBgSrc() {
+    return realityBroken() ? REALITY_SHOP_LOCK_CLOTH_BG_SRC : SHOP_LOCK_CLOTH_BG_SRC;
+  }
+
+  function currentBenchSlotBgSrc() {
+    return realityBroken() ? REALITY_BENCH_SLOT_BG_SRC : BENCH_SLOT_BG_SRC;
+  }
+
+  function currentTeamIntelBgSrc() {
+    return realityBroken() ? REALITY_TEAM_INTEL_BG_SRC : TEAM_INTEL_BG_SRC;
+  }
+
+  function currentFoodMenuBgSrc() {
+    return realityBroken() ? REALITY_FOOD_MENU_BG_SRC : FOOD_MENU_BG_SRC;
+  }
+
+  function currentCodexMenuButtonSrc() {
+    return realityBroken() ? REALITY_CODEX_MENU_BUTTON_SRC : CODEX_MENU_BUTTON_SRC;
+  }
+
+  function currentUiIconAtlasSrc() {
+    return realityBroken() ? REALITY_UI_ICON_ATLAS_SRC : UI_ICON_ATLAS_SRC;
+  }
+
+  function currentCodexMenuButtonRect() {
+    return realityBroken() ? SHOPKEEPER_DISPLAY.realityCodexButton : SHOPKEEPER_DISPLAY.codexButton;
+  }
+
+  function currentBattleFieldBgSrc() {
+    return realityBroken() ? REALITY_BATTLE_FIELD_BG_SRC : BATTLE_FIELD_BG_SRC;
+  }
+
+  function currentBoardPlateSlotSrc() {
+    return realityBroken() ? REALITY_BOARD_PLATE_SLOT_SRC : BOARD_PLATE_SLOT_SRC;
+  }
+
+  function currentDrinkCoasterSlotSrc() {
+    return realityBroken() ? REALITY_DRINK_COASTER_SLOT_SRC : DRINK_COASTER_SLOT_SRC;
+  }
+
+  function currentToppingStorageSlotSrc() {
+    return realityBroken() ? REALITY_TOPPING_STORAGE_SLOT_SRC : TOPPING_CUTTING_BOARD_SLOT_SRC;
+  }
+
+  function currentStatusBoardSrc(kind) {
+    if (!realityBroken()) {
+      if (kind === "coins") return STATUS_CHALK_COINS_SRC;
+      if (kind === "health") return STATUS_CHALK_HEALTH_SRC;
+      return STATUS_CHALK_COURSE_SRC;
+    }
+    if (kind === "coins") return REALITY_STATUS_SCRAP_SRC;
+    if (kind === "health") return REALITY_STATUS_HULL_SRC;
+    return REALITY_STATUS_WAVE_SRC;
+  }
+
+  function currentButtonSignSrc(button) {
+    if (!realityBroken()) return button.signSrc;
+    const label = String(button?.label || "").toLowerCase();
+    if (button === buttons.shopUpgrade || label.includes("rig") || label.includes("lv ") || label.includes("max rig")) return REALITY_COMMAND_RIG_SRC;
+    if (button === buttons.roll || label.includes("scan")) return REALITY_COMMAND_SCAN_SRC;
+    if (button === buttons.battle || label.includes("deploy")) return REALITY_COMMAND_DEPLOY_SRC;
+    if (button === buttons.battleSpeed || label.includes("speed")) return REALITY_COMMAND_SPEED_SRC;
+    if (button?.signSrc === RESTART_CHALK_SIGN_SRC || label.includes("reboot") || label.includes("restart")) return REALITY_COMMAND_REBOOT_SRC;
+    return button.signSrc;
+  }
+
+  function realityBroken() {
+    if (state.realityOverride !== null && state.realityOverride !== undefined) return Boolean(state.realityOverride);
+    return Boolean(state.realityBroken);
+  }
+
+  function currentCopyThemeId() {
+    return realityBroken() ? "horror" : "cozy";
+  }
+
+  function copyLookup(path, themeId = currentCopyThemeId()) {
+    const theme = COPY_THEMES[themeId];
+    if (!theme) return undefined;
+    const parts = Array.isArray(path) ? path : String(path || "").split(".");
+    let value = theme;
+    for (const part of parts) {
+      if (value === null || value === undefined || part === "") return undefined;
+      value = value[part];
+    }
+    return value;
+  }
+
+  function copy(path, fallback, context = {}) {
+    const value = copyLookup(path);
+    if (typeof value === "function") return value(context, fallback);
+    return value === undefined || value === null ? fallback : value;
+  }
+
+  function copyObject(path, fallback = null) {
+    const value = copyLookup(path);
+    return value && typeof value === "object" && !Array.isArray(value) ? value : fallback;
+  }
+
+  function displayItemName(item) {
+    return copy(["items", item?.id, "name"], item?.name || "");
+  }
+
+  function displayItemShort(item) {
+    return copy(["items", item?.id, "short"], item?.short || displayItemName(item));
+  }
+
+  function displayUnitLineName(unit) {
+    return copy(["units", unit?.typeId || unit?.id, "lineName"], unit?.lineName || unit?.name || "");
+  }
+
+  function displayUnitFormName(unit) {
+    const value = copyLookup(["units", unit?.typeId || unit?.id, "forms", String(unit?.tier || 1), "name"]);
+    if (value) return value;
+    if (currentCopyThemeId() === "horror" && unit) return `${displayUnitLineName(unit)} Mk ${unit.tier || 1}`;
+    return unit?.name || "";
+  }
+
+  function displayUnitShort(unit) {
+    const value = copyLookup(["units", unit?.typeId || unit?.id, "forms", String(unit?.tier || 1), "short"]);
+    if (value) return value;
+    if (currentCopyThemeId() === "horror" && unit) {
+      const lineShort = copyLookup(["units", unit?.typeId || unit?.id, "short"]);
+      return lineShort ? `${lineShort} ${unit.tier || 1}` : displayUnitFormName(unit);
+    }
+    return unit?.short || displayUnitFormName(unit);
+  }
+
+  function displayCatalogName(animal) {
+    return copy(["units", animal?.id, "lineName"], animal?.name || "");
+  }
+
+  function displayCatalogShort(animal) {
+    return copy(["units", animal?.id, "short"], animal?.short || displayCatalogName(animal));
+  }
+
+  function displayCatalogForm(animal, tier, field = "name") {
+    const form = animal?.forms?.[Math.max(0, tier - 1)] || {};
+    const value = copyLookup(["units", animal?.id, "forms", String(tier), field]);
+    if (value) return value;
+    if (currentCopyThemeId() === "horror" && animal) {
+      return field === "short" ? `Mk ${tier}` : `${displayCatalogName(animal)} Mk ${tier}`;
+    }
+    return form[field] || form.name || animal?.name || "";
+  }
+
+  function displayEntryTypeLabel(entry) {
+    if (isUnit(entry)) return copy("ui.types.food", "Food animal");
+    if (isDrink(entry)) return copy("ui.types.drink", "Drink");
+    if (isItem(entry)) return copy("ui.types.topping", "Topping");
+    return "Entry";
+  }
+
+  function displayRoleLabel(role) {
+    return copy(["roles", role], role || "");
+  }
+
+  function itemRailLabel(item) {
+    return isDrink(item) ? copy("ui.types.drink", "Drink") : copy("ui.types.topping", "Topping");
+  }
+
+  function itemStorageLabel(item) {
+    return `${itemRailLabel(item)} storage`;
+  }
+
+  function themeColor(name, fallback) {
+    if (!realityBroken()) return fallback;
+    return {
+      panel: "rgba(3, 10, 12, 0.92)",
+      panelSoft: "rgba(8, 20, 22, 0.84)",
+      panelHover: "rgba(22, 52, 49, 0.92)",
+      panelActive: "rgba(101, 255, 109, 0.24)",
+      primary: "#f2fff7",
+      muted: "#a8d6c0",
+      dim: "#75a08e",
+      accent: "#65ff6d",
+      danger: "#ff6673",
+      warning: "#ffd15b",
+      chipText: "#06100c",
+      border: "rgba(101, 255, 109, 0.56)",
+      borderDim: "rgba(101, 255, 109, 0.24)",
+    }[name] || fallback;
+  }
+
+  function arenaDisplayColor(arena) {
+    if (!realityBroken()) return arena?.color;
+    return HORROR_ARENA_COLORS[arena?.id] || arena?.color;
+  }
+
+  function arenaEffectBadgeColors(helpful) {
+    if (!realityBroken()) {
+      return {
+        fill: helpful ? "#e7ffd9" : "#ffe2d8",
+        stroke: helpful ? "rgba(74, 158, 104, 0.28)" : "rgba(217, 87, 60, 0.28)",
+        label: helpful ? "#24683e" : "#8c3627",
+        text: "#6a4b35",
+      };
+    }
+    return helpful
+      ? {
+        fill: "rgba(101, 255, 109, 0.16)",
+        stroke: "rgba(101, 255, 109, 0.46)",
+        label: "#86ff91",
+        text: "#a8d6c0",
+      }
+      : {
+        fill: "rgba(255, 102, 115, 0.16)",
+        stroke: "rgba(255, 102, 115, 0.50)",
+        label: "#ff9aa4",
+        text: "#ffb0b8",
+      };
+  }
+
+  function themedArena(arena) {
+    const override = copyObject(["arenas", arena?.id], {});
+    const effects = override.effects || arena.effects || [];
+    return {
+      ...arena,
+      name: override.name || arena.name,
+      short: override.short || arena.short,
+      mood: override.mood || arena.mood,
+      backgroundSrc: override.backgroundSrc || arena.backgroundSrc,
+      color: override.color || arenaDisplayColor(arena),
+      effects: effects.map((effect) => ({ ...effect })),
+    };
+  }
+
+  function triggerRealityBreak() {
+    state.realityBroken = true;
+    state.realityBreakTimer = 5.5;
+    state.message = copy("ui.reality.triggerMessage", "ILLUSION FAILURE - combat layer exposed");
+    state.log.unshift(copy("ui.reality.triggerLog", "Illusion failed: future war layer exposed"));
+  }
+
+  function setRealityTheme(mode = "auto") {
+    state.realityOverride = normalizeRealityOverride(mode);
+    if (state.realityOverride === true) {
+      state.realityBreakTimer = Math.max(state.realityBreakTimer || 0, 1.6);
+      state.message = copy("ui.reality.forcedHorror", "Horror layer forced");
+    } else if (state.realityOverride === false) {
+      state.realityBreakTimer = 0;
+      state.message = "Cozy illusion forced";
+    } else {
+      state.message = realityBroken()
+        ? copy("ui.reality.autoBroken", "Combat layer active")
+        : "Auto theme";
+    }
+    draw();
+    return { override: state.realityOverride, broken: realityBroken() };
+  }
+
+  function cycleRealityThemeOverride() {
+    if (state.realityOverride === null || state.realityOverride === undefined) return setRealityTheme("horror");
+    if (state.realityOverride === true) return setRealityTheme("cozy");
+    return setRealityTheme("auto");
+  }
+
+  function statusLabel(label) {
+    return copy(["ui", "status", label], label);
+  }
+
+  function actionLabel(label) {
+    if (label.startsWith("Lv ")) {
+      const upgradeLabel = copyLookup(["ui", "actions", "Upgrade"]);
+      return upgradeLabel ? `${upgradeLabel}${label.slice(2)}` : label;
+    }
+    if (label === "Max Lv") return copy(["ui", "actions", "Max Lv"], label);
+    if (label === "Speed 1x" || label.startsWith("Speed ")) return label.replace("Speed", copy(["ui", "actions", "Speed"], "Speed"));
+    return copy(["ui", "actions", label], label);
   }
 
   function shopRarityOdds() {
@@ -4707,10 +6236,14 @@
   }
 
   function rarityInfo(rarityId) {
-    return RARITIES[rarityId] || RARITIES.common;
+    const base = RARITIES[rarityId] || RARITIES.common;
+    if (!realityBroken()) return base;
+    return { ...base, ...(HORROR_RARITIES[base.id] || {}) };
   }
 
   function familyLabel(familyId) {
+    const themed = copyLookup(["families", familyId]);
+    if (themed) return themed;
     return String(familyId || "meal")
       .split("-")
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -4718,12 +6251,20 @@
   }
 
   function traitInfo(traitId) {
-    return TRAITS[traitId] || {
+    const base = TRAITS[traitId] || {
       id: traitId,
       label: familyLabel(traitId),
       short: String(traitId || "?").slice(0, 3).toUpperCase(),
       color: "#8a6a3f",
       thresholds: [],
+    };
+    const override = copyObject(["traits", traitId], {});
+    return {
+      ...base,
+      label: override.label || base.label,
+      short: override.short || base.short,
+      color: realityBroken() ? (HORROR_TRAIT_COLORS[traitId] || base.color) : base.color,
+      thresholds: override.thresholds || base.thresholds,
     };
   }
 
@@ -4837,8 +6378,8 @@
     const item = itemInfo(favorite.itemId);
     return {
       itemId: favorite.itemId,
-      itemName: item.name,
-      itemShort: item.short,
+      itemName: displayItemName(item),
+      itemShort: displayItemShort(item),
       bonus: favorite.bonus,
       specs: favoriteToppingSpecLines(unit),
       technicalSpecs: favoriteToppingTechnicalSpecLines(unit),
@@ -4863,11 +6404,11 @@
 
   function favoriteToppingCompactSpecLine(unit) {
     const item = favoriteToppingPreviewItem(unit);
-    return item ? `Topping: ${itemCompactSpecLine(item)}` : null;
+    return item ? `${displayEntryTypeLabel(item)}: ${itemCompactSpecLine(item)}` : null;
   }
 
   function favoriteToppingTechnicalSpecLines(unit) {
-    return favoriteToppingItemSpecLines(unit).map((line) => `Topping: ${line}`);
+    return favoriteToppingItemSpecLines(unit).map((line) => `${copy("ui.types.topping", "Topping")}: ${line}`);
   }
 
   function favoriteToppingSpecLines(unit) {
@@ -4893,7 +6434,7 @@
   function favoriteUsersForItem(itemId) {
     return CATALOG
       .filter((unit) => FAVORITE_TOPPINGS[unit.id]?.itemId === itemId)
-      .map((unit) => unit.short);
+      .map((unit) => displayCatalogShort(unit));
   }
 
   function randomArenaId(excludeId = null) {
@@ -4913,19 +6454,20 @@
   function setArena(arenaId) {
     const arena = arenaInfo(arenaId);
     state.arenaId = arena.id;
-    if (state.phase === "prep") state.message = arena.short;
+    if (state.phase === "prep") state.message = themedArena(arena).short;
     draw();
     return currentArena();
   }
 
   function arenaText(arena = currentArena()) {
+    const displayArena = themedArena(arena);
     return {
-      id: arena.id,
-      name: arena.name,
-      short: arena.short,
-      mood: arena.mood,
-      backgroundSrc: arena.backgroundSrc,
-      effects: arena.effects.map((effect) => ({ ...effect })),
+      id: displayArena.id,
+      name: displayArena.name,
+      short: displayArena.short,
+      mood: displayArena.mood,
+      backgroundSrc: displayArena.backgroundSrc,
+      effects: displayArena.effects.map((effect) => ({ ...effect })),
     };
   }
 
@@ -5123,6 +6665,7 @@
     state.enemyPreview = null;
     refreshShop(true);
     ensureEnemyPreview();
+    if (realityBroken()) state.message = "War prep";
   }
 
   function currentRollCost() {
@@ -5186,8 +6729,7 @@
   }
 
   function itemStorageFullMessage(item) {
-    if (isDrink(item)) return "Drink rack full";
-    if (isTopping(item)) return "Topping rack full";
+    if (isItem(item)) return `${itemStorageLabel(item)} full`;
     return "Bench full";
   }
 
@@ -5355,6 +6897,58 @@
     }
     return [...state.bench.map((_, index) => ({ area: "bench", index })), ...state.board.map((_, index) => ({ area: "board", index }))]
       .some((target) => canMergeShopEntryIntoSlot(entry, target.area, target.index));
+  }
+
+  function shopEntryMergeOpportunity(entry) {
+    if (!entry) return null;
+    if (isItem(entry)) {
+      if (itemTier(entry.tier) >= MAX_ITEM_TIER) return null;
+      const progress = itemMergeProgressCount(entry.id, entry.tier);
+      if (progress + 1 < 3) return null;
+      return {
+        kind: "item",
+        progress,
+        incomingProgress: 1,
+        required: 3,
+        text: `${Math.min(3, progress + 1)}/3 ready`,
+      };
+    }
+    if (!isUnit(entry) || entry.tier >= unitMaxTier(entry)) return null;
+    const progress = allOwnedRefs()
+      .filter((ref) => unitMatchesMerge(entry, ref.unit))
+      .reduce((total, ref) => total + mergeProgressFor(ref), 0);
+    const incomingProgress = 1;
+    const phantomProgress = fortunePhantomCopy(entry.typeId, entry.tier, progress + incomingProgress);
+    if (progress + incomingProgress + phantomProgress < 3) return null;
+    return {
+      kind: "unit",
+      progress,
+      incomingProgress,
+      phantomProgress,
+      required: 3,
+      text: `${Math.min(3, progress + incomingProgress + phantomProgress)}/3 ready`,
+    };
+  }
+
+  function shopSlotMergeOpportunity(index) {
+    if (!isShopSlotUnlocked(index) || !state.shop[index]) return null;
+    const opportunity = shopEntryMergeOpportunity(state.shop[index]);
+    if (!opportunity || !hasShopMergeTarget(state.shop[index])) return null;
+    return opportunity;
+  }
+
+  function ownedSlotShopMergeOpportunity(area, index) {
+    if (!["bench", "board", "itemBench", "drinks"].includes(area)) return null;
+    if (!state[area]?.[index]) return null;
+    for (let shopIndex = 0; shopIndex < state.shop.length; shopIndex += 1) {
+      const entry = state.shop[shopIndex];
+      if (!isShopSlotUnlocked(shopIndex) || !entry) continue;
+      const opportunity = shopEntryMergeOpportunity(entry);
+      if (opportunity && canMergeShopEntryIntoSlot(entry, area, index)) {
+        return { shopIndex, entry, ...opportunity };
+      }
+    }
+    return null;
   }
 
   function clearPurchasedShopSlot(shopIndex) {
@@ -5541,15 +7135,15 @@
     if (isItem(entry)) {
       if (isDrink(entry)) {
         if (targetArea !== "bench" && targetArea !== "drinks" && targetArea !== "itemBench") {
-          state.message = "Drop drinks on rails";
+          state.message = `Drop ${copy("ui.types.drink", "drinks")} on rails`;
           return false;
         }
       } else if (targetArea !== "bench" && targetArea !== "itemBench") {
-        state.message = "Store toppings on bench";
+        state.message = `Store ${copy("ui.types.topping", "toppings")} on bench`;
         return false;
       }
       if (targetArea === "itemBench" && !itemBenchSlotAccepts(targetIndex, entry)) {
-        state.message = isDrink(entry) ? "Drink slots only" : "Topping slots only";
+        state.message = `${itemRailLabel(entry)} slots only`;
         return false;
       }
     }
@@ -5570,7 +7164,7 @@
     markItemDiscountUsed(entry, shopIndex, cost);
     state[targetArea][targetIndex] = entry;
     clearPurchasedShopSlot(shopIndex);
-    state.message = isDrink(entry) && targetArea === "drinks" ? `${entry.short} poured` : `${entry.short} bought`;
+    state.message = isDrink(entry) && targetArea === "drinks" ? (realityBroken() ? `${displayItemShort(entry)} loaded` : `${entry.short} poured`) : `${entry.short} bought`;
     if (isUnit(entry)) resolveMerges();
     if (isItem(entry)) resolveItemMerges();
     return true;
@@ -5585,7 +7179,7 @@
     const item = state.shop[shopIndex];
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
-      state.message = "Pick a topping";
+      state.message = `Pick a ${copy("ui.types.topping", "topping")}`;
       return false;
     }
     const cost = purchaseCost(item, shopIndex);
@@ -5594,15 +7188,15 @@
       return false;
     }
     if (targetArea !== "bench" && targetArea !== "board") {
-      state.message = "Drop on animal";
+      state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
       return false;
     }
     if (!isUnit(unit)) {
-      state.message = "Drop on animal";
+      state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
       return false;
     }
     if (unit.item) {
-      state.message = "Already topped";
+      state.message = realityBroken() ? "Already armed" : "Already topped";
       return false;
     }
     state.gold -= cost;
@@ -5613,7 +7207,7 @@
     state.shopFrozen[shopIndex] = false;
     state.shopSales[shopIndex] = false;
     state.selected = { area: targetArea, index: targetIndex };
-    state.message = `${unit.short} topped`;
+    state.message = realityBroken() ? `${displayUnitShort(unit)} armed` : `${displayUnitShort(unit)} topped`;
     return true;
   }
 
@@ -5684,22 +7278,22 @@
     const item = state[sourceArea]?.[itemIndex];
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
-      state.message = "Pick a topping";
+      state.message = `Pick a ${copy("ui.types.topping", "topping")}`;
       return false;
     }
     if (!isUnit(unit)) {
-      state.message = "Drop on animal";
+      state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
       return false;
     }
     if (unit.item) {
-      state.message = "Already topped";
+      state.message = realityBroken() ? "Already armed" : "Already topped";
       return false;
     }
     state[sourceArea][itemIndex] = null;
     unit.item = item;
     refreshUnitItemStats(unit);
     state.selected = { area: targetArea, index: targetIndex };
-    state.message = `${unit.short} topped`;
+    state.message = realityBroken() ? `${displayUnitShort(unit)} armed` : `${displayUnitShort(unit)} topped`;
     return true;
   }
 
@@ -5721,7 +7315,7 @@
     if (!source?.unit?.item || state.phase !== "prep") return false;
     const item = source.unit.item;
     if (!itemStorageAccepts(targetArea, targetIndex, item)) {
-      state.message = isDrink(item) ? "Drink slots only" : "Topping slots only";
+      state.message = `${itemRailLabel(item)} slots only`;
       return false;
     }
     if (state[targetArea][targetIndex]) {
@@ -5732,7 +7326,7 @@
     refreshUnitItemStats(source.unit);
     state[targetArea][targetIndex] = item;
     state.selected = { area: targetArea, index: targetIndex };
-    state.message = `${source.unit.short} untopped`;
+    state.message = realityBroken() ? `${displayUnitShort(source.unit)} disarmed` : `${displayUnitShort(source.unit)} untopped`;
     resolveItemMerges();
     return true;
   }
@@ -5746,11 +7340,11 @@
     const target = state[targetArea]?.[targetIndex];
     if (!source?.unit?.item || state.phase !== "prep") return false;
     if (!isUnit(target)) {
-      state.message = "Drop on animal";
+      state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
       return false;
     }
     if (target.item) {
-      state.message = "Already topped";
+      state.message = realityBroken() ? "Already armed" : "Already topped";
       return false;
     }
     if (source.area === targetArea && source.index === targetIndex) {
@@ -5763,7 +7357,7 @@
     target.item = item;
     refreshUnitItemStats(target);
     state.selected = { area: targetArea, index: targetIndex };
-    state.message = `${target.short} topped`;
+    state.message = realityBroken() ? `${displayUnitShort(target)} armed` : `${target.short} topped`;
     return true;
   }
 
@@ -5771,21 +7365,21 @@
     if (state.phase !== "prep") return false;
     const item = state[sourceArea]?.[itemIndex];
     if (!isDrink(item)) {
-      state.message = "Pick a drink";
+      state.message = `Pick a ${copy("ui.types.drink", "drink")}`;
       return false;
     }
     if (!drinkSlots[drinkIndex]) {
-      state.message = "Drop on drink rail";
+      state.message = `Drop on ${copy("ui.types.drink", "drink")} rail`;
       return false;
     }
     if (state.drinks[drinkIndex]) {
-      state.message = "Drink slot full";
+      state.message = `${copy("ui.types.drink", "Drink")} slot full`;
       return false;
     }
     state[sourceArea][itemIndex] = null;
     state.drinks[drinkIndex] = item;
     state.selected = { area: "drinks", index: drinkIndex };
-    state.message = `${item.short} poured`;
+    state.message = realityBroken() ? `${displayItemShort(item)} loaded` : `${displayItemShort(item)} poured`;
     resolveItemMerges();
     return true;
   }
@@ -5805,7 +7399,7 @@
     state[spot.area][spot.index] = ref.unit.item;
     ref.unit.item = null;
     refreshUnitItemStats(ref.unit);
-    state.message = `${ref.unit.short} untopped`;
+    state.message = realityBroken() ? `${displayUnitShort(ref.unit)} disarmed` : `${displayUnitShort(ref.unit)} untopped`;
     resolveItemMerges();
     return true;
   }
@@ -5836,8 +7430,8 @@
     if (item) moveItemToBench(item);
     state.selected = null;
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
-    state.message = `${unit.short} sold +${value} coins`;
-    state.log.unshift(`Sold ${unit.name} for ${value} coins`);
+    state.message = `${displayUnitShort(unit)} sold +${value} coins`;
+    state.log.unshift(`Sold ${displayUnitFormName(unit)} for ${value} coins`);
     return true;
   }
 
@@ -5852,8 +7446,8 @@
     state[area][index] = null;
     state.selected = null;
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
-    state.message = `${item.short} sold +${value} coins`;
-    state.log.unshift(`Sold ${item.name} for ${value} coins`);
+    state.message = `${displayItemShort(item)} sold +${value} coins`;
+    state.log.unshift(`Sold ${displayItemName(item)} for ${value} coins`);
     return true;
   }
 
@@ -5870,8 +7464,8 @@
     refreshUnitItemStats(source.unit);
     state.selected = { area: source.area, index: source.index };
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
-    state.message = `${item.short} sold +${value} coins`;
-    state.log.unshift(`Sold ${item.name} for ${value} coins`);
+    state.message = `${displayItemShort(item)} sold +${value} coins`;
+    state.log.unshift(`Sold ${displayItemName(item)} for ${value} coins`);
     return true;
   }
 
@@ -5960,7 +7554,7 @@
       if (isItemStorageArea(area)) {
         const target = state[area][index];
         if (!itemStorageAccepts(area, index, moving)) {
-          state.message = isDrink(moving) ? "Drink slots only" : "Topping slots only";
+          state.message = `${itemRailLabel(moving)} slots only`;
           return;
         }
         if (target && !isItem(target)) {
@@ -5982,12 +7576,12 @@
           state[spot.area][spot.index] = target;
         }
         state.selected = null;
-        state.message = target ? "Bench swapped" : isDrink(moving) ? "Drink stored" : "Topping stored";
+        state.message = target ? "Bench swapped" : `${itemRailLabel(moving)} stored`;
         resolveItemMerges();
         return;
       }
       if (isDrink(moving)) {
-        state.message = "Drop on drink rail";
+        state.message = `Drop on ${copy("ui.types.drink", "drink")} rail`;
         return;
       }
       attachItemFromStorage(from.area, from.index, area, index);
@@ -6024,19 +7618,19 @@
           resolveItemMerges();
           return true;
         }
-        state.message = "Drink slot full";
+        state.message = `${copy("ui.types.drink", "Drink")} slot full`;
         return false;
       }
       if (!isItemStorageArea(toArea)) {
-        state.message = isDrink(moving) ? "Drop on drink rail" : "Toppings stay on bench";
+        state.message = isDrink(moving) ? `Drop on ${copy("ui.types.drink", "drink")} rail` : `${copy("ui.types.topping", "Toppings")} stay on bench`;
         return false;
       }
       if (fromArea === toArea && fromIndex === toIndex) {
-        state.message = isDrink(moving) ? "Drink stored" : "Topping stored";
+        state.message = `${itemRailLabel(moving)} stored`;
         return false;
       }
       if (!itemStorageAccepts(toArea, toIndex, moving)) {
-        state.message = isDrink(moving) ? "Drink slots only" : "Topping slots only";
+        state.message = `${itemRailLabel(moving)} slots only`;
         return false;
       }
       const target = state[toArea][toIndex];
@@ -6048,7 +7642,7 @@
         state[toArea][toIndex] = moving;
         state[fromArea][fromIndex] = target;
         state.selected = null;
-        state.message = target ? "Bench swapped" : isDrink(moving) ? "Drink stored" : "Topping stored";
+        state.message = target ? "Bench swapped" : `${itemRailLabel(moving)} stored`;
         resolveItemMerges();
         return true;
       }
@@ -6063,7 +7657,7 @@
       state[toArea][toIndex] = moving;
       state[fromArea][fromIndex] = null;
       state.selected = null;
-      state.message = isDrink(moving) ? "Drink stored" : "Topping stored";
+      state.message = `${itemRailLabel(moving)} stored`;
       resolveItemMerges();
       return true;
     }
@@ -6122,16 +7716,16 @@
   }
 
   function expectedPlayerPowerForRound(round) {
-    return Math.min(34, 2.6 + round * 1.1);
+    return Math.min(32, 3.2 + round * 1.0);
   }
 
   function enemyAdaptivePressure(round) {
     const overage = playerBoardPowerScore() - expectedPlayerPowerForRound(round);
-    return clamp(overage / 18, 0, 0.36);
+    return clamp(overage / 20, 0, 0.28);
   }
 
   function enemyLatePressure(round) {
-    return Math.max(0, round - 12);
+    return Math.max(0, round - 14);
   }
 
   function makeEnemyPlan(round = state.round) {
@@ -6159,8 +7753,8 @@
       targetExtraTier: enemyTargetExtraTier(round, archetype, adaptivePressure),
       tier3Chance: enemyTier3Chance(round, archetype, adaptivePressure),
       tier4Chance: enemyTier4Chance(round, archetype, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.72 + round * 0.045 + latePressure * 0.018 + adaptivePressure * 0.22 + (archetype.statBias || 0)),
-      atkMultiplier: Math.max(0.55, 0.75 + round * 0.04 + latePressure * 0.012 + adaptivePressure * 0.16 + (archetype.statBias || 0)),
+      hpMultiplier: Math.max(0.55, 0.78 + round * 0.034 + latePressure * 0.012 + adaptivePressure * 0.16 + (archetype.statBias || 0)),
+      atkMultiplier: Math.max(0.55, 0.78 + round * 0.032 + latePressure * 0.008 + adaptivePressure * 0.12 + (archetype.statBias || 0)),
       toppingCount: enemySupportCount(round, count, 3, archetype.itemBias || 0),
       drinkCount: enemySupportCount(round, drinkSlots.length, 4, archetype.drinkBias || 0),
       adaptivePressure,
@@ -6217,8 +7811,8 @@
   }
 
   function enemyArchetypeRarityBias(archetype) {
-    if (archetype?.id === "loaded" || archetype?.id === "elite") return 1;
-    if (archetype?.id === "swarm") return -1;
+    if (archetype?.id === "juggernaut" || archetype?.id === "arsenal") return 1;
+    if (archetype?.id === "horde") return -1;
     return 0;
   }
 
@@ -6238,17 +7832,17 @@
   }
 
   function enemyTargetExtraTier(round, archetype, adaptivePressure = 0) {
-    return clamp(Math.min(0.72, round * 0.055) + enemyLatePressure(round) * 0.018 + adaptivePressure * 0.45 + (archetype.tierBias || 0), 0, 1.18);
+    return clamp(Math.min(0.62, round * 0.045) + enemyLatePressure(round) * 0.012 + adaptivePressure * 0.34 + (archetype.tierBias || 0), 0, 0.98);
   }
 
   function enemyTier3Chance(round, archetype, adaptivePressure = 0) {
-    if (round < 7 && adaptivePressure < 0.15) return 0;
-    return clamp((round - 6) * 0.018 + adaptivePressure * 0.12 + (archetype.tier3Bias || 0), 0, 0.34);
+    if (round < 8 && adaptivePressure < 0.15) return 0;
+    return clamp((round - 7) * 0.014 + adaptivePressure * 0.09 + (archetype.tier3Bias || 0), 0, 0.26);
   }
 
   function enemyTier4Chance(round, archetype, adaptivePressure = 0) {
-    if (round < 13 && adaptivePressure < 0.28) return 0;
-    return clamp((round - 12) * 0.01 + adaptivePressure * 0.1 + (archetype.tier3Bias || 0) * 0.5, 0, 0.18);
+    if (round < 15 && adaptivePressure < 0.24) return 0;
+    return clamp((round - 14) * 0.006 + adaptivePressure * 0.07 + (archetype.tier3Bias || 0) * 0.4, 0, 0.1);
   }
 
   function enemyTierForPlan(plan) {
@@ -6268,9 +7862,9 @@
     const latePressure = enemyLatePressure(round);
     return {
       common: 100,
-      uncommon: Math.max(0, Math.round(12 + round * 2.2 + bias * 7)),
-      rare: Math.max(0, Math.round((round - 2) * 2.8 + latePressure * 1.1 + bias * 4)),
-      epic: Math.max(0, Math.round((round - 7) * 1.8 + latePressure * 1.5 + bias * 2)),
+      uncommon: Math.max(0, Math.round(14 + round * 2 + bias * 6)),
+      rare: Math.max(0, Math.round((round - 3) * 2.35 + latePressure * 0.75 + bias * 3.5)),
+      epic: Math.max(0, Math.round((round - 8) * 1.25 + latePressure * 0.85 + bias * 1.6)),
     };
   }
 
@@ -6426,6 +8020,8 @@
       count: plan.count,
       toppingCount: plan.toppingCount,
       drinkCount: plan.drinkCount,
+      hpMultiplier: Number(plan.hpMultiplier.toFixed(2)),
+      atkMultiplier: Number(plan.atkMultiplier.toFixed(2)),
       targetExtraTier: Number(plan.targetExtraTier.toFixed(2)),
       tier3ChancePct: Number((plan.tier3Chance * 100).toFixed(1)),
       tier4ChancePct: Number(((plan.tier4Chance || 0) * 100).toFixed(1)),
@@ -6504,7 +8100,7 @@
     state.phase = "battle";
     state.selected = null;
     state.drag = null;
-    state.message = "Battle";
+    state.message = realityBroken() ? "Simulation malfunction" : "Battle";
   }
 
   function applyDrinkEffects(units, drinks = state.drinks) {
@@ -6782,8 +8378,15 @@
     return [5, 2, 8, 4, 1, 7, 3, 0, 6];
   }
 
+  function roundLossDamage(round) {
+    if (round < 10) return Math.max(1, Math.ceil(round / 3));
+    return Math.min(4, 3 + Math.floor((round - 10) / 8));
+  }
+
   function endBattle(won) {
-    const damage = won ? 0 : Math.max(1, Math.ceil(state.round / 2));
+    const completedRound = state.round;
+    const finalVictory = won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
+    const damage = won ? 0 : roundLossDamage(state.round);
     if (!won) state.hearts = Math.max(0, state.hearts - damage);
     if (won) {
       state.winStreak += 1;
@@ -6798,19 +8401,29 @@
     state.gold = Math.min(ECONOMY.maxGold, state.gold + income.total);
     state.lastIncome = income;
     state.round += 1;
+    const justBrokeReality = !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
+    if (justBrokeReality) triggerRealityBreak();
     state.phase = "result";
     state.enemyPreview = null;
-    state.rewardChoices = state.hearts > 0 ? generateRewardChoices(won) : [];
-    state.message = state.hearts > 0
-      ? `${won ? "Victory" : "Defeat"} +${income.total} coins - choose a reward`
-      : "Run over";
-    state.log.unshift(won ? `Won +${income.total} coins` : `Lost ${damage} hearts +${income.total} coins`);
+    state.rewardChoices = state.hearts > 0 && !finalVictory ? generateRewardChoices(won) : [];
+    state.message = finalVictory
+      ? "Final objective secured"
+      : state.hearts > 0
+      ? realityBroken()
+        ? `${won ? "Target cleared" : "Unit loss"} +${income.total} scrap - choose salvage`
+        : `${won ? "Victory" : "Defeat"} +${income.total} coins - choose a reward`
+      : realityBroken() ? "Core offline" : "Run over";
+    if (justBrokeReality && state.hearts > 0) state.message = "ILLUSION FAILURE - combat layer exposed";
+    state.log.unshift(realityBroken()
+      ? (won ? `Target cleared +${income.total} scrap` : `Hull breach ${damage} +${income.total} scrap`)
+      : (won ? `Won +${income.total} coins` : `Lost ${damage} hearts +${income.total} coins`));
     clearParticles();
     state.battle.attacks = [];
     state.battle.drinkTosses = [];
     state.postCombatBattle = state.battle;
     state.battle = null;
     combatEndExplosion(won);
+    if (finalVictory) startFinalVictoryTransition();
   }
 
   function createCombatLedger(allies, enemies) {
@@ -6819,8 +8432,8 @@
       units[unit.uid] = {
         uid: unit.uid,
         side: unit.side,
-        name: unit.name,
-        short: unit.short,
+        name: displayUnitFormName(unit),
+        short: displayUnitShort(unit),
         typeId: unit.typeId,
         tier: unit.tier,
         damageDealt: 0,
@@ -6846,8 +8459,8 @@
       ledger.units[unit.uid] = {
         uid: unit.uid,
         side: unit.side,
-        name: unit.name,
-        short: unit.short,
+        name: displayUnitFormName(unit),
+        short: displayUnitShort(unit),
         typeId: unit.typeId,
         tier: unit.tier,
         damageDealt: 0,
@@ -6972,7 +8585,7 @@
       ref.unit.permanentHpBonus = (ref.unit.permanentHpBonus || 0) + gain;
       ref.unit.maxHp += gain;
       ref.unit.hp = Math.min(ref.unit.maxHp, ref.unit.hp + gain);
-      state.log.unshift(`${ref.unit.short} gained ${gain} max HP`);
+      state.log.unshift(`${displayUnitShort(ref.unit)} gained ${gain} max HP`);
     });
   }
 
@@ -7039,7 +8652,7 @@
       type: "copy",
       typeId: base.id,
       traitId,
-      title: source === "arena" ? `${currentArena().short}: ${unit.short}` : `${label}: ${unit.short}`,
+      title: source === "arena" ? `${themedArena(currentArena()).short}: ${displayUnitShort(unit)}` : `${label}: ${displayUnitShort(unit)}`,
       body: source === "arena" ? `Arena-favored ${label} copy.` : `Helps push your ${label} tier.`,
       key: `copy:${source}:${traitId}:${base.id}`,
     };
@@ -7054,7 +8667,7 @@
     return {
       type: "copy",
       typeId: base.id,
-      title: `Pivot: ${unit.short}`,
+      title: `Pivot: ${displayUnitShort(unit)}`,
       body: "Off-arena copy for changing lanes.",
       key: `copy:pivot:${base.id}`,
     };
@@ -7072,8 +8685,8 @@
     return {
       type: "item",
       itemId: item.id,
-      title: `${item.short} Favorite`,
-      body: `${unit.short}'s favorite topping.`,
+      title: `${displayItemShort(item)} Favorite`,
+      body: `${displayUnitShort(unit)}'s favorite topping.`,
       key: `favorite:${unit.typeId}:${item.id}`,
     };
   }
@@ -7092,7 +8705,7 @@
     return {
       type: "item",
       itemId: item.id,
-      title: `${currentArena().short}: ${item.short}`,
+      title: `${themedArena(currentArena()).short}: ${displayItemShort(item)}`,
       body: `Topping fits this arena.`,
       key: `arena-item:${currentArena().id}:${item.id}`,
     };
@@ -7106,7 +8719,7 @@
     return {
       type: "copy",
       typeId,
-      title: `${unit.short} Copy`,
+      title: `${displayUnitShort(unit)} Copy`,
       body: "Adds a copy of a line you own.",
       key: `owned-copy:${typeId}`,
     };
@@ -7117,7 +8730,7 @@
     return {
       type: "item",
       itemId: item.id,
-      title: `Free ${item.short}`,
+      title: `Free ${displayItemShort(item)}`,
       body: `${rarityInfo(item.rarity).label} topping.`,
       key: `item:${item.id}`,
     };
@@ -7147,16 +8760,17 @@
 
   function arenaScoutReward() {
     const arena = currentArena();
+    const displayArena = themedArena(arena);
     const traitIds = arenaRewardTraits(arena.id);
     if (!traitIds.length) return null;
     return {
       type: "arenaScout",
       arenaId: arena.id,
-      arenaShort: arena.short,
+      arenaShort: displayArena.short,
       traitIds,
       shopsRemaining: 2,
       freeRolls: 1,
-      title: `${arena.short} Scout`,
+      title: `${displayArena.short} Scout`,
       body: "+1 roll; next 2 shops favor arena traits.",
       key: `arena-scout:${arena.id}`,
     };
@@ -7164,18 +8778,19 @@
 
   function arenaPrepBuffReward() {
     const arena = currentArena();
+    const displayArena = themedArena(arena);
     const traitIds = arenaRewardTraits(arena.id);
     if (!traitIds.length) return null;
     return {
       type: "arenaPrepBuff",
       arenaId: arena.id,
-      arenaShort: arena.short,
+      arenaShort: displayArena.short,
       traitIds,
       shieldPct: 0.12,
       hastePct: 0.1,
       attackPct: 0.08,
       duration: 3,
-      title: `${arena.short} Prep`,
+      title: `${displayArena.short} Prep`,
       body: "Next battle: one favored unit gets buffs.",
       key: `arena-prep:${arena.id}`,
     };
@@ -7183,12 +8798,13 @@
 
   function arenaHoldReward() {
     const arena = currentArena();
+    const displayArena = themedArena(arena);
     return {
       type: "arenaHold",
       arenaId: arena.id,
-      arenaShort: arena.short,
+      arenaShort: displayArena.short,
       freeRolls: 1,
-      title: `Hold ${arena.short}`,
+      title: `Hold ${displayArena.short}`,
       body: "Keep this arena next battle; +1 roll.",
       key: `arena-hold:${arena.id}`,
     };
@@ -7196,13 +8812,14 @@
 
   function arenaPurseReward(won) {
     const arena = currentArena();
+    const displayArena = themedArena(arena);
     const amount = won ? 14 : 10;
     return {
       type: "arenaPurse",
       arenaId: arena.id,
       amount,
       freeRolls: 1,
-      title: `${arena.short} Purse`,
+      title: `${displayArena.short} Purse`,
       body: `Gain ${amount} coins and 1 free roll.`,
       key: `arena-purse:${arena.id}`,
     };
@@ -7321,8 +8938,8 @@
       if (!moveItemToBench(makeUnit(reward.typeId))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
       resolveMerges();
     }
-    state.message = `Claimed ${reward.title}`;
-    state.log.unshift(`Reward: ${reward.title}`);
+    state.message = realityBroken() ? `Salvaged ${reward.title}` : `Claimed ${reward.title}`;
+    state.log.unshift(realityBroken() ? `Salvage: ${reward.title}` : `Reward: ${reward.title}`);
     const rewardParticles = state.particles.slice();
     state.rewardChoices = [];
     continuePrep();
@@ -7332,6 +8949,7 @@
 
   function continuePrep() {
     if (state.hearts <= 0) {
+      if (startRebootTransition()) return;
       resetGame();
       return;
     }
@@ -7340,6 +8958,77 @@
     state.rewardChoices = [];
     state.postCombatBattle = null;
     startNextRoundShop();
+  }
+
+  function startRebootTransition() {
+    if (!realityBroken() || state.rebootTransition) return false;
+    state.rebootTransition = {
+      elapsed: 0,
+      duration: REBOOT_STATIC_FADE_SECONDS,
+      resetAt: REBOOT_STATIC_FADE_SECONDS * REBOOT_STATIC_RESET_AT,
+      resetDone: false,
+    };
+    state.pointer = null;
+    state.hover = null;
+    state.message = "Rebooting cozy shell";
+    return true;
+  }
+
+  function startFinalVictoryTransition() {
+    if (state.finalVictoryTransition) return false;
+    state.finalVictoryTransition = {
+      elapsed: 0,
+      duration: FINAL_VICTORY_STATIC_FADE_SECONDS,
+      resetAt: FINAL_VICTORY_STATIC_FADE_SECONDS * FINAL_VICTORY_STATIC_RESET_AT,
+      resetDone: false,
+    };
+    state.pointer = null;
+    state.hover = null;
+    state.selected = null;
+    state.message = "Final objective secured";
+    return true;
+  }
+
+  function completeFinalVictoryTransitionReset(transition) {
+    state.realityOverride = false;
+    state.phase = "victoryCutscene";
+    state.codexOpen = false;
+    state.selected = null;
+    state.drag = null;
+    state.rewardChoices = [];
+    state.battle = null;
+    state.postCombatBattle = null;
+    state.finalVictoryTransition = {
+      ...transition,
+      resetDone: true,
+    };
+    state.victoryCutscene = {
+      elapsed: 0,
+      roundCleared: FINAL_VICTORY_ROUND,
+      backgroundSrc: FINAL_VICTORY_CUTSCENE_SRC,
+      idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC,
+      message: "Hope Returns",
+    };
+    state.message = "Hope returns";
+    clearParticles();
+  }
+
+  function rebootFromVictoryCutscene() {
+    state.realityOverride = false;
+    resetGame();
+    state.message = "Cozy mode restored";
+  }
+
+  function completeRebootTransitionReset(transition) {
+    state.realityOverride = false;
+    resetGame();
+    state.rebootTransition = {
+      ...transition,
+      resetDone: true,
+    };
+    state.pointer = null;
+    state.hover = null;
+    state.message = "Cozy mode restored";
   }
 
   function resetGame() {
@@ -7375,6 +9064,11 @@
     state.lossStreak = 0;
     state.lastIncome = null;
     state.itemDiscountUsed = false;
+    state.realityBroken = false;
+    state.realityBreakTimer = 0;
+    state.rebootTransition = null;
+    state.finalVictoryTransition = null;
+    state.victoryCutscene = null;
     clearParticles();
     state.log = [];
     refreshShop(true);
@@ -7389,19 +9083,31 @@
     if (!battle) return null;
     const active = battle.elapsed >= MOLD_START_SECONDS || (battle.moldStacks || 0) > 0;
     const stacks = battle.moldStacks || 0;
+    const horror = realityBroken();
     return {
+      label: horror ? "Radiation" : "Mold",
       active,
       startsAt: MOLD_START_SECONDS,
       nextTickIn: active ? Math.max(0, Number(((battle.moldNextTick || 0) - battle.elapsed).toFixed(2))) : Math.max(0, Number((MOLD_START_SECONDS - battle.elapsed).toFixed(2))),
       stacks,
+      ...(horror ? { dose: stacks } : {}),
       damagePct: Number((moldDamagePct(Math.max(1, stacks)) * 100).toFixed(1)),
       totalDamage: battle.moldTotalDamage || 0,
     };
   }
 
+  function currentMoldStatusEffectId() {
+    return realityBroken() ? "radiation" : "mold";
+  }
+
+  function currentMoldStatusStyle() {
+    return STATUS_EFFECT_STYLES[currentMoldStatusEffectId()] || STATUS_EFFECT_STYLES.mold;
+  }
+
   function applyMoldTick(battle) {
     battle.moldStacks = (battle.moldStacks || 0) + 1;
     const damagePct = moldDamagePct(battle.moldStacks);
+    const moldStyle = currentMoldStatusStyle();
     const units = [...battle.allies, ...battle.enemies].filter((unit) => !unit.dead);
     units.forEach((unit) => {
       unit.moldStacks = battle.moldStacks;
@@ -7409,7 +9115,7 @@
       unit.hp = Math.max(0, unit.hp - damage);
       battle.moldTotalDamage = (battle.moldTotalDamage || 0) + damage;
       recordCombatDamage(battle, null, unit, damage, 0);
-      burst({ x: unit.x, y: unit.y }, STATUS_EFFECT_STYLES.mold.color);
+      burst({ x: unit.x, y: unit.y }, moldStyle.color);
       if (unit.hp <= 0 && !unit.dead) {
         unit.dead = true;
         unit.shield = 0;
@@ -8333,8 +10039,35 @@
     unit.attackSlow = null;
   }
 
+  function triggerCombatAttackMotion(source, target, battle, options = {}) {
+    if (!source || !target || !battle || source.dead || options.status) return;
+    if (source.uid === target.uid || (source.side && target.side && source.side === target.side)) return;
+    source.attackMotion = {
+      start: battle.elapsed || 0,
+      duration: COMBAT_ATTACK_MOTION_SECONDS,
+      targetX: target.x,
+      targetY: target.y,
+    };
+  }
+
+  function triggerCombatHitMotion(target, source, battle, hpDamage, shieldDamage = 0) {
+    if (!target || !battle || target.dead) return;
+    const totalImpact = Math.max(0, hpDamage || 0) + Math.max(0, shieldDamage || 0);
+    if (totalImpact <= 0) return;
+    const maxHp = Math.max(1, target.maxHp || 1);
+    target.hitMotion = {
+      start: battle.elapsed || 0,
+      duration: COMBAT_HIT_MOTION_SECONDS,
+      sourceX: source?.x,
+      sourceY: source?.y,
+      strength: clamp(0.72 + totalImpact / maxHp, 0.72, 1.35),
+      shieldOnly: hpDamage <= 0 && shieldDamage > 0,
+    };
+  }
+
   function applyDamage(target, amount, source, battle, options = {}) {
     if (!target || target.dead) return 0;
+    triggerCombatAttackMotion(source, target, battle, options);
     if (!options.status && !options.noItemTriggers && target.item?.firstHitRedirect && !target.firstHitRedirectUsed) {
       target.firstHitRedirectUsed = true;
       battle.attacks.push({
@@ -8404,6 +10137,7 @@
     }
     if (damage > 0) target.hp = Math.max(0, target.hp - damage);
     recordCombatDamage(battle, source, target, damage, absorbed);
+    triggerCombatHitMotion(target, source, battle, damage, absorbed);
     if (
       absorbed > 0 &&
       !options.status &&
@@ -8892,10 +10626,16 @@
   }
 
   function particleSpriteSrc(spriteKind, particleType, particleTier) {
-    if (!particleType) return null;
-    if (spriteKind === "drink") return DRINK_THROWABLE_SPRITES[particleType] || null;
-    if (spriteKind === "item") return ITEM_TIER_SPRITES[particleType]?.[itemTier(particleTier)] || ITEM_SPRITES[particleType] || null;
-    return ATTACK_PARTICLE_SPRITES[particleType] || null;
+    return particleSpriteInfo(spriteKind, particleType, particleTier).src;
+  }
+
+  function particleSpriteInfo(spriteKind, particleType, particleTier) {
+    if (!particleType) return { src: null, cacheKind: null };
+    if (spriteKind === "drink") return { src: drinkThrowableSpriteSrcFor(particleType), cacheKind: "drink" };
+    if (spriteKind === "item") return { src: itemSpriteSrcForId(particleType, particleTier), cacheKind: "item" };
+    const attackSrc = attackParticleSpriteSrcFor(particleType);
+    if (attackSrc) return { src: attackSrc, cacheKind: "attack" };
+    return { src: itemSpriteSrcForId(particleType, particleTier), cacheKind: "item" };
   }
 
   function burst(pos, color, options = {}) {
@@ -8903,7 +10643,8 @@
     const particleType = options.particleType;
     const particleSprite = options.particleSprite || (options.food ? "attack" : null);
     const particleTier = options.particleTier || 1;
-    const imageSrc = particleSpriteSrc(particleSprite, particleType, particleTier);
+    const spriteInfo = particleSpriteInfo(particleSprite, particleType, particleTier);
+    const imageSrc = spriteInfo.src;
     const foodParticles = Boolean(options.food && imageSrc);
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -8922,6 +10663,7 @@
         maxLife: life,
         color,
         imageSrc,
+        imageCacheKind: spriteInfo.cacheKind,
         particleType,
         particleTier,
         particleSprite,
@@ -9083,6 +10825,12 @@
 
   function update(dt) {
     state.idleTime += dt;
+    updateRebootTransition(dt);
+    updateFinalVictoryTransition(dt);
+    if (state.phase === "victoryCutscene" && state.victoryCutscene) {
+      state.victoryCutscene.elapsed += dt;
+    }
+    if (state.realityBreakTimer > 0) state.realityBreakTimer = Math.max(0, state.realityBreakTimer - dt);
     const step = state.phase === "battle" ? dt * currentBattleSpeed() : dt;
     if (state.phase === "battle") updateBattle(step);
     state.particles.forEach((p) => {
@@ -9098,6 +10846,33 @@
     state.particles = state.particles.filter((p) => p.life > 0);
   }
 
+  function updateRebootTransition(dt) {
+    const transition = state.rebootTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    if (!transition.resetDone && transition.elapsed >= transition.resetAt) {
+      completeRebootTransitionReset(transition);
+      return;
+    }
+    if (transition.resetDone && transition.elapsed >= transition.duration) {
+      state.rebootTransition = null;
+      state.message = "Prep";
+    }
+  }
+
+  function updateFinalVictoryTransition(dt) {
+    const transition = state.finalVictoryTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    if (!transition.resetDone && transition.elapsed >= transition.resetAt) {
+      completeFinalVictoryTransitionReset(transition);
+      return;
+    }
+    if (transition.resetDone && transition.elapsed >= transition.duration) {
+      state.finalVictoryTransition = null;
+    }
+  }
+
   function roundedRect(x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -9111,24 +10886,35 @@
   function draw() {
     state.tooltipTargets = [];
     ctx.clearRect(0, 0, W, H);
-    drawBackground();
-    drawTopBar();
-    if (state.phase === "battle") {
-      drawBattle();
-    } else if (state.phase === "result") {
-      drawResult();
+    if (state.phase === "victoryCutscene") {
+      drawVictoryCutscene();
     } else {
-      drawPrep();
+      drawBackground();
+      if (state.phase === "battle") {
+        drawBattle();
+      } else if (state.phase === "result") {
+        drawResult();
+      } else {
+        drawPrep();
+      }
+      drawTopBar();
+      drawParticles();
+      if (state.codexOpen) {
+        state.tooltipTargets = [];
+        drawCodexOverlay();
+      }
+      drawRealityOverlay();
     }
-    drawParticles();
-    if (state.codexOpen) {
-      state.tooltipTargets = [];
-      drawCodexOverlay();
-    }
+    drawRebootTransitionOverlay();
+    drawFinalVictoryTransitionOverlay();
     drawTooltip();
   }
 
   function drawBackground() {
+    if (realityBroken()) {
+      drawWarFutureBackground();
+      return;
+    }
     const image = getBackgroundImage();
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.save();
@@ -9155,13 +10941,241 @@
     }
   }
 
-  function getBackgroundImage() {
-    const src = currentArena()?.backgroundSrc || BACKGROUND_SRC;
+  function drawWarFutureBackground() {
+    const backgroundSrc = themedArena(currentArena()).backgroundSrc || REALITY_BACKGROUND_SRC;
+    const image = getBackgroundImage(backgroundSrc);
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(image, 0, 0, W, H);
+      ctx.fillStyle = "rgba(1, 5, 6, 0.18)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    } else {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#07100f");
+      g.addColorStop(0.48, "#111820");
+      g.addColorStop(1, "#240d13");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 0.72;
+    ctx.strokeStyle = "rgba(70, 255, 99, 0.16)";
+    ctx.lineWidth = 1;
+    for (let x = -180; x < W + 180; x += 64) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + 240, H);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(255, 58, 58, 0.12)";
+    for (let y = 88; y < H; y += 62) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y + Math.sin(y * 0.05 + state.idleTime) * 10);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const t = state.idleTime;
+    for (let i = 0; i < 16; i++) {
+      const x = (i * 73 + Math.sin(t * 0.7 + i) * 16) % W;
+      const y = 84 + ((i * 41 + t * 12) % (H - 120));
+      ctx.fillStyle = i % 3 === 0 ? "rgba(67, 255, 92, 0.18)" : "rgba(255, 70, 70, 0.12)";
+      ctx.fillRect(x, y, 18 + (i % 4) * 10, 2);
+    }
+  }
+
+  function victoryCutsceneStage(elapsed = state.victoryCutscene?.elapsed || 0) {
+    if (elapsed < VICTORY_CRAWL_START_SECONDS) return "title";
+    if (elapsed < VICTORY_IDEAL_FADE_START_SECONDS) return "crawl";
+    if (elapsed < VICTORY_IDEAL_FADE_START_SECONDS + VICTORY_IDEAL_FADE_SECONDS) return "staticFade";
+    return "ideal";
+  }
+
+  function drawCutsceneBackground(src, elapsed, alpha = 1, ideal = false) {
+    const image = getBackgroundImage(src);
+    const pan = clamp01(elapsed / (ideal ? 22 : 18));
+    const ease = pan * pan * (3 - 2 * pan);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+      const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight) * (ideal ? 1.05 : 1.09);
+      const drawW = image.naturalWidth * scale;
+      const drawH = image.naturalHeight * scale;
+      const extraX = Math.max(0, drawW - W);
+      const extraY = Math.max(0, drawH - H);
+      const drift = Math.sin(elapsed * (ideal ? 0.08 : 0.12)) * (ideal ? 0.04 : 0.08);
+      const x = -extraX * (ideal ? 0.38 + ease * 0.18 + drift : 0.28 + ease * 0.36 + drift);
+      const y = -extraY * (ideal ? 0.52 - ease * 0.18 : 0.72 - ease * 0.34);
+      ctx.drawImage(image, x, y, drawW, drawH);
+    } else {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, ideal ? "#82c9ef" : "#6d5f96");
+      g.addColorStop(0.42, ideal ? "#f7c475" : "#f2a05c");
+      g.addColorStop(1, ideal ? "#7fb579" : "#2b2f36");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
+  function drawVictoryCrawl(elapsed) {
+    const crawlElapsed = Math.max(0, elapsed - VICTORY_CRAWL_START_SECONDS);
+    const fadeIn = clamp01(crawlElapsed / 2.2);
+    const fadeOut = 1 - clamp01((elapsed - (VICTORY_IDEAL_FADE_START_SECONDS - 2.2)) / 2.2);
+    const alpha = Math.min(fadeIn, fadeOut);
+    const startY = H + 44 - crawlElapsed * 28;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "800 19px Inter, sans-serif";
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(31, 20, 24, 0.72)";
+    ctx.fillStyle = "#fff1c7";
+    VICTORY_CRAWL_LINES.forEach((line, index) => {
+      const y = startY + index * 42;
+      if (y < -32 || y > H + 36) return;
+      ctx.strokeText(line, W / 2, y);
+      ctx.fillText(line, W / 2, y);
+    });
+    ctx.restore();
+  }
+
+  function drawVictoryRebootButton() {
+    const button = VICTORY_REBOOT_BUTTON;
+    ctx.save();
+    roundedRect(button.x, button.y, button.w, button.h, 8);
+    ctx.fillStyle = "rgba(255, 248, 219, 0.92)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(66, 91, 54, 0.42)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "900 16px Inter, sans-serif";
+    ctx.fillStyle = "#213b27";
+    ctx.fillText(button.label, button.x + button.w / 2, button.y + button.h / 2 + 1);
+    ctx.restore();
+  }
+
+  function drawVictoryCutscene() {
+    const cutscene = state.victoryCutscene || { elapsed: 0, backgroundSrc: FINAL_VICTORY_CUTSCENE_SRC, idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC };
+    const elapsed = cutscene.elapsed || 0;
+    const stage = victoryCutsceneStage(elapsed);
+    const idealProgress = clamp01((elapsed - VICTORY_IDEAL_FADE_START_SECONDS) / VICTORY_IDEAL_FADE_SECONDS);
+    const idealEase = idealProgress * idealProgress * (3 - 2 * idealProgress);
+
+    ctx.save();
+    drawCutsceneBackground(cutscene.backgroundSrc || FINAL_VICTORY_CUTSCENE_SRC, elapsed, 1, false);
+    if (idealEase > 0) {
+      drawCutsceneBackground(cutscene.idealBackgroundSrc || FINAL_VICTORY_IDEAL_SRC, Math.max(0, elapsed - VICTORY_IDEAL_FADE_START_SECONDS), idealEase, true);
+    }
+
+    const entrance = clamp01(elapsed / 3.8);
+    const glow = ctx.createRadialGradient(W * 0.52, H * 0.53, 40, W * 0.52, H * 0.53, 460);
+    glow.addColorStop(0, `rgba(255, 237, 172, ${0.18 + entrance * 0.08})`);
+    glow.addColorStop(0.45, "rgba(255, 165, 86, 0.06)");
+    glow.addColorStop(1, "rgba(255, 165, 86, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    const vignette = ctx.createRadialGradient(W / 2, H / 2, 220, W / 2, H / 2, 680);
+    vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+    vignette.addColorStop(1, `rgba(8, 8, 12, ${stage === "ideal" ? 0.26 : 0.46})`);
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = stage === "ideal"
+      ? "rgba(255, 244, 202, 0.08)"
+      : `rgba(255, 236, 185, ${0.05 + entrance * 0.1})`;
+    ctx.fillRect(0, 0, W, H);
+
+    const residualStatic = Math.max(0, 0.16 * (1 - clamp01(elapsed / 6)));
+    const fadeStatic = idealProgress > 0 && idealProgress < 1 ? Math.sin(idealProgress * Math.PI) * 0.56 : 0;
+    const staticAlpha = Math.max(residualStatic, fadeStatic);
+    if (staticAlpha > 0.001) {
+      const frame = Math.floor((state.idleTime + elapsed) * 22);
+      ctx.globalCompositeOperation = "lighter";
+      for (let y = 0; y < H; y += 4) {
+        const roll = glitchNoise(frame * 71 + y * 19);
+        ctx.fillStyle = y % 2 === 0
+          ? `rgba(74, 255, 104, ${staticAlpha * (0.1 + roll * 0.18)})`
+          : `rgba(255, 84, 92, ${staticAlpha * (0.08 + roll * 0.14)})`;
+        ctx.fillRect(0, y, W, 1);
+      }
+      for (let i = 0; i < 220; i++) {
+        const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
+        const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
+        const size = glitchNoise(frame * 167 + i * 23) > 0.88 ? 2 : 1;
+        ctx.fillStyle = `rgba(255, 255, 236, ${(0.08 + glitchNoise(frame * 181 + i * 29) * 0.26) * staticAlpha})`;
+        ctx.fillRect(x, y, size, size);
+      }
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    const titleAlpha = clamp01((elapsed - 0.85) / 2.25) * (1 - clamp01((elapsed - 6.2) / 2.2)) * (1 - idealEase);
+    if (titleAlpha > 0.001) {
+      ctx.globalAlpha = titleAlpha;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(255, 155, 76, 0.72)";
+      ctx.shadowBlur = 22;
+      ctx.fillStyle = "#fff5d2";
+      ctx.font = "900 54px Inter, sans-serif";
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(38, 22, 24, 0.58)";
+      ctx.strokeText("HOPE RETURNS", W / 2, 252);
+      ctx.fillText("HOPE RETURNS", W / 2, 252);
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "#ffe4a9";
+      ctx.font = "800 19px Inter, sans-serif";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(38, 22, 24, 0.62)";
+      ctx.strokeText("Wave 20 secured. The simulation breaks open to sunset.", W / 2, 308);
+      ctx.fillText("Wave 20 secured. The simulation breaks open to sunset.", W / 2, 308);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = titleAlpha * 0.72;
+      ctx.fillStyle = "#ffd7a6";
+      ctx.font = "800 15px Inter, sans-serif";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(38, 22, 24, 0.58)";
+      ctx.strokeText("The market breathes again.", W / 2, 354);
+      ctx.fillText("The market breathes again.", W / 2, 354);
+      ctx.globalAlpha = 1;
+    }
+
+    drawVictoryCrawl(elapsed);
+
+    if (stage === "ideal") {
+      const idealTextAlpha = clamp01((elapsed - VICTORY_IDEAL_FADE_START_SECONDS - VICTORY_IDEAL_FADE_SECONDS) / 2);
+      ctx.globalAlpha = idealTextAlpha;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "900 30px Inter, sans-serif";
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(255, 248, 220, 0.76)";
+      ctx.fillStyle = "#234125";
+      ctx.strokeText("A gentler world is still possible.", W / 2, 470);
+      ctx.fillText("A gentler world is still possible.", W / 2, 470);
+      ctx.globalAlpha = clamp01((elapsed - VICTORY_IDEAL_FADE_START_SECONDS - VICTORY_IDEAL_FADE_SECONDS - 1.2) / 1.6);
+      drawVictoryRebootButton();
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  }
+
+  function getBackgroundImage(src = currentArena()?.backgroundSrc || BACKGROUND_SRC) {
     if (backgroundImageCache.has(src)) return backgroundImageCache.get(src);
     const image = new Image();
     image.onload = draw;
     image.onerror = () => {
-      if (src !== BACKGROUND_SRC) backgroundImageCache.delete(src);
+      if (src !== BACKGROUND_SRC && src !== REALITY_BACKGROUND_SRC) backgroundImageCache.delete(src);
     };
     image.src = src;
     backgroundImageCache.set(src, image);
@@ -9169,33 +11183,62 @@
   }
 
   function drawTopBar() {
-    drawChalkStatusBoard(STATUS_CHALK_COURSE_SRC, 9, 4, 126, 52, "Course", `${state.round}`, `Course ${state.round}`);
-    drawChalkStatusBoard(STATUS_CHALK_COINS_SRC, 149, 4, 104, 52, "Coins", `${state.gold}`, `${state.gold} coins`);
-    drawChalkStatusBoard(STATUS_CHALK_HEALTH_SRC, 266, 4, 104, 52, "Health", `${state.hearts}`, `${state.hearts} health`);
+    drawChalkStatusBoard(currentStatusBoardSrc("course"), 9, 4, 126, 52, statusLabel("Course"), `${state.round}`, `Course ${state.round}`);
+    drawChalkStatusBoard(currentStatusBoardSrc("coins"), 149, 4, 104, 52, statusLabel("Coins"), `${state.gold}`, `${state.gold} coins`);
+    drawChalkStatusBoard(currentStatusBoardSrc("health"), 266, 4, 104, 52, statusLabel("Health"), `${state.hearts}`, healthStatusTooltip());
 
     if (state.phase === "prep") {
       const upgradeCost = nextShopUpgradeCost();
       drawButton(
-        { ...buttons.shopUpgrade, label: upgradeCost === null ? "Max Lv" : `Lv ${state.shopLevel + 1}`, coinAmount: upgradeCost },
+        { ...buttons.shopUpgrade, label: actionLabel(upgradeCost === null ? "Max Lv" : `Lv ${state.shopLevel + 1}`), coinAmount: upgradeCost },
         upgradeCost !== null && state.gold >= upgradeCost
       );
-      drawButton({ ...buttons.roll, label: "Roll", coinAmount: currentRollCost() }, state.gold >= currentRollCost());
-      drawButton(buttons.battle, teamPower() > 0);
+      drawButton({ ...buttons.roll, label: actionLabel("Roll"), coinAmount: currentRollCost() }, state.gold >= currentRollCost());
+      drawButton({ ...buttons.battle, label: actionLabel("Battle") }, teamPower() > 0);
     } else if (state.phase === "battle") {
-      drawButton({ ...buttons.battleSpeed, label: `Speed ${battleSpeedLabel()}`, speedValue: battleSpeedLabel() }, true);
+      drawButton({ ...buttons.battleSpeed, label: actionLabel(`Speed ${battleSpeedLabel()}`), speedValue: battleSpeedLabel() }, true);
     } else if (state.phase === "result" && state.hearts <= 0) {
-      drawButton({ ...buttons.next, label: "Restart", signSrc: RESTART_CHALK_SIGN_SRC }, true);
+      drawButton({ ...buttons.next, label: actionLabel("Restart"), signSrc: RESTART_CHALK_SIGN_SRC }, true);
     }
+  }
+
+  function healthStatusTooltip() {
+    const lossDamage = roundLossDamage(state.round);
+    const label = statusLabel("Course").toLowerCase();
+    return {
+      title: `${statusLabel("Health")}: ${state.hearts}`,
+      body: realityBroken()
+        ? `A defeat on this ${label} breaches hull for ${lossDamage}. Later waves hit harder.`
+        : `A defeat on this ${label} costs ${lossDamage} health. Later courses hurt more.`,
+    };
   }
 
   function drawChalkStatusBoard(src, x, y, w, h, label, value, tooltip) {
     const image = getUiSprite(src);
+    const tooltipInfo = typeof tooltip === "string" ? { title: tooltip, body: "" } : tooltip;
+    registerTooltip(x, y, w, h, tooltipInfo);
     if (!(image && image.complete && image.naturalWidth > 0)) {
-      pill(x + 8, y + 8, w - 16, h - 16, `${label} ${value}`, "#fff5cc", "#16392d");
+      pill(x + 8, y + 8, w - 16, h - 16, `${label} ${value}`, realityBroken() ? "#071512" : "#fff5cc", realityBroken() ? "#e7ffe0" : "#16392d");
       return;
     }
-    registerTooltip(x, y, w, h, { title: tooltip, body: "" });
     ctx.drawImage(image, x - 6, Math.max(0, y - 6), w + 12, h + 12);
+    if (realityBroken()) {
+      drawWarHudText(String(label).toUpperCase(), x + w / 2, y + 18, {
+        font: "900 8px Inter, sans-serif",
+        alpha: 0.94,
+        glitch: true,
+        glitchIntensity: 0.7,
+      });
+      drawWarHudText(String(value), x + w / 2, y + 37, {
+        font: "900 19px Inter, sans-serif",
+        alpha: 0.98,
+        glitch: true,
+        glitchIntensity: 0.84,
+      });
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      return;
+    }
     drawChalkButtonText(String(label).toUpperCase(), x + w / 2, y + 19, {
       font: "900 9px Inter, sans-serif",
       alpha: 0.92,
@@ -9204,6 +11247,523 @@
       font: "900 19px Inter, sans-serif",
       alpha: 0.98,
     });
+  }
+
+  function drawRealityOverlay() {
+    if (!realityBroken()) return;
+    ctx.save();
+    const flicker = state.realityBreakTimer > 0 ? 0.12 + Math.abs(Math.sin(state.idleTime * 34)) * 0.18 : 0.04;
+    ctx.globalAlpha = flicker;
+    ctx.fillStyle = "#46ff63";
+    for (let y = 0; y < H; y += 5) ctx.fillRect(0, y, W, 1);
+    ctx.globalAlpha = state.realityBreakTimer > 0 ? 0.18 : 0.08;
+    ctx.fillStyle = "#ff3348";
+    const jitter = Math.round(Math.sin(state.idleTime * 47) * 8);
+    ctx.fillRect(0, 86 + jitter, W, 2);
+    ctx.fillRect(0, 388 - jitter, W, 1);
+    ctx.restore();
+
+    drawSimulationFailureArtifacts();
+    drawIllusionBleedAssetOverlays();
+    drawRealityBanner();
+  }
+
+  function glitchNoise(seed) {
+    const value = Math.sin(seed * 12.9898) * 43758.5453;
+    return value - Math.floor(value);
+  }
+
+  function drawSimulationFailureArtifacts() {
+    const revealIntensity = state.realityBreakTimer > 0 ? 1 : 0.58;
+    const frame = Math.floor(state.idleTime * (state.realityBreakTimer > 0 ? 18 : 8));
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 10; i++) {
+      const gate = glitchNoise(frame * 47 + i * 31);
+      if (gate < 0.2) continue;
+      const x = Math.floor(glitchNoise(frame * 83 + i * 17) * W);
+      const y = Math.floor(62 + glitchNoise(frame * 109 + i * 23) * (H - 92));
+      const w = Math.floor(26 + glitchNoise(frame * 137 + i * 29) * 118);
+      const h = Math.floor(2 + glitchNoise(frame * 151 + i * 37) * 12);
+      const offset = Math.round((glitchNoise(frame * 193 + i * 41) - 0.5) * 16);
+      const alpha = (0.06 + gate * 0.1) * revealIntensity;
+      ctx.fillStyle = `rgba(64, 255, 92, ${alpha})`;
+      ctx.fillRect(x, y, w, h);
+      if (i % 2 === 0) {
+        ctx.fillStyle = `rgba(0, 228, 255, ${alpha * 0.72})`;
+        ctx.fillRect(x + offset, y + h + 1, Math.max(14, w * 0.72), 2);
+        ctx.fillStyle = `rgba(255, 42, 74, ${alpha * 0.64})`;
+        ctx.fillRect(x - offset, y - 2, Math.max(12, w * 0.52), 2);
+      }
+    }
+    ctx.globalCompositeOperation = "source-over";
+    for (let cluster = 0; cluster < 7; cluster++) {
+      const baseX = Math.floor(glitchNoise(frame * 211 + cluster * 43) * W);
+      const baseY = Math.floor(56 + glitchNoise(frame * 239 + cluster * 47) * (H - 76));
+      const visible = glitchNoise(frame * 269 + cluster * 53) > 0.28;
+      if (!visible) continue;
+      for (let dot = 0; dot < 14; dot++) {
+        const dx = Math.floor(glitchNoise(frame * 307 + cluster * 59 + dot * 7) * 74);
+        const dy = Math.floor(glitchNoise(frame * 331 + cluster * 61 + dot * 11) * 32);
+        const size = glitchNoise(frame * 353 + dot * 13) > 0.8 ? 2 : 1;
+        ctx.fillStyle = dot % 3 === 0
+          ? "rgba(220, 255, 218, 0.18)"
+          : dot % 3 === 1
+            ? "rgba(79, 255, 92, 0.16)"
+            : "rgba(255, 52, 78, 0.12)";
+        ctx.fillRect(baseX + dx, baseY + dy, size, size);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawRebootTransitionOverlay() {
+    const transition = state.rebootTransition;
+    if (!transition) return;
+    const progress = clamp01(transition.elapsed / Math.max(0.001, transition.duration));
+    const resetPoint = clamp01(transition.resetAt / Math.max(0.001, transition.duration));
+    const fadeIn = clamp01(progress / Math.max(0.001, resetPoint));
+    const fadeOut = clamp01((progress - resetPoint) / Math.max(0.001, 1 - resetPoint));
+    const staticAlpha = transition.resetDone
+      ? 0.86 * (1 - fadeOut)
+      : 0.18 + 0.76 * fadeIn;
+    const warmAlpha = transition.resetDone ? 0.28 * fadeOut : 0;
+    const frame = Math.floor((state.idleTime + transition.elapsed) * 36);
+
+    ctx.save();
+    ctx.fillStyle = transition.resetDone
+      ? `rgba(255, 248, 216, ${0.16 + warmAlpha})`
+      : `rgba(0, 4, 5, ${0.12 + staticAlpha * 0.46})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(frame * 97 + y * 13);
+      const bandAlpha = (0.03 + roll * 0.12) * staticAlpha;
+      ctx.fillStyle = transition.resetDone
+        ? `rgba(255, 247, 205, ${bandAlpha})`
+        : y % 2 === 0
+          ? `rgba(88, 255, 105, ${bandAlpha})`
+          : `rgba(255, 55, 82, ${bandAlpha * 0.72})`;
+      ctx.fillRect(0, y, W, 1);
+    }
+    for (let i = 0; i < 520; i++) {
+      const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
+      const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
+      const size = glitchNoise(frame * 167 + i * 23) > 0.86 ? 2 : 1;
+      const speckAlpha = (0.08 + glitchNoise(frame * 181 + i * 29) * 0.3) * staticAlpha;
+      ctx.fillStyle = transition.resetDone
+        ? `rgba(255, 255, 236, ${speckAlpha})`
+        : i % 5 === 0
+          ? `rgba(0, 238, 255, ${speckAlpha})`
+          : `rgba(238, 255, 232, ${speckAlpha})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    for (let i = 0; i < 8; i++) {
+      const gate = glitchNoise(frame * 211 + i * 31);
+      if (gate < 0.22) continue;
+      const y = Math.floor(glitchNoise(frame * 227 + i * 37) * H);
+      const x = Math.floor((glitchNoise(frame * 241 + i * 41) - 0.5) * 44);
+      const h = 2 + Math.floor(glitchNoise(frame * 263 + i * 43) * 15);
+      ctx.fillStyle = transition.resetDone
+        ? `rgba(255, 235, 166, ${0.08 * staticAlpha})`
+        : `rgba(70, 255, 99, ${0.12 * staticAlpha})`;
+      ctx.fillRect(x, y, W + 88, h);
+    }
+    ctx.globalCompositeOperation = "source-over";
+    if (transition.resetDone) {
+      const clearAlpha = clamp01(fadeOut * 1.2);
+      ctx.fillStyle = `rgba(255, 250, 224, ${clearAlpha * 0.18})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
+  function drawFinalVictoryTransitionOverlay() {
+    const transition = state.finalVictoryTransition;
+    if (!transition) return;
+    const progress = clamp01(transition.elapsed / Math.max(0.001, transition.duration));
+    const resetPoint = clamp01(transition.resetAt / Math.max(0.001, transition.duration));
+    const fadeIn = clamp01(progress / Math.max(0.001, resetPoint));
+    const fadeOut = clamp01((progress - resetPoint) / Math.max(0.001, 1 - resetPoint));
+    const staticAlpha = transition.resetDone
+      ? 0.86 * (1 - fadeOut)
+      : 0.18 + 0.76 * fadeIn;
+    const warmAlpha = transition.resetDone ? 0.34 * fadeOut : 0;
+    const frame = Math.floor((state.idleTime + transition.elapsed) * 36);
+
+    ctx.save();
+    ctx.fillStyle = transition.resetDone
+      ? `rgba(255, 236, 178, ${0.12 + warmAlpha})`
+      : `rgba(0, 4, 5, ${0.12 + staticAlpha * 0.46})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(frame * 97 + y * 13);
+      const bandAlpha = (0.03 + roll * 0.12) * staticAlpha;
+      ctx.fillStyle = transition.resetDone
+        ? `rgba(255, 218, 138, ${bandAlpha})`
+        : y % 2 === 0
+          ? `rgba(88, 255, 105, ${bandAlpha})`
+          : `rgba(255, 55, 82, ${bandAlpha * 0.72})`;
+      ctx.fillRect(0, y, W, 1);
+    }
+    for (let i = 0; i < 520; i++) {
+      const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
+      const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
+      const size = glitchNoise(frame * 167 + i * 23) > 0.86 ? 2 : 1;
+      const speckAlpha = (0.08 + glitchNoise(frame * 181 + i * 29) * 0.3) * staticAlpha;
+      ctx.fillStyle = transition.resetDone
+        ? `rgba(255, 247, 210, ${speckAlpha})`
+        : i % 5 === 0
+          ? `rgba(0, 238, 255, ${speckAlpha})`
+          : `rgba(238, 255, 232, ${speckAlpha})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    for (let i = 0; i < 8; i++) {
+      const gate = glitchNoise(frame * 211 + i * 31);
+      if (gate < 0.22) continue;
+      const y = Math.floor(glitchNoise(frame * 227 + i * 37) * H);
+      const x = Math.floor((glitchNoise(frame * 241 + i * 41) - 0.5) * 44);
+      const h = 2 + Math.floor(glitchNoise(frame * 263 + i * 43) * 15);
+      ctx.fillStyle = transition.resetDone
+        ? `rgba(255, 194, 96, ${0.08 * staticAlpha})`
+        : `rgba(70, 255, 99, ${0.12 * staticAlpha})`;
+      ctx.fillRect(x, y, W + 88, h);
+    }
+    ctx.globalCompositeOperation = "source-over";
+    if (transition.resetDone) {
+      const clearAlpha = clamp01(fadeOut * 1.2);
+      ctx.fillStyle = `rgba(255, 221, 150, ${clearAlpha * 0.16})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
+  function illusionBleedFrame() {
+    return Math.floor(state.idleTime * 42);
+  }
+
+  function illusionBleedPhase(id, chance = 0.16, options = {}) {
+    if (!illusionBleedAllowed(options)) return { active: false, phase: "idle", progress: 0 };
+    const reveal = state.realityBreakTimer > 0;
+    const cycleSeconds = reveal ? 1.8 : 5.8;
+    const preStaticSeconds = 0.5;
+    const flashSeconds = reveal ? 0.36 : 0.3;
+    const postStaticSeconds = 0.5;
+    const sequenceSeconds = preStaticSeconds + flashSeconds + postStaticSeconds;
+    const cycleTime = state.idleTime + glitchNoise(id * 97) * cycleSeconds;
+    const cycle = Math.floor(cycleTime / cycleSeconds);
+    const phase = cycleTime - cycle * cycleSeconds;
+    if (phase > sequenceSeconds) return { active: false, phase: "idle", progress: 0 };
+    const threshold = 1 - Math.min(0.42, chance * (reveal ? 2.2 : 1));
+    if (glitchNoise(cycle * 173 + id * 37) <= threshold) return { active: false, phase: "idle", progress: 0 };
+    if (phase < preStaticSeconds) return { active: true, phase: "pre", progress: phase / preStaticSeconds };
+    if (phase < preStaticSeconds + flashSeconds) {
+      return { active: true, phase: "flash", progress: (phase - preStaticSeconds) / flashSeconds };
+    }
+    return { active: true, phase: "post", progress: (phase - preStaticSeconds - flashSeconds) / postStaticSeconds };
+  }
+
+  function illusionBleedActive(id, chance = 0.16, options = {}) {
+    return illusionBleedPhase(id, chance, options).phase === "flash";
+  }
+
+  function illusionBleedAllowed(options = {}) {
+    if (!realityBroken()) return false;
+    if (state.codexOpen) return false;
+    if (state.phase === "prep") return true;
+    return Boolean(options.allowCombat && state.phase === "battle");
+  }
+
+  function drawHeavyStaticAroundRect(rect, id, intensity = 1) {
+    const frame = illusionBleedFrame();
+    const pad = 5 + Math.round(4 * intensity);
+    const x = Math.round(rect.x - pad);
+    const y = Math.round(rect.y - pad);
+    const w = Math.round(rect.w + pad * 2);
+    const h = Math.round(rect.h + pad * 2);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = `rgba(75, 255, 91, ${0.22 * intensity})`;
+    ctx.lineWidth = 1.5;
+    roundedRect(x, y, w, h, Math.min(8, Math.max(3, rect.w * 0.08)));
+    ctx.stroke();
+    for (let i = 0; i < 18; i++) {
+      const edge = Math.floor(glitchNoise(frame * 197 + id * 23 + i * 11) * 4);
+      const lineW = 4 + glitchNoise(frame * 211 + id * 29 + i * 13) * Math.min(82, w * 0.45);
+      const lineH = glitchNoise(frame * 227 + id * 31 + i * 17) > 0.72 ? 2 : 1;
+      let sx = x + glitchNoise(frame * 239 + id * 41 + i * 19) * w;
+      let sy = y + glitchNoise(frame * 251 + id * 43 + i * 23) * h;
+      if (edge === 0) sy = y + glitchNoise(frame * 263 + i) * 8;
+      if (edge === 1) sy = y + h - 8 + glitchNoise(frame * 269 + i) * 8;
+      if (edge === 2) sx = x + glitchNoise(frame * 271 + i) * 8;
+      if (edge === 3) sx = x + w - 8 + glitchNoise(frame * 277 + i) * 8;
+      ctx.fillStyle = i % 3 === 0
+        ? `rgba(255, 255, 232, ${0.16 * intensity})`
+        : i % 3 === 1
+          ? `rgba(0, 232, 255, ${0.18 * intensity})`
+          : `rgba(255, 39, 70, ${0.18 * intensity})`;
+      ctx.fillRect(Math.round(sx), Math.round(sy), Math.round(lineW), lineH);
+    }
+    ctx.restore();
+  }
+
+  function drawBlueStaticAroundRect(rect, id, intensity = 1) {
+    const frame = illusionBleedFrame();
+    const pad = 6 + Math.round(5 * intensity);
+    const x = Math.round(rect.x - pad);
+    const y = Math.round(rect.y - pad);
+    const w = Math.round(rect.w + pad * 2);
+    const h = Math.round(rect.h + pad * 2);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = `rgba(70, 190, 255, ${0.34 * intensity})`;
+    ctx.lineWidth = 1.75;
+    roundedRect(x, y, w, h, Math.min(10, Math.max(4, rect.w * 0.08)));
+    ctx.stroke();
+    ctx.fillStyle = `rgba(30, 124, 255, ${0.065 * intensity})`;
+    roundedRect(rect.x, rect.y, rect.w, rect.h, Math.min(8, Math.max(3, rect.w * 0.08)));
+    ctx.fill();
+    for (let i = 0; i < 24; i++) {
+      const edge = Math.floor(glitchNoise(frame * 401 + id * 17 + i * 13) * 4);
+      const lineW = 6 + glitchNoise(frame * 409 + id * 19 + i * 17) * Math.min(96, w * 0.5);
+      const lineH = glitchNoise(frame * 419 + id * 23 + i * 19) > 0.68 ? 2 : 1;
+      let sx = x + glitchNoise(frame * 421 + id * 29 + i * 23) * w;
+      let sy = y + glitchNoise(frame * 431 + id * 31 + i * 29) * h;
+      if (edge === 0) sy = y + glitchNoise(frame * 433 + i) * 10;
+      if (edge === 1) sy = y + h - 10 + glitchNoise(frame * 439 + i) * 10;
+      if (edge === 2) sx = x + glitchNoise(frame * 443 + i) * 10;
+      if (edge === 3) sx = x + w - 10 + glitchNoise(frame * 449 + i) * 10;
+      ctx.fillStyle = i % 3 === 0
+        ? `rgba(218, 248, 255, ${0.34 * intensity})`
+        : i % 3 === 1
+          ? `rgba(32, 166, 255, ${0.3 * intensity})`
+          : `rgba(0, 246, 255, ${0.28 * intensity})`;
+      ctx.fillRect(Math.round(sx), Math.round(sy), Math.round(lineW), lineH);
+    }
+    ctx.restore();
+  }
+
+  function drawIllusionImage(src, rect, id, alpha = 0.62) {
+    const image = getUiSprite(src);
+    if (!(image && image.complete && image.naturalWidth > 0)) return false;
+    const frame = illusionBleedFrame();
+    const xJitter = Math.round((glitchNoise(frame * 311 + id * 7) - 0.5) * 4);
+    const yJitter = Math.round((glitchNoise(frame * 313 + id * 11) - 0.5) * 3);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.filter = "blur(1.2px)";
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(image, rect.x + xJitter, rect.y + yJitter, rect.w, rect.h);
+    ctx.globalAlpha = alpha * 0.28;
+    ctx.globalCompositeOperation = "lighter";
+    ctx.drawImage(image, rect.x + xJitter - 3, rect.y + yJitter, rect.w, rect.h);
+    ctx.drawImage(image, rect.x + xJitter + 3, rect.y + yJitter, rect.w, rect.h);
+    ctx.restore();
+    return true;
+  }
+
+  function cozyShopkeeperSrc() {
+    const index = Math.max(0, Math.min(SHOPKEEPER_LEVEL_SRCS.length - 1, state.shopLevel - 1));
+    return SHOPKEEPER_LEVEL_SRCS[index] || SHOPKEEPER_SRC;
+  }
+
+  function cozySlotBackdropSrc(area, slotKind = null) {
+    if (area === "shop") return SHOP_SLOT_BG_SRC;
+    if (area === "bench") return BENCH_SLOT_BG_SRC;
+    if (area === "board") return BOARD_PLATE_SLOT_SRC;
+    if (area === "drinks") return DRINK_COASTER_SLOT_SRC;
+    if (area === "itemBench" && slotKind === "drink") return DRINK_COASTER_SLOT_SRC;
+    if (area === "itemBench" && slotKind === "topping") return TOPPING_CUTTING_BOARD_SLOT_SRC;
+    return null;
+  }
+
+  function horrorSlotBackdropSrc(area, slotKind = null) {
+    if (area === "shop") return currentShopSlotBgSrc();
+    if (area === "bench") return currentBenchSlotBgSrc();
+    if (area === "board") return currentBoardPlateSlotSrc();
+    if (area === "drinks") return currentDrinkCoasterSlotSrc();
+    if (area === "itemBench" && slotKind === "drink") return currentDrinkCoasterSlotSrc();
+    if (area === "itemBench" && slotKind === "topping") return currentToppingStorageSlotSrc();
+    return null;
+  }
+
+  function slotBackdropBleedPhase(area, index = 0, slotKind = null) {
+    if (!realityBroken()) return { active: false, phase: "idle", progress: 0 };
+    const allowCombat = state.phase === "battle" && (area === "board" || area === "drinks");
+    const baseId = area === "shop"
+      ? 100
+      : area === "board"
+        ? 220
+        : area === "bench"
+          ? 340
+          : area === "drinks"
+            ? 460
+            : slotKind === "drink"
+              ? 560
+              : 620;
+    const chance = area === "shop" ? 0.085 : 0.07;
+    return illusionBleedPhase(baseId + (index || 0), chance, { allowCombat });
+  }
+
+  function drawSlotBackdropSequenceEffect(rect, area, index = 0, slotKind = null) {
+    const bleed = slotBackdropBleedPhase(area, index, slotKind);
+    if (!bleed.active) return;
+    const id = (area === "shop" ? 100 : area === "board" ? 220 : area === "bench" ? 340 : area === "drinks" ? 460 : slotKind === "drink" ? 560 : 620) + (index || 0);
+    if (bleed.phase === "flash") {
+      drawHeavyStaticAroundRect(rect, id, area === "shop" ? 0.72 : 0.58);
+      return;
+    }
+    drawBlueStaticAroundRect(rect, id, area === "shop" ? 0.68 : 0.54);
+  }
+
+  function contentBleedId(kind, entry) {
+    const typeId = entry?.typeId || entry?.id || kind;
+    const tier = isItem(entry) ? itemTier(entry?.tier) : Math.max(1, entry?.tier || 1);
+    const uid = typeof entry?.uid === "number" ? entry.uid : typeId;
+    return 760 + (hashString(`${kind}:${uid}:${typeId}:${tier}`) % 9000);
+  }
+
+  function contentBleedPhase(kind, entry) {
+    if (!entry || !realityBroken()) return { active: false, phase: "idle", progress: 0 };
+    const chance = kind === "drink" ? 0.085 : kind === "topping" ? 0.08 : 0.075;
+    return illusionBleedPhase(contentBleedId(kind, entry), chance, { allowCombat: true });
+  }
+
+  function drawContentSequenceEffect(rect, kind, entry) {
+    const bleed = contentBleedPhase(kind, entry);
+    if (!bleed.active) return;
+    const id = contentBleedId(kind, entry);
+    if (bleed.phase === "flash") {
+      drawHeavyStaticAroundRect(rect, id, kind === "unit" ? 0.58 : 0.5);
+      return;
+    }
+    drawBlueStaticAroundRect(rect, id, kind === "unit" ? 0.62 : 0.52);
+  }
+
+  function drawIllusionBleedAssetOverlays() {
+    if (!illusionBleedAllowed()) return;
+    const targets = [
+      { id: 11, rect: { x: 9, y: 4, w: 126, h: 52 }, src: STATUS_CHALK_COURSE_SRC, alpha: 0.34, chance: 0.085, intensity: 0.82 },
+      { id: 12, rect: { x: 149, y: 4, w: 104, h: 52 }, src: STATUS_CHALK_COINS_SRC, alpha: 0.34, chance: 0.085, intensity: 0.82 },
+      { id: 13, rect: { x: 266, y: 4, w: 104, h: 52 }, src: STATUS_CHALK_HEALTH_SRC, alpha: 0.34, chance: 0.085, intensity: 0.82 },
+    ];
+    targets.forEach((target) => {
+      const bleed = illusionBleedPhase(target.id, target.chance);
+      if (!bleed.active) return;
+      if (bleed.phase === "flash") {
+        drawIllusionImage(target.src, target.rect, target.id, target.alpha);
+        drawHeavyStaticAroundRect(target.rect, target.id, target.intensity);
+      } else {
+        drawBlueStaticAroundRect(target.rect, target.id, target.intensity);
+      }
+    });
+  }
+
+  function drawRealityBanner() {
+    const activeReveal = state.realityBreakTimer > 0;
+    const banner = activeReveal
+      ? copy("ui.reality.revealTitle", "ILLUSION FAILURE // WAR LAYER EXPOSED")
+      : copy("ui.reality.activeTitle", "SIMULATION MALFUNCTION");
+    const body = activeReveal
+      ? copy("ui.reality.revealBody", "Cozy market shell compromised. Machine conflict visible beneath.")
+      : copy("ui.reality.activeBody", "");
+    const x = activeReveal ? 386 : 386;
+    const y = activeReveal ? 8 : 3;
+    const w = activeReveal ? 248 : 248;
+    const h = activeReveal ? 48 : 58;
+    const board = activeReveal ? null : getUiSprite(REALITY_BANNER_BOARD_SRC);
+    if (board && board.complete && board.naturalWidth > 0) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.shadowColor = "rgba(70, 255, 99, 0.28)";
+      ctx.shadowBlur = 16 + Math.abs(Math.sin(state.idleTime * 5.5)) * 8;
+      ctx.drawImage(board, x, y, w, h);
+      ctx.restore();
+    } else {
+      roundedRect(x, y, w, h, 6);
+      ctx.fillStyle = activeReveal ? "rgba(45, 4, 10, 0.9)" : "rgba(5, 13, 15, 0.86)";
+      ctx.fill();
+      ctx.strokeStyle = activeReveal ? "rgba(255, 61, 79, 0.86)" : "rgba(70, 255, 99, 0.58)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+    }
+    if (!activeReveal) drawSimulationMalfunctionBoardEffects(x, y, w, h);
+    ctx.fillStyle = activeReveal ? "#ff596b" : "#46ff63";
+    let titleFontSize = activeReveal ? 10 : 16;
+    const titleMaxWidth = activeReveal ? w - 24 : w - 30;
+    ctx.font = `900 ${titleFontSize}px Inter, sans-serif`;
+    while (!activeReveal && titleFontSize > 10 && ctx.measureText(banner).width > titleMaxWidth) {
+      titleFontSize -= 1;
+      ctx.font = `900 ${titleFontSize}px Inter, sans-serif`;
+    }
+    ctx.textAlign = "center";
+    ctx.textBaseline = activeReveal ? "alphabetic" : "middle";
+    const titleX = x + w / 2;
+    const titleY = activeReveal ? y + 18 : y + h / 2 + 1;
+    if (!activeReveal) {
+      const split = Math.round(Math.sin(state.idleTime * 27) * 1.5);
+      ctx.save();
+      ctx.globalAlpha = 0.52;
+      ctx.fillStyle = "#ff2847";
+      ctx.fillText(banner, titleX - 2 + split, titleY + 1);
+      ctx.globalAlpha = 0.44;
+      ctx.fillStyle = "#00e5ff";
+      ctx.fillText(banner, titleX + 2 - split, titleY - 1);
+      ctx.restore();
+    }
+    ctx.fillText(banner, titleX, titleY);
+    if (!activeReveal) {
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      return;
+    }
+    ctx.textAlign = "left";
+    fitText(body, x + 12, y + 36, w - 24, "800 9px Inter, sans-serif", "#e8fff0");
+  }
+
+  function drawSimulationMalfunctionBoardEffects(x, y, w, h) {
+    const pulse = 0.5 + Math.abs(Math.sin(state.idleTime * 4.2)) * 0.5;
+    const frame = Math.floor(state.idleTime * 12);
+    ctx.save();
+    roundedRect(x + 3, y + 3, w - 6, h - 6, 5);
+    ctx.clip();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = `rgba(255, 32, 62, ${0.08 + pulse * 0.08})`;
+    ctx.fillRect(x + 18, y + h - 12, w - 36, 2);
+    ctx.fillStyle = `rgba(70, 255, 99, ${0.08 + pulse * 0.07})`;
+    ctx.fillRect(x + 32, y + 9, w - 64, 1);
+    for (let i = 0; i < 5; i++) {
+      const gate = glitchNoise(frame * 43 + i * 19);
+      if (gate < 0.34) continue;
+      const tearX = x + 18 + glitchNoise(frame * 71 + i * 23) * (w - 64);
+      const tearY = y + 12 + glitchNoise(frame * 89 + i * 29) * (h - 24);
+      const tearW = 24 + glitchNoise(frame * 101 + i * 31) * 68;
+      ctx.fillStyle = i % 2 === 0 ? "rgba(0, 232, 255, 0.18)" : "rgba(255, 37, 70, 0.18)";
+      ctx.fillRect(Math.round(tearX), Math.round(tearY), Math.round(tearW), 2);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 42, 74, ${0.36 + pulse * 0.24})`;
+    ctx.lineWidth = 1.5;
+    const corner = 18;
+    ctx.beginPath();
+    ctx.moveTo(x + 10, y + corner);
+    ctx.lineTo(x + 10, y + 10);
+    ctx.lineTo(x + corner + 6, y + 10);
+    ctx.moveTo(x + w - corner - 6, y + 10);
+    ctx.lineTo(x + w - 10, y + 10);
+    ctx.lineTo(x + w - 10, y + corner);
+    ctx.moveTo(x + 10, y + h - corner);
+    ctx.lineTo(x + 10, y + h - 10);
+    ctx.lineTo(x + corner + 6, y + h - 10);
+    ctx.moveTo(x + w - corner - 6, y + h - 10);
+    ctx.lineTo(x + w - 10, y + h - 10);
+    ctx.lineTo(x + w - 10, y + h - corner);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function iconPill(x, y, w, h, iconSrc, text, fill, color, fallbackText) {
@@ -9334,6 +11894,11 @@
   }
 
   function drawButton(button, enabled) {
+    if (realityBroken()) {
+      if (button.signSrc && drawChalkSignButton(button, enabled)) return;
+      drawWarButton(button, enabled);
+      return;
+    }
     if (button.signSrc && drawChalkSignButton(button, enabled)) return;
 
     roundedRect(button.x, button.y, button.w, button.h, 8);
@@ -9394,8 +11959,36 @@
     ctx.textBaseline = "alphabetic";
   }
 
+  function drawWarButton(button, enabled) {
+    roundedRect(button.x, button.y, button.w, button.h, 6);
+    ctx.fillStyle = enabled ? "rgba(7, 17, 20, 0.94)" : "rgba(24, 34, 36, 0.74)";
+    ctx.fill();
+    ctx.strokeStyle = enabled ? "rgba(70, 255, 99, 0.78)" : "rgba(142, 155, 148, 0.42)";
+    ctx.lineWidth = enabled ? 2 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    const label = actionLabel(button.label || "");
+    registerTooltip(button.x, button.y, button.w, button.h, buttonTooltip({ ...button, label }, enabled));
+
+    const accent = enabled ? "#46ff63" : "#8fa09a";
+    const textColor = enabled ? "#f4fff6" : "#b8c5c1";
+    ctx.fillStyle = accent;
+    ctx.fillRect(button.x + 7, button.y + 7, 3, button.h - 14);
+    ctx.fillStyle = textColor;
+    ctx.font = button.coinAmount !== undefined && button.coinAmount !== null ? "900 13px Inter, sans-serif" : "900 15px Inter, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    const primary = button.coinAmount !== undefined && button.coinAmount !== null
+      ? `${label} / ${button.coinAmount}`
+      : label;
+    fitText(primary, button.x + 16, button.y + button.h / 2 + 1, button.w - 24, ctx.font, textColor);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
   function drawChalkSignButton(button, enabled) {
-    const image = getUiSprite(button.signSrc);
+    const signSrc = currentButtonSignSrc(button);
+    const image = getUiSprite(signSrc);
     if (!(image && image.complete && image.naturalWidth > 0)) return false;
 
     registerTooltip(button.x, button.y, button.w, button.h, buttonTooltip(button, enabled));
@@ -9415,6 +12008,11 @@
       ctx.fill();
     }
 
+    if (realityBroken()) {
+      drawWarCommandButtonText(button, enabled);
+      return true;
+    }
+
     if (button.chalkMode === "speed") {
       const value = button.speedValue || String(button.label || "").replace(/^Speed\s*/i, "");
       drawChalkButtonText("SPEED", button.x + button.w / 2, button.y + 18, {
@@ -9430,7 +12028,7 @@
       return true;
     }
 
-    const isUpgradeSign = button.signSrc.includes("upgrade") || button.signSrc.includes("update");
+    const isUpgradeSign = signSrc.includes("upgrade") || signSrc.includes("update");
     const subLabel = isUpgradeSign ? String(button.label || "").toUpperCase() : "";
     if (subLabel) {
       drawChalkButtonText(subLabel, button.x + 22, button.y + button.h - 12, {
@@ -9447,6 +12045,42 @@
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     return true;
+  }
+
+  function drawWarCommandButtonText(button, enabled) {
+    const alpha = enabled ? 1 : 0.62;
+    if (button.chalkMode === "speed") {
+      const value = button.speedValue || String(button.label || "").replace(/^Speed\s*/i, "");
+      drawWarHudText(copy(["ui", "actions", "Speed"], "Speed").toUpperCase(), button.x + button.w / 2, button.y + 18, {
+        font: "900 8px Inter, sans-serif",
+        alpha,
+        glitch: true,
+        glitchIntensity: 0.7,
+      });
+      drawWarHudText(value, button.x + button.w / 2, button.y + 37, {
+        font: "900 18px Inter, sans-serif",
+        alpha,
+        glitch: true,
+        glitchIntensity: 0.84,
+      });
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      return;
+    }
+
+    const label = String(button.label || "").toUpperCase();
+    const hasCost = button.coinAmount !== undefined && button.coinAmount !== null;
+    drawWarHudText(label, button.x + button.w / 2, button.y + (hasCost ? 20 : button.h / 2 + 1), {
+      font: label.length > 8 ? "900 12px Inter, sans-serif" : "900 14px Inter, sans-serif",
+      alpha,
+      glitch: true,
+      glitchIntensity: 0.78,
+    });
+    if (hasCost) {
+      drawWarButtonCost(button.coinAmount, button.x + button.w / 2, button.y + button.h - 11, enabled);
+    }
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 
   function drawChalkButtonText(text, x, y, options = {}) {
@@ -9466,6 +12100,63 @@
     ctx.fillStyle = "#fff7cf";
     ctx.strokeText(text, x, y);
     ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  function drawWarHudText(text, x, y, options = {}) {
+    const {
+      align = "center",
+      font = "900 11px Inter, sans-serif",
+      alpha = 1,
+      fill = "#eaffea",
+      stroke = "rgba(0, 9, 6, 0.94)",
+      glitch = false,
+      glitchIntensity = 1,
+    } = options;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = font;
+    ctx.textAlign = align;
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    if (glitch) {
+      const split = Math.round(Math.sin(state.idleTime * 31 + x * 0.07 + y * 0.11) * 1.2 * glitchIntensity);
+      ctx.globalAlpha = alpha * 0.46 * glitchIntensity;
+      ctx.fillStyle = "#ff2847";
+      ctx.fillText(text, x - 1.5 + split, y + 1);
+      ctx.globalAlpha = alpha * 0.4 * glitchIntensity;
+      ctx.fillStyle = "#00e5ff";
+      ctx.fillText(text, x + 1.5 - split, y - 1);
+      ctx.globalAlpha = alpha;
+    }
+    ctx.strokeStyle = stroke;
+    ctx.fillStyle = fill;
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  function drawWarButtonCost(amount, centerX, y, enabled) {
+    const coinImage = getUiSprite(STATUS_COIN_SRC);
+    const text = String(amount);
+    ctx.save();
+    ctx.globalAlpha = enabled ? 1 : 0.62;
+    ctx.font = "900 11px Inter, sans-serif";
+    ctx.textBaseline = "middle";
+    const iconSize = 11;
+    const gap = 3;
+    const textWidth = ctx.measureText(text).width;
+    const totalWidth = iconSize + gap + textWidth;
+    const startX = centerX - totalWidth / 2;
+    if (coinImage && coinImage.complete && coinImage.naturalWidth > 0) {
+      ctx.drawImage(coinImage, Math.round(startX), Math.round(y - iconSize / 2), iconSize, iconSize);
+    }
+    drawWarHudText(text, startX + iconSize + gap, y + 1, {
+      align: "left",
+      font: "900 11px Inter, sans-serif",
+      alpha: enabled ? 0.96 : 0.62,
+    });
     ctx.restore();
   }
 
@@ -9498,8 +12189,8 @@
     if (button === buttons.roll || label.includes("roll")) return "action_roll";
     if (button === buttons.battle || label.includes("battle")) return "action_battle";
     if (button === buttons.battleSpeed || label.includes("speed")) return "action_speed";
-    if (button === buttons.sell || label.includes("sell")) return "action_sell";
-    if (button === buttons.detach || label.includes("detach")) return "action_detach";
+    if (button === buttons.sell || label.includes("sell") || label.includes("scrap")) return "action_sell";
+    if (button === buttons.detach || label.includes("detach") || label.includes("strip")) return "action_detach";
     return null;
   }
 
@@ -9519,15 +12210,15 @@
     }
     if (button === buttons.battle || label === "Battle") {
       return {
-        title: "Start battle",
-        body: enabled ? "Fight the next enemy team." : "Place at least one food animal first.",
+        title: realityBroken() ? "Deploy wave" : "Start battle",
+        body: enabled ? "Fight the next enemy team." : `Place at least one ${copy("ui.types.food", "food animal")} first.`,
       };
     }
     if (button === buttons.battleSpeed || label.startsWith("Speed")) {
       return { title: "Battle speed", body: "Cycles combat playback speed." };
     }
-    if (label.startsWith("Sell")) return { title: "Sell", body: "Refunds part of this entry's value." };
-    if (label.startsWith("Detach") || button.iconId === "action_detach") return { title: "Detach topping", body: "Moves the equipped topping to an open bench slot." };
+    if (label.startsWith("Sell") || label.startsWith("Scrap")) return { title: realityBroken() ? "Scrap" : "Sell", body: "Refunds part of this entry's value." };
+    if (label.startsWith("Detach") || label.startsWith("Strip") || button.iconId === "action_detach") return { title: realityBroken() ? "Strip weapon" : "Detach topping", body: `Moves the equipped ${copy("ui.types.topping", "topping")} to an open bench slot.` };
     if (label === "Next" || label === "Restart") return { title: label, body: label === "Restart" ? "Starts a new run." : "Moves to the next prep round." };
     return label ? { title: label, body: "" } : null;
   }
@@ -9545,43 +12236,71 @@
   }
 
   function drawShopkeeperStall() {
-    const keeper = getUiSprite(currentShopkeeperSrc());
-    const stall = getUiSprite(SHOPKEEPER_STALL_SRC);
+    const keeperBleed = illusionBleedPhase(2, 0.16);
+    const keeperFlash = keeperBleed.phase === "flash";
+    const keeper = getUiSprite(keeperFlash ? cozyShopkeeperSrc() : currentShopkeeperSrc());
+    const stall = getUiSprite(currentShopkeeperStallSrc());
     const keeperRect = SHOPKEEPER_DISPLAY.keeper;
     const stallRect = SHOPKEEPER_DISPLAY.stall;
 
-    ctx.save();
-    ctx.imageSmoothingEnabled = true;
     if (keeper && keeper.complete && keeper.naturalWidth > 0) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      if (keeperFlash) {
+        ctx.filter = "blur(1.1px)";
+        ctx.globalAlpha = 0.76;
+      }
       drawBreathingShopkeeper(keeper, keeperRect);
+      ctx.restore();
     }
     if (stall && stall.complete && stall.naturalWidth > 0) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
       ctx.drawImage(stall, stallRect.x, stallRect.y, stallRect.w, stallRect.h);
+      ctx.restore();
     }
-    ctx.restore();
+    if (keeperFlash) {
+      drawHeavyStaticAroundRect(keeperRect, 2, 0.86);
+      drawHeavyStaticAroundRect(stallRect, 3, 0.56);
+    } else if (keeperBleed.phase === "pre" || keeperBleed.phase === "post") {
+      drawBlueStaticAroundRect(keeperRect, 2, 1.08);
+      drawBlueStaticAroundRect(stallRect, 3, 0.82);
+    }
     drawShopkeeperSellTarget();
   }
 
   function drawCodexMenuButton() {
-    const rect = SHOPKEEPER_DISPLAY.codexButton;
-    const image = getUiSprite(CODEX_MENU_BUTTON_SRC);
+    const rect = currentCodexMenuButtonRect();
+    const image = getUiSprite(currentCodexMenuButtonSrc());
     registerTooltip(rect.x, rect.y, rect.w, rect.h, {
-      title: "Food menu",
-      body: "Open the food, toppings, and drinks menu.",
+      title: copy("ui.panels.foodMenu", "Food menu"),
+      body: `Open the ${copy("ui.panels.food", "food")}, ${copy("ui.panels.toppings", "toppings")}, and ${copy("ui.panels.drinks", "drinks")} menu.`,
     });
     ctx.save();
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.imageSmoothingEnabled = true;
-      const pad = 4;
+      const horror = realityBroken();
+      const pad = horror ? 0 : 4;
       const box = { x: rect.x - pad, y: rect.y - pad, w: rect.w + pad * 2, h: rect.h + pad * 2 };
-      const aspect = image.naturalWidth / image.naturalHeight;
+      const metrics = horror ? runtimeSpriteMetrics(image) : { x: 0, y: 0, w: image.naturalWidth, h: image.naturalHeight };
+      const aspect = metrics.w / metrics.h;
       let drawW = box.w;
       let drawH = drawW / aspect;
       if (drawH > box.h) {
         drawH = box.h;
         drawW = drawH * aspect;
       }
-      ctx.drawImage(image, box.x + (box.w - drawW) / 2, box.y + (box.h - drawH) / 2, drawW, drawH);
+      ctx.drawImage(
+        image,
+        metrics.x,
+        metrics.y,
+        metrics.w,
+        metrics.h,
+        box.x + (box.w - drawW) / 2,
+        box.y + (box.h - drawH) / 2,
+        drawW,
+        drawH
+      );
     } else {
       roundedRect(rect.x + 8, rect.y + 10, rect.w - 16, rect.h - 20, 8);
       ctx.fillStyle = "#fff1c8";
@@ -9656,7 +12375,7 @@
     const showDragOver = isDragOver && !useSubtleDropOutline;
     const showSubtleDropOutline = useSubtleDropOutline && isOpenDrop;
     const showSubtleBlockedOutline = useSubtleDropOutline && isDragOver && isBlockedDrop;
-    const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, w, h, area);
+    const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, w, h, area, index);
     roundedRect(x - w / 2, y - h / 2, w, h, 8);
     if (!hasArtBackdrop || showHoverHighlight || showOpenDrop || showDragOver) {
       ctx.fillStyle = showDragOver && showOpenDrop
@@ -9699,10 +12418,204 @@
       });
       ctx.restore();
       if (area === "shop") {
+        drawShopMergeOpportunityBadge(x, y, w, h, index);
         drawShopSaleBadge(x, y, w, h, index);
         drawShopFreezeBadge(x, y, w, h, index);
+      } else {
+        drawOwnedMergeOpportunityMarker(x, y, w, h, area, index);
       }
     }
+  }
+
+  function drawShopMergeOpportunityBadge(x, y, w, h, index) {
+    const opportunity = shopSlotMergeOpportunity(index);
+    if (!opportunity) return;
+    if (realityBroken()) {
+      drawHorrorShopMergeOpportunityBadge(x, y, w, h, index, opportunity);
+    } else {
+      drawCozyShopMergeOpportunityBadge(x, y, w, h, index, opportunity);
+    }
+  }
+
+  function drawCozyShopMergeOpportunityBadge(x, y, w, h, index, opportunity) {
+    const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 180 + index * 0.75);
+    ctx.save();
+    roundedRect(x - w / 2 + 3, y - h / 2 + 3, w - 6, h - 6, 10);
+    ctx.shadowColor = "rgba(37, 186, 94, 0.55)";
+    ctx.shadowBlur = 8 + pulse * 6;
+    ctx.strokeStyle = `rgba(22, 151, 78, ${0.74 + pulse * 0.22})`;
+    ctx.lineWidth = 2.4 + pulse;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const badgeW = 58;
+    const badgeH = 16;
+    const badgeX = x - badgeW / 2;
+    const badgeY = y - h / 2 + 8;
+    roundedRect(badgeX, badgeY, badgeW, badgeH, 7);
+    ctx.fillStyle = "rgba(207, 255, 221, 0.98)";
+    ctx.fill();
+    ctx.strokeStyle = "#16974e";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = "#0b6a38";
+    ctx.font = "900 8px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("MERGE", x, badgeY + badgeH / 2 + 0.5);
+    ctx.fillStyle = `rgba(37, 186, 94, ${0.56 + pulse * 0.34})`;
+    drawCozySparkle(badgeX - 5, badgeY + 7, 3 + pulse);
+    drawCozySparkle(badgeX + badgeW + 5, badgeY + 9, 2.5 + pulse * 0.8);
+    ctx.restore();
+
+    registerTooltip(badgeX, badgeY, badgeW, badgeH, {
+      title: "Merge ready",
+      body: `Buy ${entryLabel(state.shop[index])} to finish this merge: ${opportunity.text}.`,
+    });
+  }
+
+  function drawHorrorShopMergeOpportunityBadge(x, y, w, h, index, opportunity) {
+    const horror = realityBroken();
+    const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 130 + index * 0.75);
+    ctx.save();
+    ctx.shadowColor = "rgba(101, 255, 109, 0.50)";
+    ctx.shadowBlur = 9 + pulse * 8;
+    ctx.strokeStyle = `rgba(101, 255, 109, ${0.58 + pulse * 0.28})`;
+    ctx.lineWidth = 1.8 + pulse * 1.2;
+    drawCornerBrackets(x - w / 2 + 5, y - h / 2 + 5, w - 10, h - 10, 14);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(255, 42, 74, ${0.22 + pulse * 0.22})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2 + 11, y - h / 2 + 25 + pulse * 5);
+    ctx.lineTo(x + w / 2 - 11, y - h / 2 + 21 + pulse * 5);
+    ctx.moveTo(x - w / 2 + 14, y + h / 2 - 19 - pulse * 4);
+    ctx.lineTo(x + w / 2 - 14, y + h / 2 - 16 - pulse * 4);
+    ctx.stroke();
+
+    const badgeW = 46;
+    const badgeH = 16;
+    const badgeX = x - badgeW / 2;
+    const badgeY = y - h / 2 + 8;
+    roundedRect(badgeX, badgeY, badgeW, badgeH, 2);
+    ctx.fillStyle = "rgba(5, 24, 17, 0.96)";
+    ctx.fill();
+    ctx.strokeStyle = themeColor("accent", "#46ff63");
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255, 42, 74, 0.72)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(badgeX + 4, badgeY + 3);
+    ctx.lineTo(badgeX + badgeW - 4, badgeY + 3);
+    ctx.moveTo(badgeX + 5, badgeY + badgeH - 4);
+    ctx.lineTo(badgeX + badgeW - 5, badgeY + badgeH - 4);
+    ctx.stroke();
+    ctx.fillStyle = "#caffe0";
+    ctx.font = "900 8px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("FUSE", x, badgeY + badgeH / 2 + 0.5);
+    ctx.restore();
+
+    registerTooltip(badgeX, badgeY, badgeW, badgeH, {
+      title: "Fusion target",
+      body: `Deploy ${entryLabel(state.shop[index])} to complete ${opportunity.text}.`,
+    });
+  }
+
+  function drawOwnedMergeOpportunityMarker(x, y, w, h, area, index) {
+    if (state.drag) return;
+    const opportunity = ownedSlotShopMergeOpportunity(area, index);
+    if (!opportunity) return;
+    if (realityBroken()) {
+      drawHorrorOwnedMergeOpportunityMarker(x, y, w, h, area, index, opportunity);
+    } else {
+      drawCozyOwnedMergeOpportunityMarker(x, y, w, h, area, index, opportunity);
+    }
+  }
+
+  function drawCozyOwnedMergeOpportunityMarker(x, y, w, h, area, index, opportunity) {
+    const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 190 + index * 0.9);
+    ctx.save();
+    roundedRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4, 8);
+    ctx.strokeStyle = `rgba(22, 151, 78, ${0.58 + pulse * 0.30})`;
+    ctx.lineWidth = 1.6 + pulse * 0.8;
+    ctx.stroke();
+    const dotR = 5 + pulse * 1.4;
+    ctx.beginPath();
+    ctx.arc(x + w / 2 - 10, y - h / 2 + 10, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(37, 186, 94, 0.94)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(8, 94, 50, 0.82)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(207, 255, 221, 0.86)";
+    drawCozySparkle(x + w / 2 - 10, y - h / 2 + 10, 3.5);
+    ctx.restore();
+
+    registerTooltip(x + w / 2 - 20, y - h / 2, 20, 22, {
+      title: "Shop merge",
+      body: `${entryLabel(opportunity.entry)} in shop finishes this merge: ${opportunity.text}.`,
+    });
+  }
+
+  function drawHorrorOwnedMergeOpportunityMarker(x, y, w, h, area, index, opportunity) {
+    const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 140 + index * 1.1);
+    const markerX = x + w / 2 - 11;
+    const markerY = y - h / 2 + 11;
+    ctx.save();
+    ctx.strokeStyle = `rgba(101, 255, 109, ${0.46 + pulse * 0.28})`;
+    ctx.lineWidth = 1.4 + pulse * 0.6;
+    drawCornerBrackets(x - w / 2 + 3, y - h / 2 + 3, w - 6, h - 6, 9);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255, 42, 74, 0.72)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(markerX - 8, markerY);
+    ctx.lineTo(markerX + 8, markerY);
+    ctx.moveTo(markerX, markerY - 8);
+    ctx.lineTo(markerX, markerY + 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(markerX, markerY, 5 + pulse * 2, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(101, 255, 109, ${0.55 + pulse * 0.32})`;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(101, 255, 109, 0.82)";
+    ctx.fillRect(markerX - 2, markerY - 2, 4, 4);
+    ctx.restore();
+
+    registerTooltip(x + w / 2 - 20, y - h / 2, 20, 22, {
+      title: "Fusion lock",
+      body: `${entryLabel(opportunity.entry)} in shop completes ${opportunity.text}.`,
+    });
+  }
+
+  function drawCozySparkle(x, y, r) {
+    ctx.beginPath();
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x + r * 0.45, y);
+    ctx.lineTo(x, y + r);
+    ctx.lineTo(x - r * 0.45, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawCornerBrackets(x, y, w, h, length) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + length);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + length, y);
+    ctx.moveTo(x + w - length, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + length);
+    ctx.moveTo(x + w, y + h - length);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x + w - length, y + h);
+    ctx.moveTo(x + length, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x, y + h - length);
   }
 
   function drawShopSaleBadge(x, y, w, h, index) {
@@ -9727,25 +12640,26 @@
 
   function drawShopSlotUnlock(x, y, w, h, index) {
     const cost = shopSlotUnlockCost(index);
+    const horror = realityBroken();
     const panelX = x - w / 2 + 7;
     const panelY = y - h / 2 + 9;
     const panelW = w - 14;
     const panelH = h - 18;
-    const cloth = getUiSprite(SHOP_LOCK_CLOTH_BG_SRC);
+    const cloth = getUiSprite(currentShopLockClothBgSrc());
     roundedRect(panelX, panelY, panelW, panelH, 8);
     if (cloth && cloth.complete && cloth.naturalWidth > 0) {
       ctx.save();
       ctx.clip();
       ctx.drawImage(cloth, panelX, panelY, panelW, panelH);
-      ctx.fillStyle = "rgba(255, 247, 224, 0.16)";
+      ctx.fillStyle = horror ? "rgba(10, 21, 18, 0.20)" : "rgba(255, 247, 224, 0.16)";
       ctx.fillRect(panelX, panelY, panelW, panelH);
       ctx.restore();
       roundedRect(panelX, panelY, panelW, panelH, 8);
     } else {
-      ctx.fillStyle = "rgba(255, 253, 232, 0.76)";
+      ctx.fillStyle = horror ? "rgba(8, 18, 18, 0.86)" : "rgba(255, 253, 232, 0.76)";
       ctx.fill();
     }
-    ctx.strokeStyle = "rgba(111, 67, 33, 0.36)";
+    ctx.strokeStyle = horror ? "rgba(97, 255, 108, 0.38)" : "rgba(111, 67, 33, 0.36)";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -9755,7 +12669,7 @@
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.drawImage(image, x - iconSize / 2, medallionY - iconSize / 2 + 1, iconSize, iconSize);
     } else {
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = horror ? "#baff83" : "#16392d";
       ctx.font = "900 24px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -9764,18 +12678,18 @@
 
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    fitText(`Slot ${index + 1}`, x, y - 7, panelW - 10, "900 12px Inter, sans-serif", "#12372d");
-    fitText("Open", x, y + 10, panelW - 12, "900 10px Inter, sans-serif", "#7b3325");
+    fitText(`Slot ${index + 1}`, x, y - 7, panelW - 10, "900 12px Inter, sans-serif", horror ? "#e7ffe0" : "#12372d");
+    fitText("Open", x, y + 10, panelW - 12, "900 10px Inter, sans-serif", horror ? "#75ff71" : "#7b3325");
     roundedRect(x - 31, y + 18, 62, 24, 9);
-    ctx.fillStyle = "rgba(255, 246, 173, 0.86)";
+    ctx.fillStyle = horror ? "rgba(8, 28, 22, 0.86)" : "rgba(255, 246, 173, 0.86)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(142, 84, 29, 0.30)";
+    ctx.strokeStyle = horror ? "rgba(101, 255, 96, 0.30)" : "rgba(142, 84, 29, 0.30)";
     ctx.lineWidth = 1;
     ctx.stroke();
     drawCurrencyAmount(cost, x, y + 34, {
       align: "center",
       font: "900 12px Inter, sans-serif",
-      color: "#16392d",
+      color: horror ? "#e9ffe8" : "#16392d",
       iconSize: 12,
       maxWidth: 56,
     });
@@ -9785,47 +12699,58 @@
     });
   }
 
-  function drawDecoratedSlotBackdrop(x, y, w, h, area) {
+  function illusionSlotBackdropSrc(area, index, slotKind = null) {
+    if (!realityBroken()) return cozySlotBackdropSrc(area, slotKind);
+    const bleed = slotBackdropBleedPhase(area, index, slotKind);
+    return bleed.phase === "flash"
+      ? cozySlotBackdropSrc(area, slotKind)
+      : horrorSlotBackdropSrc(area, slotKind);
+  }
+
+  function drawDecoratedSlotBackdrop(x, y, w, h, area, index = 0) {
     if (area === "shop") {
-      const image = getUiSprite(SHOP_SLOT_BG_SRC);
+      const image = getUiSprite(illusionSlotBackdropSrc(area, index));
       if (!(image && image.complete && image.naturalWidth > 0)) return false;
       ctx.save();
       roundedRect(x - w / 2, y - h / 2, w, h, 8);
       ctx.clip();
       ctx.drawImage(image, Math.round(x - w / 2), Math.round(y - h / 2), w, h);
       ctx.restore();
+      drawSlotBackdropSequenceEffect({ x: x - w / 2, y: y - h / 2, w, h }, area, index);
       return true;
     }
     if (area === "bench") {
-      return drawBenchSlotBackdrop(x, y, w, h);
+      return drawBenchSlotBackdrop(x, y, w, h, index);
     }
     if (area === "itemBench") {
       const slot = itemBenchSlots.find((candidate) => Math.abs(candidate.x - x) < 1 && Math.abs(candidate.y - y) < 1);
       if (slot?.kind === "drink") {
-        const image = getUiSprite(DRINK_COASTER_SLOT_SRC);
+        const image = getUiSprite(illusionSlotBackdropSrc(area, index, "drink"));
         if (image && image.complete && image.naturalWidth > 0) {
           const size = Math.round(Math.max(w, h) + 16);
           ctx.save();
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
           ctx.restore();
+          drawSlotBackdropSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, area, index, "drink");
           return true;
         }
       }
       if (slot?.kind === "topping") {
-        const image = getUiSprite(TOPPING_CUTTING_BOARD_SLOT_SRC);
+        const image = getUiSprite(illusionSlotBackdropSrc(area, index, "topping"));
         if (image && image.complete && image.naturalWidth > 0) {
           const size = Math.round(Math.max(w, h) + 16);
           ctx.save();
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
           ctx.restore();
+          drawSlotBackdropSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, area, index, "topping");
           return true;
         }
       }
-      return drawBenchSlotBackdrop(x, y, w, h);
+      return drawBenchSlotBackdrop(x, y, w, h, index);
     }
-    const src = area === "board" ? BOARD_PLATE_SLOT_SRC : area === "drinks" ? DRINK_COASTER_SLOT_SRC : null;
+    const src = area === "board" ? illusionSlotBackdropSrc(area, index) : area === "drinks" ? illusionSlotBackdropSrc(area, index) : null;
     if (!src) return false;
     const image = getUiSprite(src);
     if (!(image && image.complete && image.naturalWidth > 0)) return false;
@@ -9834,11 +12759,12 @@
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
     ctx.restore();
+    drawSlotBackdropSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, area, index);
     return true;
   }
 
-  function drawBenchSlotBackdrop(x, y, w, h) {
-    const image = getUiSprite(BENCH_SLOT_BG_SRC);
+  function drawBenchSlotBackdrop(x, y, w, h, index = 0) {
+    const image = getUiSprite(illusionSlotBackdropSrc("bench", index));
     if (!(image && image.complete && image.naturalWidth > 0)) return false;
     const drawW = Math.round(w * BENCH_SLOT_BG_SCALE);
     const drawH = Math.round(h * BENCH_SLOT_BG_SCALE);
@@ -9847,6 +12773,7 @@
     ctx.clip();
     ctx.drawImage(image, Math.round(x - drawW / 2), Math.round(y - drawH / 2), drawW, drawH);
     ctx.restore();
+    drawSlotBackdropSequenceEffect({ x: x - drawW / 2, y: y - drawH / 2, w: drawW, h: drawH }, "bench", index);
     return true;
   }
 
@@ -9854,8 +12781,8 @@
     drawSlot(slot.x, slot.y, DRINK_SLOT_SIZE, DRINK_SLOT_SIZE, state.drinks[index], "drinks", index);
     if (state.drinks[index]) return;
     const slotTooltip = {
-      title: "Combat coaster",
-      body: "Place a drink here.",
+      title: realityBroken() ? "Fuel rail" : "Combat coaster",
+      body: `Place a ${copy("ui.types.drink", "drink")} here.`,
     };
     registerTooltip(slot.x - DRINK_SLOT_SIZE / 2, slot.y - DRINK_SLOT_SIZE / 2, DRINK_SLOT_SIZE, DRINK_SLOT_SIZE, slotTooltip);
   }
@@ -9864,8 +12791,8 @@
     drawSlot(slot.x, slot.y, 72, 72, state.board[index], "board", index);
     if (state.board[index]) return;
     registerTooltip(slot.x - 36, slot.y - 36, 72, 72, {
-      title: "Combat plate",
-      body: "Place a food animal here.",
+      title: realityBroken() ? "Deployment grid" : "Combat plate",
+      body: `Place a ${copy("ui.types.food", "food animal")} here.`,
     });
   }
 
@@ -9874,15 +12801,15 @@
     if (state.bench[index]) return;
     registerTooltip(slot.x - 36, slot.y - 36, 72, 72, {
       title: "General bench",
-      body: "Store food, toppings, or drinks here.",
+      body: `Store ${copy("ui.panels.food", "food")}, ${copy("ui.panels.toppings", "toppings")}, or ${copy("ui.panels.drinks", "drinks")} here.`,
     });
   }
 
   function drawItemBenchSlot(slot, index) {
     drawSlot(slot.x, slot.y, ITEM_BENCH_SLOT_SIZE, ITEM_BENCH_SLOT_SIZE, state.itemBench[index], "itemBench", index);
     if (state.itemBench[index]) return;
-    const title = slot.kind === "drink" ? "Drink storage" : "Topping storage";
-    const body = slot.kind === "drink" ? "Store spare drinks here." : "Store spare toppings here.";
+    const title = slot.kind === "drink" ? `${copy("ui.types.drink", "Drink")} storage` : `${copy("ui.types.topping", "Topping")} storage`;
+    const body = slot.kind === "drink" ? `Store spare ${copy("ui.types.drink", "drinks")} here.` : `Store spare ${copy("ui.types.topping", "toppings")} here.`;
     registerTooltip(
       slot.x - ITEM_BENCH_SLOT_SIZE / 2,
       slot.y - ITEM_BENCH_SLOT_SIZE / 2,
@@ -9895,10 +12822,15 @@
   function drawShopFreezeBadge(x, y, w, h, index) {
     const rect = shopFreezeRect(x, y, w, h);
     const frozen = state.shopFrozen[index];
+    const horror = realityBroken();
     roundedRect(rect.x, rect.y, rect.w, rect.h, 5);
-    ctx.fillStyle = frozen ? "#e7ffd9" : "rgba(255, 253, 232, 0.92)";
+    ctx.fillStyle = horror
+      ? frozen ? "rgba(101, 255, 109, 0.24)" : "rgba(6, 16, 18, 0.90)"
+      : frozen ? "#e7ffd9" : "rgba(255, 253, 232, 0.92)";
     ctx.fill();
-    ctx.strokeStyle = frozen ? "#16392d" : "rgba(22, 57, 45, 0.24)";
+    ctx.strokeStyle = horror
+      ? frozen ? themeColor("accent", "#46ff63") : themeColor("borderDim", "rgba(70, 255, 99, 0.22)")
+      : frozen ? "#16392d" : "rgba(22, 57, 45, 0.24)";
     ctx.lineWidth = frozen ? 2 : 1;
     ctx.stroke();
     const image = getUiSprite(frozen ? SHOP_LOCKED_SRC : SHOP_UNLOCKED_SRC);
@@ -9906,7 +12838,7 @@
       const iconSize = frozen ? 15 : 16;
       ctx.drawImage(image, rect.x + (rect.w - iconSize) / 2, rect.y + (rect.h - iconSize) / 2, iconSize, iconSize);
     } else {
-      ctx.fillStyle = frozen ? "#16392d" : "#7c452d";
+      ctx.fillStyle = horror ? (frozen ? themeColor("accent", "#46ff63") : themeColor("muted", "#9efaaa")) : frozen ? "#16392d" : "#7c452d";
       ctx.font = "900 12px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -9927,14 +12859,14 @@
     const y = Math.max(h / 2 + 6, Math.min(H - h / 2 - 6, drag.y));
     ctx.save();
     ctx.globalAlpha = 0.92;
-    ctx.shadowColor = "rgba(22, 57, 45, 0.24)";
+    ctx.shadowColor = realityBroken() ? "rgba(0, 0, 0, 0.45)" : "rgba(22, 57, 45, 0.24)";
     ctx.shadowBlur = 18;
     ctx.shadowOffsetY = 10;
     roundedRect(x - w / 2, y - h / 2, w, h, 8);
-    ctx.fillStyle = "#fff9d6";
+    ctx.fillStyle = realityBroken() ? "rgba(6, 16, 18, 0.92)" : "#fff9d6";
     ctx.fill();
     ctx.shadowColor = "transparent";
-    ctx.strokeStyle = drag.valid ? "#4a9e68" : "rgba(22, 57, 45, 0.32)";
+    ctx.strokeStyle = drag.valid ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.32)");
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.lineWidth = 1;
@@ -10034,9 +12966,11 @@
     ctx.textAlign = "center";
 
     if (shopCard) {
+      const shopPrimary = themeColor("primary", "#16392d");
+      const shopMuted = themeColor("muted", "#7c452d");
       const bottom = y + h / 2;
-      fitText(unit.short, x, bottom - 61, w - 14, "800 12px Inter, sans-serif", "#16392d");
-      ctx.fillStyle = "#7c452d";
+      fitText(displayUnitShort(unit), x, bottom - 61, w - 14, "800 12px Inter, sans-serif", shopPrimary);
+      ctx.fillStyle = shopMuted;
       ctx.font = "700 12px Inter, sans-serif";
       drawTraitChips(unit.traits || [], x - w / 2 + 7, bottom - 48, w - 14, {
         fontSize: 5.5,
@@ -10045,7 +12979,7 @@
       });
       drawUpgradeStars(unit.tier, x, bottom - 25, 9, "center");
       ctx.textAlign = "center";
-      drawCurrencyLine(purchaseCost(unit, options.shopIndex), `${unit.atk}/${unit.maxHp}`, x, bottom - 9, w - 12, "800 11px Inter, sans-serif", "#16392d", {
+      drawCurrencyLine(purchaseCost(unit, options.shopIndex), `${unit.atk}/${unit.maxHp}`, x, bottom - 9, w - 12, "800 11px Inter, sans-serif", shopPrimary, {
         iconSize: 11,
       });
       ctx.textAlign = "left";
@@ -10058,9 +12992,9 @@
       ctx.textAlign = "left";
       return;
     }
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "800 11px Inter, sans-serif";
-    ctx.fillText(unit.short, x, y + h / 2 - 14);
+    ctx.fillText(displayUnitShort(unit), x, y + h / 2 - 14);
     ctx.fillStyle = "#7c452d";
     ctx.font = "700 10px Inter, sans-serif";
     drawUpgradeStars(unit.tier, x, y + h / 2 - 4, 7, "center");
@@ -10077,14 +13011,16 @@
     if (shopCard) drawRarityBadge(x - w / 2 + 7, y - h / 2 + 7, item.rarity, "small");
     ctx.textAlign = "center";
     if (shopCard) {
+      const shopPrimary = themeColor("primary", "#16392d");
+      const shopMuted = themeColor("muted", "#7c452d");
       const bottom = y + h / 2;
-      fitText(itemDisplayShort(item), x, bottom - 57, w - 14, "800 12px Inter, sans-serif", "#16392d");
-      fitText(itemCardText(item), x, bottom - 36, w - 14, "700 10px Inter, sans-serif", "#7c452d");
+      fitText(itemDisplayShort(item), x, bottom - 57, w - 14, "800 12px Inter, sans-serif", shopPrimary);
+      fitText(itemCardText(item), x, bottom - 36, w - 14, "700 10px Inter, sans-serif", shopMuted);
       drawUpgradeStars(itemTier(item.tier), x, bottom - 24, 7, "center");
       drawCurrencyAmount(purchaseCost(item, options.shopIndex), x, bottom - 12, {
         align: "center",
         font: "800 11px Inter, sans-serif",
-        color: "#16392d",
+        color: shopPrimary,
         iconSize: 11,
         maxWidth: w - 14,
       });
@@ -10097,7 +13033,7 @@
       return;
     }
     drawRarityDot(x + w / 2 - 12, y - h / 2 + 10, item.rarity);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "800 11px Inter, sans-serif";
     ctx.fillText(itemDisplayShort(item), x, y + h / 2 - 13);
     ctx.fillStyle = "#7c452d";
@@ -10144,9 +13080,19 @@
     const w = small ? Math.max(48, Math.ceil(rarity.label.length * 6.8)) : 68;
     const h = small ? 17 : 20;
     roundedRect(x, y, w, h, 5);
+    if (realityBroken() && rarity.glow) {
+      ctx.save();
+      ctx.shadowColor = rarity.glow;
+      ctx.shadowBlur = small ? 9 : 12;
+      ctx.shadowOffsetY = 0;
+      ctx.fillStyle = rarity.fill;
+      ctx.fill();
+      ctx.restore();
+      roundedRect(x, y, w, h, 5);
+    }
     ctx.fillStyle = rarity.fill;
     ctx.fill();
-    ctx.strokeStyle = small ? "rgba(22, 57, 45, 0.28)" : rarity.stroke;
+    ctx.strokeStyle = realityBroken() ? rarity.stroke : small ? "rgba(22, 57, 45, 0.28)" : rarity.stroke;
     ctx.lineWidth = small ? 1 : 2;
     ctx.stroke();
     ctx.fillStyle = rarity.text;
@@ -10161,6 +13107,16 @@
 
   function drawRarityDot(x, y, rarityId) {
     const rarity = rarityInfo(rarityId);
+    if (realityBroken() && rarity.glow) {
+      ctx.save();
+      ctx.shadowColor = rarity.glow;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.fillStyle = rarity.fill;
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.beginPath();
     ctx.arc(x, y, 5, 0, Math.PI * 2);
     ctx.fillStyle = rarity.fill;
@@ -10192,16 +13148,26 @@
       if (w < minWidth) return;
       const chipY = y + row * rowHeight;
       roundedRect(cursor, chipY, w, 14, 4);
+      if (realityBroken()) {
+        ctx.save();
+        ctx.shadowColor = info.color;
+        ctx.shadowBlur = 7;
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = info.color;
+        ctx.fill();
+        ctx.restore();
+        roundedRect(cursor, chipY, w, 14, 4);
+      }
       ctx.fillStyle = info.color;
       ctx.fill();
-      ctx.strokeStyle = "rgba(22, 57, 45, 0.22)";
+      ctx.strokeStyle = realityBroken() ? "rgba(244, 255, 246, 0.28)" : "rgba(22, 57, 45, 0.22)";
       ctx.lineWidth = 1;
       ctx.stroke();
       registerTooltip(cursor, chipY, w, 14, {
         title: `${traitDisplayText(traitId)} trait`,
         body: info.effect || "Counts toward a team trait bonus.",
       });
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = realityBroken() ? themeColor("chipText", "#06100c") : "#16392d";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(text, cursor + w / 2, chipY + 8, w - 5);
@@ -10214,23 +13180,34 @@
   function drawActiveTraitRows(x, y, maxWidth, maxRows = Infinity) {
     const activeTraits = activePlayerTraits().filter((trait) => trait.active);
     const traits = Number.isFinite(maxRows) ? activeTraits.slice(0, maxRows) : activeTraits;
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = realityBroken() ? "#dfffe2" : "#16392d";
     ctx.font = "800 12px Inter, sans-serif";
     ctx.fillText("Active traits", x, y);
     if (!traits.length) {
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = realityBroken() ? "#84e08f" : "#6a4b35";
       ctx.font = "700 11px Inter, sans-serif";
       ctx.fillText("No active traits", x, y + 20);
       return;
     }
     traits.forEach((trait, index) => {
       const rowY = y + 20 + index * 22;
+      const info = traitInfo(trait.id);
       roundedRect(x, rowY - 11, 74, 16, 4);
-      ctx.fillStyle = trait.color;
+      if (realityBroken()) {
+        ctx.save();
+        ctx.shadowColor = info.color;
+        ctx.shadowBlur = 8;
+        ctx.globalAlpha = 0.42;
+        ctx.fillStyle = info.color;
+        ctx.fill();
+        ctx.restore();
+        roundedRect(x, rowY - 11, 74, 16, 4);
+      }
+      ctx.fillStyle = info.color;
       ctx.fill();
-      ctx.strokeStyle = "rgba(22, 57, 45, 0.18)";
+      ctx.strokeStyle = realityBroken() ? "rgba(244, 255, 246, 0.28)" : "rgba(22, 57, 45, 0.18)";
       ctx.stroke();
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = realityBroken() ? themeColor("chipText", "#06100c") : "#16392d";
       ctx.font = "900 8px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -10238,17 +13215,18 @@
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
       ctx.font = "700 10px Inter, sans-serif";
-      fitText(trait.effect, x + 82, rowY, maxWidth - 82, "700 10px Inter, sans-serif", "#6a4b35");
+      fitText(trait.effect, x + 82, rowY, maxWidth - 82, "700 10px Inter, sans-serif", realityBroken() ? "#a9f6ad" : "#6a4b35");
     });
   }
 
   function drawArenaInfoRows(x, y, maxWidth, maxRows = 3) {
-    const arena = currentArena();
-    drawInfoSectionTitle("Arena", x, y);
+    const arena = themedArena(currentArena());
+    const horror = realityBroken();
+    drawInfoSectionTitle(realityBroken() ? "War Zone" : "Arena", x, y);
     roundedRect(x, y + 9, maxWidth, 34, 7);
-    ctx.fillStyle = "rgba(255, 249, 214, 0.72)";
+    ctx.fillStyle = horror ? "rgba(7, 26, 21, 0.72)" : "rgba(255, 249, 214, 0.72)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.strokeStyle = horror ? "rgba(101, 255, 96, 0.22)" : "rgba(22, 57, 45, 0.12)";
     ctx.stroke();
     roundedRect(x + 8, y + 17, 34, 16, 5);
     ctx.fillStyle = arena.color;
@@ -10259,90 +13237,95 @@
       title: arena.name,
       body: arena.mood,
     });
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = horror ? themeColor("chipText", "#07100b") : "#16392d";
     ctx.font = "900 7px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("ARENA", x + 25, y + 25, 30);
+    ctx.fillText(copy("ui.panels.arena", realityBroken() ? "ZONE" : "ARENA"), x + 25, y + 25, 30);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    fitText(arena.name, x + 48, y + 24, maxWidth - 56, "900 11px Inter, sans-serif", "#16392d");
-    fitText(arena.mood, x + 48, y + 38, maxWidth - 56, "700 9px Inter, sans-serif", "#6a4b35");
+    fitText(arena.name, x + 48, y + 24, maxWidth - 56, "900 11px Inter, sans-serif", horror ? "#e7ffe5" : "#16392d");
+    fitText(arena.mood, x + 48, y + 38, maxWidth - 56, "700 9px Inter, sans-serif", horror ? "#9efaaa" : "#6a4b35");
     arena.effects.slice(0, maxRows).forEach((effect, index) => {
       const rowY = y + 61 + index * 18;
       const helpful = effect.tag === "HELP";
+      const colors = arenaEffectBadgeColors(helpful);
       roundedRect(x, rowY - 12, 34, 15, 4);
-      ctx.fillStyle = helpful ? "#e7ffd9" : "#ffe2d8";
+      ctx.fillStyle = colors.fill;
       ctx.fill();
-      ctx.strokeStyle = helpful ? "rgba(74, 158, 104, 0.28)" : "rgba(217, 87, 60, 0.28)";
+      ctx.strokeStyle = colors.stroke;
       ctx.stroke();
       registerTooltip(x, rowY - 12, maxWidth, 15, {
-        title: helpful ? "Arena help" : "Arena pressure",
+        title: helpful ? copy("ui.panels.arenaHelp", realityBroken() ? "Zone advantage" : "Arena help") : copy("ui.panels.arenaPressure", realityBroken() ? "Zone hazard" : "Arena pressure"),
         body: effect.text,
       });
-      ctx.fillStyle = helpful ? "#24683e" : "#8c3627";
+      ctx.fillStyle = colors.label;
       ctx.font = "900 7px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(helpful ? "UP" : "DN", x + 17, rowY - 4);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      fitText(effect.text, x + 42, rowY, maxWidth - 42, "700 9px Inter, sans-serif", "#6a4b35");
+      fitText(effect.text, x + 42, rowY, maxWidth - 42, "700 9px Inter, sans-serif", colors.text);
     });
   }
 
   function drawArenaBattlePanel() {
-    const arena = currentArena();
+    const arena = themedArena(currentArena());
     const x = 642;
     const y = 66;
     const w = 326;
     const h = 60;
     roundedRect(x, y, w, h, 8);
-    ctx.fillStyle = "rgba(255, 253, 232, 0.84)";
+    ctx.fillStyle = realityBroken() ? "rgba(5, 13, 15, 0.86)" : "rgba(255, 253, 232, 0.84)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.2)";
+    ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.42)" : "rgba(22, 57, 45, 0.2)";
     ctx.stroke();
     roundedRect(x + 10, y + 9, 42, 18, 6);
     ctx.fillStyle = arena.color;
     ctx.fill();
     ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
     ctx.stroke();
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = realityBroken() ? themeColor("chipText", "#07100b") : "#16392d";
     ctx.font = "900 8px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("ARENA", x + 31, y + 18);
+    ctx.fillText(copy("ui.panels.arena", realityBroken() ? "ZONE" : "ARENA"), x + 31, y + 18);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    fitText(arena.name, x + 60, y + 18, w - 72, "900 12px Inter, sans-serif", "#16392d");
-    fitText(arena.mood, x + 60, y + 33, w - 72, "800 8px Inter, sans-serif", "#6a4b35");
+    fitText(arena.name, x + 60, y + 18, w - 72, "900 12px Inter, sans-serif", realityBroken() ? "#f4fff6" : "#16392d");
+    fitText(arena.mood, x + 60, y + 33, w - 72, "800 8px Inter, sans-serif", realityBroken() ? "#9efaaa" : "#6a4b35");
     const chipY = y + 45;
     const gap = 5;
     const chipW = Math.floor((w - 20 - gap * 2) / 3);
     arena.effects.forEach((effect, index) => {
       const chipX = x + 10 + index * (chipW + gap);
       const helpful = effect.tag === "HELP";
+      const colors = arenaEffectBadgeColors(helpful);
       roundedRect(chipX, chipY - 9, chipW, 12, 4);
-      ctx.fillStyle = helpful ? "#e7ffd9" : "#ffe2d8";
+      ctx.fillStyle = colors.fill;
       ctx.fill();
       registerTooltip(chipX, chipY - 9, chipW, 12, {
         title: helpful ? "Arena help" : "Arena pressure",
         body: effect.text,
       });
-      ctx.fillStyle = helpful ? "#24683e" : "#8c3627";
+      ctx.fillStyle = colors.label;
       ctx.font = "900 6px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(helpful ? "UP" : "DN", chipX + 12, chipY - 3);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      fitText(effect.text, chipX + 27, chipY, chipW - 31, "700 7px Inter, sans-serif", "#6a4b35");
+      fitText(effect.text, chipX + 27, chipY, chipW - 31, "700 7px Inter, sans-serif", colors.text);
     });
   }
 
   function drawBattleMoldPanel(battle = visibleBattle()) {
     if (!battle) return;
     const mold = moldStateText(battle);
+    const horror = realityBroken();
+    const effectId = currentMoldStatusEffectId();
+    const effectStyle = currentMoldStatusStyle();
     const x = 56;
     const y = 84;
     const w = 236;
@@ -10357,32 +13340,33 @@
     ctx.fill();
     ctx.strokeStyle = mold.active ? "rgba(83, 122, 54, 0.45)" : "rgba(22, 57, 45, 0.15)";
     ctx.stroke();
-    const icon = getStatusEffectSprite("mold");
+    const icon = getStatusEffectSprite(effectId);
     if (icon && icon.complete && icon.naturalWidth) {
       const smoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(icon, x + 12, y + 7, 22, 22);
       ctx.imageSmoothingEnabled = smoothing;
     } else {
-      drawStatusGlyph({ id: "mold", ...STATUS_EFFECT_STYLES.mold }, x + 22, y + 18, 7);
+      drawStatusGlyph({ id: effectId, ...effectStyle }, x + 22, y + 18, 7);
     }
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    fitText("Mold", x + 42, y + 15, 42, "900 10px Inter, sans-serif", mold.active ? "#2f5f2d" : "#6a4b35");
+    fitText(horror ? "Radiation" : "Mold", x + 42, y + 15, 70, "900 10px Inter, sans-serif", mold.active ? "#587018" : "#6a4b35");
+    const stackValue = horror ? mold.dose : mold.stacks;
     const label = mold.active
-      ? `Stack ${mold.stacks} - ${mold.damagePct}% HP/s`
-      : `Starts in ${Math.ceil(mold.nextTickIn)}s`;
-    fitText(label, x + 86, y + 22, w - 96, "900 12px Inter, sans-serif", "#16392d");
+      ? `${horror ? "Dose" : "Stack"} ${stackValue} - ${mold.damagePct}% HP/s`
+      : `In ${Math.ceil(mold.nextTickIn)}s`;
+    fitText(label, x + 116, y + 22, w - 126, "900 12px Inter, sans-serif", "#16392d");
   }
 
   function drawInfoSectionTitle(text, x, y) {
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = realityBroken() ? "#dfffe2" : "#16392d";
     ctx.font = "900 11px Inter, sans-serif";
     ctx.fillText(text, x, y);
   }
 
   function drawInfoDivider(x, y, w) {
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.14)";
+    ctx.strokeStyle = realityBroken() ? "rgba(101, 255, 96, 0.22)" : "rgba(22, 57, 45, 0.14)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -10392,33 +13376,33 @@
 
   function drawInfoMetric(label, value, x, y, w = 48) {
     roundedRect(x, y, w, 34, 6);
-    ctx.fillStyle = "rgba(255, 249, 214, 0.72)";
+    ctx.fillStyle = themeColor("panelSoft", "rgba(255, 249, 214, 0.72)");
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
     ctx.stroke();
-    ctx.fillStyle = "#6a4b35";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 8px Inter, sans-serif";
     ctx.fillText(label, x + 7, y + 12);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 14px Inter, sans-serif";
     if (value && typeof value === "object" && value.currency !== undefined) {
       drawCurrencyAmount(value.currency, x + 7, y + 24, {
         sign: value.sign || "",
         font: "900 14px Inter, sans-serif",
-        color: "#16392d",
+        color: themeColor("primary", "#16392d"),
         iconSize: 13,
         maxWidth: w - 12,
       });
     } else {
       const text = String(value);
       const valueFont = text.length >= 5 && w <= 54 ? "900 12px Inter, sans-serif" : "900 14px Inter, sans-serif";
-      fitText(text, x + 7, y + 27, w - 12, valueFont, "#16392d");
+      fitCodexText(text, x + 7, y + 27, w - 12, valueFont, themeColor("primary", "#16392d"), 8);
     }
   }
 
   function drawSmallProgressBar(x, y, w, pct, color) {
     roundedRect(x, y, w, 7, 4);
-    ctx.fillStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.fillStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
     ctx.fill();
     const fill = Math.max(0, Math.min(w, w * pct));
     if (fill <= 0) return;
@@ -10449,17 +13433,28 @@
     const rows = traitContextForUnit(unit, ref).slice(0, maxRows);
     rows.forEach((trait, index) => {
       const rowY = y + 20 + index * 19;
+      const info = traitInfo(trait.id);
       roundedRect(x, rowY - 12, 70, 15, 4);
-      ctx.fillStyle = trait.color || traitInfo(trait.id).color;
+      if (realityBroken()) {
+        ctx.save();
+        ctx.shadowColor = info.color;
+        ctx.shadowBlur = 7;
+        ctx.globalAlpha = 0.42;
+        ctx.fillStyle = info.color;
+        ctx.fill();
+        ctx.restore();
+        roundedRect(x, rowY - 12, 70, 15, 4);
+      }
+      ctx.fillStyle = info.color;
       ctx.fill();
-      ctx.strokeStyle = "rgba(22, 57, 45, 0.18)";
+      ctx.strokeStyle = realityBroken() ? "rgba(101, 255, 109, 0.28)" : "rgba(22, 57, 45, 0.18)";
       ctx.stroke();
       const traitTooltip = {
         title: `${traitDisplayText(trait.id)} trait`,
         body: trait.effect || (trait.nextAt ? `Next bonus at ${trait.nextAt}.` : "Trait is inactive."),
       };
       registerTooltip(x, rowY - 12, 70, 15, traitTooltip);
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = realityBroken() ? themeColor("chipText", "#06100c") : "#16392d";
       ctx.font = "900 8px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -10468,32 +13463,68 @@
       ctx.textBaseline = "alphabetic";
 
       const countText = trait.preview ? `${trait.currentCount}>${trait.projectedCount}` : `${trait.currentCount}`;
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = themeColor("primary", "#16392d");
       ctx.font = "900 10px Inter, sans-serif";
       ctx.fillText(countText, x + 78, rowY);
       const effect = trait.effect || (trait.nextAt ? `Next at ${trait.nextAt}` : "Inactive");
-      fitText(effect, x + 108, rowY, maxWidth - 108, "700 10px Inter, sans-serif", "#6a4b35");
+      fitText(effect, x + 108, rowY, maxWidth - 108, "700 10px Inter, sans-serif", themeColor("muted", "#6a4b35"));
     });
   }
 
   function selectedSellButton(ref) {
-    return { ...buttons.sell, x: INFO_PANEL.x + INFO_PANEL.w - buttons.sell.w - 20, y: INFO_PANEL.y + INFO_PANEL.h - 42 };
+    const layout = selectedPanelActionLayout(ref);
+    const hasDetach = layout.split;
+    return {
+      ...buttons.sell,
+      x: hasDetach ? layout.leftX : layout.singleX,
+      y: layout.y,
+      w: hasDetach ? layout.splitW : layout.singleW,
+      h: layout.h,
+    };
   }
 
   function selectedDetachButton(ref) {
     if (ref && isUnit(ref.entry)) {
-      const slot = equipmentSlotRect();
+      const layout = selectedPanelActionLayout(ref);
       return {
         ...buttons.detach,
-        x: slot.x + slot.w + 2,
-        y: slot.y + (slot.h - 28) / 2,
-        w: 24,
-        h: 28,
-        label: "",
+        x: layout.rightX,
+        y: layout.y,
+        w: layout.splitW,
+        h: layout.h,
+        label: "Detach",
         iconId: "action_detach",
       };
     }
     return buttons.detach;
+  }
+
+  function selectedPanelActionLayout(ref) {
+    const margin = 20;
+    const gap = 8;
+    const h = 28;
+    const y = INFO_PANEL.y + INFO_PANEL.h - 42;
+    const availableW = INFO_PANEL.w - margin * 2;
+    const splitW = Math.floor((availableW - gap) / 2);
+    const leftX = INFO_PANEL.x + margin;
+    const rightX = leftX + splitW + gap;
+    const split = Boolean(
+      ref &&
+      isUnit(ref.entry) &&
+      (ref.area === "bench" || ref.area === "board") &&
+      ref.entry.item
+    );
+    const singleW = Math.min(148, availableW);
+    return {
+      y,
+      h,
+      split,
+      splitW,
+      leftX,
+      rightX,
+      singleW,
+      singleX: INFO_PANEL.x + INFO_PANEL.w - margin - singleW,
+    };
   }
 
   function drawSelectedEquipmentSlot(unit) {
@@ -10501,18 +13532,21 @@
     const hovered = state.hover?.area === "equipment";
     const canDropHere = Boolean(state.drag && isPotentialDropTarget(state.drag, "equipment", 0));
     const valid = canDropDrag(state.drag, "equipment", 0);
+    const horror = realityBroken();
     roundedRect(rect.x, rect.y, rect.w, rect.h, 7);
-    ctx.fillStyle = canDropHere && valid ? "#e7ffd9" : hovered ? "#fff9d6" : "rgba(255, 249, 214, 0.74)";
+    ctx.fillStyle = horror
+      ? canDropHere && valid ? "rgba(37, 255, 96, 0.25)" : hovered ? "rgba(17, 44, 42, 0.92)" : "rgba(8, 20, 22, 0.78)"
+      : canDropHere && valid ? "#e7ffd9" : hovered ? "#fff9d6" : "rgba(255, 249, 214, 0.74)";
     ctx.fill();
-    ctx.strokeStyle = canDropHere ? (valid ? "#4a9e68" : "#d9573c") : unit.item ? "#d99043" : "rgba(22, 57, 45, 0.24)";
+    ctx.strokeStyle = canDropHere ? (valid ? themeColor("accent", "#4a9e68") : themeColor("danger", "#d9573c")) : unit.item ? themeColor("warning", "#d99043") : themeColor("borderDim", "rgba(22, 57, 45, 0.24)");
     ctx.lineWidth = canDropHere || hovered ? 3 : 1.5;
     ctx.stroke();
     ctx.lineWidth = 1;
     if (unit.item) {
       drawItemIcon(unit.item, rect.x + rect.w / 2, rect.y + 32, 20);
-      fitText(itemDisplayShort(unit.item), rect.x + 6, rect.y + rect.h - 9, rect.w - 12, "900 9px Inter, sans-serif", "#16392d");
+      fitText(itemDisplayShort(unit.item), rect.x + 6, rect.y + rect.h - 9, rect.w - 12, "900 9px Inter, sans-serif", themeColor("primary", "#16392d"));
     } else {
-      ctx.fillStyle = "rgba(22, 57, 45, 0.52)";
+      ctx.fillStyle = horror ? themeColor("muted", "rgba(22, 57, 45, 0.52)") : "rgba(22, 57, 45, 0.52)";
       ctx.font = "900 11px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -10526,8 +13560,9 @@
     const favorite = favoriteToppingFor(unit);
     if (!favorite) return 0;
     const item = itemInfo(favorite.itemId);
-    const fill = favorite.unlocked ? "#e7ffd9" : "#fff9d6";
-    const stroke = favorite.unlocked ? "#4a9e68" : "rgba(22, 57, 45, 0.18)";
+    const horror = realityBroken();
+    const fill = horror ? (favorite.unlocked ? "rgba(37, 255, 96, 0.20)" : "rgba(8, 20, 22, 0.88)") : favorite.unlocked ? "#e7ffd9" : "#fff9d6";
+    const stroke = favorite.unlocked ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
     const cardTop = y - 17;
     const badgeText = favorite.unlocked ? "ACTIVE" : "FAV";
     const badgeW = favorite.unlocked ? 38 : 25;
@@ -10554,16 +13589,16 @@
 
     ctx.beginPath();
     ctx.arc(iconX, iconY, iconRadius, 0, Math.PI * 2);
-    ctx.fillStyle = favorite.unlocked ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.72)";
+    ctx.fillStyle = horror ? "rgba(70, 255, 99, 0.10)" : favorite.unlocked ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.72)";
     ctx.fill();
-    ctx.strokeStyle = favorite.unlocked ? "rgba(74, 158, 104, 0.42)" : "rgba(106, 75, 53, 0.18)";
+    ctx.strokeStyle = favorite.unlocked ? themeColor("accent", "rgba(74, 158, 104, 0.42)") : themeColor("borderDim", "rgba(106, 75, 53, 0.18)");
     ctx.stroke();
     drawItemIcon(item, iconX, iconY, iconDrawRadius);
 
     roundedRect(badgeX, cardTop + 8, badgeW, 16, 5);
-    ctx.fillStyle = favorite.unlocked ? "#4a9e68" : "#f1cf75";
+    ctx.fillStyle = favorite.unlocked ? themeColor("accent", "#4a9e68") : themeColor("warning", "#f1cf75");
     ctx.fill();
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = horror ? "#07100b" : "#16392d";
     ctx.font = "900 8px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -10571,8 +13606,8 @@
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
 
-    fitText(favorite.itemName, textX, cardTop + 20, textW, "900 10px Inter, sans-serif", "#16392d");
-    ctx.fillStyle = "#6a4b35";
+    fitText(favorite.itemName, textX, cardTop + 20, textW, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 8.5px Inter, sans-serif";
     let lineY = cardTop + 36;
     specs.forEach((line) => {
@@ -10921,7 +13956,7 @@
       traits: [...(animal.traits || [])],
       color: animal.color,
       accent: animal.accent,
-      role: animal.role,
+      role: displayRoleLabel(animal.role),
       ability: animal.ability || "front",
       abilityText: animal.abilityText || "Front blockers",
       tier: safeTier,
@@ -11011,6 +14046,14 @@
     return { x: fx - 40, y: y + 246, w: 80, h: 92 };
   }
 
+  function fitCodexText(text, x, y, maxWidth, font, color, minPx = 6.5) {
+    if (!realityBroken()) {
+      fitText(text, x, y, maxWidth, font, color);
+      return;
+    }
+    fitTextComplete(text, x, y, maxWidth, font, color, minPx);
+  }
+
   function hitTestCodex(pos) {
     if (pointInRect(pos.x, pos.y, codexCloseRect())) return { area: "codexClose", index: 0 };
     for (let i = 0; i < CODEX_TABS.length; i++) {
@@ -11048,30 +14091,42 @@
     const entries = codexEntries();
     const entry = currentCodexEntry();
     ctx.save();
-    ctx.fillStyle = "rgba(23, 34, 29, 0.48)";
+    ctx.fillStyle = realityBroken() ? "rgba(0, 0, 0, 0.68)" : "rgba(23, 34, 29, 0.48)";
     ctx.fillRect(0, 0, W, H);
 
-    const menuBg = getUiSprite(FOOD_MENU_BG_SRC);
+    const menuBg = getUiSprite(currentFoodMenuBgSrc());
     roundedRect(panel.x, panel.y, panel.w, panel.h, 12);
     if (menuBg && menuBg.complete && menuBg.naturalWidth > 0) {
       ctx.save();
       ctx.clip();
       ctx.drawImage(menuBg, panel.x, panel.y, panel.w, panel.h);
-      ctx.fillStyle = "rgba(255, 253, 232, 0.08)";
+      ctx.fillStyle = realityBroken() ? "rgba(3, 13, 11, 0.18)" : "rgba(255, 253, 232, 0.08)";
       ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      if (realityBroken()) {
+        ctx.fillStyle = "rgba(70, 255, 99, 0.06)";
+        for (let yy = panel.y + 18; yy < panel.y + panel.h; yy += 18) ctx.fillRect(panel.x, yy, panel.w, 1);
+      }
       ctx.restore();
     } else {
-      ctx.fillStyle = "#fff7dc";
+      ctx.fillStyle = themeColor("panel", "#fff7dc");
       ctx.fill();
+      if (realityBroken()) {
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = "rgba(70, 255, 99, 0.05)";
+        for (let yy = panel.y + 16; yy < panel.y + panel.h; yy += 18) ctx.fillRect(panel.x, yy, panel.w, 1);
+        for (let xx = panel.x + 20; xx < panel.x + panel.w; xx += 44) ctx.fillRect(xx, panel.y, 1, panel.h);
+        ctx.restore();
+      }
     }
     roundedRect(panel.x, panel.y, panel.w, panel.h, 12);
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.32)";
+    ctx.strokeStyle = themeColor("border", "rgba(22, 57, 45, 0.32)");
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 26px Inter, sans-serif";
-    ctx.fillText("Food Menu", panel.x + 28, panel.y + 42);
+    ctx.fillText(copy("ui.panels.foodMenu", "Food Menu"), panel.x + 28, panel.y + 42);
 
     drawCodexCloseButton();
     drawCodexTabs();
@@ -11088,16 +14143,16 @@
       const active = state.codexTab === tab.id;
       const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
       roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
-      ctx.fillStyle = active ? "#16392d" : hovered ? "#fff9d6" : "rgba(255, 253, 232, 0.74)";
+      ctx.fillStyle = active ? themeColor("panelActive", "#16392d") : hovered ? themeColor("panelHover", "#fff9d6") : themeColor("panelSoft", "rgba(255, 253, 232, 0.74)");
       ctx.fill();
-      ctx.strokeStyle = active ? "#16392d" : "rgba(22, 57, 45, 0.18)";
+      ctx.strokeStyle = active ? themeColor("accent", "#16392d") : themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
       ctx.lineWidth = active ? 2 : 1;
       ctx.stroke();
-      ctx.fillStyle = active ? "#fff7dc" : "#16392d";
+      ctx.fillStyle = active ? themeColor("primary", "#fff7dc") : themeColor("muted", "#16392d");
       ctx.font = "900 12px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(tab.label, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+      ctx.fillText(copy(["ui", "panels", tab.id], tab.label), rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
     });
@@ -11108,12 +14163,12 @@
     const rect = codexCloseRect();
     const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
     roundedRect(rect.x, rect.y, rect.w, rect.h, 7);
-    ctx.fillStyle = hovered ? "#ffe0d8" : "#fff0d1";
+    ctx.fillStyle = hovered ? themeColor("panelHover", "#ffe0d8") : themeColor("panelSoft", "#fff0d1");
     ctx.fill();
-    ctx.strokeStyle = hovered ? "#d9573c" : "rgba(22, 57, 45, 0.2)";
+    ctx.strokeStyle = hovered ? themeColor("danger", "#d9573c") : themeColor("borderDim", "rgba(22, 57, 45, 0.2)");
     ctx.lineWidth = hovered ? 2 : 1;
     ctx.stroke();
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 16px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -11124,21 +14179,21 @@
   }
 
   function drawCodexInnerPanel(x, y, w, h, radius = 9) {
-    const panelBg = getUiSprite(TEAM_INTEL_BG_SRC);
+    const panelBg = getUiSprite(currentTeamIntelBgSrc());
     roundedRect(x, y, w, h, radius);
     if (panelBg && panelBg.complete && panelBg.naturalWidth > 0) {
       ctx.save();
       ctx.clip();
       ctx.drawImage(panelBg, x, y, w, h);
-      ctx.fillStyle = "rgba(255, 253, 232, 0.48)";
+      ctx.fillStyle = realityBroken() ? "rgba(6, 20, 16, 0.14)" : "rgba(255, 253, 232, 0.48)";
       ctx.fillRect(x, y, w, h);
       ctx.restore();
     } else {
-      ctx.fillStyle = "rgba(255, 253, 232, 0.86)";
+      ctx.fillStyle = themeColor("panelSoft", "rgba(255, 253, 232, 0.86)");
       ctx.fill();
     }
     roundedRect(x, y, w, h, radius);
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.14)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.14)");
     ctx.lineWidth = 1;
     ctx.stroke();
   }
@@ -11147,19 +14202,19 @@
     const filters = codexFilterState();
     const layout = codexFilterLayout();
     layout.rows.forEach((row) => {
-      fitText(row.label, CODEX_LIST.x, row.labelY, 50, "900 8px Inter, sans-serif", "#6a4b35");
+      fitText(row.label, CODEX_LIST.x, row.labelY, 50, "900 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
     });
     layout.rows.flatMap((row) => row.options).forEach((option) => {
       const rect = option.rect;
       const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
       const active = filters[option.key] === option.value;
       roundedRect(rect.x, rect.y, rect.w, rect.h, 7);
-      ctx.fillStyle = active ? "#e7ffd9" : hovered ? "#fff9d6" : "rgba(255, 253, 232, 0.78)";
+      ctx.fillStyle = active ? themeColor("panelActive", "#e7ffd9") : hovered ? themeColor("panelHover", "#fff9d6") : themeColor("panelSoft", "rgba(255, 253, 232, 0.78)");
       ctx.fill();
-      ctx.strokeStyle = active ? "#4a9e68" : hovered ? "rgba(106, 75, 53, 0.32)" : "rgba(22, 57, 45, 0.14)";
+      ctx.strokeStyle = active ? themeColor("accent", "#4a9e68") : hovered ? themeColor("border", "rgba(106, 75, 53, 0.32)") : themeColor("borderDim", "rgba(22, 57, 45, 0.14)");
       ctx.lineWidth = active ? 2 : 1;
       ctx.stroke();
-      ctx.fillStyle = active ? "#16392d" : "#6a4b35";
+      ctx.fillStyle = active ? themeColor("primary", "#16392d") : themeColor("muted", "#6a4b35");
       ctx.font = "900 8px Inter, sans-serif";
       ctx.fillText(option.text, rect.x + 7, rect.y + 13);
     });
@@ -11170,15 +14225,19 @@
     const layout = codexListLayout();
     drawCodexInnerPanel(CODEX_LIST.x - 12, CODEX_LIST.y - 34, CODEX_LIST.w + 16, CODEX_LIST.h + 52);
 
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 13px Inter, sans-serif";
-    const title = state.codexTab === "food" ? "Food" : state.codexTab === "toppings" ? "Toppings" : "Drinks";
+    const title = state.codexTab === "food"
+      ? copy("ui.panels.food", "Food")
+      : state.codexTab === "toppings"
+        ? copy("ui.panels.toppings", "Toppings")
+        : copy("ui.panels.drinks", "Drinks");
     ctx.fillText(`${title} (${entries.length})`, CODEX_LIST.x, CODEX_LIST.y - 13);
-    fitText("Rarity order", CODEX_LIST.x + CODEX_LIST.w - 94, CODEX_LIST.y - 13, 92, "800 9px Inter, sans-serif", "#6a4b35");
+    fitText("Rarity order", CODEX_LIST.x + CODEX_LIST.w - 94, CODEX_LIST.y - 13, 92, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
     drawCodexFilters();
 
     if (!entries.length) {
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = "800 12px Inter, sans-serif";
       ctx.fillText("No matches", CODEX_LIST.x + 8, layout.y + 24);
       return;
@@ -11190,15 +14249,15 @@
       const selected = codexEntrySelected(entry);
       const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
       roundedRect(rect.x, rect.y, rect.w, rect.h, 6);
-      ctx.fillStyle = selected ? "#e7ffd9" : hovered ? "#fff9d6" : "rgba(255, 253, 232, 0.72)";
+      ctx.fillStyle = selected ? themeColor("panelActive", "#e7ffd9") : hovered ? themeColor("panelHover", "#fff9d6") : themeColor("panelSoft", "rgba(255, 253, 232, 0.72)");
       ctx.fill();
-      ctx.strokeStyle = selected ? "#4a9e68" : "rgba(22, 57, 45, 0.12)";
+      ctx.strokeStyle = selected ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
       ctx.lineWidth = selected ? 2 : 1;
       ctx.stroke();
       drawRarityDot(rect.x + 12, rect.y + rect.h / 2, entry.rarity);
       const font = layout.cols >= 3 ? "800 9.5px Inter, sans-serif" : "800 11px Inter, sans-serif";
-      const label = state.codexTab === "food" ? entry.name : entry.name;
-      fitText(label, rect.x + 25, rect.y + Math.round(rect.h * 0.66), rect.w - 32, font, "#16392d");
+      const label = state.codexTab === "food" ? displayCatalogName(entry) : displayItemName(entry);
+      fitCodexText(label, rect.x + 25, rect.y + Math.round(rect.h * 0.66), rect.w - 32, font, themeColor("primary", "#16392d"), layout.cols >= 3 ? 5.6 : 6.8);
     });
   }
 
@@ -11224,7 +14283,7 @@
     const selectedMeal = codexMealSelected();
     const selectedTier = selectedMeal ? 1 : codexSelectedFormTier(animal);
     const unit = codexUnitFor(animal, selectedTier);
-    const form = selectedMeal ? { name: "Meal", short: "Meal" } : animal.forms?.[selectedTier - 1] || { name: animal.name, short: animal.short };
+    const form = selectedMeal ? { name: realityBroken() ? "Wreck" : "Meal", short: realityBroken() ? "Wreck" : "Meal" } : animal.forms?.[selectedTier - 1] || { name: animal.name, short: animal.short };
     drawCodexInnerPanel(x, y, w, CODEX_LIST.h + 52);
 
     if (selectedMeal) {
@@ -11247,11 +14306,11 @@
     const headerReserve = 82;
     ctx.fillStyle = "#16392d";
     ctx.font = "900 20px Inter, sans-serif";
-    fitText(animal.name, x + 128, y + 36, w - 144 - headerReserve, "900 20px Inter, sans-serif", "#16392d");
-    fitText(form.name, x + 128, y + 64, w - 144 - headerReserve, "900 16px Inter, sans-serif", "#16392d");
-    ctx.fillStyle = "#6a4b35";
+    fitCodexText(displayCatalogName(animal), x + 128, y + 36, w - 144 - headerReserve, "900 20px Inter, sans-serif", themeColor("primary", "#16392d"), 9);
+    fitCodexText(selectedMeal ? form.name : displayCatalogForm(animal, selectedTier, "name"), x + 128, y + 64, w - 144 - headerReserve, "900 16px Inter, sans-serif", themeColor("primary", "#16392d"), 8.2);
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 12px Inter, sans-serif";
-    fitText(`${animal.role || "Food animal"} - ${familyLabel(animal.family)}`, x + 128, y + 84, w - 144 - headerReserve, "800 12px Inter, sans-serif", "#6a4b35");
+    fitCodexText(`${displayRoleLabel(animal.role) || displayEntryTypeLabel(unit)} - ${familyLabel(animal.family)}`, x + 128, y + 84, w - 144 - headerReserve, "800 12px Inter, sans-serif", themeColor("muted", "#6a4b35"), 8);
     drawRarityBadge(x + 128, y + 99, animal.rarity, "small");
     drawTraitChips(animal.traits || [], x + 196, y + 99, w - 210 - headerReserve, { maxRows: 2, fontSize: 8, minWidth: 38, rowHeight: 16 });
 
@@ -11261,7 +14320,7 @@
     drawInfoMetric("CD", unit.speed.toFixed(2), x + 160, metricY, 58);
 
     drawInfoDivider(x + 20, y + 209, w - 40);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 13px Inter, sans-serif";
     ctx.fillText("Forms", x + 20, y + 234);
     (animal.forms || []).slice(0, 4).forEach((form, index) => {
@@ -11270,24 +14329,24 @@
       const selected = !selectedMeal && index + 1 === selectedTier;
       const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
       roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
-      ctx.fillStyle = selected ? "rgba(231, 255, 217, 0.86)" : hovered ? "rgba(255, 249, 214, 0.88)" : "rgba(255, 253, 232, 0.46)";
+      ctx.fillStyle = selected ? themeColor("panelActive", "rgba(231, 255, 217, 0.86)") : hovered ? themeColor("panelHover", "rgba(255, 249, 214, 0.88)") : themeColor("panelSoft", "rgba(255, 253, 232, 0.46)");
       ctx.fill();
-      ctx.strokeStyle = selected ? "#4a9e68" : hovered ? "rgba(106, 75, 53, 0.32)" : "rgba(22, 57, 45, 0.11)";
+      ctx.strokeStyle = selected ? themeColor("accent", "#4a9e68") : hovered ? themeColor("border", "rgba(106, 75, 53, 0.32)") : themeColor("borderDim", "rgba(22, 57, 45, 0.11)");
       ctx.lineWidth = selected ? 2 : 1;
       ctx.stroke();
       ctx.lineWidth = 1;
       const centerX = rect.x + rect.w / 2;
       drawFoodAnimal(formUnit, centerX, y + 268, 15, true);
       drawUpgradeStars(index + 1, centerX, y + 296, 7, "center");
-      fitText(form.short || form.name, rect.x + 5, y + 313, rect.w - 10, "800 8px Inter, sans-serif", "#6a4b35");
+      fitText(displayCatalogForm(animal, index + 1, "short"), rect.x + 5, y + 313, rect.w - 10, "800 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
     });
     const mealRect = codexFormRect(4);
     const mealSelected = selectedMeal;
     const mealHovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, mealRect);
     roundedRect(mealRect.x, mealRect.y, mealRect.w, mealRect.h, 8);
-    ctx.fillStyle = mealSelected ? "rgba(231, 255, 217, 0.86)" : mealHovered ? "rgba(255, 249, 214, 0.88)" : "rgba(255, 253, 232, 0.46)";
+    ctx.fillStyle = mealSelected ? themeColor("panelActive", "rgba(231, 255, 217, 0.86)") : mealHovered ? themeColor("panelHover", "rgba(255, 249, 214, 0.88)") : themeColor("panelSoft", "rgba(255, 253, 232, 0.46)");
     ctx.fill();
-    ctx.strokeStyle = mealSelected ? "#4a9e68" : mealHovered ? "rgba(106, 75, 53, 0.32)" : "rgba(22, 57, 45, 0.11)";
+    ctx.strokeStyle = mealSelected ? themeColor("accent", "#4a9e68") : mealHovered ? themeColor("border", "rgba(106, 75, 53, 0.32)") : themeColor("borderDim", "rgba(22, 57, 45, 0.11)");
     ctx.lineWidth = mealSelected ? 2 : 1;
     ctx.stroke();
     const mealImage = getDefeatStillSprite(animal);
@@ -11301,11 +14360,11 @@
       ctx.restore();
       ctx.imageSmoothingEnabled = true;
     }
-    fitText("Meal", mealRect.x + 5, y + 313, mealRect.w - 10, "800 8px Inter, sans-serif", "#6a4b35");
+    fitText(realityBroken() ? "Wreck" : "Meal", mealRect.x + 5, y + 313, mealRect.w - 10, "800 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
 
     const favoriteH = drawCodexFavoriteToppingDetails(unit, x + 20, y + 328, w - 40);
     const effectsTitleY = y + 328 + favoriteH + 12;
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 12px Inter, sans-serif";
     ctx.fillText("Effects by level", x + 20, effectsTitleY);
     drawCodexLevelEffectFullRows(
@@ -11323,9 +14382,9 @@
   function drawCodexAttackParticlePreview(animal, centerX, centerY, radius) {
     const image = getAttackParticleSprite(animal?.id);
     roundedRect(centerX - radius, centerY - radius, radius * 2, radius * 2, 8);
-    ctx.fillStyle = "rgba(255, 249, 214, 0.62)";
+    ctx.fillStyle = themeColor("panelSoft", "rgba(255, 249, 214, 0.62)");
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
     ctx.lineWidth = 1;
     ctx.stroke();
     if (!image || !image.complete || image.naturalWidth <= 0) return;
@@ -11355,24 +14414,24 @@
     const cardH = Math.max(78, 34 + specRows * lineHeight + Math.max(0, specs.length - 1) * 2);
 
     roundedRect(x, y, maxWidth, cardH, 7);
-    ctx.fillStyle = "rgba(255, 249, 214, 0.78)";
+    ctx.fillStyle = themeColor("panelSoft", "rgba(255, 249, 214, 0.78)");
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
     ctx.lineWidth = 1;
     ctx.stroke();
 
     roundedRect(x + 8, y + 10, iconSize, iconSize, 8);
-    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.fillStyle = realityBroken() ? "rgba(6, 16, 18, 0.92)" : "rgba(255,255,255,0.8)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(106, 75, 53, 0.16)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(106, 75, 53, 0.16)");
     ctx.lineWidth = 1;
     ctx.stroke();
     drawItemIcon(item, x + 8 + iconSize / 2, y + 10 + iconSize / 2, 22);
-    fitText(favorite.itemName, textX, y + 17, textW, "900 10px Inter, sans-serif", "#16392d");
+    fitText(favorite.itemName, textX, y + 17, textW, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
     roundedRect(x + maxWidth - 30, y + 8, 22, 14, 5);
     ctx.fillStyle = "#f1cf75";
     ctx.fill();
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = realityBroken() ? "#07100b" : "#16392d";
     ctx.font = "900 6.5px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -11380,7 +14439,7 @@
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
 
-    ctx.fillStyle = "#6a4b35";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = specFont;
     let lineY = y + 32;
     specs.forEach((line) => {
@@ -11403,19 +14462,19 @@
       const lines = wrappedTextLines(row.text, textW);
       const rowH = Math.max(15, lines.length * lineHeight + 3);
       roundedRect(x, rowY - 11, labelW, 14, 4);
-      ctx.fillStyle = "rgba(255, 249, 214, 0.82)";
+      ctx.fillStyle = themeColor("panelSoft", "rgba(255, 249, 214, 0.82)");
       ctx.fill();
-      ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
+      ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = themeColor("primary", "#16392d");
       ctx.font = "900 7px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(row.label, x + labelW / 2, rowY - 4);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = textFont;
       lines.forEach((line, lineIndex) => {
         ctx.fillText(line, textX, rowY + lineIndex * lineHeight);
@@ -11428,7 +14487,7 @@
     const x = CODEX_LIST.x + CODEX_LIST.w + 34;
     const y = CODEX_LIST.y - 34;
     const w = CODEX_PANEL.x + CODEX_PANEL.w - x - 28;
-    const typeLabel = tabId === "drinks" ? "Drink" : "Topping";
+    const typeLabel = tabId === "drinks" ? copy("ui.types.drink", "Drink") : copy("ui.types.topping", "Topping");
     const selectedTier = codexSelectedItemTier();
     const selectedItem = makeItem(item.id, selectedTier);
     drawCodexInnerPanel(x, y, w, CODEX_LIST.h + 52);
@@ -11437,13 +14496,13 @@
     drawUpgradeStars(selectedTier, x + 58, y + 136, 9, "center");
     const headerReserve = isDrink(item) ? 82 : 0;
     if (isDrink(item)) drawCodexDrinkParticlePreview(item, x + w - 42, y + 82, 34);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 20px Inter, sans-serif";
-    fitText(item.name, x + 128, y + 36, w - 144 - headerReserve, "900 20px Inter, sans-serif", "#16392d");
-    fitText(`Lv ${selectedTier}`, x + 128, y + 64, w - 144 - headerReserve, "900 16px Inter, sans-serif", "#16392d");
-    ctx.fillStyle = "#6a4b35";
+    fitCodexText(displayItemName(item), x + 128, y + 36, w - 144 - headerReserve, "900 20px Inter, sans-serif", themeColor("primary", "#16392d"), 9);
+    fitCodexText(`Lv ${selectedTier}`, x + 128, y + 64, w - 144 - headerReserve, "900 16px Inter, sans-serif", themeColor("primary", "#16392d"), 9.5);
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 12px Inter, sans-serif";
-    fitText(`${typeLabel} - ${itemCardText(selectedItem)}`, x + 128, y + 84, w - 144 - headerReserve, "800 12px Inter, sans-serif", "#6a4b35");
+    fitCodexText(`${typeLabel} - ${itemCardText(selectedItem)}`, x + 128, y + 84, w - 144 - headerReserve, "800 12px Inter, sans-serif", themeColor("muted", "#6a4b35"), 8);
     drawRarityBadge(x + 128, y + 99, item.rarity, "small");
     if (isDrink(item) && item.pairTraits?.length) {
       drawTraitChips(item.pairTraits, x + 196, y + 99, w - 210 - headerReserve, { maxRows: 2, fontSize: 8, minWidth: 38, rowHeight: 16 });
@@ -11453,11 +14512,11 @@
     const metricY = y + 154;
     drawInfoMetric("COST", { currency: entryCost(selectedItem) }, x + 20, metricY, 60);
     drawInfoMetric(stat.label, stat.value, x + 90, metricY, 76);
-    drawInfoMetric("TYPE", typeLabel === "Drink" ? "Drink" : "Top", x + 176, metricY, 66);
+    drawInfoMetric("TYPE", isDrink(item) ? copy("ui.types.drink", "Drink") : copy("ui.types.topping", "Top"), x + 176, metricY, 66);
     drawInfoMetric("SHOP", selectedItem.shopWeight || 1, x + 252, metricY, 58);
 
     drawInfoDivider(x + 20, y + 209, w - 40);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 13px Inter, sans-serif";
     ctx.fillText("Forms", x + 20, y + 234);
     for (let tier = 1; tier <= MAX_ITEM_TIER; tier += 1) {
@@ -11467,19 +14526,19 @@
       const selected = tier === selectedTier;
       const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
       roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
-      ctx.fillStyle = selected ? "rgba(231, 255, 217, 0.86)" : hovered ? "rgba(255, 249, 214, 0.88)" : "rgba(255, 253, 232, 0.46)";
+      ctx.fillStyle = selected ? themeColor("panelActive", "rgba(231, 255, 217, 0.86)") : hovered ? themeColor("panelHover", "rgba(255, 249, 214, 0.88)") : themeColor("panelSoft", "rgba(255, 253, 232, 0.46)");
       ctx.fill();
-      ctx.strokeStyle = selected ? "#4a9e68" : hovered ? "rgba(106, 75, 53, 0.32)" : "rgba(22, 57, 45, 0.11)";
+      ctx.strokeStyle = selected ? themeColor("accent", "#4a9e68") : hovered ? themeColor("border", "rgba(106, 75, 53, 0.32)") : themeColor("borderDim", "rgba(22, 57, 45, 0.11)");
       ctx.lineWidth = selected ? 2 : 1;
       ctx.stroke();
       ctx.lineWidth = 1;
       drawItemIcon(formItem, fx, y + 272, 22);
       drawUpgradeStars(tier, fx, y + 308, 9, "center");
-      fitText(`Lv ${tier}`, fx - 30, y + 328, 60, "800 9px Inter, sans-serif", "#6a4b35");
+      fitText(`Lv ${tier}`, fx - 30, y + 328, 60, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
     }
 
     drawInfoDivider(x + 20, y + 342, w - 40);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 13px Inter, sans-serif";
     if (isDrink(item)) {
       ctx.fillText("Stat effects by level", x + 20, y + 367);
@@ -11497,7 +14556,7 @@
         { rowHeight: 15, textFont: "800 8px Inter, sans-serif" }
       );
       drawInfoDivider(x + 20, y + 424, w - 40);
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = themeColor("primary", "#16392d");
       ctx.font = "900 13px Inter, sans-serif";
       ctx.fillText("Pulse effect", x + 20, y + 445);
       drawTechnicalBulletLines(drinkSpecialUnlockLines(selectedItem), x + 20, y + 464, w - 40, 11, 6);
@@ -11519,22 +14578,22 @@
 
     const relatedY = y + 452;
     drawInfoDivider(x + 20, relatedY - 16, w - 40);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 13px Inter, sans-serif";
     ctx.fillText("Favorite for", x + 20, relatedY);
-    ctx.fillStyle = "#6a4b35";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 11px Inter, sans-serif";
     const fans = favoriteUsersForItem(item.id);
-    fitText(fans.length ? fans.join(", ") : "No favorite animal yet.", x + 20, relatedY + 20, w - 40, "800 11px Inter, sans-serif", "#6a4b35");
+    fitText(fans.length ? fans.join(", ") : realityBroken() ? "No preferred machine yet." : "No favorite animal yet.", x + 20, relatedY + 20, w - 40, "800 11px Inter, sans-serif", themeColor("muted", "#6a4b35"));
 
   }
 
   function drawCodexDrinkParticlePreview(item, centerX, centerY, radius) {
     const image = getDrinkThrowableSprite(item?.id);
     roundedRect(centerX - radius, centerY - radius, radius * 2, radius * 2, 8);
-    ctx.fillStyle = "rgba(255, 249, 214, 0.62)";
+    ctx.fillStyle = themeColor("panelSoft", "rgba(255, 249, 214, 0.62)");
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
     ctx.lineWidth = 1;
     ctx.stroke();
     if (!image || !image.complete || image.naturalWidth <= 0) return;
@@ -11548,7 +14607,7 @@
   }
 
   function drawTechnicalBulletLines(lines, x, y, maxWidth, lineHeight, maxRows) {
-    ctx.fillStyle = "#6a4b35";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 11px Inter, sans-serif";
     let rowCount = 0;
     let lineY = y;
@@ -11574,36 +14633,50 @@
     rows.forEach((row, index) => {
       const rowY = y + index * rowHeight;
       roundedRect(x, rowY - 12, labelWidth, 15, 4);
-      ctx.fillStyle = "rgba(255, 249, 214, 0.82)";
+      ctx.fillStyle = themeColor("panelSoft", "rgba(255, 249, 214, 0.82)");
       ctx.fill();
-      ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
+      ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = themeColor("primary", "#16392d");
       ctx.font = labelFont;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(row.label, x + labelWidth / 2, rowY - 4);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      fitText(row.text, x + labelWidth + 8, rowY, maxWidth - labelWidth - 8, textFont, "#6a4b35");
+      fitText(row.text, x + labelWidth + 8, rowY, maxWidth - labelWidth - 8, textFont, themeColor("muted", "#6a4b35"));
     });
   }
 
   function drawFoodAnimal(unit, x, y, r, facingRight = false) {
     const breath = idleBreathForUnit(unit);
-    const drawY = y + breath.bob;
-    const runtimeSprite = getRuntimeSprite(unit);
-    if (runtimeSprite && runtimeSprite.complete && runtimeSprite.naturalWidth > 0) {
-      drawRuntimeFoodAnimal(runtimeSprite, x, drawY, r, facingRight, breath);
-      drawUnitToppings(unit, x, drawY, r, facingRight);
+    const combatMotion = combatMotionForUnit(unit);
+    const drawX = x + combatMotion.x;
+    const drawY = y + breath.bob + combatMotion.y;
+    const drawScale = {
+      scaleX: breath.scaleX * combatMotion.scaleX,
+      scaleY: breath.scaleY * combatMotion.scaleY,
+    };
+    const bleed = contentBleedPhase("unit", unit);
+    const runtimeSprite = getRuntimeSprite(unit, { cozy: bleed.phase === "flash" });
+    const runtimeFacingRight = runtimeSpriteFacingRight(unit, facingRight, { cozy: bleed.phase === "flash" });
+    if (spriteImageReady(runtimeSprite)) {
+      drawRuntimeFoodAnimal(runtimeSprite, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash);
+      drawContentSequenceEffect({ x: drawX - r * 1.45, y: drawY - r * 1.45, w: r * 2.9, h: r * 2.9 }, "unit", unit);
+      drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
+      return;
+    }
+    if (runtimeSprite && !spriteImageFailed(runtimeSprite)) {
+      drawContentSequenceEffect({ x: drawX - r * 1.45, y: drawY - r * 1.45, w: r * 2.9, h: r * 2.9 }, "unit", unit);
+      drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
       return;
     }
 
     const sprite = getPixelSprite(unit);
     const stickerMask = getTintedPixelSprite(unit, "#fff9df", "sticker");
     const size = Math.round(r * 2.65);
-    const left = Math.round(x - size / 2);
+    const left = Math.round(drawX - size / 2);
     const top = Math.round(drawY - size / 2);
     const outline = Math.max(2, Math.round(size * 0.085));
 
@@ -11619,12 +14692,69 @@
       [-outline, outline],
       [outline, outline],
     ]) {
-      drawImageFacing(stickerMask, left + offset[0], top + offset[1], size, size, facingRight, breath.scaleX, breath.scaleY, 1);
+      drawImageFacing(stickerMask, left + offset[0], top + offset[1], size, size, facingRight, drawScale.scaleX, drawScale.scaleY, 1, combatMotion.rotation);
     }
-    drawImageFacing(sprite, left, top, size, size, facingRight, breath.scaleX, breath.scaleY, 1);
+    drawImageFacing(sprite, left, top, size, size, facingRight, drawScale.scaleX, drawScale.scaleY, 1, combatMotion.rotation);
+    if (combatMotion.flash > 0) {
+      ctx.globalAlpha = combatMotion.flash;
+      drawImageFacing(stickerMask, left, top, size, size, facingRight, drawScale.scaleX, drawScale.scaleY, 1, combatMotion.rotation);
+      ctx.globalAlpha = 1;
+    }
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
-    drawUnitToppings(unit, x, drawY, r, facingRight);
+    drawContentSequenceEffect({ x: drawX - size / 2, y: drawY - size / 2, w: size, h: size }, "unit", unit);
+    drawUnitToppings(unit, drawX, drawY, r, facingRight);
+  }
+
+  function combatMotionForUnit(unit) {
+    const battle = visibleBattle();
+    const now = battle?.elapsed || 0;
+    const motion = { x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 0, flash: 0 };
+    const attack = unit?.attackMotion;
+    if (attack && typeof attack.start === "number") {
+      const progress = (now - attack.start) / Math.max(0.001, attack.duration || COMBAT_ATTACK_MOTION_SECONDS);
+      if (progress >= 0 && progress < 1) {
+        const vector = combatVector(unit.x, unit.y, attack.targetX, attack.targetY, unit.side === "ally" ? 1 : -1);
+        const windup = progress < 0.22 ? easeOutCubic(progress / 0.22) : 1;
+        const strike = progress < 0.22 ? 0 : progress < 0.54 ? easeOutCubic((progress - 0.22) / 0.32) : 1 - easeOutCubic((progress - 0.54) / 0.46);
+        const reach = progress < 0.22 ? -0.22 * windup : strike;
+        motion.x += vector.x * COMBAT_ATTACK_LUNGE_PIXELS * reach;
+        motion.y += vector.y * COMBAT_ATTACK_LUNGE_PIXELS * reach - Math.sin(progress * Math.PI) * 2.2;
+        motion.scaleX += strike * 0.1;
+        motion.scaleY -= strike * 0.075;
+        motion.rotation += vector.x * strike * 0.08;
+      }
+    }
+
+    const hit = unit?.hitMotion;
+    if (hit && typeof hit.start === "number") {
+      const progress = (now - hit.start) / Math.max(0.001, hit.duration || COMBAT_HIT_MOTION_SECONDS);
+      if (progress >= 0 && progress < 1) {
+        const vector = combatVector(hit.sourceX, hit.sourceY, unit.x, unit.y, unit.side === "ally" ? -1 : 1);
+        const fade = 1 - easeOutCubic(progress);
+        const wobble = Math.sin(progress * Math.PI * 7 + seededUnitFloat(unitBreathSeed(unit), 9) * Math.PI) * fade;
+        const strength = hit.strength || 1;
+        motion.x += vector.x * COMBAT_HIT_RECOIL_PIXELS * strength * fade + wobble * 2.2;
+        motion.y += vector.y * COMBAT_HIT_RECOIL_PIXELS * strength * fade - Math.abs(wobble) * 1.4;
+        motion.scaleX += 0.07 * strength * fade;
+        motion.scaleY -= 0.06 * strength * fade;
+        motion.rotation += (vector.x || (unit.side === "ally" ? -1 : 1)) * 0.09 * strength * fade;
+        motion.flash = Math.max(motion.flash, (hit.shieldOnly ? 0.2 : 0.36) * fade);
+      }
+    }
+    return motion;
+  }
+
+  function combatVector(fromX, fromY, toX, toY, fallbackX = 1) {
+    const dx = Number.isFinite(toX) && Number.isFinite(fromX) ? toX - fromX : fallbackX;
+    const dy = Number.isFinite(toY) && Number.isFinite(fromY) ? toY - fromY : 0;
+    const length = Math.hypot(dx, dy) || 1;
+    return { x: dx / length, y: dy / length };
+  }
+
+  function easeOutCubic(value) {
+    const t = clamp01(value);
+    return 1 - Math.pow(1 - t, 3);
   }
 
   function drawUnitToppings(unit, x, y, r, facingRight = false) {
@@ -11635,25 +14765,34 @@
   }
 
   function drawItemIcon(item, x, y, r, options = {}) {
-    const image = getItemSprite(item);
+    const bleedKind = isDrink(item) ? "drink" : "topping";
+    const bleed = contentBleedPhase(bleedKind, item);
+    const image = getItemSprite(item, { cozy: bleed.phase === "flash" });
     const size = Math.round(r * 2.4);
     ctx.save();
-    if (image && image.complete && image.naturalWidth > 0) {
+    if (spriteImageReady(image)) {
       ctx.imageSmoothingEnabled = false;
+      let drawRect = { x: x - size / 2, y: y - size / 2, w: size, h: size };
       if (options.centerOpaque) {
         const metrics = itemSpriteMetrics(image);
         const offsetX = ((metrics.x + metrics.w / 2) / Math.max(1, image.naturalWidth) - 0.5) * size;
         const anchorY = Math.max(0, Math.min(1, options.opaqueAnchorY ?? 0.5));
         const offsetY = ((metrics.y + metrics.h * anchorY) / Math.max(1, image.naturalHeight) - 0.5) * size;
+        drawRect = { x: x - size / 2 - offsetX, y: y - size / 2 - offsetY, w: size, h: size };
         ctx.drawImage(image, x - size / 2 - offsetX, y - size / 2 - offsetY, size, size);
       } else {
         ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
       }
+      drawContentSequenceEffect(drawRect, bleedKind, item);
       ctx.imageSmoothingEnabled = true;
+    } else if (image && !spriteImageFailed(image)) {
+      drawContentSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item);
     } else if (isDrink(item)) {
       drawFallbackDrink(item, x, y, r);
+      drawContentSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item);
     } else {
       drawFallbackEgg(x, y, r);
+      drawContentSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item);
     }
     ctx.restore();
   }
@@ -11727,56 +14866,131 @@
     return hash;
   }
 
-  function drawImageFacing(image, x, y, w, h, facingRight, scaleX = 1, scaleY = 1, anchorY = 0.5) {
-    if (!facingRight && scaleX === 1 && scaleY === 1) {
+  function drawImageFacing(image, x, y, w, h, facingRight, scaleX = 1, scaleY = 1, anchorY = 0.5, rotation = 0) {
+    if (!facingRight && scaleX === 1 && scaleY === 1 && rotation === 0) {
       ctx.drawImage(image, x, y, w, h);
       return;
     }
     ctx.save();
     ctx.translate(x + w / 2, y + h * anchorY);
+    ctx.rotate(rotation);
     ctx.scale(facingRight ? -scaleX : scaleX, scaleY);
     ctx.drawImage(image, -w / 2, -h * anchorY, w, h);
     ctx.restore();
   }
 
-  function getRuntimeSprite(unit) {
+  const REALITY_RUNTIME_INVERT_FACING = new Set(["crab_cake_caterpillar"]);
+
+  function runtimeSpriteFacingRight(unit, facingRight, options = {}) {
+    if (options.cozy || !realityBroken()) return facingRight;
+    const typeId = unit?.typeId || unit?.id;
+    const tier = Math.max(1, unit?.tier || 1);
+    if (REALITY_RUNTIME_INVERT_FACING.has(typeId) && REALITY_RUNTIME_SPRITES[typeId]?.[tier]) return !facingRight;
+    return facingRight;
+  }
+
+  function runtimeSpriteSrcFor(unit, options = {}) {
     const typeId = unit.typeId || unit.id;
     const tier = Math.max(1, unit.tier || 1);
-    const src = RUNTIME_SPRITES[typeId]?.[tier];
+    if (options.cozy) return RUNTIME_SPRITES[typeId]?.[tier] || null;
+    if (options.horror) return REALITY_RUNTIME_SPRITES[typeId]?.[tier] || RUNTIME_SPRITES[typeId]?.[tier] || null;
+    return (realityBroken() ? REALITY_RUNTIME_SPRITES[typeId]?.[tier] : null) || RUNTIME_SPRITES[typeId]?.[tier] || null;
+  }
+
+  function attackParticleSpriteSrcFor(typeId, options = {}) {
+    if (options.cozy) return ATTACK_PARTICLE_SPRITES[typeId] || null;
+    if (options.horror) return REALITY_ATTACK_PARTICLE_SPRITES[typeId] || ATTACK_PARTICLE_SPRITES[typeId] || null;
+    return (realityBroken() ? REALITY_ATTACK_PARTICLE_SPRITES[typeId] : null) || ATTACK_PARTICLE_SPRITES[typeId] || null;
+  }
+
+  function drinkThrowableSpriteSrcFor(drinkId) {
+    return (realityBroken() ? REALITY_DRINK_THROWABLE_SPRITES[drinkId] : null) || DRINK_THROWABLE_SPRITES[drinkId] || null;
+  }
+
+  function defeatStillSpriteSrcFor(unit) {
+    const typeId = unit?.typeId || unit?.id;
+    return (realityBroken() ? REALITY_DEFEAT_STILL_SPRITES[typeId] : null) || DEFEAT_STILL_SPRITES[typeId] || null;
+  }
+
+  function getRuntimeSprite(unit, options = {}) {
+    const src = runtimeSpriteSrcFor(unit, options);
     if (!src) return null;
     if (runtimeSpriteCache.has(src)) return runtimeSpriteCache.get(src);
-    const image = new Image();
-    image.onload = draw;
-    image.src = src;
+    const image = loadSpriteImage(src);
     runtimeSpriteCache.set(src, image);
     return image;
   }
 
   function getDefeatStillSprite(unit) {
     const typeId = unit?.typeId || unit?.id;
-    const src = DEFEAT_STILL_SPRITES[typeId];
+    const src = defeatStillSpriteSrcFor(unit);
     if (!src) return null;
     if (runtimeSpriteCache.has(src)) return runtimeSpriteCache.get(src);
-    const image = new Image();
-    image.onload = draw;
-    image.src = src;
+    const image = loadSpriteImage(src);
     runtimeSpriteCache.set(src, image);
     return image;
   }
 
-  function getItemSprite(item) {
-    const src = ITEM_TIER_SPRITES[item?.id]?.[itemTier(item?.tier)] || ITEM_SPRITES[item?.id];
+  function loadSpriteImage(src) {
+    const image = new Image();
+    image.decoding = "async";
+    image.dataset.loadState = "loading";
+    image.onload = () => {
+      image.dataset.loadState = "loaded";
+      draw();
+    };
+    image.onerror = () => {
+      image.dataset.loadState = "failed";
+      draw();
+    };
+    image.src = src;
+    return image;
+  }
+
+  function spriteImageReady(image) {
+    return Boolean(image && image.complete && image.naturalWidth > 0);
+  }
+
+  function spriteImageFailed(image) {
+    return Boolean(image && (image.dataset.loadState === "failed" || (image.complete && image.naturalWidth <= 0)));
+  }
+
+  function getItemSprite(item, options = {}) {
+    const src = itemSpriteSrcFor(item, options);
+    return getItemSpriteBySrc(src);
+  }
+
+  function itemSpriteSrcFor(item, options = {}) {
+    return itemSpriteSrcForId(item?.id, item?.tier, options);
+  }
+
+  function itemSpriteSrcForId(itemId, tierValue, options = {}) {
+    const tier = itemTier(tierValue);
+    if (options.cozy) return ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null;
+    return realityBroken()
+      ? REALITY_ITEM_TIER_SPRITES[itemId]?.[tier] || REALITY_ITEM_SPRITES[itemId] || ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null
+      : ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null;
+  }
+
+  function getItemSpriteById(itemId, tierValue, options = {}) {
+    const src = itemSpriteSrcForId(itemId, tierValue, options);
+    return getItemSpriteBySrc(src);
+  }
+
+  function getItemSpriteBySrc(src) {
     if (!src) return null;
     if (itemSpriteCache.has(src)) return itemSpriteCache.get(src);
-    const image = new Image();
-    image.onload = draw;
-    image.src = src;
+    const image = loadSpriteImage(src);
     itemSpriteCache.set(src, image);
     return image;
   }
 
-  function getAttackParticleSprite(typeId) {
-    const src = ATTACK_PARTICLE_SPRITES[typeId];
+  function getAttackParticleSprite(typeId, options = {}) {
+    const src = attackParticleSpriteSrcFor(typeId, options);
+    return getAttackParticleSpriteBySrc(src);
+  }
+
+  function getAttackParticleSpriteBySrc(src) {
     if (!src) return null;
     if (attackParticleSpriteCache.has(src)) return attackParticleSpriteCache.get(src);
     const image = new Image();
@@ -11787,7 +15001,11 @@
   }
 
   function getDrinkThrowableSprite(drinkId) {
-    const src = DRINK_THROWABLE_SPRITES[drinkId];
+    const src = drinkThrowableSpriteSrcFor(drinkId);
+    return getDrinkThrowableSpriteBySrc(src);
+  }
+
+  function getDrinkThrowableSpriteBySrc(src) {
     if (!src) return null;
     if (drinkThrowableSpriteCache.has(src)) return drinkThrowableSpriteCache.get(src);
     const image = new Image();
@@ -11797,8 +15015,27 @@
     return image;
   }
 
+  function getParticleSpriteBySrc(src) {
+    if (!src) return null;
+    if (particleSpriteCache.has(src)) return particleSpriteCache.get(src);
+    const image = new Image();
+    image.onload = draw;
+    image.src = src;
+    particleSpriteCache.set(src, image);
+    return image;
+  }
+
+  function getParticleSprite(cacheKind, particleType, particleTier, resolvedSrc = null) {
+    const spriteInfo = resolvedSrc ? { src: resolvedSrc, cacheKind } : particleSpriteInfo(cacheKind, particleType, particleTier);
+    if (spriteInfo.cacheKind === "drink") return getDrinkThrowableSpriteBySrc(spriteInfo.src);
+    if (spriteInfo.cacheKind === "item") return getItemSpriteBySrc(spriteInfo.src);
+    if (spriteInfo.cacheKind === "attack") return getAttackParticleSpriteBySrc(spriteInfo.src);
+    return getParticleSpriteBySrc(spriteInfo.src);
+  }
+
   function preloadAttackParticleSprites() {
-    ATTACK_PARTICLE_TYPES.forEach((typeId) => getAttackParticleSprite(typeId));
+    ATTACK_PARTICLE_TYPES.forEach((typeId) => getAttackParticleSprite(typeId, { cozy: true }));
+    Object.keys(REALITY_ATTACK_PARTICLE_SPRITES).forEach((typeId) => getAttackParticleSprite(typeId, { horror: true }));
   }
 
   function preloadDrinkThrowableSprites() {
@@ -11806,7 +15043,19 @@
   }
 
   function preloadDefeatStillSprites() {
-    Object.keys(DEFEAT_STILL_SPRITES).forEach((typeId) => getDefeatStillSprite({ typeId }));
+    [...new Set([...Object.keys(DEFEAT_STILL_SPRITES), ...Object.keys(REALITY_DEFEAT_STILL_SPRITES)])].forEach((typeId) => getDefeatStillSprite({ typeId }));
+  }
+
+  function preloadRuntimeSprites() {
+    const preloadTable = (table, options = {}) => {
+      Object.entries(table).forEach(([typeId, tierSprites]) => {
+        Object.keys(tierSprites || {}).forEach((tier) => {
+          getRuntimeSprite({ typeId, tier: Number(tier) }, options);
+        });
+      });
+    };
+    preloadTable(RUNTIME_SPRITES, { cozy: true });
+    preloadTable(REALITY_RUNTIME_SPRITES, { horror: true });
   }
 
   function getStatusEffectSprite(effectId) {
@@ -11832,7 +15081,7 @@
 
   function drawUiAtlasIcon(iconId, x, y, size = 18, options = {}) {
     const cell = UI_ICON_ATLAS[iconId];
-    const image = getUiSprite(UI_ICON_ATLAS_SRC);
+    const image = getUiSprite(currentUiIconAtlasSrc());
     if (options.tooltip) {
       registerTooltip(x - size / 2, y - size / 2, size, size, options.tooltip);
     }
@@ -11889,40 +15138,47 @@
   function drawTooltip() {
     const tip = currentTooltip();
     if (!tip) return;
+    const cozyMergeTooltip = !realityBroken() && (tip.title === "Merge ready" || tip.title === "Shop merge");
     const pad = 9;
     const maxW = 230;
+    const bodyFont = "700 10px Inter, sans-serif";
     ctx.save();
     ctx.font = "900 11px Inter, sans-serif";
     const titleW = Math.min(maxW - pad * 2, ctx.measureText(tip.title).width);
-    ctx.font = "700 10px Inter, sans-serif";
-    const bodyW = tip.body ? Math.min(maxW - pad * 2, ctx.measureText(tip.body).width) : 0;
+    ctx.font = bodyFont;
+    const bodyLines = tip.body ? wrappedTextLines(tip.body, maxW - pad * 2).slice(0, 3) : [];
+    const bodyW = bodyLines.reduce((width, line) => Math.max(width, Math.min(maxW - pad * 2, ctx.measureText(line).width)), 0);
     const w = Math.max(86, Math.min(maxW, Math.ceil(Math.max(titleW, bodyW) + pad * 2)));
-    const h = tip.body ? 48 : 30;
+    const h = bodyLines.length ? 32 + bodyLines.length * 13 : 30;
     let x = Math.round((state.pointer?.x || 0) + 14);
     let y = Math.round((state.pointer?.y || 0) + 16);
     if (x + w > W - 8) x = Math.round((state.pointer?.x || 0) - w - 14);
     if (y + h > H - 8) y = Math.round((state.pointer?.y || 0) - h - 12);
     x = clamp(x, 8, W - w - 8);
     y = clamp(y, 8, H - h - 8);
-    ctx.shadowColor = "rgba(22, 57, 45, 0.24)";
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = cozyMergeTooltip ? "rgba(22, 151, 78, 0.35)" : "rgba(22, 57, 45, 0.24)";
+    ctx.shadowBlur = cozyMergeTooltip ? 14 : 12;
     ctx.shadowOffsetY = 5;
     roundedRect(x, y, w, h, 7);
-    ctx.fillStyle = "rgba(255, 253, 232, 0.96)";
+    ctx.fillStyle = cozyMergeTooltip ? "rgba(224, 255, 233, 0.98)" : themeColor("panel", "rgba(255, 253, 232, 0.96)");
     ctx.fill();
     ctx.shadowColor = "transparent";
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.2)";
+    ctx.strokeStyle = cozyMergeTooltip ? "rgba(22, 151, 78, 0.68)" : themeColor("border", "rgba(22, 57, 45, 0.2)");
+    ctx.lineWidth = cozyMergeTooltip ? 1.5 : 1;
     ctx.stroke();
-    ctx.fillStyle = "#16392d";
+    ctx.lineWidth = 1;
+    ctx.fillStyle = cozyMergeTooltip ? "#0b6a38" : themeColor("primary", "#16392d");
     ctx.font = "900 11px Inter, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    fitText(tip.title, x + pad, y + 17, w - pad * 2, "900 11px Inter, sans-serif", "#16392d");
-    if (tip.body) fitText(tip.body, x + pad, y + 34, w - pad * 2, "700 10px Inter, sans-serif", "#6a4b35");
+    fitText(tip.title, x + pad, y + 17, w - pad * 2, "900 11px Inter, sans-serif", cozyMergeTooltip ? "#0b6a38" : themeColor("primary", "#16392d"));
+    bodyLines.forEach((line, index) => {
+      fitText(line, x + pad, y + 34 + index * 13, w - pad * 2, bodyFont, cozyMergeTooltip ? "#285b3a" : themeColor("muted", "#6a4b35"));
+    });
     ctx.restore();
   }
 
-  function drawRuntimeFoodAnimal(image, x, y, r, facingRight = false, breath = { scaleX: 1, scaleY: 1 }) {
+  function drawRuntimeFoodAnimal(image, x, y, r, facingRight = false, breath = { scaleX: 1, scaleY: 1 }, rotation = 0, flash = 0) {
     const metrics = runtimeSpriteMetrics(image);
     const targetMax = r * 2.9;
     const scale = targetMax / Math.max(metrics.w, metrics.h);
@@ -11932,6 +15188,7 @@
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.round(x), Math.round(y));
+    ctx.rotate(rotation);
     ctx.scale(facingRight ? -breath.scaleX : breath.scaleX, breath.scaleY);
     ctx.drawImage(
       image,
@@ -11944,6 +15201,23 @@
       drawW,
       drawH
     );
+    if (flash > 0) {
+      ctx.globalAlpha = flash;
+      ctx.filter = "brightness(2.4) saturate(0.7)";
+      ctx.drawImage(
+        image,
+        metrics.x,
+        metrics.y,
+        metrics.w,
+        metrics.h,
+        -drawW / 2,
+        -drawH / 2,
+        drawW,
+        drawH
+      );
+      ctx.filter = "none";
+      ctx.globalAlpha = 1;
+    }
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
   }
@@ -13197,22 +16471,34 @@
     const metricXs = [contentX, contentX + 58, contentX + 150, contentX + 211];
     const metricWs = [52, 86, 56, 57];
     const ref = getSelectedRef();
-    const teamIntelBg = getUiSprite(TEAM_INTEL_BG_SRC);
+    const horror = realityBroken();
+    const primary = themeColor("primary", "#16392d");
+    const muted = themeColor("muted", "#6a4b35");
+    const panelSoft = themeColor("panelSoft", "rgba(255, 253, 232, 0.82)");
+    const borderDim = themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
+    const teamIntelBg = getUiSprite(currentTeamIntelBgSrc());
     roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
     if (teamIntelBg && teamIntelBg.complete && teamIntelBg.naturalWidth > 0) {
       ctx.save();
       ctx.clip();
       ctx.drawImage(teamIntelBg, panel.x, panel.y, panel.w, panel.h);
-      ctx.fillStyle = "rgba(255, 253, 232, 0.16)";
+      ctx.fillStyle = horror ? (ref ? "rgba(3, 10, 12, 0.52)" : "rgba(3, 10, 12, 0.26)") : "rgba(255, 253, 232, 0.16)";
       ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
       ctx.restore();
     } else {
-      ctx.fillStyle = "rgba(255, 253, 232, 0.82)";
+      ctx.fillStyle = panelSoft;
       ctx.fill();
     }
     roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.18)";
+    ctx.strokeStyle = borderDim;
     ctx.stroke();
+    if (horror) {
+      roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+      ctx.fillStyle = "rgba(3, 10, 12, 0.34)";
+      ctx.fill();
+      ctx.strokeStyle = themeColor("border", "rgba(70, 255, 99, 0.34)");
+      ctx.stroke();
+    }
 
     if (!ref) {
       const titleY = 166 + panelDy;
@@ -13220,9 +16506,9 @@
       const arenaY = 212 + panelDy;
       const traitDividerY = 318 + panelDy;
       const traitY = 340 + panelDy;
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = primary;
       ctx.font = "900 17px Inter, sans-serif";
-      ctx.fillText("Team Intel", contentX, titleY);
+      ctx.fillText(copy("ui.panels.teamIntel", horror ? "War Intel" : "Team Intel"), contentX, titleY);
       drawInfoDivider(contentX, arenaDividerY, contentW);
       drawArenaInfoRows(contentX, arenaY, contentW, 3);
       drawInfoDivider(contentX, traitDividerY, contentW);
@@ -13240,33 +16526,33 @@
       const specsDividerY = (showMergeInfo ? 334 : 306) + panelDy;
       const specsTitleY = (showMergeInfo ? 360 : 332) + panelDy;
       drawItemIcon(item, contentX + 26, 194 + panelDy, 26);
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = primary;
       ctx.font = "900 16px Inter, sans-serif";
-      fitText(`${item.name} ${itemLevelLabel(item)}`, textX, 178 + panelDy, contentW - 66, "900 16px Inter, sans-serif", "#16392d");
-      ctx.fillStyle = "#6a4b35";
+      fitText(`${displayItemName(item)} ${itemLevelLabel(item)}`, textX, 178 + panelDy, contentW - 66, "900 16px Inter, sans-serif", primary);
+      ctx.fillStyle = muted;
       ctx.font = "700 12px Inter, sans-serif";
-      ctx.fillText(isDrink(item) ? "Drink" : "Topping", textX, 196 + panelDy);
+      ctx.fillText(displayEntryTypeLabel(item), textX, 196 + panelDy);
       drawRarityBadge(textX, 205 + panelDy, item.rarity);
       drawInfoMetric("COST", { currency: entryCost(item) }, metricXs[0], itemMetricY, metricWs[0]);
       drawInfoMetric(stat.label, stat.value, metricXs[1], itemMetricY, metricWs[1]);
       drawInfoMetric("LV", `${itemTier(item.tier)}/${MAX_ITEM_TIER}`, metricXs[2], itemMetricY, metricWs[2]);
-      drawInfoMetric("TYPE", item.type === "topping" ? "Top" : item.type === "drink" ? "Drink" : item.type, metricXs[3], itemMetricY, metricWs[3]);
+      drawInfoMetric("TYPE", displayEntryTypeLabel(item), metricXs[3], itemMetricY, metricWs[3]);
       if (showMergeInfo) {
         const itemCopies = itemMergeProgressCount(item.id, item.tier);
         const itemMergeText = itemTier(item.tier) >= MAX_ITEM_TIER ? "Max level" : `${Math.min(itemCopies, 3)}/3 to Lv ${itemTier(item.tier) + 1}`;
         drawSmallProgressBar(contentX, mergeBarY, contentW, itemTier(item.tier) >= MAX_ITEM_TIER ? 1 : Math.min(1, itemCopies / 3), item.accent);
-        fitText(itemMergeText, contentX + 42, mergeTextY, 104, "800 11px Inter, sans-serif", "#6a4b35");
+        fitText(itemMergeText, contentX + 42, mergeTextY, 104, "800 11px Inter, sans-serif", muted);
       }
       const itemOwnedInPanel = ref.area === "bench" || ref.area === "itemBench" || ref.area === "drinks";
       drawInfoDivider(contentX, specsDividerY, contentW);
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = primary;
       ctx.font = "900 12px Inter, sans-serif";
-      ctx.fillText(isDrink(item) ? "Drink specs" : "Topping specs", contentX, specsTitleY);
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillText(`${displayEntryTypeLabel(item)} specs`, contentX, specsTitleY);
+      ctx.fillStyle = muted;
       ctx.font = "800 12px Inter, sans-serif";
       const summaryY = (showMergeInfo ? (itemOwnedInPanel ? 398 : 384) : 356) + panelDy;
       const specStartY = (showMergeInfo ? (itemOwnedInPanel ? 422 : 408) : 380) + panelDy;
-      fitText(itemCompactSpecLine(item), contentX, summaryY, contentW, "800 12px Inter, sans-serif", "#6a4b35");
+      fitText(itemCompactSpecLine(item), contentX, summaryY, contentW, "800 12px Inter, sans-serif", muted);
       ctx.font = "700 10px Inter, sans-serif";
       const fans = favoriteUsersForItem(item.id);
       const specGap = fans.length ? 15 : 18;
@@ -13276,12 +16562,12 @@
       });
       if (fans.length) {
         const favoriteY = specStartY + visibleSpecs.length * specGap + 2;
-        ctx.fillStyle = "#16392d";
+        ctx.fillStyle = primary;
         ctx.font = "900 11px Inter, sans-serif";
-        ctx.fillText("Favorite for", contentX, favoriteY);
-        ctx.fillStyle = "#6a4b35";
+        ctx.fillText(realityBroken() ? "Preferred by" : "Favorite for", contentX, favoriteY);
+        ctx.fillStyle = muted;
         ctx.font = "800 10px Inter, sans-serif";
-        fitText(fans.join(", "), contentX, favoriteY + 16, contentW, "800 10px Inter, sans-serif", "#6a4b35");
+        fitText(fans.join(", "), contentX, favoriteY + 16, contentW, "800 10px Inter, sans-serif", muted);
       }
       if (ref.area === "bench" || ref.area === "itemBench" || ref.area === "drinks") {
         drawButton({ ...selectedSellButton(ref), label: "Sell", coinAmount: itemSellValue(item) }, true);
@@ -13296,12 +16582,12 @@
 
     drawFoodAnimal(unit, contentX + 26, 194 + panelDy, 25, true);
     drawSelectedEquipmentSlot(unit);
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = primary;
     ctx.font = "900 16px Inter, sans-serif";
-    fitText(unit.name, textX, 178 + panelDy, headerTextW, "900 16px Inter, sans-serif", "#16392d");
-    ctx.fillStyle = "#6a4b35";
+    fitText(displayUnitFormName(unit), textX, 178 + panelDy, headerTextW, "900 16px Inter, sans-serif", primary);
+    ctx.fillStyle = muted;
     ctx.font = "700 12px Inter, sans-serif";
-    fitText(unit.lineName, textX, 196 + panelDy, headerTextW, "700 12px Inter, sans-serif", "#6a4b35");
+    fitText(displayUnitLineName(unit), textX, 196 + panelDy, headerTextW, "700 12px Inter, sans-serif", muted);
     drawRarityBadge(textX, 207 + panelDy, unit.rarity);
     drawTraitChips(unit.traits || [], textX, 231 + panelDy, headerTextW, { maxRows: 1, fontSize: 7, minWidth: 24 });
 
@@ -13310,66 +16596,75 @@
     drawInfoMetric("HP", `${unit.hp}/${unit.maxHp}`, metricXs[1], unitMetricY, metricWs[1]);
     drawInfoMetric("CD", unit.speed.toFixed(2), metricXs[2], unitMetricY, metricWs[2]);
     drawInfoMetric("PWR", unit.abilityPower, metricXs[3], unitMetricY, metricWs[3]);
+    const favoriteH = drawFavoriteToppingRow(unit, contentX, 332 + panelDy, contentW);
+    const abilityDividerY = (favoriteH ? 334 + favoriteH : 332) + panelDy;
+    drawInfoDivider(contentX, abilityDividerY - 12, contentW);
+    ctx.fillStyle = primary;
+    ctx.font = "900 12px Inter, sans-serif";
+    ctx.fillText(effect.title, contentX, abilityDividerY + 17);
+    ctx.fillStyle = muted;
+    ctx.font = "700 10px Inter, sans-serif";
+    wrapTextLimited(effect.body, contentX, abilityDividerY + 32, contentW, 11, favoriteH ? 4 : 6);
     if (ref.area === "bench" || ref.area === "board") {
       drawButton({ ...selectedSellButton(ref), label: "Sell", coinAmount: sellValue(unit) }, true);
     }
     if ((ref.area === "bench" || ref.area === "board") && unit.item) {
       drawButton(selectedDetachButton(ref), true);
     }
-    const favoriteH = drawFavoriteToppingRow(unit, contentX, 332 + panelDy, contentW);
-    const abilityDividerY = (favoriteH ? 334 + favoriteH : 332) + panelDy;
-    drawInfoDivider(contentX, abilityDividerY - 12, contentW);
-    ctx.fillStyle = "#16392d";
-    ctx.font = "900 12px Inter, sans-serif";
-    ctx.fillText(effect.title, contentX, abilityDividerY + 17);
-    ctx.fillStyle = "#6a4b35";
-    ctx.font = "700 10px Inter, sans-serif";
-    wrapTextLimited(effect.body, contentX, abilityDividerY + 32, contentW, 11, favoriteH ? 4 : 6);
   }
 
   function drawResultPanel() {
+    const horror = realityBroken();
+    const primary = themeColor("primary", "#16392d");
+    const muted = themeColor("muted", "#6a4b35");
+    const panelSoft = themeColor("panelSoft", "rgba(255, 253, 232, 0.86)");
+    const borderDim = themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
     roundedRect(700, 76, 306, 466, 8);
-    ctx.fillStyle = "rgba(255, 253, 232, 0.86)";
+    ctx.fillStyle = panelSoft;
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.18)";
+    ctx.strokeStyle = borderDim;
     ctx.stroke();
 
     const income = state.lastIncome;
     const hasReward = state.hearts > 0 && state.rewardChoices?.length;
     const won = income?.result === "win";
-    const resultTitle = state.hearts <= 0 ? "Run Over" : won ? "Victory!" : "Defeat";
-    const resultColor = state.hearts <= 0 ? "#9b3028" : won ? "#1f7d4a" : "#a94b2b";
+    const resultTitle = state.hearts <= 0
+      ? copy("ui.result.runOver", "Run Over")
+      : won
+        ? copy("ui.result.victory", "Victory!")
+        : copy("ui.result.defeat", "Defeat");
+    const resultColor = state.hearts <= 0 ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
     roundedRect(718, 92, 268, 34, 8);
-    ctx.fillStyle = won ? "rgba(219, 246, 198, 0.92)" : state.hearts <= 0 ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
+    ctx.fillStyle = horror ? "rgba(5, 19, 18, 0.92)" : won ? "rgba(219, 246, 198, 0.92)" : state.hearts <= 0 ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.16)";
+    ctx.strokeStyle = borderDim;
     ctx.stroke();
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = primary;
     ctx.font = "900 16px Inter, sans-serif";
     fitText(resultTitle, 732, 114, hasReward ? 138 : 232, "900 16px Inter, sans-serif", resultColor);
     if (hasReward) {
       roundedRect(882, 99, 92, 19, 6);
-      ctx.fillStyle = "#f7d15b";
+      ctx.fillStyle = themeColor("warning", "#f7d15b");
       ctx.fill();
-      ctx.strokeStyle = "rgba(138, 82, 35, 0.28)";
+      ctx.strokeStyle = horror ? "rgba(255, 209, 91, 0.42)" : "rgba(138, 82, 35, 0.28)";
       ctx.stroke();
       drawUiAtlasIcon("reward_gold", 894, 108, 15, { tooltip: null });
       ctx.font = "900 9px Inter, sans-serif";
-      fitText("REWARD", 905, 112, 60, "900 9px Inter, sans-serif", "#6a3f14");
+      fitText(copy("ui.result.reward", "REWARD"), 905, 112, 60, "900 9px Inter, sans-serif", horror ? "#07100b" : "#6a3f14");
     }
     if (income) {
       roundedRect(718, 136, 268, 31, 7);
-      ctx.fillStyle = "rgba(255, 249, 214, 0.72)";
+      ctx.fillStyle = themeColor("panelHover", "rgba(255, 249, 214, 0.72)");
       ctx.fill();
-      ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+      ctx.strokeStyle = borderDim;
       ctx.stroke();
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = muted;
       ctx.font = "900 10px Inter, sans-serif";
-      ctx.fillText("BATTLE PAYOUT", 730, 156);
+      ctx.fillText(copy("ui.result.payout", "BATTLE PAYOUT"), 730, 156);
       drawCurrencyAmount(income.total, 870, 152, {
         sign: "+",
         font: "900 15px Inter, sans-serif",
-        color: "#16392d",
+        color: primary,
         iconSize: 16,
       });
       const heartDamage = state.lastCombatLedger?.heartDamage || 0;
@@ -13381,7 +16676,7 @@
     }
     drawCombatLedger(state.lastCombatLedger, 720, 188, 268);
     if (!state.rewardChoices?.length) {
-      wrapText(state.hearts <= 0 ? "Your run has ended. Restart from the top bar." : "Reward claimed.", 720, 320, 268, 15);
+      wrapText(state.hearts <= 0 ? copy("ui.result.runEnded", "Your run has ended. Restart from the top bar.") : copy("ui.result.rewardClaimed", "Reward claimed."), 720, 320, 268, 15);
       return;
     }
     drawRewardPrompt();
@@ -13389,30 +16684,31 @@
   }
 
   function drawRewardPrompt() {
+    const horror = realityBroken();
     roundedRect(710, 304, 286, 232, 8);
-    ctx.fillStyle = "rgba(255, 241, 176, 0.5)";
+    ctx.fillStyle = horror ? "rgba(29, 55, 25, 0.42)" : "rgba(255, 241, 176, 0.5)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(217, 144, 67, 0.48)";
+    ctx.strokeStyle = horror ? themeColor("border", "rgba(217, 144, 67, 0.48)") : "rgba(217, 144, 67, 0.48)";
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.lineWidth = 1;
-    drawUiAtlasIcon("reward_gold", 730, 329, 22, { tooltip: { title: "Post-battle reward", body: "Pick one reward before the next course starts." } });
-    ctx.fillStyle = "#16392d";
+    drawUiAtlasIcon("reward_gold", 730, 329, 22, { tooltip: { title: copy("ui.result.rewardTooltipTitle", "Post-battle reward"), body: copy("ui.result.rewardTooltipBody", "Pick one reward before the next course starts.") } });
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 14px Inter, sans-serif";
-    ctx.fillText("Choose 1 Reward", 748, 334);
-    ctx.fillStyle = "#8a5223";
+    ctx.fillText(copy("ui.result.chooseReward", "Choose 1 Reward"), 748, 334);
+    ctx.fillStyle = themeColor("muted", "#8a5223");
     ctx.font = "800 10px Inter, sans-serif";
-    ctx.fillText("Claim one to start the next course", 748, 348);
+    ctx.fillText(copy("ui.result.claimReward", "Claim one to start the next course"), 748, 348);
   }
 
   function drawCombatLedger(ledger, x, y, maxWidth) {
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 12px Inter, sans-serif";
-    ctx.fillText("Combat ledger", x, y);
+    ctx.fillText(copy("ui.result.ledger", "Combat ledger"), x, y);
     if (!ledger) {
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = "700 11px Inter, sans-serif";
-      ctx.fillText("No combat details captured.", x, y + 20);
+      ctx.fillText(copy("ui.result.noLedger", "No combat details captured."), x, y + 20);
       return;
     }
     const rows = [
@@ -13423,26 +16719,26 @@
     rows.forEach(([label, value, iconId, body], index) => {
       const rowY = y + 18 + index * 18;
       drawUiAtlasIcon(iconId, x + 8, rowY - 4, 16, { tooltip: { title: label, body } });
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = "800 10px Inter, sans-serif";
       ctx.fillText(label, x + 20, rowY);
-      ctx.fillStyle = "#16392d";
+      ctx.fillStyle = themeColor("primary", "#16392d");
       ctx.font = "900 12px Inter, sans-serif";
-      fitText(value, x + 84, rowY, maxWidth - 84, "900 12px Inter, sans-serif", "#16392d");
+      fitText(value, x + 84, rowY, maxWidth - 84, "900 12px Inter, sans-serif", themeColor("primary", "#16392d"));
     });
     const mvp = ledger.mvp?.damageDealt > 0 ? `${ledger.mvp.name}: ${ledger.mvp.damageDealt} dmg${ledger.mvp.kos ? `, ${ledger.mvp.kos} KO` : ""}` : "No damage MVP";
     const protectedLine = ledger.protected && ledger.protected.healingReceived + ledger.protected.shieldingReceived > 0
       ? `${ledger.protected.name}: +${ledger.protected.healingReceived} HP, +${ledger.protected.shieldingReceived} shield`
       : "No major support target";
-    ctx.fillStyle = "#6a4b35";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 10px Inter, sans-serif";
     drawUiAtlasIcon("info_damage", x + 8, y + 74, 16, { tooltip: { title: "MVP", body: "Top damage dealer for the fight." } });
     drawUiAtlasIcon("info_shield", x + 8, y + 92, 16, { tooltip: { title: "Held", body: "Unit that received the most support." } });
     ctx.fillText("MVP", x + 20, y + 78);
     ctx.fillText("Held", x + 20, y + 96);
     ctx.font = "900 11px Inter, sans-serif";
-    fitText(mvp, x + 52, y + 78, maxWidth - 52, "900 11px Inter, sans-serif", "#16392d");
-    fitText(protectedLine, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", "#16392d");
+    fitText(mvp, x + 52, y + 78, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
+    fitText(protectedLine, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
   }
 
   function rewardIconId(reward) {
@@ -13457,55 +16753,56 @@
   }
 
   function rewardKindLabel(reward) {
-    if (!reward) return "REWARD";
-    if (reward.type === "gold" || reward.type === "arenaPurse") return "COINS";
-    if (reward.type === "freeRolls") return "ROLL";
-    if (reward.type === "item") return reward.key?.startsWith("favorite:") ? "FAV" : "TOP";
-    if (reward.type === "copy") return "COPY";
-    if (reward.type === "upgradeDiscount") return "UPG";
+    if (!reward) return copy("ui.result.reward", "REWARD");
+    if (reward.type === "gold" || reward.type === "arenaPurse") return realityBroken() ? "SCRAP" : "COINS";
+    if (reward.type === "freeRolls") return realityBroken() ? "SCAN" : "ROLL";
+    if (reward.type === "item") return reward.key?.startsWith("favorite:") ? "FAV" : (realityBroken() ? "WPN" : "TOP");
+    if (reward.type === "copy") return realityBroken() ? "UNIT" : "COPY";
+    if (reward.type === "upgradeDiscount") return realityBroken() ? "RIG" : "UPG";
     if (reward.type === "shopSlotUnlock") return "SLOT";
     if (reward.type?.startsWith("arena")) return "ARENA";
     return "REWARD";
   }
 
   function drawRewardChoice(reward, button, index) {
+    const horror = realityBroken();
     const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 260 + index * 0.7);
     roundedRect(button.x, button.y, button.w, button.h, 8);
-    ctx.fillStyle = index === 0 ? `rgba(255, 249, 214, ${0.92 + pulse * 0.06})` : "#fff9d6";
+    ctx.fillStyle = horror ? (index === 0 ? `rgba(24, 61, 35, ${0.78 + pulse * 0.08})` : "rgba(8, 20, 22, 0.9)") : index === 0 ? `rgba(255, 249, 214, ${0.92 + pulse * 0.06})` : "#fff9d6";
     ctx.fill();
-    ctx.strokeStyle = index === 0 ? "#d99043" : "rgba(22, 57, 45, 0.24)";
+    ctx.strokeStyle = index === 0 ? themeColor("accent", "#d99043") : themeColor("borderDim", "rgba(22, 57, 45, 0.24)");
     ctx.lineWidth = index === 0 ? 3 : 2;
     ctx.stroke();
     ctx.lineWidth = 1;
     roundedRect(button.x + 8, button.y + 8, 34, 34, 7);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.66)";
+    ctx.fillStyle = horror ? "rgba(70, 255, 99, 0.10)" : "rgba(255, 255, 255, 0.66)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(22, 57, 45, 0.12)";
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
     ctx.stroke();
     drawUiAtlasIcon(rewardIconId(reward), button.x + 25, button.y + 25, 25, {
       tooltip: { title: reward.title, body: reward.body },
     });
     roundedRect(button.x + button.w - 56, button.y + 8, 42, 15, 5);
-    ctx.fillStyle = "#f7d15b";
+    ctx.fillStyle = themeColor("warning", "#f7d15b");
     ctx.fill();
-    ctx.strokeStyle = "rgba(138, 82, 35, 0.2)";
+    ctx.strokeStyle = horror ? "rgba(255, 209, 91, 0.42)" : "rgba(138, 82, 35, 0.2)";
     ctx.stroke();
-    ctx.fillStyle = "#6a3f14";
+    ctx.fillStyle = horror ? "#07100b" : "#6a3f14";
     ctx.font = "900 8px Inter, sans-serif";
-    fitText(rewardKindLabel(reward), button.x + button.w - 51, button.y + 19, 32, "900 8px Inter, sans-serif", "#6a3f14");
-    ctx.fillStyle = "#16392d";
+    fitText(rewardKindLabel(reward), button.x + button.w - 51, button.y + 19, 32, "900 8px Inter, sans-serif", horror ? "#07100b" : "#6a3f14");
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 12px Inter, sans-serif";
     const textX = button.x + 52;
     const textWidth = button.w - 118;
-    fitText(reward.title, textX, button.y + 18, textWidth, "900 12px Inter, sans-serif", "#16392d");
-    ctx.fillStyle = "#6a4b35";
+    fitText(reward.title, textX, button.y + 18, textWidth, "900 12px Inter, sans-serif", themeColor("primary", "#16392d"));
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "700 10px Inter, sans-serif";
     wrapTextLimited(reward.body, textX, button.y + 35, button.w - 72, 10, 2);
   }
 
   function drawEnemyPreviewMini(x, y, maxWidth) {
     const enemies = ensureEnemyPreview();
-    ctx.fillStyle = "#16392d";
+    ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "800 12px Inter, sans-serif";
     ctx.fillText("Next enemy", x, y);
     enemies.slice(0, 5).forEach((unit, index) => {
@@ -13515,7 +16812,7 @@
       drawRarityDot(px + 13, py - 13, unit.rarity);
     });
     if (enemies.length > 5) {
-      ctx.fillStyle = "#6a4b35";
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = "800 10px Inter, sans-serif";
       ctx.fillText(`+${enemies.length - 5}`, x + 184, y + 32);
     }
@@ -13836,6 +17133,28 @@
     if (line && lines < maxLines) ctx.fillText(line, x, y);
   }
 
+  function scaledCanvasFont(font, px) {
+    return String(font || "").replace(/(\d+(?:\.\d+)?)px/, `${px}px`);
+  }
+
+  function canvasFontPx(font) {
+    const match = String(font || "").match(/(\d+(?:\.\d+)?)px/);
+    return match ? Number(match[1]) : 12;
+  }
+
+  function fitTextComplete(text, x, y, maxWidth, font, color, minPx = 6) {
+    const value = String(text || "");
+    ctx.fillStyle = color;
+    const basePx = canvasFontPx(font);
+    let px = basePx;
+    ctx.font = font;
+    while (px > minPx && ctx.measureText(value).width > maxWidth) {
+      px = Math.max(minPx, px - 0.5);
+      ctx.font = scaledCanvasFont(font, px);
+    }
+    ctx.fillText(value, x, y);
+  }
+
   function fitText(text, x, y, maxWidth, font, color) {
     ctx.fillStyle = color;
     ctx.font = font;
@@ -13874,6 +17193,49 @@
   }
 
   function drawBattleFieldBackdrop() {
+    if (realityBroken()) {
+      roundedRect(BATTLE_FIELD.x, BATTLE_FIELD.y, BATTLE_FIELD.w, BATTLE_FIELD.h, 8);
+      const image = getUiSprite(currentBattleFieldBgSrc());
+      if (image && image.complete && image.naturalWidth > 0) {
+        ctx.save();
+        ctx.clip();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(image, BATTLE_FIELD.x, BATTLE_FIELD.y, BATTLE_FIELD.w, BATTLE_FIELD.h);
+        ctx.fillStyle = "rgba(2, 8, 9, 0.18)";
+        ctx.fillRect(BATTLE_FIELD.x, BATTLE_FIELD.y, BATTLE_FIELD.w, BATTLE_FIELD.h);
+        ctx.restore();
+        roundedRect(BATTLE_FIELD.x, BATTLE_FIELD.y, BATTLE_FIELD.w, BATTLE_FIELD.h, 8);
+        ctx.strokeStyle = "rgba(70, 255, 99, 0.42)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      } else {
+      ctx.fillStyle = "rgba(4, 10, 13, 0.86)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(70, 255, 99, 0.38)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      }
+      ctx.save();
+      ctx.clip();
+      ctx.strokeStyle = "rgba(70, 255, 99, 0.12)";
+      for (let x = BATTLE_FIELD.x - 40; x < BATTLE_FIELD.x + BATTLE_FIELD.w + 80; x += 42) {
+        ctx.beginPath();
+        ctx.moveTo(x, BATTLE_FIELD.y);
+        ctx.lineTo(x + 170, BATTLE_FIELD.y + BATTLE_FIELD.h);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(255, 61, 79, 0.13)";
+      for (let y = BATTLE_FIELD.y + 28; y < BATTLE_FIELD.y + BATTLE_FIELD.h; y += 46) {
+        ctx.beginPath();
+        ctx.moveTo(BATTLE_FIELD.x, y);
+        ctx.lineTo(BATTLE_FIELD.x + BATTLE_FIELD.w, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    }
     const image = getUiSprite(BATTLE_FIELD_BG_SRC);
     roundedRect(BATTLE_FIELD.x, BATTLE_FIELD.y, BATTLE_FIELD.w, BATTLE_FIELD.h, 8);
     if (image && image.complete && image.naturalWidth > 0) {
@@ -13910,7 +17272,12 @@
     const angle = Math.atan2(dy, dx);
     const mirrorLeft = dx < 0;
 
-    const image = getAttackParticleSprite(attack.particleType);
+    if (!attack.particleSrc) {
+      const spriteInfo = particleSpriteInfo(attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1);
+      attack.particleSrc = spriteInfo.src;
+      attack.particleCacheKind = spriteInfo.cacheKind;
+    }
+    const image = getParticleSprite(attack.particleCacheKind || attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1, attack.particleSrc);
     const size = ATTACK_PROJECTILE_SIZE + Math.min(4, from.tier || 1) * 5;
     ctx.save();
     ctx.translate(x, y);
@@ -14000,13 +17367,15 @@
       const { col } = slotGrid(i);
       const cell = BATTLE_FORMATION.cellSize;
       const occupied = units.some((unit) => unit.slot === i);
-      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, cell, cell, "board");
+      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, cell, cell, "board", i);
       roundedRect(x - cell / 2, y - cell / 2, cell, cell, 8);
       if (!hasArtBackdrop) {
-        ctx.fillStyle = col === FRONT_COL ? "rgba(255, 245, 204, 0.24)" : "rgba(255, 253, 232, 0.16)";
+        ctx.fillStyle = realityBroken()
+          ? (col === FRONT_COL ? "rgba(255, 61, 79, 0.12)" : "rgba(70, 255, 99, 0.08)")
+          : (col === FRONT_COL ? "rgba(255, 245, 204, 0.24)" : "rgba(255, 253, 232, 0.16)");
         ctx.fill();
       }
-      ctx.strokeStyle = hasArtBackdrop ? "transparent" : "rgba(22, 57, 45, 0.12)";
+      ctx.strokeStyle = hasArtBackdrop ? "transparent" : realityBroken() ? "rgba(70, 255, 99, 0.22)" : "rgba(22, 57, 45, 0.12)";
       ctx.stroke();
       if (occupied) continue;
     }
@@ -14035,7 +17404,7 @@
       const item = drinks[index];
       const { x, y } = battleDrinkSlotPosition(side, slot);
       const size = BATTLE_DRINK_SLOT_SIZE;
-      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, size, size, "drinks");
+      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, size, size, "drinks", index);
       roundedRect(x - size / 2, y - size / 2, size, size, 7);
       if (!item && !hasArtBackdrop) {
         ctx.fillStyle = "rgba(242, 237, 210, 0.62)";
@@ -14082,7 +17451,6 @@
 
   function drawBattleUnit(unit) {
     const radius = 28 + unit.tier * 4;
-    drawUnitStatusFlashes(unit, unit.x, unit.y, radius);
     drawFoodAnimal(unit, unit.x, unit.y, radius, unit.side === "ally");
     drawUnitStatusGlyphs(unit, unit.x, unit.y, radius);
     const baseBarRows = drawBattleBaseBars(unit, radius);
@@ -14144,11 +17512,12 @@
     const radius = 28 + unit.tier * 4;
     const size = Math.round(radius * 2.7);
     const y = unit.y + radius * 0.08;
+    const facingRight = realityBroken() && unit.side === "ally";
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.86;
-    ctx.drawImage(image, Math.round(unit.x - size / 2), Math.round(y - size / 2), size, size);
+    drawImageFacing(image, Math.round(unit.x - size / 2), Math.round(y - size / 2), size, size, facingRight);
     ctx.restore();
     ctx.imageSmoothingEnabled = true;
   }
@@ -14165,30 +17534,11 @@
     if (unit.antiSupport) effects.push({ id: "antiSupport", ...STATUS_EFFECT_STYLES.antiSupport });
     if (unit.slowed) effects.push({ id: "slowed", ...STATUS_EFFECT_STYLES.slowed });
     if (unit.lateFightStacks > 0) effects.push({ id: "lateFightStacks", ...STATUS_EFFECT_STYLES.lateFightStacks });
-    if (unit.moldStacks > 0) effects.push({ id: "mold", ...STATUS_EFFECT_STYLES.mold });
+    if (unit.moldStacks > 0) {
+      const moldId = currentMoldStatusEffectId();
+      effects.push({ id: moldId, ...currentMoldStatusStyle() });
+    }
     return effects;
-  }
-
-  function drawUnitStatusFlashes(unit, x, y, r) {
-    const effects = activeStatusEffects(unit).filter((effect) => effect.id !== "burn");
-    if (!effects.length) return;
-    const time = visibleBattle()?.elapsed || 0;
-    effects.slice(0, 4).forEach((effect, index) => {
-      const pulse = 0.5 + Math.sin(time * 5.4 + index * 1.7) * 0.5;
-      ctx.save();
-      ctx.globalAlpha = 0.16 + pulse * 0.13;
-      ctx.strokeStyle = effect.color;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.ellipse(x, y + 2, r * 1.08 + index * 3 + pulse * 4, r * 0.78 + index * 2 + pulse * 3, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.globalAlpha = 0.12 + pulse * 0.1;
-      ctx.fillStyle = effect.color;
-      ctx.beginPath();
-      ctx.ellipse(x, y + 6, r * 0.88 + pulse * 4, r * 0.48 + pulse * 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
   }
 
   function drawUnitStatusGlyphs(unit, x, y, r) {
@@ -14353,6 +17703,27 @@
       ctx.arc(-size * 0.08, size * 0.2, size * 0.1, 0, Math.PI * 2);
       ctx.arc(size * 0.32, -size * 0.02, size * 0.08, 0, Math.PI * 2);
       ctx.fill();
+    } else if (effect.kind === "radiation") {
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = effect.accent;
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 + i * (Math.PI * 2 / 3);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a - 0.34) * size * 0.28, Math.sin(a - 0.34) * size * 0.28);
+        ctx.arc(0, 0, size * 0.78, a - 0.34, a + 0.34);
+        ctx.lineTo(Math.cos(a + 0.34) * size * 0.28, Math.sin(a + 0.34) * size * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#07100b";
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.18, 0, Math.PI * 2);
+      ctx.fill();
     }
     ctx.restore();
   }
@@ -14362,11 +17733,7 @@
       const alpha = Math.max(0, p.life / (p.maxLife || 0.45));
       ctx.globalAlpha = alpha;
       if (p.foodParticles) {
-        const image = p.particleSprite === "drink"
-          ? getDrinkThrowableSprite(p.particleType)
-          : p.particleSprite === "item"
-            ? getItemSprite({ id: p.particleType, tier: p.particleTier })
-            : getAttackParticleSprite(p.particleType);
+        const image = getParticleSprite(p.imageCacheKind || p.particleSprite || "attack", p.particleType, p.particleTier, p.imageSrc);
         const size = (p.size || 24) * (0.75 + alpha * 0.35);
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -14411,9 +17778,16 @@
   }
 
   function hitTest(pos) {
+    if (state.rebootTransition || state.finalVictoryTransition) return null;
+    if (state.phase === "victoryCutscene") {
+      if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
+        return { area: "button", index: "victoryReboot" };
+      }
+      return null;
+    }
     if (state.codexOpen) return hitTestCodex(pos);
     if (state.phase === "prep") {
-      if (pointInRect(pos.x, pos.y, SHOPKEEPER_DISPLAY.codexButton)) return { area: "codexButton", index: 0 };
+      if (pointInRect(pos.x, pos.y, currentCodexMenuButtonRect())) return { area: "codexButton", index: 0 };
       if (pointInRect(pos.x, pos.y, buttons.shopUpgrade)) return { area: "button", index: "shopUpgrade" };
       if (pointInRect(pos.x, pos.y, buttons.roll)) return { area: "button", index: "roll" };
       if (pointInRect(pos.x, pos.y, buttons.battle)) return { area: "button", index: "battle" };
@@ -14497,6 +17871,7 @@
       if (hit.index === "battle") startBattle();
       if (hit.index === "battleSpeed") cycleBattleSpeed();
       if (hit.index === "next") continuePrep();
+      if (hit.index === "victoryReboot") rebootFromVictoryCutscene();
       if (String(hit.index).startsWith("reward")) applyRewardChoice(Number(String(hit.index).slice(6)));
       if (hit.index === "sell") {
         const selectedRef = getSelectedRef();
@@ -14513,7 +17888,7 @@
       state.codexSelectedDrinkId = state.codexSelectedDrinkId || codexDrinks()[0]?.id || null;
       syncCodexSelectionToVisibleEntry();
       state.selected = null;
-      state.message = "Food menu";
+      state.message = copy("ui.panels.foodMenu", "Food menu");
       event.preventDefault();
       return;
     }
@@ -14527,7 +17902,7 @@
         state.codexSelectedToppingId = state.codexSelectedToppingId || codexToppings()[0]?.id || null;
         state.codexSelectedDrinkId = state.codexSelectedDrinkId || codexDrinks()[0]?.id || null;
         syncCodexSelectionToVisibleEntry();
-        state.message = tab.label;
+        state.message = copy(["ui", "panels", tab.id], tab.label);
       }
       event.preventDefault();
       return;
@@ -14549,7 +17924,7 @@
         state.codexSelectedId = entry?.id || state.codexSelectedId;
         state.codexSelectedFormTier = 1;
       }
-      state.message = entry?.short || entry?.name || "Food menu";
+      state.message = entry ? (state.codexTab === "food" ? displayCatalogShort(entry) : itemDisplayShort(entry)) : copy("ui.panels.foodMenu", "Food menu");
       event.preventDefault();
       return;
     }
@@ -14558,20 +17933,20 @@
       const maxTier = Math.min(4, animal?.forms?.length || 1);
       if (hit.index >= maxTier) {
         state.codexSelectedFormTier = 0;
-        state.message = "Meal";
+        state.message = realityBroken() ? "Wreck" : "Meal";
         event.preventDefault();
         return;
       }
       state.codexSelectedFormTier = Math.max(1, Math.min(maxTier, hit.index + 1));
       const form = animal.forms?.[state.codexSelectedFormTier - 1];
-      state.message = form?.short || form?.name || "Food menu";
+      state.message = animal ? displayCatalogForm(animal, state.codexSelectedFormTier, "short") : copy("ui.panels.foodMenu", "Food menu");
       event.preventDefault();
       return;
     }
     if (hit.area === "codexItemForm") {
       const entry = currentCodexEntry();
       state.codexSelectedItemTier = Math.max(1, Math.min(MAX_ITEM_TIER, hit.index + 1));
-      state.message = `${entry?.short || entry?.name || "Item"} Lv ${state.codexSelectedItemTier}`;
+      state.message = `${entry ? itemDisplayShort(entry) : "Item"} Lv ${state.codexSelectedItemTier}`;
       event.preventDefault();
       return;
     }
@@ -14690,7 +18065,7 @@
       over: null,
       valid: false,
     };
-    state.message = isDrink(unit) ? "Drag to drink rail" : isItem(unit) ? "Drag to animal" : "Drag to grid";
+    state.message = isDrink(unit) ? `Drag to ${copy("ui.types.drink", "drink")} rail` : isItem(unit) ? (realityBroken() ? "Drag to machine" : "Drag to animal") : "Drag to grid";
   }
 
   function startUnitDrag(area, index, pos) {
@@ -14711,13 +18086,13 @@
       over: null,
       valid: false,
     };
-    state.message = isDrink(unit) ? "Drag to drink rail" : isItem(unit) ? "Top an animal" : area === "bench" ? "Drag to board" : "Drag to slot";
+    state.message = isDrink(unit) ? `Drag to ${copy("ui.types.drink", "drink")} rail` : isItem(unit) ? (realityBroken() ? "Arm a machine" : "Top an animal") : area === "bench" ? "Drag to board" : "Drag to slot";
   }
 
   function startEquipmentDrag(pos) {
     const source = selectedEquipmentTargetRef();
     if (!source?.unit?.item) {
-      state.message = "Drop topping here";
+      state.message = `Drop ${copy("ui.types.topping", "topping")} here`;
       return;
     }
     state.drag = {
@@ -14733,7 +18108,7 @@
       over: null,
       valid: false,
     };
-    state.message = "Drag topping out";
+    state.message = `Drag ${copy("ui.types.topping", "topping")} out`;
   }
 
   function updateDrag(pos, hit) {
@@ -14770,7 +18145,7 @@
     }
     if (drag.area === "shop") {
       if (!hit || !isPotentialDropTarget(drag, hit.area, hit.index)) {
-        state.message = isDrink(drag.unit) ? "Drop on drink rail" : isItem(drag.unit) ? "Drop on animal" : "Drop on grid";
+        state.message = isDrink(drag.unit) ? `Drop on ${copy("ui.types.drink", "drink")} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : "Drop on grid";
         return;
       }
       if (isItem(drag.unit) && isUnit(state[hit.area]?.[hit.index])) {
@@ -14789,7 +18164,7 @@
       return;
     }
     if (!hit || !isPotentialDropTarget(drag, hit.area, hit.index)) {
-      state.message = isDrink(drag.unit) ? "Drop on drink rail" : isItem(drag.unit) ? "Drop on animal" : drag.area === "bench" ? "Drop on board" : "Drop on slot";
+      state.message = isDrink(drag.unit) ? `Drop on ${copy("ui.types.drink", "drink")} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : drag.area === "bench" ? "Drop on board" : "Drop on slot";
       return;
     }
     if (!canDropDrag(drag, hit.area, hit.index)) {
@@ -14820,6 +18195,16 @@
   }
 
   function onKeyDown(event) {
+    if (state.finalVictoryTransition || state.phase === "victoryCutscene") {
+      if (event.key.toLowerCase() === "f") {
+        if (!document.fullscreenElement) canvas.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      } else if (state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || event.key.toLowerCase() === "r")) {
+        rebootFromVictoryCutscene();
+      }
+      event.preventDefault();
+      return;
+    }
     if (event.key.toLowerCase() === "f") {
       if (!document.fullscreenElement) canvas.requestFullscreen?.();
       else document.exitFullscreen?.();
@@ -14846,6 +18231,9 @@
     if (event.key.toLowerCase() === "s" && state.phase === "battle") {
       cycleBattleSpeed();
     }
+    if (event.key.toLowerCase() === "h") {
+      cycleRealityThemeOverride();
+    }
   }
 
   function gameLoop(now) {
@@ -14862,12 +18250,14 @@
     const enemyPreview = state.phase === "prep" ? ensureEnemyPreview() : state.enemyPreview?.units || [];
     const shownBattle = visibleBattle();
     const enemyDrinks = shownBattle ? shownBattle.enemyDrinks || [] : enemyPreviewDrinks();
+    const moldState = shownBattle ? moldStateText(shownBattle) : null;
     const battle = shownBattle
       ? {
           elapsed: Number(shownBattle.elapsed.toFixed(2)),
           arena: shownBattle.arena,
           enemyPlan: shownBattle.enemyPlan,
-          mold: moldStateText(shownBattle),
+          mold: moldState,
+          ...(realityBroken() ? { radiation: moldState } : {}),
           traitLevels: shownBattle.traitLevels,
           allies: shownBattle.allies
             .filter((u) => !u.dead)
@@ -14882,6 +18272,7 @@
             to: attack.to,
             kind: attack.kind || "damage",
             particleType: attack.particleType,
+            particleSrc: attack.particleSrc || particleSpriteSrc(attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1),
             progress: Number(clamp01(1 - attack.t / (attack.duration || ATTACK_ANIMATION_SECONDS)).toFixed(2)),
           })),
           drinkTosses: (shownBattle.drinkTosses || []).map((toss) => ({
@@ -14902,6 +18293,70 @@
       gold: state.gold,
       hearts: state.hearts,
       message: state.message,
+      reality: {
+        broken: realityBroken(),
+        copyTheme: currentCopyThemeId(),
+        copyThemeLabel: copy("meta.label", "Cozy illusion"),
+        storyBroken: Boolean(state.realityBroken),
+        override: state.realityOverride,
+        breakRound: REALITY_BREAK_ROUND,
+        breakTimer: Number((state.realityBreakTimer || 0).toFixed(2)),
+        rebootTransition: state.rebootTransition ? {
+          active: true,
+          elapsed: Number((state.rebootTransition.elapsed || 0).toFixed(2)),
+          duration: state.rebootTransition.duration,
+          resetDone: Boolean(state.rebootTransition.resetDone),
+        } : { active: false },
+        finalVictoryTransition: state.finalVictoryTransition ? {
+          active: true,
+          elapsed: Number((state.finalVictoryTransition.elapsed || 0).toFixed(2)),
+          duration: state.finalVictoryTransition.duration,
+          resetDone: Boolean(state.finalVictoryTransition.resetDone),
+        } : { active: false },
+        victoryCutscene: state.victoryCutscene ? {
+          active: true,
+          elapsed: Number((state.victoryCutscene.elapsed || 0).toFixed(2)),
+          stage: victoryCutsceneStage(state.victoryCutscene.elapsed || 0),
+          roundCleared: state.victoryCutscene.roundCleared,
+          backgroundSrc: state.victoryCutscene.backgroundSrc,
+          idealBackgroundSrc: state.victoryCutscene.idealBackgroundSrc,
+          message: state.victoryCutscene.message,
+          rebootButton: victoryCutsceneStage(state.victoryCutscene.elapsed || 0) === "ideal" ? { ...VICTORY_REBOOT_BUTTON } : null,
+        } : { active: false },
+        simulationArtifacts: realityBroken(),
+        assetIllusionBleed: realityBroken()
+          ? { enabled: illusionBleedAllowed({ allowCombat: true }), frame: illusionBleedFrame(), rate: "sequenced_slightly_more_frequent_combat_visual", sequenceSeconds: { preStatic: 0.5, flash: 0.3, postStatic: 0.5 }, affectedAreas: ["shopkeeper", "stall", "hud", "shop", "tiles", "foodAnimals", "drinks", "toppings", "combatFoodAnimals", "combatDrinks", "combatTiles"] }
+          : { enabled: false, frame: null, rate: "off", affectedAreas: [] },
+        malfunctionBanner: realityBroken() && !(state.realityBreakTimer > 0) ? { x: 386, y: 3, w: 248, h: 58, effects: true } : null,
+        shopkeeperSrc: currentShopkeeperSrc(),
+        stallSrc: currentShopkeeperStallSrc(),
+        backgroundSrc: realityBroken() ? themedArena(currentArena()).backgroundSrc : (currentArena()?.backgroundSrc || BACKGROUND_SRC),
+        fallbackBackgroundSrc: REALITY_BACKGROUND_SRC,
+        battleFieldSrc: currentBattleFieldBgSrc(),
+        shopSlotSrc: currentShopSlotBgSrc(),
+        shopLockSrc: currentShopLockClothBgSrc(),
+        teamIntelSrc: currentTeamIntelBgSrc(),
+        foodMenuSrc: currentFoodMenuBgSrc(),
+        codexMenuButtonSrc: currentCodexMenuButtonSrc(),
+        bannerBoardSrc: REALITY_BANNER_BOARD_SRC,
+        uiIconAtlasSrc: currentUiIconAtlasSrc(),
+        benchSlotSrc: currentBenchSlotBgSrc(),
+        boardPlateSrc: currentBoardPlateSlotSrc(),
+        drinkCoasterSrc: currentDrinkCoasterSlotSrc(),
+        toppingStorageSrc: currentToppingStorageSlotSrc(),
+        statusBoardSrcs: {
+          course: currentStatusBoardSrc("course"),
+          coins: currentStatusBoardSrc("coins"),
+          health: currentStatusBoardSrc("health"),
+        },
+        commandSignSrcs: {
+          rig: REALITY_COMMAND_RIG_SRC,
+          scan: REALITY_COMMAND_SCAN_SRC,
+          deploy: REALITY_COMMAND_DEPLOY_SRC,
+          speed: REALITY_COMMAND_SPEED_SRC,
+          reboot: REALITY_COMMAND_REBOOT_SRC,
+        },
+      },
       battleSpeed: {
         value: currentBattleSpeed(),
         label: battleSpeedLabel(),
@@ -14941,8 +18396,8 @@
       },
       economy: ECONOMY,
       traits: Object.fromEntries(Object.entries(TRAITS).map(([id, trait]) => [id, {
-        label: trait.label,
-        short: trait.short,
+        label: traitInfo(id).label,
+        short: traitInfo(id).short,
         thresholds: trait.thresholds,
       }])),
       activeTraits: activePlayerTraits(),
@@ -15001,15 +18456,17 @@
         visibleCount: codexEntries().length,
         visibleEntries: codexEntries().slice(0, 12).map((entry) => ({
           id: entry.id,
-          name: entry.name,
+          name: state.codexTab === "food" ? displayCatalogName(entry) : displayItemName(entry),
           rarity: entry.rarity || "common",
         })),
         selectedId: state.codexSelectedId,
         selectedFormTier: state.codexSelectedFormTier,
         selectedFormName: state.codexTab === "food"
           ? codexMealSelected()
-            ? "Meal"
-            : currentCodexEntry()?.forms?.[codexSelectedFormTier(currentCodexEntry()) - 1]?.name || null
+            ? (realityBroken() ? "Wreck" : "Meal")
+            : currentCodexEntry()
+              ? displayCatalogForm(currentCodexEntry(), codexSelectedFormTier(currentCodexEntry()), "name")
+              : null
           : null,
         selectedAnimal: state.codexTab === "food" && currentCodexEntry()
           ? unitText(codexUnitFor(currentCodexEntry(), codexMealSelected() ? 1 : codexSelectedFormTier(currentCodexEntry())))
@@ -15046,12 +18503,19 @@
   }
 
   function shopEntryText(entry, index) {
+    const mergeOpportunity = shopSlotMergeOpportunity(index);
     return {
       ...entryText(entry),
       shopSale: shopSlotOnSale(index),
       basePrice: entryCost(entry),
       salePrice: saleAdjustedEntryCost(entry, index),
       purchasePrice: purchaseCost(entry, index),
+      shopMergeOpportunity: Boolean(mergeOpportunity),
+      shopMergeProgress: mergeOpportunity?.progress || 0,
+      shopMergeIncomingProgress: mergeOpportunity?.incomingProgress || 0,
+      shopMergePhantomProgress: mergeOpportunity?.phantomProgress || 0,
+      shopMergeRequired: mergeOpportunity?.required || 3,
+      shopMergeText: mergeOpportunity?.text || null,
     };
   }
 
@@ -15059,10 +18523,11 @@
     return {
       kind: "item",
       id: item.id,
-      name: item.name,
+      name: displayItemName(item),
       short: itemDisplayShort(item),
-      baseShort: item.short,
+      baseShort: displayItemShort(item),
       type: item.type,
+      typeLabel: displayEntryTypeLabel(item),
       tier: itemTier(item.tier),
       maxTier: MAX_ITEM_TIER,
       tierScale: itemTierScale(item.tier),
@@ -15071,6 +18536,8 @@
       mergeText: itemTier(item.tier) >= MAX_ITEM_TIER ? "Max level" : `${Math.min(itemMergeProgressCount(item.id, item.tier), 3)}/3 to Lv ${itemTier(item.tier) + 1}`,
       rarity: item.rarity || "common",
       rarityLabel: rarityInfo(item.rarity).label,
+      spriteSrc: itemSpriteSrcFor(item),
+      drinkThrowableSpriteSrc: isDrink(item) ? drinkThrowableSpriteSrcFor(item.id) : undefined,
       price: entryCost(item),
       sellValue: itemSellValue(item),
       damageBonusPct: item.damageBonusPct,
@@ -15188,11 +18655,16 @@
     const payload = {
       kind: "unit",
       id: unit.typeId,
-      lineName: unit.lineName,
-      formName: unit.name,
-      name: unit.short,
+      typeLabel: displayEntryTypeLabel(unit),
+      lineName: displayUnitLineName(unit),
+      formName: displayUnitFormName(unit),
+      name: displayUnitShort(unit),
+      spriteSrc: runtimeSpriteSrcFor(unit),
+      attackParticleSrc: attackParticleSpriteSrcFor(unit.typeId || unit.id),
+      defeatStillSrc: defeatStillSpriteSrcFor(unit),
       rarity: unit.rarity,
       rarityLabel: rarityInfo(unit.rarity).label,
+      role: displayRoleLabel(unit.role),
       family: unit.family,
       familyLabel: familyLabel(unit.family),
       traits: (unit.traits || []).map((traitId) => ({
@@ -15230,6 +18702,7 @@
       drinkEffects: unit.drinkEffects || [],
       item: unit.item ? itemText(unit.item) : null,
     };
+    if (realityBroken()) payload.radiationDose = unit.moldStacks || 0;
     if (includePosition) {
       payload.x = Math.round(unit.x);
       payload.y = Math.round(unit.y);
@@ -15262,6 +18735,90 @@
     };
   }
 
+  function initialSmokeScenario() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get("smoke") || "").trim().toLowerCase();
+    } catch (_err) {
+      return "";
+    }
+  }
+
+  function routeParam(name) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return String(params.get(name) || "").trim().toLowerCase();
+    } catch (_err) {
+      return "";
+    }
+  }
+
+  function victoryEpilogueRouteElapsed() {
+    const stage = routeParam("stage") || routeParam("at");
+    if (stage === "crawl" || stage === "message") return VICTORY_CRAWL_START_SECONDS + 5.5;
+    if (stage === "static" || stage === "fade") return VICTORY_IDEAL_FADE_START_SECONDS + 0.8;
+    if (stage === "ideal" || stage === "reboot") return VICTORY_IDEAL_FADE_START_SECONDS + VICTORY_IDEAL_FADE_SECONDS + 2.5;
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const seconds = Number(params.get("t") || params.get("elapsed"));
+      if (Number.isFinite(seconds) && seconds >= 0) return seconds;
+    } catch (_err) {
+      // Keep the default title beat.
+    }
+
+    return 0;
+  }
+
+  function applyVictoryEpilogueRoute() {
+    state.phase = "victoryCutscene";
+    state.round = FINAL_VICTORY_ROUND + 1;
+    state.realityOverride = false;
+    state.realityBroken = true;
+    state.realityBreakTimer = 0;
+    state.codexOpen = false;
+    state.selected = null;
+    state.drag = null;
+    state.battle = null;
+    state.postCombatBattle = null;
+    state.rewardChoices = [];
+    state.rebootTransition = null;
+    state.finalVictoryTransition = null;
+    state.victoryCutscene = {
+      elapsed: victoryEpilogueRouteElapsed(),
+      roundCleared: FINAL_VICTORY_ROUND,
+      backgroundSrc: FINAL_VICTORY_CUTSCENE_SRC,
+      idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC,
+      message: "Hope Returns",
+    };
+    state.message = "Hope returns";
+    clearParticles();
+    return true;
+  }
+
+  function applyInitialRouteScreen() {
+    const screen = routeParam("screen") || routeParam("scene");
+    if (screen === "victory-epilogue" || screen === "victory-cutscene" || screen === "final-victory") {
+      return applyVictoryEpilogueRoute();
+    }
+    return false;
+  }
+
+  function applySmokeScenario() {
+    const scenario = initialSmokeScenario();
+    if (scenario !== "basic" && scenario !== "core-loop") return false;
+    state.board.fill(null);
+    state.bench.fill(null);
+    state.itemBench.fill(null);
+    state.drinks.fill(null);
+    state.board[3] = makeUnit("sushi_seal", 1);
+    state.board[4] = makeUnit("toast_tortoise", 2);
+    state.board[5] = makeUnit("churro_cheetah", 1);
+    state.selected = null;
+    state.message = "Smoke team ready";
+    return true;
+  }
+
   window.render_game_to_text = renderGameToText;
   window.advanceTime = (ms) => {
     const steps = Math.max(1, Math.round(ms / (1000 / 60)));
@@ -15284,6 +18841,9 @@
     currentItemShopChance,
     currentShopSaleChance,
     shopSlotOnSale,
+    currentCopyThemeId,
+    copy,
+    copyThemes: COPY_THEMES,
     moveUnitToOpenSlot,
     attachItemFromBench,
     detachSelectedItem,
@@ -15298,6 +18858,8 @@
     purchaseShopSlot,
     cycleBattleSpeed,
     currentBattleSpeed,
+    setRealityTheme,
+    cycleRealityThemeOverride,
     currentArena,
     setArena,
     arenaInfo,
@@ -15312,12 +18874,16 @@
     continuePrep,
     makeUnit,
     makeItem,
+    itemText,
+    itemSpriteSrcFor,
+    drinkThrowableSpriteSrcFor,
     mergeTriples,
     resolveMerges,
     mergeItemTriples,
     resolveItemMerges,
     itemMergeProgressCount,
     positionBattleUnit,
+    applySmokeScenario,
   };
 
   canvas.addEventListener("pointerdown", onPointerDown);
@@ -15327,10 +18893,9 @@
   canvas.addEventListener("pointerleave", onPointerLeave);
   window.addEventListener("keydown", onKeyDown);
 
-  preloadAttackParticleSprites();
-  preloadDrinkThrowableSprites();
-  preloadDefeatStillSprites();
   refreshShop(true);
+  applySmokeScenario();
+  applyInitialRouteScreen();
   ensureEnemyPreview();
   draw();
   requestAnimationFrame(gameLoop);

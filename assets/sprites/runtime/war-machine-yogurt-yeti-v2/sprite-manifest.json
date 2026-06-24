@@ -1,0 +1,23 @@
+{
+  "packageId": "war-machine-yogurt-yeti-v2",
+  "packageStatus": "horror-theme-metallic-palette-spacing-redo-evolution-munition-defeat-pass",
+  "unitId": "yogurt_yeti",
+  "sourceChromaKey": "assets/sprites/source/war-machine-yogurt-yeti-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-yogurt-yeti-evolution-v2-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "particleFrameSize": { "w": 96, "h": 96 },
+  "theme": "horror",
+  "forms": [
+    { "tier": 1, "formName": "Cryo Scout Crawler", "frame": "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk1_idle_SW_00.png" },
+    { "tier": 2, "formName": "Frostline Repair Golem", "frame": "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk2_idle_SW_00.png" },
+    { "tier": 3, "formName": "Glacier Support Engine", "frame": "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk3_idle_SW_00.png" },
+    { "tier": 4, "formName": "Cryo Bastion Golem", "frame": "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk4_idle_SW_00.png" }
+  ],
+  "attackParticle": "assets/particles/runtime/war-machine-yogurt-yeti-cryo-capacitor-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/yogurt-yeti-war-machine-defeat-v2.png",
+  "notes": [
+    "V1 was rejected because the middle evolution forms merged during alpha grouping. V2 increases source gutters.",
+    "The prompt translated the icy white, blue, and red reference palette into frosted ceramic armor, blue crystalline plates, and red sensor jewels.",
+    "The accepted transparent alpha scan found exactly six groups with source gutters of 76, 85, 106, 63, and 63 pixels."
+  ]
+}

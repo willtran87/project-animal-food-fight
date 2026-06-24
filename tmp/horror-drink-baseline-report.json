@@ -1,0 +1,884 @@
+[
+  {
+    "id": "bean_brew",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_grav_rail_battery_lv1_idle_SW_00.png",
+    "bbox": [
+      12,
+      51,
+      153,
+      166
+    ],
+    "bottom": 166,
+    "top": 51,
+    "height": 115
+  },
+  {
+    "id": "bean_brew",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\bean_brew-grand-v2-lv2.webp",
+    "bbox": [
+      16,
+      27,
+      176,
+      165
+    ],
+    "bottom": 165,
+    "top": 27,
+    "height": 138
+  },
+  {
+    "id": "bean_brew",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\bean_brew-grand-v2-lv3.webp",
+    "bbox": [
+      29,
+      16,
+      163,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "berry_fizz",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_ion_bastion_reactor_lv1_idle_SW_00.png",
+    "bbox": [
+      25,
+      39,
+      167,
+      164
+    ],
+    "bottom": 164,
+    "top": 39,
+    "height": 125
+  },
+  {
+    "id": "berry_fizz",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\berry_fizz-grand-v2-lv2.webp",
+    "bbox": [
+      28,
+      16,
+      163,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "berry_fizz",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\berry_fizz-grand-v2-lv3.webp",
+    "bbox": [
+      33,
+      16,
+      159,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "garden_spritz",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_neutron_arsenal_core_lv1_idle_SW_00.png",
+    "bbox": [
+      40,
+      26,
+      152,
+      166
+    ],
+    "bottom": 166,
+    "top": 26,
+    "height": 140
+  },
+  {
+    "id": "garden_spritz",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\garden_spritz-grand-v2-lv2.png",
+    "bbox": [
+      40,
+      16,
+      152,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "garden_spritz",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\garden_spritz-grand-v2-lv3.png",
+    "bbox": [
+      29,
+      16,
+      162,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "citrus_tea",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_obsidian_missile_forge_lv1_idle_SW_00.png",
+    "bbox": [
+      25,
+      37,
+      167,
+      168
+    ],
+    "bottom": 168,
+    "top": 37,
+    "height": 131
+  },
+  {
+    "id": "citrus_tea",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\citrus_tea-grand-v2-lv2.webp",
+    "bbox": [
+      16,
+      25,
+      176,
+      167
+    ],
+    "bottom": 167,
+    "top": 25,
+    "height": 142
+  },
+  {
+    "id": "citrus_tea",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\citrus_tea-grand-v2-lv3.webp",
+    "bbox": [
+      16,
+      35,
+      176,
+      157
+    ],
+    "bottom": 157,
+    "top": 35,
+    "height": 122
+  },
+  {
+    "id": "chili_crunch_cola",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_ignition_barrage_core_lv1_idle_SW_00.png",
+    "bbox": [
+      25,
+      42,
+      167,
+      166
+    ],
+    "bottom": 166,
+    "top": 42,
+    "height": 124
+  },
+  {
+    "id": "chili_crunch_cola",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\chili_crunch_cola-grand-v2-lv2.webp",
+    "bbox": [
+      48,
+      16,
+      144,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "chili_crunch_cola",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\chili_crunch_cola-grand-v2-lv3.webp",
+    "bbox": [
+      21,
+      16,
+      171,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "pepper_broth",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_pressure_bulwark_reactor_lv1_idle_SW_00.png",
+    "bbox": [
+      25,
+      27,
+      167,
+      165
+    ],
+    "bottom": 165,
+    "top": 27,
+    "height": 138
+  },
+  {
+    "id": "pepper_broth",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\pepper_broth-grand-v2-lv2.png",
+    "bbox": [
+      16,
+      38,
+      176,
+      154
+    ],
+    "bottom": 154,
+    "top": 38,
+    "height": 116
+  },
+  {
+    "id": "pepper_broth",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\pepper_broth-grand-v2-lv3.png",
+    "bbox": [
+      16,
+      35,
+      176,
+      157
+    ],
+    "bottom": 157,
+    "top": 35,
+    "height": 122
+  },
+  {
+    "id": "abyssal_shake",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_abyssal_tide_singularity_lv1_idle_SW_00.png",
+    "bbox": [
+      32,
+      25,
+      149,
+      167
+    ],
+    "bottom": 167,
+    "top": 25,
+    "height": 142
+  },
+  {
+    "id": "abyssal_shake",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\abyssal_shake-grand-v2-lv2.webp",
+    "bbox": [
+      34,
+      16,
+      157,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "abyssal_shake",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\abyssal_shake-grand-v2-lv3.webp",
+    "bbox": [
+      29,
+      16,
+      163,
+      176
+    ],
+    "bottom": 176,
+    "top": 16,
+    "height": 160
+  },
+  {
+    "id": "cream_soda_float",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_cryo_guard_battery_lv1_idle_SW_00.png",
+    "bbox": [
+      28,
+      25,
+      164,
+      167
+    ],
+    "bottom": 167,
+    "top": 25,
+    "height": 142
+  },
+  {
+    "id": "cream_soda_float",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\cream_soda_float-grand-v1-lv2.png",
+    "bbox": [
+      43,
+      10,
+      149,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "cream_soda_float",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\cream_soda_float-grand-v1-lv3.png",
+    "bbox": [
+      49,
+      10,
+      142,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "tidepool_espresso",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_tide_turbo_source_lv1_idle_SW_00.png",
+    "bbox": [
+      29,
+      36,
+      163,
+      156
+    ],
+    "bottom": 156,
+    "top": 36,
+    "height": 120
+  },
+  {
+    "id": "tidepool_espresso",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\tidepool_espresso-grand-v1-lv2.png",
+    "bbox": [
+      37,
+      11,
+      152,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "tidepool_espresso",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\tidepool_espresso-grand-v1-lv3.png",
+    "bbox": [
+      32,
+      9,
+      159,
+      183
+    ],
+    "bottom": 183,
+    "top": 9,
+    "height": 174
+  },
+  {
+    "id": "avocado_lassi",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_pit_repair_reservoir_lv1_idle_SW_00.png",
+    "bbox": [
+      29,
+      31,
+      163,
+      161
+    ],
+    "bottom": 161,
+    "top": 31,
+    "height": 130
+  },
+  {
+    "id": "avocado_lassi",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\avocado_lassi-grand-v1-lv2.webp",
+    "bbox": [
+      42,
+      10,
+      148,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "avocado_lassi",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\avocado_lassi-grand-v1-lv3.webp",
+    "bbox": [
+      38,
+      10,
+      152,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "chili_brine_tonic",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_thermal_brine_reactor_lv1_idle_SW_00.png",
+    "bbox": [
+      29,
+      32,
+      163,
+      159
+    ],
+    "bottom": 159,
+    "top": 32,
+    "height": 127
+  },
+  {
+    "id": "chili_brine_tonic",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\chili_brine_tonic-grand-v1-lv2.webp",
+    "bbox": [
+      51,
+      11,
+      141,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "chili_brine_tonic",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\chili_brine_tonic-grand-v1-lv3.webp",
+    "bbox": [
+      37,
+      8,
+      155,
+      184
+    ],
+    "bottom": 184,
+    "top": 8,
+    "height": 176
+  },
+  {
+    "id": "market_malt",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_convoy_overcharger_lv1_idle_SW_00.png",
+    "bbox": [
+      31,
+      29,
+      161,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "market_malt",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\market_malt-grand-v1-lv2.png",
+    "bbox": [
+      39,
+      11,
+      153,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "market_malt",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\market_malt-grand-v1-lv3.png",
+    "bbox": [
+      29,
+      8,
+      162,
+      184
+    ],
+    "bottom": 184,
+    "top": 8,
+    "height": 176
+  },
+  {
+    "id": "maple_cloud_cocoa",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_maple_cloud_reactor_lv1_idle_SW_00.png",
+    "bbox": [
+      32,
+      29,
+      160,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "maple_cloud_cocoa",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\maple_cloud_cocoa-grand-v1-lv2.png",
+    "bbox": [
+      45,
+      10,
+      147,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "maple_cloud_cocoa",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\maple_cloud_cocoa-grand-v1-lv3.png",
+    "bbox": [
+      32,
+      9,
+      160,
+      182
+    ],
+    "bottom": 182,
+    "top": 9,
+    "height": 173
+  },
+  {
+    "id": "pearl_biscuit_latte",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_pearl_armor_core_lv1_idle_SW_00.png",
+    "bbox": [
+      32,
+      29,
+      159,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "pearl_biscuit_latte",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\pearl_biscuit_latte-grand-v1-lv2.png",
+    "bbox": [
+      39,
+      11,
+      152,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "pearl_biscuit_latte",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\pearl_biscuit_latte-grand-v1-lv3.png",
+    "bbox": [
+      30,
+      10,
+      160,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "kelp_cucumber_cooler",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_kelp_turbo_cooler_lv1_idle_SW_00.png",
+    "bbox": [
+      48,
+      29,
+      144,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "kelp_cucumber_cooler",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\kelp_cucumber_cooler-grand-v1-lv2.png",
+    "bbox": [
+      49,
+      10,
+      143,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "kelp_cucumber_cooler",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\kelp_cucumber_cooler-grand-v1-lv3.png",
+    "bbox": [
+      37,
+      9,
+      154,
+      182
+    ],
+    "bottom": 182,
+    "top": 9,
+    "height": 173
+  },
+  {
+    "id": "nori_pop_slush",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_nori_pop_powercell_lv1_idle_SW_00.png",
+    "bbox": [
+      42,
+      29,
+      150,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "nori_pop_slush",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\nori_pop_slush-grand-v1-lv2.png",
+    "bbox": [
+      40,
+      11,
+      151,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "nori_pop_slush",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\nori_pop_slush-grand-v1-lv3.png",
+    "bbox": [
+      35,
+      10,
+      156,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "harissa_morning_shot",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_harissa_brine_ampoule_lv1_idle_SW_00.png",
+    "bbox": [
+      49,
+      29,
+      143,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "harissa_morning_shot",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\harissa_morning_shot-grand-v1-lv2.png",
+    "bbox": [
+      39,
+      11,
+      153,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "harissa_morning_shot",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\harissa_morning_shot-grand-v1-lv3.png",
+    "bbox": [
+      30,
+      10,
+      160,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "pretzel_cream_soda",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_pretzel_shield_reservoir_lv1_idle_SW_00.png",
+    "bbox": [
+      29,
+      31,
+      163,
+      162
+    ],
+    "bottom": 162,
+    "top": 31,
+    "height": 131
+  },
+  {
+    "id": "pretzel_cream_soda",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\pretzel_cream_soda-grand-v1-lv2.png",
+    "bbox": [
+      46,
+      10,
+      145,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "pretzel_cream_soda",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\pretzel_cream_soda-grand-v1-lv3.png",
+    "bbox": [
+      26,
+      10,
+      164,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "boba_night_tea",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_boba_night_overdrive_lv1_idle_SW_00.png",
+    "bbox": [
+      29,
+      35,
+      163,
+      158
+    ],
+    "bottom": 158,
+    "top": 35,
+    "height": 123
+  },
+  {
+    "id": "boba_night_tea",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\boba_night_tea-grand-v1-lv2.webp",
+    "bbox": [
+      44,
+      11,
+      148,
+      182
+    ],
+    "bottom": 182,
+    "top": 11,
+    "height": 171
+  },
+  {
+    "id": "boba_night_tea",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\boba_night_tea-grand-v1-lv3.webp",
+    "bbox": [
+      37,
+      10,
+      155,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "pico_lime_agua",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_pico_lime_repair_well_lv1_idle_SW_00.png",
+    "bbox": [
+      29,
+      34,
+      163,
+      159
+    ],
+    "bottom": 159,
+    "top": 34,
+    "height": 125
+  },
+  {
+    "id": "pico_lime_agua",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\pico_lime_agua-grand-v1-lv2.png",
+    "bbox": [
+      45,
+      11,
+      146,
+      181
+    ],
+    "bottom": 181,
+    "top": 11,
+    "height": 170
+  },
+  {
+    "id": "pico_lime_agua",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\pico_lime_agua-grand-v1-lv3.png",
+    "bbox": [
+      30,
+      10,
+      162,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "night_bite_energy",
+    "tier": 1,
+    "path": "assets\\items\\runtime\\item-horror-power_night_bite_warcell_lv1_idle_SW_00.png",
+    "bbox": [
+      32,
+      29,
+      160,
+      163
+    ],
+    "bottom": 163,
+    "top": 29,
+    "height": 134
+  },
+  {
+    "id": "night_bite_energy",
+    "tier": 2,
+    "path": "assets\\items\\runtime\\night_bite_energy-grand-v1-lv2.png",
+    "bbox": [
+      43,
+      10,
+      148,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  },
+  {
+    "id": "night_bite_energy",
+    "tier": 3,
+    "path": "assets\\items\\runtime\\night_bite_energy-grand-v1-lv3.png",
+    "bbox": [
+      26,
+      10,
+      166,
+      182
+    ],
+    "bottom": 182,
+    "top": 10,
+    "height": 172
+  }
+]

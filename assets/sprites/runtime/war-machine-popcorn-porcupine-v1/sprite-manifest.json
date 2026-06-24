@@ -1,0 +1,24 @@
+{
+  "packageId": "war-machine-popcorn-porcupine-v1",
+  "packageStatus": "horror-theme-metallic-palette-evolution-munition-defeat-pass",
+  "unitId": "popcorn_porcupine",
+  "sourceChromaKey": "assets/sprites/source/war-machine-popcorn-porcupine-evolution-v1-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-popcorn-porcupine-evolution-v1-transparent.png",
+  "runtimeFrameSize": { "w": 192, "h": 192 },
+  "particleFrameSize": { "w": 96, "h": 96 },
+  "theme": "horror",
+  "forms": [
+    { "tier": 1, "formName": "Quill Battery Drone", "frame": "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk1_idle_SW_00.png" },
+    { "tier": 2, "formName": "Needleback Artillery Rig", "frame": "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk2_idle_SW_00.png" },
+    { "tier": 3, "formName": "Shrapnel Rack Platform", "frame": "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk3_idle_SW_00.png" },
+    { "tier": 4, "formName": "Shrapnel Citadel Battery", "frame": "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk4_idle_SW_00.png" }
+  ],
+  "attackParticle": "assets/particles/runtime/war-machine-popcorn-porcupine-shrapnel-mine-v1.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/popcorn-porcupine-war-machine-defeat-v1.png",
+  "notes": [
+    "Generated with built-in image generation after inspecting the Popcorn Porcupine cozy evolution sheet and original particle.",
+    "The prompt translated the yellow, cream, and red palette into yellow-gold metal spikes, cream ceramic shell plates, red hazard panels, and dark gunmetal chassis.",
+    "The accepted source sheet contains six pure robot subjects: four evolution stages, one static shrapnel mine munition, and one disabled wreck defeat still.",
+    "Background was removed with the imagegen remove_chroma_key.py helper. The transparent alpha scan found exactly six groups with source gutters of 49, 53, 29, 41, and 40 pixels."
+  ]
+}

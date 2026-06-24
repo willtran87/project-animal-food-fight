@@ -1,0 +1,21 @@
+{
+  "theme": "horror_future_war",
+  "typeId": "iceberg_oyster",
+  "lineName": "Abyssal Lock Core",
+  "version": "v1",
+  "sourceSheet": "assets/sprites/source/war-machine-iceberg-oyster-evolution-v1-chromakey.png",
+  "transparentSheet": "assets/sprites/transparent/war-machine-iceberg-oyster-evolution-v1-transparent.png",
+  "runtimeFrames": {
+    "1": "assets/sprites/runtime/war-machine-iceberg-oyster-v1/iceberg_oyster-abyssal-lock-core-mk1_idle_SW_00.png",
+    "2": "assets/sprites/runtime/war-machine-iceberg-oyster-v1/iceberg_oyster-abyssal-lock-core-mk2_idle_SW_00.png",
+    "3": "assets/sprites/runtime/war-machine-iceberg-oyster-v1/iceberg_oyster-abyssal-lock-core-mk3_idle_SW_00.png",
+    "4": "assets/sprites/runtime/war-machine-iceberg-oyster-v1/iceberg_oyster-abyssal-lock-core-mk4_idle_SW_00.png"
+  },
+  "attackParticle": "assets/particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v1.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v1.png",
+  "contactPreview": "output/war-machine-iceberg-oyster-v1-contact.png",
+  "notes": [
+    "Generated as a pure mechanical future-war horror unit with static munition particle and disabled wreck defeat state.",
+    "Sliced from six separated alpha groups; particle is group 5 and defeat state is group 6."
+  ]
+}
