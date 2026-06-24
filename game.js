@@ -23,6 +23,8 @@
   const COMBAT_HIT_RECOIL_PIXELS = 10;
   const HORROR_PLATE_BENCH_UNIT_SCALE = 1.3;
   const HORROR_DEFEAT_STILL_SCALE = 1.3;
+  const HORROR_PARTICLE_SPEED_SCALE = 1.24;
+  const HORROR_PARTICLE_LIFE_SCALE = 0.74;
   const FINAL_VICTORY_ROUND = 20;
   const FINAL_BOSS_TYPE_ID = "cyber_brain_final_boss";
   const FINAL_BOSS_MINION_TYPE_ID = "brainstem_wire_minion";
@@ -10974,11 +10976,13 @@
     const foodParticles = Boolean(options.food && imageSrc);
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const minSpeed = options.speedMin || (foodParticles ? 95 : 45);
-      const maxSpeed = options.speedMax || (foodParticles ? 250 : 135);
+      const speedScale = options.speedScale || 1;
+      const lifeScale = options.lifeScale || 1;
+      const minSpeed = (options.speedMin || (foodParticles ? 95 : 45)) * speedScale;
+      const maxSpeed = (options.speedMax || (foodParticles ? 250 : 135)) * speedScale;
       const speed = minSpeed + Math.random() * Math.max(0, maxSpeed - minSpeed);
       const size = options.size || (foodParticles ? (options.sizeMin || 20) + Math.random() * ((options.sizeMax || 38) - (options.sizeMin || 20)) : 6);
-      const life = options.life || (foodParticles ? 0.62 + Math.random() * 0.24 : 0.45);
+      const life = (options.life || (foodParticles ? 0.62 + Math.random() * 0.24 : 0.45)) * lifeScale;
       state.particles.push({
         x: pos.x + (Math.random() - 0.5) * (options.spread || 10),
         y: pos.y + (Math.random() - 0.5) * (options.spread || 10),
@@ -10994,6 +10998,7 @@
         particleTier,
         particleSprite,
         foodParticles,
+        suppressFallback: Boolean(options.suppressFallback),
         size,
         rotation: Math.random() * Math.PI * 2,
         spin: (Math.random() < 0.5 ? -1 : 1) * (5 + Math.random() * 8),
@@ -11003,6 +11008,9 @@
   }
 
   function foodExplosion(pos, color, particleType, options = {}) {
+    const horror = realityBroken();
+    const speedScale = horror ? HORROR_PARTICLE_SPEED_SCALE : 1;
+    const lifeScale = horror ? HORROR_PARTICLE_LIFE_SCALE : 1;
     burst(pos, color, {
       food: true,
       particleSprite: "attack",
@@ -11011,10 +11019,13 @@
       size: options.size,
       spread: options.spread || 16,
       life: options.life,
+      lifeScale,
       speedMin: options.speedMin,
       speedMax: options.speedMax,
+      speedScale,
       sizeMin: options.sizeMin,
       sizeMax: options.sizeMax,
+      suppressFallback: horror,
     });
   }
 
@@ -11079,7 +11090,7 @@
       speedMin: 150,
       speedMax: 330,
     });
-    burst({ x: unit.x, y: unit.y }, unit.accent, { count: 12, spread: 22, life: 0.55 });
+    if (!realityBroken()) burst({ x: unit.x, y: unit.y }, unit.accent, { count: 12, spread: 22, life: 0.55 });
   }
 
   function combatEndExplosion(won) {
@@ -18211,7 +18222,7 @@
         ctx.imageSmoothingEnabled = false;
         if (image && image.complete && image.naturalWidth) {
           ctx.drawImage(image, -size / 2, -size / 2, size, size);
-        } else {
+        } else if (!p.suppressFallback) {
           roundedRect(-size / 4, -size / 4, size / 2, size / 2, 3);
           ctx.fillStyle = p.color;
           ctx.fill();
