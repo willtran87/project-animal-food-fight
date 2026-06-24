@@ -16,10 +16,15 @@
     bob: 0.95,
   };
   const COMBAT_ATTACK_MOTION_SECONDS = 0.38;
+  const COMBAT_SUPPORT_MOTION_SECONDS = 0.42;
   const COMBAT_HIT_MOTION_SECONDS = 0.3;
   const COMBAT_ATTACK_LUNGE_PIXELS = 15;
+  const COMBAT_SUPPORT_LIFT_PIXELS = 8;
   const COMBAT_HIT_RECOIL_PIXELS = 10;
+  const HORROR_PLATE_BENCH_UNIT_SCALE = 1.3;
   const FINAL_VICTORY_ROUND = 20;
+  const FINAL_BOSS_TYPE_ID = "cyber_brain_final_boss";
+  const FINAL_BOSS_MINION_TYPE_ID = "brainstem_wire_minion";
   const REBOOT_STATIC_FADE_SECONDS = 1.28;
   const REBOOT_STATIC_RESET_AT = 0.58;
   const FINAL_VICTORY_STATIC_FADE_SECONDS = REBOOT_STATIC_FADE_SECONDS;
@@ -4535,6 +4540,8 @@
     caesar_salamander: "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v1.png?v=1",
     cucumber_cobra: "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v1.png?v=1",
     avocado_axolotl: "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v1.png?v=1",
+    [FINAL_BOSS_TYPE_ID]: "assets/particles/runtime/cyber_brain_final_boss-attack-particle-v1.png?v=1",
+    [FINAL_BOSS_MINION_TYPE_ID]: "assets/particles/runtime/brainstem_wire_minion-attack-particle-v1.png?v=1",
   };
   const ATTACK_PARTICLE_TYPES = Object.keys(ATTACK_PARTICLE_SPRITES);
   const DRINK_THROWABLE_SPRITES = {
@@ -5230,6 +5237,19 @@
       3: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk3_idle_SW_00.png?v=1",
       4: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk4_idle_SW_00.png?v=1",
     },
+    [FINAL_BOSS_TYPE_ID]: {
+      1: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
+    },
+    [FINAL_BOSS_MINION_TYPE_ID]: {
+      1: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-4_idle_SW_00.png?v=1",
+      5: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-5_idle_SW_00.png?v=1",
+    },
   };
   const DEFEAT_STILL_SPRITES = {
     toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-defeat-food-v1.png",
@@ -5320,6 +5340,14 @@
     caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v1.png?v=1",
     cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v1.png?v=1",
     avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v1.png?v=1",
+    [FINAL_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/cyber-brain-final-boss-defeat-v1.png?v=1",
+    [FINAL_BOSS_MINION_TYPE_ID]: {
+      1: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier1.png?v=1",
+      2: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier2.png?v=1",
+      3: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier3.png?v=1",
+      4: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier4.png?v=1",
+      5: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier5.png?v=1",
+    },
   };
   let unitSeq = 1;
 
@@ -5834,6 +5862,54 @@
       slot: null,
       item: null,
       dead: false,
+    };
+  }
+
+  function isFinalBossUnitType(typeId) {
+    return typeId === FINAL_BOSS_TYPE_ID || typeId === FINAL_BOSS_MINION_TYPE_ID;
+  }
+
+  function makeFinalBossUnit(typeId, options = {}) {
+    const boss = typeId === FINAL_BOSS_TYPE_ID;
+    const tier = options.tier || (boss ? 4 : 2);
+    const maxHp = boss ? 2100 : Math.round(340 + tier * 70);
+    const atk = boss ? 34 : Math.round(10 + tier * 3);
+    return {
+      kind: "unit",
+      uid: unitSeq++,
+      typeId,
+      lineName: boss ? "Cybernetic Brain" : "Brainstem Wire Robot",
+      name: boss ? "Overmind Control Cortex" : "Brainstem Wire Drone",
+      short: boss ? "Overmind" : "Wire Drone",
+      emoji: boss ? "CB" : "BW",
+      rarity: "epic",
+      family: "machine",
+      traits: [],
+      color: boss ? "#10d6d6" : "#42f4ff",
+      accent: boss ? "#ff334f" : "#37e7ff",
+      role: boss ? "Final Boss" : "Control Minion",
+      ability: boss ? "neural_overmind" : "brainstem_probe",
+      abilityText: boss ? "Neural control" : "Signal dread",
+      tier,
+      hp: maxHp,
+      maxHp,
+      baseAtk: atk,
+      atk,
+      abilityPower: boss ? 38 : Math.round(10 + tier * 2),
+      speed: boss ? 1.36 : Math.max(0.74, 1.16 - tier * 0.04),
+      cooldown: boss ? 0.42 : 0.24 + Math.random() * 0.2,
+      targetUid: null,
+      shield: boss ? 180 : 0,
+      x: 0,
+      y: 0,
+      side: "enemy",
+      slot: null,
+      item: null,
+      dead: false,
+      finalBossUnit: true,
+      enemySlot: options.enemySlot ?? null,
+      battleSpriteScale: boss ? 2.0 : 1.06,
+      battleSpriteOffsetY: boss ? 28 : 4,
     };
   }
 
@@ -7826,7 +7902,36 @@
     return Math.max(0, round - 14);
   }
 
+  function isFinalBossRound(round = state.round) {
+    return round === FINAL_VICTORY_ROUND;
+  }
+
+  function makeFinalBossEnemyPlan(round = FINAL_VICTORY_ROUND) {
+    return {
+      round,
+      finalBoss: true,
+      archetypeId: "neural_overmind",
+      archetypeLabel: "Neural Overmind",
+      primaryArchetypeId: "neural_overmind",
+      primaryArchetypeLabel: "Neural Overmind",
+      secondaryArchetypeId: "brainstem_guard",
+      secondaryArchetypeLabel: "Brainstem Guard",
+      themeTrait: null,
+      count: 6,
+      rarityWeights: { common: 0, uncommon: 0, rare: 0, epic: 100 },
+      targetExtraTier: 0,
+      tier3Chance: 0,
+      tier4Chance: 0,
+      hpMultiplier: 1,
+      atkMultiplier: 1,
+      toppingCount: 0,
+      drinkCount: 0,
+      adaptivePressure: 0,
+    };
+  }
+
   function makeEnemyPlan(round = state.round) {
+    if (isFinalBossRound(round)) return makeFinalBossEnemyPlan(round);
     const primaryArchetype = chooseEnemyArchetype(round);
     const secondaryArchetype = chooseEnemySecondaryArchetype(round, primaryArchetype);
     const archetype = blendEnemyArchetypes(primaryArchetype, secondaryArchetype);
@@ -8031,6 +8136,7 @@
   }
 
   function makeEnemyTeam(plan = makeEnemyPlan()) {
+    if (plan.finalBoss) return makeFinalBossTeam();
     const usedTypeIds = [];
     const units = Array.from({ length: plan.count }, () => {
       const typeId = chooseEnemyUnitId(plan, usedTypeIds);
@@ -8041,6 +8147,17 @@
     });
     equipEnemyToppings(units, plan);
     return units;
+  }
+
+  function makeFinalBossTeam() {
+    return [
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 2, enemySlot: 5 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 1, enemySlot: 2 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 3, enemySlot: 8 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 4, enemySlot: 4 }),
+      makeFinalBossUnit(FINAL_BOSS_TYPE_ID, { tier: 4, enemySlot: 3 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 5, enemySlot: 1 }),
+    ];
   }
 
   function randomEnemyToppingFor(unit, plan = makeEnemyPlan()) {
@@ -8075,8 +8192,8 @@
     const fallbackDrinks = ITEMS.filter((item) => isDrink(item) && (item.rarity || "common") === "common");
     if (!fallbackDrinks.length) return drinks;
     const targetCount = Math.min(drinks.length, plan.drinkCount);
-    const occupiedDrinkSlots = [...new Set(units.flatMap((_, index) => {
-      const { row, col } = slotGrid(enemySlotOrder()[index] ?? index);
+    const occupiedDrinkSlots = [...new Set(units.flatMap((unit, index) => {
+      const { row, col } = slotGrid(enemyPreviewSlotFor(unit, index));
       return [row, BOARD_ROWS + col];
     }))];
     const slotOrder = (occupiedDrinkSlots.length ? occupiedDrinkSlots : [...drinks.keys()]).sort(() => Math.random() - 0.5);
@@ -8134,7 +8251,9 @@
   }
 
   function cloneEnemyPreviewUnit(unit) {
-    const clone = makeUnit(unit.typeId, unit.tier);
+    const clone = unit.finalBossUnit || isFinalBossUnitType(unit.typeId)
+      ? makeFinalBossUnit(unit.typeId, { tier: unit.tier, enemySlot: unit.enemySlot })
+      : makeUnit(unit.typeId, unit.tier);
     clone.side = "enemy";
     clone.maxHp = unit.maxHp;
     clone.hp = unit.maxHp;
@@ -8145,6 +8264,11 @@
     clone.speed = unit.speed;
     clone.cooldown = battleInitialCooldown();
     clone.item = cloneItem(unit.item);
+    clone.shield = unit.shield || 0;
+    clone.finalBossUnit = Boolean(unit.finalBossUnit);
+    clone.enemySlot = unit.enemySlot ?? null;
+    clone.battleSpriteScale = unit.battleSpriteScale || clone.battleSpriteScale;
+    clone.battleSpriteOffsetY = unit.battleSpriteOffsetY || clone.battleSpriteOffsetY;
     return clone;
   }
 
@@ -8162,7 +8286,7 @@
     clearParticles();
     const previewEnemies = ensureEnemyPreview();
     const previewEnemyDrinks = enemyPreviewDrinks().map((item) => cloneItem(item));
-    const enemies = previewEnemies.map((unit, index) => positionBattleUnit(cloneEnemyPreviewUnit(unit), "enemy", enemySlotOrder()[index]));
+    const enemies = previewEnemies.map((unit, index) => positionBattleUnit(cloneEnemyPreviewUnit(unit), "enemy", enemyPreviewSlotFor(unit, index)));
     allies.forEach((unit) => positionBattleUnit(unit, "ally", unit.slot));
     state.battle = {
       allies,
@@ -8476,6 +8600,10 @@
     return [5, 2, 8, 4, 1, 7, 3, 0, 6];
   }
 
+  function enemyPreviewSlotFor(unit, index) {
+    return Number.isInteger(unit?.enemySlot) ? unit.enemySlot : enemySlotOrder()[index] ?? index;
+  }
+
   function roundLossDamage(round) {
     if (round < 10) return Math.max(1, Math.ceil(round / 3));
     return Math.min(4, 3 + Math.floor((round - 10) / 8));
@@ -8498,7 +8626,8 @@
     state.lastCombatLedger = summarizeCombatLedger(state.battle, won, damage);
     state.gold = Math.min(ECONOMY.maxGold, state.gold + income.total);
     state.lastIncome = income;
-    state.round += 1;
+    const retryFinalBoss = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
+    if (!retryFinalBoss) state.round += 1;
     const justBrokeReality = !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
     if (justBrokeReality) triggerRealityBreak();
     state.phase = "result";
@@ -8508,7 +8637,7 @@
       ? "Final objective secured"
       : state.hearts > 0
       ? realityBroken()
-        ? `${won ? "Target cleared" : "Unit loss"} +${income.total} scrap - choose salvage`
+        ? `${won ? "Target cleared" : retryFinalBoss ? "Overmind still active" : "Unit loss"} +${income.total} scrap - choose salvage`
         : `${won ? "Victory" : "Defeat"} +${income.total} coins - choose a reward`
       : realityBroken() ? "Core offline" : "Run over";
     if (justBrokeReality && state.hearts > 0) state.message = "ILLUSION FAILURE - combat layer exposed";
@@ -9472,6 +9601,54 @@
     const target = chooseTarget(unit, foes);
     if (!target) return;
 
+    if (unit.ability === "neural_overmind") {
+      unit.overmindAttackCount = (unit.overmindAttackCount || 0) + 1;
+      applyDamage(target, unit.atk, unit, battle, {
+        color: "#18f0ff",
+        particleType: FINAL_BOSS_TYPE_ID,
+      });
+      if (!target.dead) {
+        applyCooldownDelay(target, 0.2, unit);
+        target.attackSlow = {
+          remaining: statusDuration(unit, 2.4),
+          pct: 0.14,
+        };
+      }
+      if (unit.overmindAttackCount % 3 === 0) {
+        foes
+          .filter((foe) => !foe.dead && foe.uid !== target.uid && foe.row === target.row)
+          .slice(0, 2)
+          .forEach((foe) => {
+            applyDamage(foe, Math.max(1, Math.round(unit.atk * 0.42)), unit, battle, {
+              color: "#ff334f",
+              particleType: FINAL_BOSS_TYPE_ID,
+              status: true,
+            });
+            if (!foe.dead) applyCooldownDelay(foe, 0.12, unit);
+          });
+      }
+      applyOnAttackItem(unit, target, battle, foes);
+      return;
+    }
+
+    if (unit.ability === "brainstem_probe") {
+      applyDamage(target, unit.atk, unit, battle, {
+        color: "#42f4ff",
+        particleType: FINAL_BOSS_MINION_TYPE_ID,
+      });
+      if (!target.dead) {
+        applyCooldownDelay(target, 0.08 + unit.tier * 0.015, unit);
+        if (unit.tier >= 3) {
+          target.attackSlow = {
+            remaining: statusDuration(unit, 1.4),
+            pct: 0.08,
+          };
+        }
+      }
+      applyOnAttackItem(unit, target, battle, foes);
+      return;
+    }
+
     if (unit.ability === "execute") {
       const wounded = target.hp / target.maxHp <= 0.5;
       const bonus = wounded ? executeBonus(unit) : 0;
@@ -9918,66 +10095,84 @@
       .forEach((unit) => {
         unit.taunt = { remaining: tauntDuration(unit) + 0.8 };
         const shielded = grantShield(unit, supportAmount(unit, Math.round(tauntGuardShield(unit) * 1.15)), { noShare: true });
-        if (shielded > 0) burst({ x: unit.x, y: unit.y }, "#d99043");
+        if (shielded > 0) {
+          triggerCombatSupportMotion(unit, unit, state.battle);
+          burst({ x: unit.x, y: unit.y }, "#d99043");
+        }
       });
     units
       .filter((unit) => unit.ability === "syrup_start")
       .forEach((unit) => {
+        let supportTarget = null;
         units
           .filter((ally) => !ally.dead && isAdjacentSlot(unit, ally))
           .forEach((ally) => {
             const shielded = grantShield(ally, supportAmount(unit, syrupShield(unit)));
             ally.haste = { remaining: 2, pct: syrupHaste(unit) };
             applySupportItem(unit, ally);
+            if (shielded > 0 || ally.uid === unit.uid) supportTarget = ally;
             if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, state.battle, "#e8b765");
           });
+        if (supportTarget) triggerCombatSupportMotion(unit, supportTarget, state.battle);
         burst({ x: unit.x, y: unit.y }, "#e8b765");
       });
     units
       .filter((unit) => unit.ability === "bagel_build")
       .forEach((unit) => {
+        let supportTarget = null;
         units
           .filter((ally) => !ally.dead && isAdjacentSlot(unit, ally))
           .forEach((ally) => {
-            grantShield(ally, supportAmount(unit, Math.round(bagelBuildShield(unit) * 0.85)));
+            const shielded = grantShield(ally, supportAmount(unit, Math.round(bagelBuildShield(unit) * 0.85)));
             ally.haste = { remaining: 2, pct: bagelBuildHaste(unit) };
             applySupportItem(unit, ally);
+            if (shielded > 0 || ally.uid === unit.uid) supportTarget = ally;
           });
+        if (supportTarget) triggerCombatSupportMotion(unit, supportTarget, state.battle);
         burst({ x: unit.x, y: unit.y }, "#f0d56b");
       });
     units
       .filter((unit) => unit.ability === "row_shield")
       .forEach((unit) => {
+        let supportTarget = null;
         units
           .filter((ally) => !ally.dead && ally.row === unit.row)
           .forEach((ally) => {
             const shielded = grantShield(ally, supportAmount(unit, Math.round(dumplingRowShield(unit) * 0.8)));
             applySupportItem(unit, ally);
+            if (shielded > 0 || ally.uid === unit.uid) supportTarget = ally;
             if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, state.battle, "#f0dcb8");
           });
+        if (supportTarget) triggerCombatSupportMotion(unit, supportTarget, state.battle);
         burst({ x: unit.x, y: unit.y }, "#f0dcb8");
       });
     units
       .filter((unit) => unit.ability === "formation_captain")
       .forEach((unit) => {
+        let supportTarget = null;
         formationAllies(unit, units).forEach((ally) => {
           const shielded = grantShield(ally, supportAmount(unit, Math.round(formationShield(unit) * 1.2)));
           ally.attackBoost = { remaining: formationBuffDuration(unit), pct: formationAttackBoost(unit) };
           applySupportItem(unit, ally);
+          if (shielded > 0 || ally.uid === unit.uid) supportTarget = ally;
           if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, state.battle, "#d84a3a");
         });
+        if (supportTarget) triggerCombatSupportMotion(unit, supportTarget, state.battle);
         burst({ x: unit.x, y: unit.y }, "#6fae48");
       });
     units
       .filter((unit) => unit.ability === "survive_scale" && unit.tier >= 2 && (unit.permanentHpBonus || 0) > 0)
       .forEach((unit) => {
+        let supportTarget = null;
         units
           .filter((ally) => !ally.dead && isAdjacentSlot(unit, ally))
           .forEach((ally) => {
             const shielded = grantShield(ally, supportAmount(unit, mochiAdjacentShield(unit)));
             applySupportItem(unit, ally);
+            if (shielded > 0 || ally.uid === unit.uid) supportTarget = ally;
             if (shielded > 0 && ally.uid !== unit.uid) emitSupportProjectile(unit, ally, state.battle, unit.accent);
           });
+        if (supportTarget) triggerCombatSupportMotion(unit, supportTarget, state.battle);
         burst({ x: unit.x, y: unit.y }, unit.accent);
       });
     units
@@ -9996,7 +10191,8 @@
           }
           burst({ x: foe.x, y: foe.y }, "#7ec7e8");
         });
-        grantShield(unit, supportAmount(unit, oysterLockShield(unit)), { noShare: true });
+        const shielded = grantShield(unit, supportAmount(unit, oysterLockShield(unit)), { noShare: true });
+        if (shielded > 0 || targets.length) triggerCombatSupportMotion(unit, targets[0] || unit, state.battle);
         burst({ x: unit.x, y: unit.y }, "#d8f2ff");
       });
     units
@@ -10011,7 +10207,7 @@
 
   function applyKrakenPull(unit, foes) {
     const target = foes
-      .filter((foe) => !foe.dead && foe.col === BACK_COL)
+      .filter((foe) => !foe.dead && foe.col === BACK_COL && foe.typeId !== FINAL_BOSS_TYPE_ID)
       .sort((a, b) => (a.col - b.col) || distSq(unit, b) - distSq(unit, a))[0];
     if (!target) return;
     const nextCol = Math.min(FRONT_COL, (target.col ?? BACK_COL) + 1);
@@ -10147,6 +10343,18 @@
       duration: COMBAT_ATTACK_MOTION_SECONDS,
       targetX: target.x,
       targetY: target.y,
+    };
+  }
+
+  function triggerCombatSupportMotion(source, target, battle, options = {}) {
+    if (!source || !battle || source.dead) return;
+    const targetX = Number.isFinite(options.targetX) ? options.targetX : target?.x ?? source.x;
+    const targetY = Number.isFinite(options.targetY) ? options.targetY : target?.y ?? source.y;
+    source.supportMotion = {
+      start: battle.elapsed || 0,
+      duration: options.duration || COMBAT_SUPPORT_MOTION_SECONDS,
+      targetX,
+      targetY,
     };
   }
 
@@ -10348,6 +10556,7 @@
 
   function emitSupportProjectile(source, target, battle, color = "#55a375") {
     if (!source || !target || !battle || source.dead || target.dead) return;
+    triggerCombatSupportMotion(source, target, battle);
     battle.attacks.push({
       from: source.uid,
       to: target.uid,
@@ -11004,6 +11213,7 @@
         drawCodexOverlay();
       }
       drawRealityOverlay();
+      drawMergeOpportunityOverlay();
     }
     drawRebootTransitionOverlay();
     drawFinalVictoryTransitionOverlay();
@@ -12561,17 +12771,34 @@
       if (isDragSource) ctx.globalAlpha = 0.34;
       drawUnitCard(unit, x, y, w, h, area === "shop", area !== "shop", {
         hideTileName: area === "board" || area === "bench" || area === "itemBench" || area === "drinks",
+        placementArea: area,
         shopIndex: area === "shop" ? index : null,
       });
       ctx.restore();
       if (area === "shop") {
-        drawShopMergeOpportunityBadge(x, y, w, h, index);
         drawShopSaleBadge(x, y, w, h, index);
         drawShopFreezeBadge(x, y, w, h, index);
-      } else {
-        drawOwnedMergeOpportunityMarker(x, y, w, h, area, index);
       }
     }
+  }
+
+  function drawMergeOpportunityOverlay() {
+    if (state.phase !== "prep" || state.codexOpen) return;
+    shopSlots.forEach((slot, index) => {
+      drawShopMergeOpportunityBadge(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, index);
+    });
+    boardSlots.forEach((slot, index) => {
+      drawOwnedMergeOpportunityMarker(slot.x, slot.y, 72, 72, "board", index);
+    });
+    drinkSlots.forEach((slot, index) => {
+      drawOwnedMergeOpportunityMarker(slot.x, slot.y, DRINK_SLOT_SIZE, DRINK_SLOT_SIZE, "drinks", index);
+    });
+    benchSlots.forEach((slot, index) => {
+      drawOwnedMergeOpportunityMarker(slot.x, slot.y, 72, 72, "bench", index);
+    });
+    itemBenchSlots.forEach((slot, index) => {
+      drawOwnedMergeOpportunityMarker(slot.x, slot.y, ITEM_BENCH_SLOT_SIZE, ITEM_BENCH_SLOT_SIZE, "itemBench", index);
+    });
   }
 
   function drawShopMergeOpportunityBadge(x, y, w, h, index) {
@@ -13108,7 +13335,11 @@
       return;
     }
     const radius = Math.min(w, h) * (shopCard ? 0.25 : 0.28);
-    drawFoodAnimal(unit, x, y - (shopCard ? 20 : 4), radius, facingRight);
+    const presentationScale = horrorFoodAnimalPlacementScale(unit, options.placementArea);
+    drawFoodAnimal(unit, x, y - (shopCard ? 20 : 4), radius, facingRight, {
+      presentationScale,
+      preserveBase: presentationScale !== 1,
+    });
     if (shopCard) drawRarityBadge(x - w / 2 + 7, y - h / 2 + 7, unit.rarity, "small");
     ctx.textAlign = "center";
 
@@ -13146,6 +13377,13 @@
     ctx.font = "700 10px Inter, sans-serif";
     drawUpgradeStars(unit.tier, x, y + h / 2 - 4, 7, "center");
     ctx.textAlign = "left";
+  }
+
+  function horrorFoodAnimalPlacementScale(unit, area) {
+    if (!realityBroken() || !isUnit(unit)) return 1;
+    return area === "board" || area === "bench" || area === "battle"
+      ? HORROR_PLATE_BENCH_UNIT_SCALE
+      : 1;
   }
 
   function drawItemCard(item, x, y, w, h, shopCard, options = {}) {
@@ -13697,7 +13935,7 @@
       ctx.font = "900 11px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("TOP", rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
+      ctx.fillText(realityBroken() ? "WPN" : "TOP", rect.x + rect.w / 2, rect.y + rect.h / 2 + 1);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
     }
@@ -14796,11 +15034,13 @@
     });
   }
 
-  function drawFoodAnimal(unit, x, y, r, facingRight = false) {
+  function drawFoodAnimal(unit, x, y, r, facingRight = false, options = {}) {
     const breath = idleBreathForUnit(unit);
     const combatMotion = combatMotionForUnit(unit);
     const drawX = x + combatMotion.x;
     const drawY = y + breath.bob + combatMotion.y;
+    const presentationScale = Math.max(0.01, options.presentationScale || 1);
+    const preserveBase = Boolean(options.preserveBase && presentationScale !== 1);
     const drawScale = {
       scaleX: breath.scaleX * combatMotion.scaleX,
       scaleY: breath.scaleY * combatMotion.scaleY,
@@ -14809,22 +15049,28 @@
     const runtimeSprite = getRuntimeSprite(unit, { cozy: bleed.phase === "flash" });
     const runtimeFacingRight = runtimeSpriteFacingRight(unit, facingRight, { cozy: bleed.phase === "flash" });
     if (spriteImageReady(runtimeSprite)) {
-      drawRuntimeFoodAnimal(runtimeSprite, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash);
-      drawContentSequenceEffect({ x: drawX - r * 1.45, y: drawY - r * 1.45, w: r * 2.9, h: r * 2.9 }, "unit", unit);
+      drawRuntimeFoodAnimal(runtimeSprite, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash, {
+        presentationScale,
+        preserveBase,
+      });
+      const effectRadius = r * presentationScale;
+      drawContentSequenceEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit);
       drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
       return;
     }
     if (runtimeSprite && !spriteImageFailed(runtimeSprite)) {
-      drawContentSequenceEffect({ x: drawX - r * 1.45, y: drawY - r * 1.45, w: r * 2.9, h: r * 2.9 }, "unit", unit);
+      const effectRadius = r * presentationScale;
+      drawContentSequenceEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit);
       drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
       return;
     }
 
     const sprite = getPixelSprite(unit);
     const stickerMask = getTintedPixelSprite(unit, "#fff9df", "sticker");
-    const size = Math.round(r * 2.65);
+    const baseSize = Math.round(r * 2.65);
+    const size = Math.round(baseSize * presentationScale);
     const left = Math.round(drawX - size / 2);
-    const top = Math.round(drawY - size / 2);
+    const top = preserveBase ? Math.round(drawY + baseSize / 2 - size) : Math.round(drawY - size / 2);
     const outline = Math.max(2, Math.round(size * 0.085));
 
     ctx.save();
@@ -14870,6 +15116,23 @@
         motion.scaleX += strike * 0.1;
         motion.scaleY -= strike * 0.075;
         motion.rotation += vector.x * strike * 0.08;
+      }
+    }
+
+    const support = unit?.supportMotion;
+    if (support && typeof support.start === "number") {
+      const progress = (now - support.start) / Math.max(0.001, support.duration || COMBAT_SUPPORT_MOTION_SECONDS);
+      if (progress >= 0 && progress < 1) {
+        const vector = combatVector(unit.x, unit.y, support.targetX, support.targetY, unit.side === "ally" ? 1 : -1);
+        const lift = Math.sin(progress * Math.PI);
+        const pulse = Math.sin(progress * Math.PI * 1.15);
+        const lean = Math.sin(progress * Math.PI * 2);
+        motion.x += vector.x * 2.6 * lift;
+        motion.y -= COMBAT_SUPPORT_LIFT_PIXELS * lift;
+        motion.scaleX += 0.055 * pulse;
+        motion.scaleY += 0.075 * pulse;
+        motion.rotation += vector.x * 0.045 * lean;
+        motion.flash = Math.max(motion.flash, 0.24 * (1 - Math.abs(progress - 0.5) * 1.35));
       }
     }
 
@@ -15054,9 +15317,16 @@
     return (realityBroken() ? REALITY_DRINK_THROWABLE_SPRITES[drinkId] : null) || DRINK_THROWABLE_SPRITES[drinkId] || null;
   }
 
+  function defeatStillSpriteFromEntry(entry, tier) {
+    if (!entry) return null;
+    if (typeof entry === "string") return entry;
+    return entry[tier] || entry[Math.min(4, tier)] || entry[1] || null;
+  }
+
   function defeatStillSpriteSrcFor(unit) {
     const typeId = unit?.typeId || unit?.id;
-    return (realityBroken() ? REALITY_DEFEAT_STILL_SPRITES[typeId] : null) || DEFEAT_STILL_SPRITES[typeId] || null;
+    const tier = Math.max(1, unit?.tier || 1);
+    return (realityBroken() ? defeatStillSpriteFromEntry(REALITY_DEFEAT_STILL_SPRITES[typeId], tier) : null) || defeatStillSpriteFromEntry(DEFEAT_STILL_SPRITES[typeId], tier);
   }
 
   function getRuntimeSprite(unit, options = {}) {
@@ -15069,7 +15339,6 @@
   }
 
   function getDefeatStillSprite(unit) {
-    const typeId = unit?.typeId || unit?.id;
     const src = defeatStillSpriteSrcFor(unit);
     if (!src) return null;
     if (runtimeSpriteCache.has(src)) return runtimeSpriteCache.get(src);
@@ -15190,7 +15459,16 @@
   }
 
   function preloadDefeatStillSprites() {
-    [...new Set([...Object.keys(DEFEAT_STILL_SPRITES), ...Object.keys(REALITY_DEFEAT_STILL_SPRITES)])].forEach((typeId) => getDefeatStillSprite({ typeId }));
+    const preloadEntry = (entry) => {
+      if (!entry) return;
+      if (typeof entry === "string") {
+        if (!runtimeSpriteCache.has(entry)) runtimeSpriteCache.set(entry, loadSpriteImage(entry));
+        return;
+      }
+      Object.values(entry).forEach(preloadEntry);
+    };
+    Object.values(DEFEAT_STILL_SPRITES).forEach(preloadEntry);
+    Object.values(REALITY_DEFEAT_STILL_SPRITES).forEach(preloadEntry);
   }
 
   function preloadRuntimeSprites() {
@@ -15325,12 +15603,16 @@
     ctx.restore();
   }
 
-  function drawRuntimeFoodAnimal(image, x, y, r, facingRight = false, breath = { scaleX: 1, scaleY: 1 }, rotation = 0, flash = 0) {
+  function drawRuntimeFoodAnimal(image, x, y, r, facingRight = false, breath = { scaleX: 1, scaleY: 1 }, rotation = 0, flash = 0, options = {}) {
     const metrics = runtimeSpriteMetrics(image);
     const targetMax = r * 2.9;
     const scale = targetMax / Math.max(metrics.w, metrics.h);
-    const drawW = metrics.w * scale;
-    const drawH = metrics.h * scale;
+    const presentationScale = Math.max(0.01, options.presentationScale || 1);
+    const baseDrawW = metrics.w * scale;
+    const baseDrawH = metrics.h * scale;
+    const drawW = baseDrawW * presentationScale;
+    const drawH = baseDrawH * presentationScale;
+    const drawTop = options.preserveBase ? baseDrawH / 2 - drawH : -drawH / 2;
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
@@ -15344,7 +15626,7 @@
       metrics.w,
       metrics.h,
       -drawW / 2,
-      -drawH / 2,
+      drawTop,
       drawW,
       drawH
     );
@@ -15358,7 +15640,7 @@
         metrics.w,
         metrics.h,
         -drawW / 2,
-        -drawH / 2,
+        drawTop,
         drawW,
         drawH
       );
@@ -16986,6 +17268,8 @@
 
   function abilitySpecLine(unit) {
     if (!unit) return "No ability";
+    if (unit.ability === "neural_overmind") return "Hit: neural slow, cooldown delay; every 3rd hit echoes down row";
+    if (unit.ability === "brainstem_probe") return "Hit: small cooldown delay; stronger drones slow attacks";
     if (unit.ability === "taunt_guard") return `Taunt ${tauntDuration(unit)}s; self shield ${supportAmount(unit, tauntGuardShield(unit))}`;
     if (unit.ability === "thorns") return `When hit: counter ${thornDamage(unit)} dmg`;
     if (unit.ability === "guard") return `Hit: shield lowest ally ${supportAmount(unit, guardShield(unit))}`;
@@ -17018,6 +17302,18 @@
   }
 
   function specialEffectFor(unit) {
+    if (unit.ability === "neural_overmind") {
+      return {
+        title: "Spec: Neural Control",
+        body: "Attacks fire brain-shaped energy, delay the target cooldown, and slow attacks. Every third attack echoes down the target row.",
+      };
+    }
+    if (unit.ability === "brainstem_probe") {
+      return {
+        title: "Spec: Signal Dread",
+        body: "Attacks fire solid control orbs and add a small cooldown delay. Higher-tier drones also slow attack speed.",
+      };
+    }
     if (unit.ability === "taunt_guard") {
       return {
         title: "Spec: Table Guardian",
@@ -17597,25 +17893,32 @@
   }
 
   function drawBattleUnit(unit) {
-    const radius = 28 + unit.tier * 4;
-    drawFoodAnimal(unit, unit.x, unit.y, radius, unit.side === "ally");
+    const radius = 28 + Math.min(4, unit.tier) * 4;
+    const visualRadius = radius * (unit.battleSpriteScale || 1);
+    const drawY = unit.y + (unit.battleSpriteOffsetY || 0);
+    const barRadius = Math.min(68, visualRadius);
+    const presentationScale = horrorFoodAnimalPlacementScale(unit, "battle");
+    drawFoodAnimal(unit, unit.x, drawY, visualRadius, unit.side === "ally", {
+      presentationScale,
+      preserveBase: presentationScale !== 1,
+    });
     drawUnitStatusGlyphs(unit, unit.x, unit.y, radius);
-    const baseBarRows = drawBattleBaseBars(unit, radius);
-    drawUpgradeStars(unit.tier, unit.x, unit.y + radius + 14 + baseBarRows * 8, 10, "center");
+    const baseBarRows = drawBattleBaseBars(unit, barRadius, drawY);
+    drawUpgradeStars(Math.min(4, unit.tier), unit.x, drawY + barRadius + 14 + baseBarRows * 8, 10, "center");
     ctx.textAlign = "left";
   }
 
-  function drawBattleBaseBars(unit, r) {
+  function drawBattleBaseBars(unit, r, anchorY = unit.y) {
     const shieldPct = unit.shield > 0 ? clamp(unit.shield / Math.max(1, unit.maxHp * 0.5), 0.08, 1) : 0;
     const hpPct = clamp01(unit.hp / Math.max(1, unit.maxHp));
     const healthVisible = hpPct < 0.995;
     let rows = 0;
     if (shieldPct > 0) {
-      drawBattleBaseBar(unit.x, unit.y + r + 5, shieldPct, "#5aa6d6", "rgba(220, 244, 252, 0.8)");
+      drawBattleBaseBar(unit.x, anchorY + r + 5, shieldPct, "#5aa6d6", "rgba(220, 244, 252, 0.8)");
       rows += 1;
     }
     if (healthVisible) {
-      const y = unit.y + r + 5 + rows * 8;
+      const y = anchorY + r + 5 + rows * 8;
       drawBattleBaseBar(unit.x, y, hpPct, hpPct > 0.45 ? "#4a9e68" : "#d9573c", "rgba(255, 249, 224, 0.78)");
       if (hpPct <= 0.28) {
         const time = visibleBattle()?.elapsed || 0;
@@ -18593,8 +18896,8 @@
       enemyPlan: state.enemyPreview?.plan || shownBattle?.enemyPlan || null,
       enemyPreview: enemyPreview.map((unit, index) => ({
         ...unitText(unit),
-        previewSlot: enemySlotOrder()[index],
-        ...slotText(enemySlotOrder()[index]),
+        previewSlot: enemyPreviewSlotFor(unit, index),
+        ...slotText(enemyPreviewSlotFor(unit, index)),
       })),
       rewardChoices: state.rewardChoices.map((reward, index) => ({ index, ...reward })),
       codex: {
