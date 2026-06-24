@@ -26,7 +26,9 @@
   const FINAL_VICTORY_STATIC_RESET_AT = REBOOT_STATIC_RESET_AT;
   const VICTORY_CRAWL_START_SECONDS = 3.6;
   const VICTORY_CRAWL_PIXELS_PER_SECOND = 18;
-  const VICTORY_IDEAL_FADE_START_SECONDS = 24;
+  const VICTORY_CRAWL_LINE_GAP = 42;
+  const VICTORY_CRAWL_HOLD_SECONDS = 6;
+  const VICTORY_IDEAL_FADE_START_SECONDS = 40;
   const VICTORY_IDEAL_FADE_SECONDS = 2.4;
   const VICTORY_REBOOT_BUTTON = { x: 422, y: 544, w: 180, h: 44, label: "Reboot" };
   const VICTORY_CRAWL_LINES = [
@@ -8960,16 +8962,20 @@
     startNextRoundShop();
   }
 
-  function startRebootTransition() {
-    if (!realityBroken() || state.rebootTransition) return false;
+  function startRebootTransition(options = {}) {
+    const fromVictoryCutscene = Boolean(options.fromVictoryCutscene);
+    if ((!fromVictoryCutscene && !realityBroken()) || state.rebootTransition) return false;
     state.rebootTransition = {
       elapsed: 0,
       duration: REBOOT_STATIC_FADE_SECONDS,
       resetAt: REBOOT_STATIC_FADE_SECONDS * REBOOT_STATIC_RESET_AT,
       resetDone: false,
+      source: fromVictoryCutscene ? "victoryCutscene" : "defeat",
     };
     state.pointer = null;
     state.hover = null;
+    state.selected = null;
+    state.drag = null;
     state.message = "Rebooting cozy shell";
     return true;
   }
@@ -9014,9 +9020,7 @@
   }
 
   function rebootFromVictoryCutscene() {
-    state.realityOverride = false;
-    resetGame();
-    state.message = "Cozy mode restored";
+    startRebootTransition({ fromVictoryCutscene: true });
   }
 
   function completeRebootTransitionReset(transition) {
@@ -11028,7 +11032,10 @@
     const fadeIn = clamp01(crawlElapsed / 2.2);
     const fadeOut = 1 - clamp01((elapsed - (VICTORY_IDEAL_FADE_START_SECONDS - 2.2)) / 2.2);
     const alpha = Math.min(fadeIn, fadeOut);
-    const startY = H + 44 - crawlElapsed * VICTORY_CRAWL_PIXELS_PER_SECOND;
+    const blockHeight = (VICTORY_CRAWL_LINES.length - 1) * VICTORY_CRAWL_LINE_GAP;
+    const centeredStartY = H / 2 - blockHeight / 2;
+    const scrollingStartY = H + 44 - crawlElapsed * VICTORY_CRAWL_PIXELS_PER_SECOND;
+    const startY = Math.max(centeredStartY, scrollingStartY);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.textAlign = "center";
@@ -11038,7 +11045,7 @@
     ctx.strokeStyle = "rgba(31, 20, 24, 0.72)";
     ctx.fillStyle = "#fff1c7";
     VICTORY_CRAWL_LINES.forEach((line, index) => {
-      const y = startY + index * 42;
+      const y = startY + index * VICTORY_CRAWL_LINE_GAP;
       if (y < -32 || y > H + 36) return;
       ctx.strokeText(line, W / 2, y);
       ctx.fillText(line, W / 2, y);
@@ -18350,6 +18357,7 @@
           elapsed: Number((state.rebootTransition.elapsed || 0).toFixed(2)),
           duration: state.rebootTransition.duration,
           resetDone: Boolean(state.rebootTransition.resetDone),
+          source: state.rebootTransition.source || "defeat",
         } : { active: false },
         finalVictoryTransition: state.finalVictoryTransition ? {
           active: true,
@@ -18799,7 +18807,12 @@
 
   function victoryEpilogueRouteElapsed() {
     const stage = routeParam("stage") || routeParam("at");
-    if (stage === "crawl" || stage === "message") return VICTORY_CRAWL_START_SECONDS + 5.5;
+    if (stage === "crawl" || stage === "message") {
+      const blockHeight = (VICTORY_CRAWL_LINES.length - 1) * VICTORY_CRAWL_LINE_GAP;
+      const centeredStartY = H / 2 - blockHeight / 2;
+      const secondsToCenter = Math.max(0, (H + 44 - centeredStartY) / VICTORY_CRAWL_PIXELS_PER_SECOND);
+      return VICTORY_CRAWL_START_SECONDS + secondsToCenter + VICTORY_CRAWL_HOLD_SECONDS / 2;
+    }
     if (stage === "static" || stage === "fade") return VICTORY_IDEAL_FADE_START_SECONDS + 0.8;
     if (stage === "ideal" || stage === "reboot") return VICTORY_IDEAL_FADE_START_SECONDS + VICTORY_IDEAL_FADE_SECONDS + 2.5;
 
