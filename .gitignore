@@ -1,6 +1,7 @@
 output/
 .agents/
 progress.md
+tmp/
 
 assets/**/source/
 assets/**/transparent/
