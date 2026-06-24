@@ -8634,7 +8634,8 @@
   function endBattle(won) {
     const completedRound = state.round;
     const finalVictory = won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
-    const damage = won ? 0 : roundLossDamage(state.round);
+    const finalDefeat = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
+    const damage = won ? 0 : finalDefeat ? state.hearts : roundLossDamage(state.round);
     if (!won) state.hearts = Math.max(0, state.hearts - damage);
     if (won) {
       state.winStreak += 1;
@@ -8649,7 +8650,7 @@
     state.gold = Math.min(ECONOMY.maxGold, state.gold + income.total);
     state.lastIncome = income;
     const retryFinalBoss = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
-    if (!retryFinalBoss) state.round += 1;
+    if (!retryFinalBoss && !finalDefeat) state.round += 1;
     const justBrokeReality = !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
     if (justBrokeReality) triggerRealityBreak();
     state.phase = "result";
