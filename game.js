@@ -1949,6 +1949,7 @@
   const MOLD_STACK_DAMAGE_PCT = 0.008;
   const MOLD_MAX_DAMAGE_PCT = 0.32;
   const BATTLE_SPEEDS = [0.5, 1, 2, 4];
+  const BOSS_BATTLE_SPEEDS = [0.5, 1];
   const STATUS_EFFECT_STYLES = {
     burn: { color: "#e24822", accent: "#ffc14a", kind: "flame" },
     mark: { color: "#59651d", accent: "#d8e46b", kind: "target" },
@@ -8064,6 +8065,10 @@
     return round === GIRAFFE_BOSS_ROUND;
   }
 
+  function isBossRound(round = state.round) {
+    return isGiraffeBossRound(round) || isFinalBossRound(round);
+  }
+
   function makeGiraffeBossEnemyPlan(round = GIRAFFE_BOSS_ROUND) {
     const plan = makeStandardEnemyPlan(round);
     return {
@@ -8495,6 +8500,7 @@
     applyBattleStartTraitEffects(enemies, allies);
     applyBattleStartAbilities(allies, enemies);
     applyBattleStartAbilities(enemies, allies);
+    normalizeBossBattleSpeed();
     state.phase = "battle";
     state.selected = null;
     state.drag = null;
@@ -11345,14 +11351,36 @@
   }
 
   function currentBattleSpeed() {
-    return BATTLE_SPEEDS[state.battleSpeedIndex] || BATTLE_SPEEDS[0];
+    const speed = BATTLE_SPEEDS[state.battleSpeedIndex] || BATTLE_SPEEDS[0];
+    return bossBattleSpeedRestricted() && !BOSS_BATTLE_SPEEDS.includes(speed) ? 1 : speed;
   }
 
   function battleSpeedLabel() {
     return `${currentBattleSpeed()}x`;
   }
 
+  function battleSpeedOptions() {
+    return bossBattleSpeedRestricted() ? [...BOSS_BATTLE_SPEEDS] : [...BATTLE_SPEEDS];
+  }
+
+  function bossBattleSpeedRestricted() {
+    return state.phase === "battle" && isBossRound(state.round);
+  }
+
+  function setBattleSpeed(value) {
+    const index = BATTLE_SPEEDS.indexOf(value);
+    if (index >= 0) state.battleSpeedIndex = index;
+  }
+
+  function normalizeBossBattleSpeed() {
+    if (isBossRound(state.round)) setBattleSpeed(1);
+  }
+
   function cycleBattleSpeed() {
+    if (bossBattleSpeedRestricted()) {
+      setBattleSpeed(currentBattleSpeed() === 1 ? 0.5 : 1);
+      return;
+    }
     state.battleSpeedIndex = (state.battleSpeedIndex + 1) % BATTLE_SPEEDS.length;
     if (state.phase !== "battle") state.message = `Speed ${battleSpeedLabel()}`;
   }
@@ -19151,7 +19179,8 @@
         value: currentBattleSpeed(),
         label: battleSpeedLabel(),
         index: state.battleSpeedIndex,
-        options: [...BATTLE_SPEEDS],
+        options: battleSpeedOptions(),
+        bossRestricted: bossBattleSpeedRestricted(),
       },
       particles: {
         count: state.particles.length,
