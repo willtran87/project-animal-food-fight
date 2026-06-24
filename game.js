@@ -1824,6 +1824,10 @@
     return Boolean(state?.shopUnlocked?.[index]);
   }
 
+  function shopEntryAt(index) {
+    return isShopSlotUnlocked(index) ? state.shop?.[index] || null : null;
+  }
+
   function shopSlotUnlockCost(index) {
     return SHOP_SLOT_UNLOCK_COSTS[index] ?? SHOP_SLOT_UNLOCK_COSTS[SHOP_SLOT_UNLOCK_COSTS.length - 1] ?? 0;
   }
@@ -5437,7 +5441,7 @@
   }
 
   function shopSlotOnSale(index) {
-    return Boolean(isShopSlotUnlocked(index) && state.shop[index] && state.shopSales[index]);
+    return Boolean(shopEntryAt(index) && state.shopSales[index]);
   }
 
   function currentShopSaleChance() {
@@ -6776,7 +6780,7 @@
 
   function shopEntryForSlot(index) {
     if (!isShopSlotUnlocked(index)) return null;
-    return state.shopFrozen[index] && state.shop[index] ? state.shop[index] : shopEntry();
+    return state.shopFrozen[index] && shopEntryAt(index) ? shopEntryAt(index) : shopEntry();
   }
 
   function refreshShop(free = false) {
@@ -6793,11 +6797,11 @@
     const previousSales = [...state.shopSales];
     state.shop = shopSlots.map((_, index) => shopEntryForSlot(index));
     state.shopSales = shopSlots.map((_, index) => {
-      if (!isShopSlotUnlocked(index) || !state.shop[index]) return false;
+      if (!shopEntryAt(index)) return false;
       if (state.shopFrozen[index] && previousSales[index]) return true;
-      return rollShopSlotSale(index, state.shop[index]);
+      return rollShopSlotSale(index, shopEntryAt(index));
     });
-    state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(isShopSlotUnlocked(index) && frozen && state.shop[index]));
+    state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(frozen && shopEntryAt(index)));
     if (state.arenaScout?.shopsRemaining > 0) {
       state.arenaScout.shopsRemaining -= 1;
       if (state.arenaScout.shopsRemaining <= 0) state.arenaScout = null;
@@ -6880,11 +6884,11 @@
     const previousSales = [...state.shopSales];
     state.shop = shopSlots.map((_, index) => shopEntryForSlot(index));
     state.shopSales = shopSlots.map((_, index) => {
-      if (!isShopSlotUnlocked(index) || !state.shop[index]) return false;
+      if (!shopEntryAt(index)) return false;
       if (state.shopFrozen[index] && previousSales[index]) return true;
-      return rollShopSlotSale(index, state.shop[index]);
+      return rollShopSlotSale(index, shopEntryAt(index));
     });
-    state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(isShopSlotUnlocked(index) && frozen && state.shop[index]));
+    state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(frozen && shopEntryAt(index)));
     state.message = `Odds up +1 ${rollTerm({ lower: true })}`;
     state.log.unshift(`${upgradeTerm()} ${realityBroken() ? "rig" : "shop"} to level ${state.shopLevel}`);
     return true;
@@ -7120,9 +7124,10 @@
   }
 
   function shopSlotMergeOpportunity(index) {
-    if (!isShopSlotUnlocked(index) || !state.shop[index]) return null;
-    const opportunity = shopEntryMergeOpportunity(state.shop[index]);
-    if (!opportunity || !hasShopMergeTarget(state.shop[index])) return null;
+    const entry = shopEntryAt(index);
+    if (!entry) return null;
+    const opportunity = shopEntryMergeOpportunity(entry);
+    if (!opportunity || !hasShopMergeTarget(entry)) return null;
     return opportunity;
   }
 
@@ -7130,8 +7135,8 @@
     if (!["bench", "board", "itemBench", "drinks"].includes(area)) return null;
     if (!state[area]?.[index]) return null;
     for (let shopIndex = 0; shopIndex < state.shop.length; shopIndex += 1) {
-      const entry = state.shop[shopIndex];
-      if (!isShopSlotUnlocked(shopIndex) || !entry) continue;
+      const entry = shopEntryAt(shopIndex);
+      if (!entry) continue;
       const opportunity = shopEntryMergeOpportunity(entry);
       if (opportunity && canMergeShopEntryIntoSlot(entry, area, index)) {
         return { shopIndex, entry, ...opportunity };
@@ -7147,7 +7152,7 @@
   }
 
   function buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex) {
-    const entry = state.shop[shopIndex];
+    const entry = shopEntryAt(shopIndex);
     if (!entry || !canMergeShopEntryIntoSlot(entry, targetArea, targetIndex)) return false;
     const cost = purchaseCost(entry, shopIndex);
     if (state.gold < cost) {
@@ -7292,7 +7297,7 @@
   }
 
   function buyShop(index) {
-    const entry = state.shop[index];
+    const entry = shopEntryAt(index);
     if (isItem(entry)) {
       const spot = firstEmptyItemStorage(entry);
       return spot ? buyShopToSlot(index, spot.area, spot.index) : false;
@@ -7311,7 +7316,7 @@
       state.message = "Open slot first";
       return false;
     }
-    const entry = state.shop[shopIndex];
+    const entry = shopEntryAt(shopIndex);
     if (!entry) {
       state.message = "Empty shop";
       return false;
@@ -7365,7 +7370,7 @@
       state.message = "Open slot first";
       return false;
     }
-    const item = state.shop[shopIndex];
+    const item = shopEntryAt(shopIndex);
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
       state.message = `Pick a ${toppingTerm({ lower: true })}`;
@@ -7425,12 +7430,13 @@
       state.message = "Open slot first";
       return false;
     }
-    if (!state.shop[index]) {
+    const entry = shopEntryAt(index);
+    if (!entry) {
       state.message = "Empty shop";
       return false;
     }
     state.shopFrozen[index] = !state.shopFrozen[index];
-    state.message = state.shopFrozen[index] ? `${entryLabel(state.shop[index])} locked` : `${entryLabel(state.shop[index])} unlocked`;
+    state.message = state.shopFrozen[index] ? `${entryLabel(entry)} locked` : `${entryLabel(entry)} unlocked`;
     return true;
   }
 
@@ -7690,7 +7696,7 @@
   }
 
   function selectFrom(area, index) {
-    const entry = state[area][index];
+    const entry = area === "shop" ? shopEntryAt(index) : state[area][index];
     if (area === "shop") {
       state.selected = entry ? { area, index } : null;
       return;
@@ -12629,7 +12635,7 @@
   function drawPrep() {
     drawShopkeeperStall();
     drawCodexMenuButton();
-    shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, state.shop[i], "shop", i));
+    shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, shopEntryAt(i), "shop", i));
     itemBenchSlots.forEach((slot, i) => drawItemBenchSlot(slot, i));
     boardSlots.forEach((slot, i) => drawBoardSlot(slot, i));
     drinkSlots.forEach((slot, i) => drawDrinkSlot(slot, i));
@@ -12890,7 +12896,7 @@
 
     registerTooltip(badgeX, badgeY, badgeW, badgeH, {
       title: "Merge ready",
-      body: `Buy ${entryLabel(state.shop[index])} to finish this merge: ${opportunity.text}.`,
+      body: `Buy ${entryLabel(shopEntryAt(index))} to finish this merge: ${opportunity.text}.`,
     });
   }
 
@@ -12941,7 +12947,7 @@
 
     registerTooltip(badgeX, badgeY, badgeW, badgeH, {
       title: "Fusion target",
-      body: `Deploy ${entryLabel(state.shop[index])} to complete ${opportunity.text}.`,
+      body: `Deploy ${entryLabel(shopEntryAt(index))} to complete ${opportunity.text}.`,
     });
   }
 
@@ -18322,7 +18328,7 @@
         if (!isShopSlotUnlocked(i) && Math.abs(pos.x - s.x) <= SHOP_SLOT_W / 2 && Math.abs(pos.y - s.y) <= SHOP_SLOT_H / 2) {
           return { area: "shopUnlock", index: i };
         }
-        if (state.shop[i] && pointInRect(pos.x, pos.y, shopFreezeRect(s.x, s.y, SHOP_SLOT_W, SHOP_SLOT_H))) {
+        if (shopEntryAt(i) && pointInRect(pos.x, pos.y, shopFreezeRect(s.x, s.y, SHOP_SLOT_W, SHOP_SLOT_H))) {
           return { area: "shopFreeze", index: i };
         }
         if (Math.abs(pos.x - s.x) <= SHOP_SLOT_W / 2 && Math.abs(pos.y - s.y) <= SHOP_SLOT_H / 2) return { area: "shop", index: i };
@@ -18531,7 +18537,7 @@
   }
 
   function startShopDrag(index, pos) {
-    const unit = state.shop[index];
+    const unit = shopEntryAt(index);
     const equipmentTarget = selectedEquipmentTargetRef();
     if (!isShopSlotUnlocked(index)) {
       state.message = "Open slot first";
@@ -18943,7 +18949,10 @@
       shopUnlocked: [...state.shopUnlocked],
       shopLocked: shopSlots.map((_, index) => !isShopSlotUnlocked(index)),
       shopUnlockCosts: shopSlots.map((_, index) => shopSlotUnlockCost(index)),
-      shop: state.shop.map((u, index) => (u ? shopEntryText(u, index) : null)),
+      shop: shopSlots.map((_, index) => {
+        const entry = shopEntryAt(index);
+        return entry ? shopEntryText(entry, index) : null;
+      }),
       bench: state.bench.map((u) => (u ? entryText(u) : null)),
       itemBench: state.itemBench.map((item, index) => (item ? { ...itemText(item), slotKind: itemBenchSlotKind(index) } : { slotKind: itemBenchSlotKind(index), item: null })),
       board: state.board.map((u, i) => (isUnit(u) ? { ...unitText(u), ...slotText(i) } : null)),
