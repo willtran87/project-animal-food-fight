@@ -1836,6 +1836,7 @@
   const ECONOMY = {
     startingGold: 100,
     maxGold: 300,
+    freeRollsPerShopLevel: 1,
     rollCost: 8,
     rerollCostSteps: [
       { after: 0, cost: 8 },
@@ -1844,8 +1845,8 @@
     ],
     unitCost: 30,
     itemCost: 18,
-    winGold: 50,
-    lossGold: 42,
+    winGold: 60,
+    lossGold: 52,
     interestStep: 25,
     interestGold: 5,
     interestCap: 15,
@@ -4621,7 +4622,7 @@
     enemyPreview: null,
     rewardChoices: [],
     lastCombatLedger: null,
-    freeRolls: 0,
+    freeRolls: ECONOMY.freeRollsPerShopLevel,
     rollsThisRound: 0,
     nextShopUpgradeDiscountGold: 0,
     winStreak: 0,
@@ -6658,6 +6659,7 @@
 
   function startNextRoundShop() {
     state.rollsThisRound = 0;
+    state.freeRolls += startingFreeRollsForShopLevel();
     state.itemDiscountUsed = false;
     if (state.keepArenaNextRound) {
       state.keepArenaNextRound = false;
@@ -6673,6 +6675,10 @@
   function currentRollCost() {
     if (state.freeRolls > 0) return 0;
     return ECONOMY.rerollCostSteps.reduce((cost, step) => (state.rollsThisRound >= step.after ? step.cost : cost), ECONOMY.rollCost);
+  }
+
+  function startingFreeRollsForShopLevel(level = state.shopLevel) {
+    return Math.max(0, Math.floor(level || 0) * ECONOMY.freeRollsPerShopLevel);
   }
 
   function upgradeShop() {
@@ -9061,7 +9067,7 @@
     state.enemyPreview = null;
     state.rewardChoices = [];
     state.lastCombatLedger = null;
-    state.freeRolls = 0;
+    state.freeRolls = startingFreeRollsForShopLevel();
     state.rollsThisRound = 0;
     state.nextShopUpgradeDiscountGold = 0;
     state.winStreak = 0;
