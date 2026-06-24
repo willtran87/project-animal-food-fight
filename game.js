@@ -11028,7 +11028,7 @@
     const fadeIn = clamp01(crawlElapsed / 2.2);
     const fadeOut = 1 - clamp01((elapsed - (VICTORY_IDEAL_FADE_START_SECONDS - 2.2)) / 2.2);
     const alpha = Math.min(fadeIn, fadeOut);
-    const startY = H + 44 - crawlElapsed * 28;
+    const startY = H + 44 - crawlElapsed * VICTORY_CRAWL_PIXELS_PER_SECOND;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.textAlign = "center";
@@ -11095,26 +11095,70 @@
       : `rgba(255, 236, 185, ${0.05 + entrance * 0.1})`;
     ctx.fillRect(0, 0, W, H);
 
-    const residualStatic = Math.max(0, 0.16 * (1 - clamp01(elapsed / 6)));
-    const fadeStatic = idealProgress > 0 && idealProgress < 1 ? Math.sin(idealProgress * Math.PI) * 0.56 : 0;
+    const residualStatic = Math.max(0, 0.18 * (1 - clamp01(elapsed / 6)));
+    const fadeStatic = idealProgress > 0 && idealProgress < 1 ? Math.sin(idealProgress * Math.PI) * 0.94 : 0;
     const staticAlpha = Math.max(residualStatic, fadeStatic);
     if (staticAlpha > 0.001) {
-      const frame = Math.floor((state.idleTime + elapsed) * 22);
+      const frame = Math.floor((state.idleTime + elapsed) * 54);
+      const violentPulse = clamp01(staticAlpha * (0.84 + glitchNoise(frame * 37) * 0.48));
+      const whiteFlash = Math.max(0, glitchNoise(frame * 43) - 0.78) * violentPulse;
       ctx.globalCompositeOperation = "lighter";
-      for (let y = 0; y < H; y += 4) {
+      ctx.fillStyle = `rgba(255, 247, 216, ${whiteFlash * 0.72})`;
+      ctx.fillRect(0, 0, W, H);
+
+      for (let y = 0; y < H; y += 2) {
         const roll = glitchNoise(frame * 71 + y * 19);
         ctx.fillStyle = y % 2 === 0
-          ? `rgba(74, 255, 104, ${staticAlpha * (0.1 + roll * 0.18)})`
-          : `rgba(255, 84, 92, ${staticAlpha * (0.08 + roll * 0.14)})`;
-        ctx.fillRect(0, y, W, 1);
+          ? `rgba(74, 255, 104, ${violentPulse * (0.1 + roll * 0.34)})`
+          : `rgba(255, 64, 86, ${violentPulse * (0.08 + roll * 0.3)})`;
+        ctx.fillRect(0, y, W, roll > 0.78 ? 2 : 1);
       }
-      for (let i = 0; i < 220; i++) {
+
+      ctx.globalCompositeOperation = "source-over";
+      for (let i = 0; i < 26; i++) {
+        const gate = glitchNoise(frame * 89 + i * 31);
+        if (gate < 0.28 + violentPulse * 0.34) continue;
+        const y = Math.floor(glitchNoise(frame * 97 + i * 37) * H);
+        const h = 3 + Math.floor(glitchNoise(frame * 103 + i * 41) * 28);
+        const offset = Math.round((glitchNoise(frame * 109 + i * 43) - 0.5) * (24 + violentPulse * 74));
+        const tint = glitchNoise(frame * 113 + i * 47) > 0.5
+          ? `rgba(255, 58, 82, ${0.16 * violentPulse})`
+          : `rgba(76, 255, 116, ${0.18 * violentPulse})`;
+        ctx.drawImage(canvas, 0, y, W, h, offset, y, W, h);
+        ctx.fillStyle = tint;
+        ctx.fillRect(Math.max(0, offset), y, W, h);
+      }
+
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < 18; i++) {
+        if (glitchNoise(frame * 127 + i * 53) < 0.42) continue;
+        const x = Math.floor(glitchNoise(frame * 131 + i * 57) * W);
+        const y = Math.floor(glitchNoise(frame * 137 + i * 59) * H);
+        const w = 18 + Math.floor(glitchNoise(frame * 139 + i * 61) * 116);
+        const h = 6 + Math.floor(glitchNoise(frame * 149 + i * 67) * 44);
+        ctx.fillStyle = glitchNoise(frame * 151 + i * 71) > 0.5
+          ? `rgba(255, 255, 244, ${0.08 + violentPulse * 0.24})`
+          : `rgba(61, 255, 124, ${0.08 + violentPulse * 0.2})`;
+        ctx.fillRect(x, y, w, h);
+      }
+
+      for (let i = 0; i < 520; i++) {
         const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
         const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
-        const size = glitchNoise(frame * 167 + i * 23) > 0.88 ? 2 : 1;
-        ctx.fillStyle = `rgba(255, 255, 236, ${(0.08 + glitchNoise(frame * 181 + i * 29) * 0.26) * staticAlpha})`;
+        const size = glitchNoise(frame * 167 + i * 23) > 0.76 ? 2 : 1;
+        ctx.fillStyle = `rgba(255, 255, 236, ${(0.08 + glitchNoise(frame * 181 + i * 29) * 0.42) * violentPulse})`;
         ctx.fillRect(x, y, size, size);
       }
+
+      ctx.globalAlpha = 0.44 * violentPulse;
+      ctx.fillStyle = "#050508";
+      for (let i = 0; i < 10; i++) {
+        if (glitchNoise(frame * 191 + i * 73) < 0.36) continue;
+        const y = Math.floor(glitchNoise(frame * 193 + i * 79) * H);
+        const h = 2 + Math.floor(glitchNoise(frame * 197 + i * 83) * 20);
+        ctx.fillRect(0, y, W, h);
+      }
+      ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
     }
 
