@@ -1,0 +1,25 @@
+{
+  "theme": "horror_future_war",
+  "typeId": "mochi_mammoth",
+  "lineName": "Festival Colossus Walker",
+  "version": "v4",
+  "packageStatus": "horror-theme-neon-festival-colossus-redo-pure-robot-safe-inset-wired",
+  "sourceSheet": "assets/sprites/source/war-machine-mochi-mammoth-evolution-v4-chromakey.png",
+  "transparentSheet": "assets/sprites/transparent/war-machine-mochi-mammoth-evolution-v4-transparent.png",
+  "runtimeFrames": {
+    "1": "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk1_idle_SW_00.png",
+    "2": "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk2_idle_SW_00.png",
+    "3": "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk3_idle_SW_00.png",
+    "4": "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk4_idle_SW_00.png"
+  },
+  "sheet": "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v4.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v4.png",
+  "contactPreview": "output/war-machine-mochi-mammoth-v4-contact.png",
+  "notes": [
+    "Generated with built-in image generation as a stronger neon redo of the Festival Colossus Walker horror war-machine line.",
+    "The source sheet contains four roughly equal-footprint pure robot walker evolution forms, one static prism munition, and one disabled Mk4 wreck defeat state.",
+    "Evolution is expressed through added shield emitters, tusk railguns, dorsal cannons, side racks, command hardware, reactor nodes, and heavier hydraulics rather than major size changes.",
+    "Runtime frames were extracted from isolated alpha masks because the source particle and wreck bounding boxes overlap horizontally, then repacked with safe transparent insets to prevent clipping."
+  ]
+}

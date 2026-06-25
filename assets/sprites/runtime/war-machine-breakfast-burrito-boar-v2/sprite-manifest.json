@@ -1,0 +1,47 @@
+{
+  "packageId": "war-machine-breakfast-burrito-boar-v2",
+  "packageStatus": "horror-theme-neon-redo-pure-robot-equal-footprint-distinct-evolution-munition-defeat-wired",
+  "unitId": "breakfast_burrito_boar",
+  "sourceImage": "assets/sprites/source/war-machine-breakfast-burrito-boar-evolution-v2-blackbg.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-breakfast-burrito-boar-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Egg Wrap Piglet",
+      "frame": "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Breakfast Burrito Boar",
+      "frame": "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Salsa Tusk Boar",
+      "frame": "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Brunch Cart Boar",
+      "frame": "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-breakfast-burrito-boar-static-tusk-mine-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v2.png",
+  "notes": [
+    "Generated with built-in image generation after inspecting the existing v1 horror sheet, original cozy four-form sheet, static particle, and defeat still.",
+    "Redo emphasizes future-war, dark neon, black outline, high-detail pixel art, pure mechanical robots, metallic palette, and stronger red/cyan/green glow.",
+    "The accepted source contains six subjects: four same-footprint evolution stages, one static munition/discharge object, and one disabled mechanical defeat still.",
+    "Runtime frames were cut from alpha-projection intervals to preserve clean spacing and avoid neighboring subject slivers."
+  ]
+}

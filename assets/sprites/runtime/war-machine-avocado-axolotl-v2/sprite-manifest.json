@@ -1,0 +1,47 @@
+{
+  "packageId": "war-machine-avocado-axolotl-v2",
+  "packageStatus": "horror-theme-neon-pitguard-reactor-chromakey-transparent-runtime-wired",
+  "unitId": "avocado_axolotl",
+  "sourceChromaKey": "assets/sprites/source/war-machine-avocado-axolotl-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-avocado-axolotl-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Avocado Totl",
+      "frame": "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Avocado Axolotl",
+      "frame": "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Guac Gill Axolotl",
+      "frame": "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Orchard Pit Oracle",
+      "frame": "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v2.png",
+  "notes": [
+    "Generated with built-in image generation on a flat magenta chroma key, then converted to transparent alpha.",
+    "The accepted source sheet contains four same-footprint robotic Pitguard Reactor evolution stages, one static green-core capacitor munition, and one disabled mechanical defeat still.",
+    "The MK1-to-MK2 progression is built around visible hardpoint evolution: MK1 has an exposed core and empty side socket; MK2 fills the hardpoints with shield/reactor pods and adds dorsal battery cylinders.",
+    "Progression continues through dorsal capacitor fins, secondary cells, command hardware, reactor plating, and stronger neon without simple size growth."
+  ]
+}

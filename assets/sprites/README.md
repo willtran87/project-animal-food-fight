@@ -203,6 +203,33 @@ Noodle Newt now has a complete pure-robot horror vertical slice:
 
 The prompt referenced the base Serpent Medic Rig horror sprite and translated the line into a small crawler through heavy siege-repair rig progression. It explicitly prohibited food, noodles, ramen, bowls, and organic newt features; the visible conduit loops are treated as armored cables. The source sheet scanned as exactly six groups with 98, 58, 72, 52, and 92px gutters.
 
+### Noodle Newt Horror Evolution V2
+
+Noodle Newt now uses a stronger neon Serpent Medic Rig redo in horror mode:
+
+- Generated chroma-key source: `source/war-machine-noodle-newt-evolution-v2-chromakey.png`
+- Transparent source: `transparent/war-machine-noodle-newt-evolution-v2-transparent.png`
+- Runtime four-form sprites and manifest: `runtime/war-machine-noodle-newt-v2/`
+- Static munition particle: `assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v2.png`
+- Defeat still: `runtime/defeat-stills/noodle-newt-war-machine-defeat-v2.png`
+- Contact preview: `output/war-machine-noodle-newt-v2-contact.png`
+
+The V2 prompt keeps all four evolution forms near the same footprint and makes the improvement read through armor, surgical arms, reactor hardware, neon red/cyan/magenta/green lights, and battlefield damage rather than simple size growth. After visual review found alpha damage from the green chroma key, the transparent sheet was repaired by restoring enclosed green-dominant reactor/canister holes from the original source and suppressing only exterior semi-transparent green fringe. Grouped-mask slicing was used after visual review caught neighbor bleed in a column/component crop; final frame checks found transparent corners, zero tiny-alpha dust, zero semi-transparent green pixels, and zero nontransparent border pixels.
+
+### Noodle Newt Horror Evolution V3
+
+Noodle Newt now uses an image-gen corrected Serpent Medic Rig redo in horror mode:
+
+- Generated chroma-key source: `source/war-machine-noodle-newt-evolution-v3-chromakey.png`
+- Transparent source: `transparent/war-machine-noodle-newt-evolution-v3-transparent.png`
+- Runtime four-form sprites and manifest: `runtime/war-machine-noodle-newt-v3/`
+- Static munition particle: `assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v3.png`
+- Defeat still: `runtime/defeat-stills/noodle-newt-war-machine-defeat-v3.png`
+- Contact preview: `output/war-machine-noodle-newt-v3-contact.png`
+- Alpha audit: `output/war-machine-noodle-newt-v3-alpha-audit.png`
+
+V3 was generated specifically to correct the V2 green-chroma alpha damage at the image source. The prompt preserved the six-cell Serpent Medic Rig layout, switched the removable background to flat magenta, and prohibited magenta/pink/purple subject pixels so the toxic green medic cores, canisters, smoke glow, and cross symbols stay solid opaque artwork. The magenta-key transparent sheet scanned as exactly six large groups with 39, 50, 31, 78, and 82px gutters at threshold 24. Final runtime checks found transparent corners, zero tiny-alpha dust, zero semi-transparent green pixels, zero semi-transparent magenta pixels, zero visible key-magenta pixels, and zero nontransparent border pixels.
+
 ### Pancake Penguin Horror Evolution V1
 
 Pancake Penguin now has a metallic-palette horror vertical slice:
@@ -242,6 +269,19 @@ Popcorn Porcupine now has a metallic-palette horror vertical slice:
 
 The prompt referenced the cozy Popcorn Porcupine spiked silhouette and reused its yellow, cream, and red palette as yellow-gold metal spikes, cream ceramic plates, red hazard panels, and gunmetal chassis. It explicitly prohibited food, popcorn, kernels, buckets, fur, and organic quills while translating the line into a Shrapnel Quill Battery. The source sheet scanned as exactly six groups with 49, 53, 29, 41, and 40px gutters; the tightest gap still sliced cleanly and was visually checked in the contact preview.
 
+### Popcorn Porcupine Horror Evolution V2
+
+Popcorn Porcupine V2 is the active horror-mode Shrapnel Quill Battery redo:
+
+- Generated chroma-key source: `source/war-machine-popcorn-porcupine-evolution-v2-chromakey.png`
+- Transparent source: `transparent/war-machine-popcorn-porcupine-evolution-v2-transparent.png`
+- Runtime four-form sprites and manifest: `runtime/war-machine-popcorn-porcupine-v2/`
+- Static neon shrapnel munition particle: `assets/particles/runtime/war-machine-popcorn-porcupine-neon-shrapnel-mine-v2.png`
+- Defeat still: `runtime/defeat-stills/popcorn-porcupine-war-machine-defeat-v2.png`
+- Contact preview: `output/war-machine-popcorn-porcupine-v2-contact.png`
+
+V2 pushes the line into a darker future-war pure robot identity with stronger cyan neon, black gunmetal, scratched off-white armor, red hazard plates, and yellow-gold munition tips. The four forms stay in the same runtime footprint while the upgrade path reads through increased firepower: more cannons, stabilizers, missile-quill racks, turret hardware, railgun rails, and reactor ports. The attack particle is a static munition with no motion trails; a cleanup pass removed one stray particle speck after grouped slicing.
+
 ### Six-Line Metallic Horror Evolution Batch
 
 Yogurt Yeti, Bagel Beaver, Bao Bun Badger, Donut Dodo, Kimchi Chameleon, and Waffle Walrus now have horror-mode robot evolution slices:
@@ -252,6 +292,7 @@ Yogurt Yeti, Bagel Beaver, Bao Bun Badger, Donut Dodo, Kimchi Chameleon, and Waf
 - Donut Dodo V2: `source/war-machine-donut-dodo-evolution-v2-chromakey.png`, `transparent/war-machine-donut-dodo-evolution-v2-transparent.png`, `runtime/war-machine-donut-dodo-v2/`, `assets/particles/runtime/war-machine-donut-dodo-scrap-charge-v2.png`, `runtime/defeat-stills/donut-dodo-war-machine-defeat-v2.png`, `output/war-machine-donut-dodo-v2-contact.png`
 - Kimchi Chameleon V1: `source/war-machine-kimchi-chameleon-evolution-v1-chromakey.png`, `transparent/war-machine-kimchi-chameleon-evolution-v1-transparent.png`, `runtime/war-machine-kimchi-chameleon-v1/`, `assets/particles/runtime/war-machine-kimchi-chameleon-camo-mine-v1.png`, `runtime/defeat-stills/kimchi-chameleon-war-machine-defeat-v1.png`, `output/war-machine-kimchi-chameleon-v1-contact.png`
 - Waffle Walrus V2: `source/war-machine-waffle-walrus-evolution-v2-chromakey.png`, `transparent/war-machine-waffle-walrus-evolution-v2-transparent.png`, `runtime/war-machine-waffle-walrus-v2/`, `assets/particles/runtime/war-machine-waffle-walrus-lattice-charge-v2.png`, `runtime/defeat-stills/waffle-walrus-war-machine-defeat-v2.png`, `output/war-machine-waffle-walrus-v2-contact.png`
+- Waffle Walrus V3: `source/war-machine-waffle-walrus-evolution-v3-chromakey.png`, `transparent/war-machine-waffle-walrus-evolution-v3-transparent.png`, `runtime/war-machine-waffle-walrus-v3/`, `assets/particles/runtime/war-machine-waffle-walrus-lattice-charge-v3.png`, `runtime/defeat-stills/waffle-walrus-war-machine-defeat-v3.png`, `output/war-machine-waffle-walrus-v3-contact.png`
 
 The prompts reused each reference palette as metallic materials while prohibiting food and organic animal features. Yogurt, Bagel, Donut, and Waffle required regeneration because their first sheets merged adjacent evolution forms during alpha grouping; the active v2 sheets scanned as six clean groups. Bao and Kimchi passed on their first sheets. All particles are static munition/discharge objects rather than motion trails.
 
@@ -261,9 +302,12 @@ Pepper Prawn, Hot Chip Hamster, Benedict Lobster, Curry Crab, Churro Cheetah, Gr
 
 - Pepper Prawn V1: `source/war-machine-pepper-prawn-evolution-v1-chromakey.png`, `transparent/war-machine-pepper-prawn-evolution-v1-transparent.png`, `runtime/war-machine-pepper-prawn-v1/`, `assets/particles/runtime/war-machine-pepper-prawn-thermal-torpedo-cell-v1.png`, `runtime/defeat-stills/pepper-prawn-war-machine-defeat-v1.png`
 - Hot Chip Hamster V1: `source/war-machine-hot-chip-hamster-evolution-v1-chromakey.png`, `transparent/war-machine-hot-chip-hamster-evolution-v1-transparent.png`, `runtime/war-machine-hot-chip-hamster-v1/`, `assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v1.png`, `runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v1.png`
+- Hot Chip Hamster V2: `source/war-machine-hot-chip-hamster-evolution-v2-chromakey.png`, `transparent/war-machine-hot-chip-hamster-evolution-v2-transparent.png`, `runtime/war-machine-hot-chip-hamster-v2/`, `assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v2.png`, `runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v2.png`
+- Hot Chip Hamster V3: `source/war-machine-hot-chip-hamster-evolution-v3-chromakey.png`, `transparent/war-machine-hot-chip-hamster-evolution-v3-transparent.png`, `runtime/war-machine-hot-chip-hamster-v3/`, `assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v3.png`, `runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v3.png`
 - Benedict Lobster V1: `source/war-machine-benedict-lobster-evolution-v1-chromakey.png`, `transparent/war-machine-benedict-lobster-evolution-v1-transparent.png`, `runtime/war-machine-benedict-lobster-v1/`, `assets/particles/runtime/war-machine-benedict-lobster-claw-charge-pod-v1.png`, `runtime/defeat-stills/benedict-lobster-war-machine-defeat-v1.png`
 - Curry Crab V1: `source/war-machine-curry-crab-evolution-v1-chromakey.png`, `transparent/war-machine-curry-crab-evolution-v1-transparent.png`, `runtime/war-machine-curry-crab-v1/`, `assets/particles/runtime/war-machine-curry-crab-thermal-core-mine-v1.png`, `runtime/defeat-stills/curry-crab-war-machine-defeat-v1.png`
 - Churro Cheetah V1: `source/war-machine-churro-cheetah-evolution-v1-chromakey.png`, `transparent/war-machine-churro-cheetah-evolution-v1-transparent.png`, `runtime/war-machine-churro-cheetah-v1/`, `assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v1.png`, `runtime/defeat-stills/churro-cheetah-war-machine-defeat-v1.png`
+- Churro Cheetah V2: `source/war-machine-churro-cheetah-evolution-v2-chromakey.png`, `transparent/war-machine-churro-cheetah-evolution-v2-transparent.png`, `runtime/war-machine-churro-cheetah-v2/`, `assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v2.png`, `runtime/defeat-stills/churro-cheetah-war-machine-defeat-v2.png`
 - Granola Goat V1: `source/war-machine-granola-goat-evolution-v1-chromakey.png`, `transparent/war-machine-granola-goat-evolution-v1-transparent.png`, `runtime/war-machine-granola-goat-v1/`, `assets/particles/runtime/war-machine-granola-goat-seed-armor-mine-v1.png`, `runtime/defeat-stills/granola-goat-war-machine-defeat-v1.png`
 - Breakfast Burrito Boar V1: `source/war-machine-breakfast-burrito-boar-evolution-v1-chromakey.png`, `transparent/war-machine-breakfast-burrito-boar-evolution-v1-transparent.png`, `runtime/war-machine-breakfast-burrito-boar-v1/`, `assets/particles/runtime/war-machine-breakfast-burrito-boar-static-tusk-mine-v1.png`, `runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v1.png`
 - Caesar Salamander V1: `source/war-machine-caesar-salamander-evolution-v1-chromakey.png`, `transparent/war-machine-caesar-salamander-evolution-v1-transparent.png`, `runtime/war-machine-caesar-salamander-v1/`, `assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v1.png`, `runtime/defeat-stills/caesar-salamander-war-machine-defeat-v1.png`
@@ -363,6 +407,7 @@ Horror mode now has ten more future-war unit override packages. Each package was
 - Croissant Kraken -> Layered Leviathan Rig: `source/war-machine-croissant-kraken-evolution-v2-chromakey.png`, `transparent/war-machine-croissant-kraken-evolution-v2-transparent.png`, `runtime/war-machine-croissant-kraken-v2/`, particle `../particles/runtime/war-machine-croissant-kraken-crescent-clamp-v2.png`, defeat `runtime/defeat-stills/croissant-kraken-war-machine-defeat-v2.png`, preview `../../output/war-machine-croissant-kraken-v2-contact.png`
 - Fortune Cookie Fox -> Oracle Chance Engine: `source/war-machine-fortune-cookie-fox-evolution-v2-chromakey.png`, `transparent/war-machine-fortune-cookie-fox-evolution-v2-transparent.png`, `runtime/war-machine-fortune-cookie-fox-v2/`, particle `../particles/runtime/war-machine-fortune-cookie-fox-oracle-core-v2.png`, defeat `runtime/defeat-stills/fortune-cookie-fox-war-machine-defeat-v2.png`, preview `../../output/war-machine-fortune-cookie-fox-v2-contact.png`
 - Mochi Mammoth -> Festival Colossus Walker: `source/war-machine-mochi-mammoth-evolution-v2-chromakey.png`, `transparent/war-machine-mochi-mammoth-evolution-v2-transparent.png`, `runtime/war-machine-mochi-mammoth-v2/`, particle `../particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v2.png`, defeat `runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v2.png`, preview `../../output/war-machine-mochi-mammoth-v2-contact.png`
+- Mochi Mammoth -> Festival Colossus Walker V4: `source/war-machine-mochi-mammoth-evolution-v4-chromakey.png`, `transparent/war-machine-mochi-mammoth-evolution-v4-transparent.png`, `runtime/war-machine-mochi-mammoth-v4/`, particle `../particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v4.png`, defeat `runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v4.png`, preview `../../output/war-machine-mochi-mammoth-v4-contact.png`
 - Gingerbread Golem -> Citadel Decoy Guardian: `source/war-machine-gingerbread-golem-evolution-v1-chromakey.png`, `transparent/war-machine-gingerbread-golem-evolution-v1-transparent.png`, `runtime/war-machine-gingerbread-golem-v1/`, particle `../particles/runtime/war-machine-gingerbread-golem-decoy-core-v1.png`, defeat `runtime/defeat-stills/gingerbread-golem-war-machine-defeat-v1.png`, preview `../../output/war-machine-gingerbread-golem-v1-contact.png`
 - Boba Basilisk -> Pearl Gorgon Artillery: `source/war-machine-boba-basilisk-evolution-v1-chromakey.png`, `transparent/war-machine-boba-basilisk-evolution-v1-transparent.png`, `runtime/war-machine-boba-basilisk-v1/`, particle `../particles/runtime/war-machine-boba-basilisk-pearl-stun-mine-v1.png`, defeat `runtime/defeat-stills/boba-basilisk-war-machine-defeat-v1.png`, preview `../../output/war-machine-boba-basilisk-v1-contact.png`
 - Iceberg Oyster -> Abyssal Lock Core: `source/war-machine-iceberg-oyster-evolution-v1-chromakey.png`, `transparent/war-machine-iceberg-oyster-evolution-v1-transparent.png`, `runtime/war-machine-iceberg-oyster-v1/`, particle `../particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v1.png`, defeat `runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v1.png`, preview `../../output/war-machine-iceberg-oyster-v1-contact.png`
@@ -372,6 +417,8 @@ Croissant Kraken, Fortune Cookie Fox, and Mochi Mammoth use V2 because their V1 
 The mk1 runtime frames for all ten lines were later resliced larger from the same transparent sheets so first forms retain more visible detail in the War Manifest and shop cards. `game.js` requests those revised mk1 frames with `?v=2`; later evolution stages, particles, and defeat wrecks are unchanged.
 
 The active game now uses the V3 regeneration for all ten lines. V3 uses the same identities as the earlier pass but keeps forms 1-4 at roughly the same runtime footprint and detail density; evolution is shown through added armor, weapons, reactors, and command modules instead of large size changes. Active paths are `source/war-machine-*-evolution-v3-chromakey.png`, `transparent/war-machine-*-evolution-v3-transparent.png`, `runtime/war-machine-*-v3/`, `../particles/runtime/war-machine-*-v3.png`, and `runtime/defeat-stills/*-war-machine-defeat-v3.png`. The V3 review board is `../../output/war-machine-ten-line-v3-contact-overview.png`.
+
+Abyssal Lock Core now uses a targeted V4 regeneration because the previous Iceberg Oyster horror pass was too tame. V4 pushes the line into a darker pure-robot future-war identity with heavier neon cyan/teal/magenta lighting, black steel, red targeting lights, and a clearer form-by-form firepower progression. The source is `source/war-machine-iceberg-oyster-evolution-v4-chromakey.png`, the transparent sheet is `transparent/war-machine-iceberg-oyster-evolution-v4-transparent.png`, the runtime frames and manifest are in `runtime/war-machine-iceberg-oyster-v4/`, the static munition is `../particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v4.png`, the wreck is `runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v4.png`, and the review preview is `../../output/war-machine-iceberg-oyster-v4-contact.png`.
 
 ## Fresh/Salad Defeat Stills V2
 

@@ -336,33 +336,47 @@ Packaging notes:
 
 ## Horror Power Associated Particles Batch 2 V1
 
-The second horror power-source batch has separate associated static particles for `neutron_arsenal_core`, `grav_rail_battery`, `ion_bastion_reactor`, and `obsidian_missile_forge`. These are pure robotic munition icons rather than drink art; they use the same cyan, magenta, violet, gunmetal, and brushed-metal palette as the power centers. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, and loose extra particles.
+The second horror power-source batch has separate associated static particles for `neutron_arsenal_core`, `grav_rail_battery`, `ion_bastion_reactor`, and `obsidian_missile_forge`; `bean_brew` now uses the no-purple `caffeine_reactor` redo particle instead of the original `grav_rail_battery` particle, and `garden_spritz` now uses the brighter `cleanroom_repair_source` redo particle instead of the original `neutron_arsenal_core` particle. These are pure robotic munition icons rather than drink art. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, and loose extra particles.
 
 - Source chroma-key sheet: `source/horror-power-associated-particles-batch2-v1-chromakey.png`
 - Transparent source sheet: `transparent/horror-power-associated-particles-batch2-v1-transparent.png`
 - Runtime preview sheet: `runtime/horror-power-particle_batch2-v1-sheet.png`
 - Runtime frames:
   - `runtime/horror-power-particle_neutron_arsenal_core_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_cleanroom_repair_source_static_idle_SW_00.png` (active for `garden_spritz`)
   - `runtime/horror-power-particle_grav_rail_battery_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_caffeine_reactor_static_idle_SW_00.png` (active for `bean_brew`)
   - `runtime/horror-power-particle_ion_bastion_reactor_static_idle_SW_00.png`
   - `runtime/horror-power-particle_obsidian_missile_forge_static_idle_SW_00.png`
 
-Horror-mode runtime wiring uses these as drink/fuel throwables for `garden_spritz`, `bean_brew`, `berry_fizz`, and `citrus_tea` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+Horror-mode runtime wiring uses these as drink/fuel throwables for `garden_spritz`, `bean_brew`, `berry_fizz`, and `citrus_tea` respectively; `garden_spritz` now uses the brighter `cleanroom_repair_source` redo particle instead of the original `neutron_arsenal_core` particle, and `citrus_tea` now uses the brighter `citrus_brine_battery` redo particle instead of the original `obsidian_missile_forge` particle. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+`runtime/horror-power-particle_citrus_brine_battery_static_idle_SW_00.png` is the active static munition for `citrus_tea`; it preserves the orange, gold, amber, green, cream, and cyan brine-battery palette with no motion trails or directional effects.
+
+`runtime/horror-power-particle_cleanroom_repair_source_static_idle_SW_00.png` is the active static munition for `garden_spritz`; it preserves the lime, leaf green, pale yellow, cream, and warm gold repair-source palette with no motion trails or directional effects.
 
 ## Horror Power Associated Particles Batch 3 V1
 
-The third horror power-source batch has separate associated static particles for `ignition_barrage_core`, `pressure_bulwark_reactor`, `abyssal_tide_singularity`, and `cryo_guard_battery`. These are pure robotic munition icons rather than drink art; they use the same cyan, magenta, violet, gunmetal, and brushed-metal palette as the power centers. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, and loose extra particles.
+The third horror power-source batch has separate associated static particles for `ignition_barrage_core`, `pressure_bulwark_reactor`, `abyssal_tide_singularity`, and `cryo_guard_battery`; `chili_crunch_cola` now uses the brighter `thermal_overdrive_tank` redo particle instead of the original `ignition_barrage_core` particle, and `pepper_broth` now uses the brighter `pepper_armor_station` redo particle instead of the original `pressure_bulwark_reactor` particle. These are pure robotic munition icons rather than drink art; they use the same cyan, magenta, violet, gunmetal, and brushed-metal palette as the power centers. The source prompt explicitly avoided trails, speed lines, blur, smears, impact bursts, arrows, rotation marks, whoosh shapes, splashes, ghost images, and loose extra particles.
 
 - Source chroma-key sheet: `source/horror-power-associated-particles-batch3-v1-chromakey.png`
 - Transparent source sheet: `transparent/horror-power-associated-particles-batch3-v1-transparent.png`
 - Runtime preview sheet: `runtime/horror-power-particle_batch3-v1-sheet.png`
 - Runtime frames:
   - `runtime/horror-power-particle_ignition_barrage_core_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_thermal_overdrive_tank_static_idle_SW_00.png` (active for `chili_crunch_cola`)
   - `runtime/horror-power-particle_pressure_bulwark_reactor_static_idle_SW_00.png`
+  - `runtime/horror-power-particle_pepper_armor_station_static_idle_SW_00.png` (active for `pepper_broth`)
   - `runtime/horror-power-particle_abyssal_tide_singularity_static_idle_SW_00.png`
   - `runtime/horror-power-particle_cryo_guard_battery_static_idle_SW_00.png`
 
-Horror-mode runtime wiring uses these as drink/fuel throwables for `chili_crunch_cola`, `pepper_broth`, `abyssal_shake`, and `cream_soda_float` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+Horror-mode runtime wiring uses these as drink/fuel throwables for `chili_crunch_cola`, `pepper_broth`, `abyssal_shake`, and `cream_soda_float` respectively; `chili_crunch_cola` now uses the brighter `thermal_overdrive_tank` redo particle instead of the original `ignition_barrage_core` particle, `pepper_broth` now uses the brighter `pepper_armor_station` redo particle instead of the original `pressure_bulwark_reactor` particle, and `cream_soda_float` now uses the brighter `foam_shield_station` redo particle instead of the original `cryo_guard_battery` particle. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+`runtime/horror-power-particle_thermal_overdrive_tank_static_idle_SW_00.png` is the active static munition for `chili_crunch_cola`; it preserves the chili red, cola brown, tomato-orange, cream, warm gold, and tiny green overdrive-tank palette with no motion trails or directional effects.
+
+`runtime/horror-power-particle_pepper_armor_station_static_idle_SW_00.png` is the active static munition for `pepper_broth`; it preserves the red, tomato-orange, cream, chili brown, bronze, and tiny green armor-station palette with no motion trails or directional effects.
+
+`runtime/horror-power-particle_foam_shield_station_static_idle_SW_00.png` is the active static munition for `cream_soda_float`; it preserves the cream, gold, caramel, red, and cyan shield-station palette with no motion trails or directional effects.
 
 ## Horror Power Associated Particles Batch 4 V1
 
@@ -410,3 +424,62 @@ The sixth horror power-source batch has separate associated static particles for
   - `runtime/horror-power-particle_night_bite_warcell_static_idle_SW_00.png`
 
 Horror-mode runtime wiring uses these as drink/fuel throwables for `avocado_lassi`, `boba_night_tea`, `pico_lime_agua`, and `night_bite_energy` respectively. Cozy mode continues to use the original `drink-buff-throwable_*` sprites.
+
+## Requested War-Machine Static Attack Particles V1
+
+Pancake Penguin, Popcorn Porcupine, Pretzel Python, Yogurt Yeti, Donut Dodo, Dumpling Armadillo, Kimchi Chameleon, Lemon Meringue Lynx, Boba Basilisk, Fortune Cookie Fox, and Gingerbread Golem have dedicated high-detail war-machine attack particles. These are static munition/core icons; the art intentionally avoids trails, speed lines, smears, blur, impact bursts, arrows, rotation marks, whoosh shapes, ghost images, and other baked-in motion cues because runtime movement and spin are handled by `game.js`.
+
+- Runtime frames:
+  - `runtime/war-machine-pancake-penguin-aegis-charge-v1.png`
+  - `runtime/war-machine-popcorn-porcupine-neon-shrapnel-mine-v2.png`
+  - `runtime/war-machine-pretzel-python-coil-charge-v1.png`
+  - `runtime/war-machine-yogurt-yeti-cryo-capacitor-v2.png`
+  - `runtime/war-machine-donut-dodo-scrap-charge-v2.png`
+  - `runtime/war-machine-dumpling-armadillo-pressure-canister-v3.png`
+  - `runtime/war-machine-kimchi-chameleon-camo-mine-v1.png`
+  - `runtime/war-machine-lemon-meringue-lynx-acid-cleanse-charge-v3.png`
+  - `runtime/war-machine-boba-basilisk-pearl-stun-mine-v5.png`
+  - `runtime/war-machine-fortune-cookie-fox-oracle-core-v3.png`
+  - `runtime/war-machine-gingerbread-golem-decoy-core-v3.png`
+
+The runtime map in `game.js` uses these via `REALITY_ATTACK_PARTICLE_SPRITES`, while cozy mode uses dedicated food-object attack particles.
+
+## Requested Cozy Static Pixel-Art Attack Particles V1
+
+Pancake Penguin, Popcorn Porcupine, Pretzel Python, Yogurt Yeti, Donut Dodo, Dumpling Armadillo, Kimchi Chameleon, Lemon Meringue Lynx, Boba Basilisk, Fortune Cookie Fox, and Gingerbread Golem have dedicated cozy-mode static food-object attack particles. These are high-detail pixel-art stickers with white outlines. The art intentionally avoids trails, speed lines, smears, blur, impact bursts, arrows, rotation marks, whoosh shapes, ghost images, detached sparkles, floating crumbs, splashes, smoke, and other baked-in motion cues because runtime movement is handled by `game.js`.
+
+- Source chroma-key sheet: `source/food-attack-particles-cozy-static-requested-v1-chromakey.png`
+- Transparent source sheet: `transparent/food-attack-particles-cozy-static-requested-v1-transparent.png`
+- Runtime preview sheet: `runtime/food-attack-particle-cozy-static_evolution_SW_sheet.png`
+- Runtime frames:
+  - `runtime/food-attack-particle-cozy-static_pancake_penguin_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_popcorn_porcupine_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_pretzel_python_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_yogurt_yeti_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_donut_dodo_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_dumpling_armadillo_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_kimchi_chameleon_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_lemon_meringue_lynx_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_boba_basilisk_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_fortune_cookie_fox_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static_gingerbread_golem_static_idle_SW_00.png`
+
+## Requested Cozy Static Pixel-Art Attack Particles Batch 2 V1
+
+Toast Tortoise, Caesar Salamander, Cucumber Cobra, Green Juice Goose, Noodle Newt, Taco Tiger, Curry Crab, Saltwater Taffy Otter, Waffle Walrus, Croissant Kraken, and Vinaigrette Viper have dedicated cozy-mode static food-object attack particles. These are high-detail pixel-art stickers with white outlines. The art intentionally avoids trails, speed lines, smears, blur, impact bursts, arrows, rotation marks, whoosh shapes, ghost images, detached sparkles, floating crumbs, splashes, smoke, and other baked-in motion cues because runtime movement is handled by `game.js`.
+
+- Source chroma-key sheet: `source/food-attack-particles-cozy-static-requested-batch2-v1-chromakey.png`
+- Transparent source sheet: `transparent/food-attack-particles-cozy-static-requested-batch2-v1-transparent.png`
+- Runtime preview sheet: `runtime/food-attack-particle-cozy-static-batch2_evolution_SW_sheet.png`
+- Runtime frames:
+  - `runtime/food-attack-particle-cozy-static-batch2_toast_tortoise_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_caesar_salamander_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_cucumber_cobra_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_green_juice_goose_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_noodle_newt_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_taco_tiger_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_curry_crab_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_saltwater_taffy_otter_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_waffle_walrus_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_croissant_kraken_static_idle_SW_00.png`
+  - `runtime/food-attack-particle-cozy-static-batch2_vinaigrette_viper_static_idle_SW_00.png`

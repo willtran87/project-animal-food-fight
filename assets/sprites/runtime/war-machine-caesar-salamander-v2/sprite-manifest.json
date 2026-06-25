@@ -1,0 +1,47 @@
+{
+  "packageId": "war-machine-caesar-salamander-v2",
+  "packageStatus": "horror-theme-neon-pure-robot-chromakey-transparent-runtime-wired",
+  "unitId": "caesar_salamander",
+  "sourceChromaKey": "assets/sprites/source/war-machine-caesar-salamander-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-caesar-salamander-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Romaine Newt",
+      "frame": "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Caesar Salamander",
+      "frame": "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Crouton Crest",
+      "frame": "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Salad Bar Sovereign",
+      "frame": "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v2.png",
+  "notes": [
+    "Generated with built-in image generation on a flat magenta chroma key, then converted to transparent alpha.",
+    "The accepted source sheet contains four same-footprint robotic evolution stages, one static repair-capacitor munition, and one disabled mechanical defeat still.",
+    "Runtime frames were grouped by alpha components to keep detached neon antennas, smoke, and effects with their nearest sprite instead of equal-column splitting.",
+    "Progression is expressed through armor architecture, support modules, sensor towers, reactor cells, neon conduits, and mechanical silhouette changes rather than size."
+  ]
+}

@@ -33,10 +33,19 @@
   const GIRAFFE_BOSS_ROUND = 10;
   const GIRAFFE_BOSS_TYPE_ID = "banana_split_giraffe_boss";
   const GIRAFFE_BOSS_SLOT = 3;
+  const GIRAFFE_BOSS_HIT_GLITCH_SECONDS = 0.62;
+  const FINAL_BOSS_HIT_GLITCH_SECONDS = 0.52;
+  const REALITY_BREAK_REVEAL_SECONDS = 5.5;
+  const REALITY_REVEAL_DISTORT_SECONDS = 1.65;
+  const POST_GIRAFFE_HORROR_ITEM_TRANSITION_SECONDS = 6.4;
+  const POST_GIRAFFE_HORROR_ITEM_TRANSITION_CLEAR_SECONDS = 7.2;
+  const HORROR_SHOP_RETURN_STATIC_SECONDS = 1.6;
+  const COZY_SHOP_RETURN_AWNING_SECONDS = 1.75;
   const REBOOT_STATIC_FADE_SECONDS = 1.28;
   const REBOOT_STATIC_RESET_AT = 0.58;
-  const FINAL_VICTORY_STATIC_FADE_SECONDS = REBOOT_STATIC_FADE_SECONDS;
-  const FINAL_VICTORY_STATIC_RESET_AT = REBOOT_STATIC_RESET_AT;
+  const FINAL_VICTORY_HOLD_SECONDS = 3;
+  const FINAL_VICTORY_STATIC_FADE_SECONDS = 3.4;
+  const FINAL_VICTORY_STATIC_RESET_AT = 0.64;
   const VICTORY_CRAWL_START_SECONDS = 3.6;
   const VICTORY_CRAWL_PIXELS_PER_SECOND = 18;
   const VICTORY_CRAWL_LINE_GAP = 42;
@@ -1738,6 +1747,7 @@
   const BENCH_SLOT_BG_SCALE = 1.12;
   const BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-picnic-blanket-v1.webp?v=3";
   const REALITY_BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-war-grid-v1.webp?v=1";
+  const COZY_AWNING_TRANSITION_SRC = "assets/ui/runtime/cozy-awning-transition-v1.png?v=1";
   const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
   const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";
   const REALITY_BANNER_BOARD_SRC = "assets/ui/runtime/reality-banner-war-v1.webp?v=1";
@@ -1749,7 +1759,7 @@
   const SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/food-animal-stall-forward-facing-v1.webp";
   const REALITY_SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/war-future-market-stall-v3-native-cutout.png?v=1";
   const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.webp";
-  const REALITY_BREAK_ROUND = 10;
+  const REALITY_BREAK_ROUND = 11;
   const REALITY_SHOPKEEPER_SRC = "assets/shopkeeper/runtime/black-outline-horror-terminator-shopkeeper-kitten-v4-alpha.png?v=1";
   const CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/beat-up-food-menu-button-v2.png";
   const REALITY_CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/horror-food-menu-hanging-sign-v1.png?v=3";
@@ -1927,6 +1937,27 @@
     traitFocus: 0.18,
     rarityBias: 0.28,
   };
+  const SHOP_POWER_ENEMY_STAT_BONUS_BY_ROUND = [
+    { round: 15, bonus: 0.04 },
+    { round: 10, bonus: 0.032 },
+    { round: 8, bonus: 0.024 },
+    { round: 5, bonus: 0.016 },
+    { round: 3, bonus: 0.008 },
+  ];
+  const SHOP_POWER_ENEMY_TIER_BONUS_BY_ROUND = [
+    { round: 15, bonus: 0.045 },
+    { round: 10, bonus: 0.036 },
+    { round: 8, bonus: 0.028 },
+    { round: 5, bonus: 0.018 },
+    { round: 3, bonus: 0.01 },
+  ];
+  const SHOP_POWER_ENEMY_TIER3_BONUS_BY_ROUND = [
+    { round: 15, bonus: 0.012 },
+    { round: 10, bonus: 0.008 },
+    { round: 8, bonus: 0.004 },
+  ];
+  const FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER = 1.03;
+  const FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER = 1.02;
   const TIER_SCALING = [
     null,
     { hp: 1, atk: 1, speed: 1, ability: 1 },
@@ -1942,6 +1973,8 @@
   };
   const ATTACK_ANIMATION_SECONDS = 0.32;
   const ATTACK_PROJECTILE_SIZE = 58;
+  const ATTACK_PROJECTILE_SPIN_MIN = Math.PI * 1.7;
+  const ATTACK_PROJECTILE_SPIN_MAX = Math.PI * 2.7;
   const BATTLE_TIMEOUT_SECONDS = 150;
   const MOLD_START_SECONDS = 45;
   const MOLD_TICK_SECONDS = 1;
@@ -2071,8 +2104,13 @@
     },
     {
       level: 4,
-      upgradeCost: null,
+      upgradeCost: 140,
       rarityWeights: { common: 58, uncommon: 42, rare: 30, epic: 14 },
+    },
+    {
+      level: 5,
+      upgradeCost: null,
+      rarityWeights: { common: 46, uncommon: 40, rare: 34, epic: 18 },
     },
   ];
   const MAX_SHOP_LEVEL = SHOP_LEVELS.length;
@@ -2085,6 +2123,11 @@
   const ITEM_MERGE_GOLD_REWARD = {
     2: 6,
     3: 14,
+  };
+  const SHOP_TIER_COST_MULTIPLIERS = {
+    1: 1,
+    2: 2,
+    3: 4,
   };
   const ITEM_SCALABLE_PROPS = [
     "damageBonusPct",
@@ -3667,9 +3710,9 @@
       description: "A royal icing crest that gives adjacent allies shields and a short attack boost at battle start.",
     },
   ];
-  const TOPPING_SHOP_CHANCES = [0, 0.18, 0.2, 0.22, 0.24];
-  const DRINK_SHOP_CHANCES = [0, 0.15, 0.15, 0.15, 0.15];
-  const SHOP_SALE_CHANCES = [0, 0.08, 0.12, 0.16, 0.22];
+  const TOPPING_SHOP_CHANCES = [0, 0.18, 0.2, 0.22, 0.24, 0.25];
+  const DRINK_SHOP_CHANCES = [0, 0.15, 0.15, 0.15, 0.15, 0.15];
+  const SHOP_SALE_CHANCES = [0, 0.08, 0.12, 0.16, 0.22, 0.24];
   const ITEM_SPRITES = {
     sunny_side_egg: "assets/items/runtime/sunny_side_egg-evolved-v1.png?v=3",
     bean_brew: "assets/items/runtime/bean_brew-grand-v2-lv1.webp?v=1",
@@ -4090,14 +4133,14 @@
     },
   };
   const REALITY_ITEM_SPRITES = {
-    bean_brew: "assets/items/runtime/item-horror-power_grav_rail_battery_lv1_idle_SW_00.png?v=1",
+    bean_brew: "assets/items/runtime/item-horror-power_caffeine_reactor_lv1_idle_SW_00.png?v=1",
     berry_fizz: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv1_idle_SW_00.png?v=1",
-    garden_spritz: "assets/items/runtime/item-horror-power_neutron_arsenal_core_lv1_idle_SW_00.png?v=1",
-    citrus_tea: "assets/items/runtime/item-horror-power_obsidian_missile_forge_lv1_idle_SW_00.png?v=1",
-    chili_crunch_cola: "assets/items/runtime/item-horror-power_ignition_barrage_core_lv1_idle_SW_00.png?v=1",
-    pepper_broth: "assets/items/runtime/item-horror-power_pressure_bulwark_reactor_lv1_idle_SW_00.png?v=1",
+    garden_spritz: "assets/items/runtime/item-horror-power_cleanroom_repair_source_lv1_idle_SW_00.png?v=1",
+    citrus_tea: "assets/items/runtime/item-horror-power_citrus_brine_battery_lv1_idle_SW_00.png?v=1",
+    chili_crunch_cola: "assets/items/runtime/item-horror-power_thermal_overdrive_tank_lv1_idle_SW_00.png?v=1",
+    pepper_broth: "assets/items/runtime/item-horror-power_pepper_armor_station_lv1_idle_SW_00.png?v=1",
     abyssal_shake: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv1_idle_SW_00.png?v=1",
-    cream_soda_float: "assets/items/runtime/item-horror-power_cryo_guard_battery_lv1_idle_SW_00.png?v=1",
+    cream_soda_float: "assets/items/runtime/item-horror-power_foam_shield_station_lv1_idle_SW_00.png?v=1",
     tidepool_espresso: "assets/items/runtime/item-horror-power_tide_turbo_source_lv1_idle_SW_00.png?v=1",
     avocado_lassi: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv1_idle_SW_00.png?v=1",
     chili_brine_tonic: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv1_idle_SW_00.png?v=1",
@@ -4108,7 +4151,7 @@
     nori_pop_slush: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv1_idle_SW_00.png?v=1",
     harissa_morning_shot: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv1_idle_SW_00.png?v=1",
     pretzel_cream_soda: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv1_idle_SW_00.png?v=1",
-    boba_night_tea: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv1_idle_SW_00.png?v=1",
+    boba_night_tea: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv1_idle_SW_00.png?v=4",
     pico_lime_agua: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv1_idle_SW_00.png?v=1",
     night_bite_energy: "assets/items/runtime/item-horror-power_night_bite_warcell_lv1_idle_SW_00.png?v=1",
     sunny_side_egg: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv1.png?v=1",
@@ -4127,19 +4170,19 @@
     caramel_crown: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv1.png?v=1",
     whipped_cream_puff: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv1.png?v=1",
     basil_leaf: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv1.png?v=1",
-    honey_drizzle: "assets/items/runtime/adhesive_gel-horror-evolution-v1-lv1.png?v=1",
-    garlic_clove: "assets/items/runtime/repulsor_module-horror-evolution-v1-lv1.png?v=1",
-    rice_ball: "assets/items/runtime/impact_pellet-horror-evolution-v1-lv1.png?v=1",
+    honey_drizzle: "assets/items/runtime/adhesive_gel-horror-evolution-v3-lv1.png?v=1",
+    garlic_clove: "assets/items/runtime/repulsor_module-horror-evolution-v3-lv1.png?v=1",
+    rice_ball: "assets/items/runtime/impact_pellet-horror-evolution-v3-lv1.png?v=1",
     onion_ring: "assets/items/runtime/razor_ring-horror-evolution-v1-lv1.png?v=1",
     maple_leaf: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv1.png?v=1",
-    marshmallow_cube: "assets/items/runtime/soft_armor_cube-horror-evolution-v1-lv1.png?v=1",
+    marshmallow_cube: "assets/items/runtime/soft_armor_cube-horror-evolution-v3-lv1.png?v=1",
     cookie_crumb: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv1.png?v=1",
-    seaweed_wrap: "assets/items/runtime/tide_snare-horror-evolution-v1-lv1.png?v=1",
-    pretzel_stick: "assets/items/runtime/knotwire_spike-horror-evolution-v1-lv1.png?v=1",
-    waffle_cone: "assets/items/runtime/sabot_cone-horror-evolution-v1-lv1.png?v=1",
-    skewer: "assets/items/runtime/rail_spear-horror-evolution-v1-lv1.png?v=1",
-    hot_sauce_bottle: "assets/items/runtime/thermal_spray-horror-evolution-v1-lv1.png?v=1",
-    sugar_cube: "assets/items/runtime/stim_cube-horror-evolution-v1-lv1.png?v=1",
+    seaweed_wrap: "assets/items/runtime/tide_snare-horror-evolution-v3-lv1.png?v=1",
+    pretzel_stick: "assets/items/runtime/knotwire_spike-horror-evolution-v3-lv1.png?v=1",
+    waffle_cone: "assets/items/runtime/sabot_cone-horror-evolution-v3-lv1.png?v=1",
+    skewer: "assets/items/runtime/rail_spear-horror-evolution-v3-lv1.png?v=1",
+    hot_sauce_bottle: "assets/items/runtime/thermal_spray-horror-evolution-v3-lv1.png?v=1",
+    sugar_cube: "assets/items/runtime/stim_cube-horror-evolution-v3-lv1.png?v=1",
     mint_leaf: "assets/items/runtime/decon_patch-horror-evolution-v1-lv1.png?v=1",
     soda_pop: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv1.png?v=1",
     salt_shaker: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv1.png?v=1",
@@ -4176,36 +4219,36 @@
   };
   const REALITY_ITEM_TIER_SPRITES = {
     bean_brew: {
-      2: "assets/items/runtime/item-horror-power_grav_rail_battery_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_grav_rail_battery_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_caffeine_reactor_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_caffeine_reactor_lv3_idle_SW_00.png?v=1",
     },
     berry_fizz: {
       2: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv2_idle_SW_00.png?v=1",
       3: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv3_idle_SW_00.png?v=1",
     },
     garden_spritz: {
-      2: "assets/items/runtime/item-horror-power_neutron_arsenal_core_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_neutron_arsenal_core_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_cleanroom_repair_source_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_cleanroom_repair_source_lv3_idle_SW_00.png?v=1",
     },
     citrus_tea: {
-      2: "assets/items/runtime/item-horror-power_obsidian_missile_forge_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_obsidian_missile_forge_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_citrus_brine_battery_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_citrus_brine_battery_lv3_idle_SW_00.png?v=1",
     },
     chili_crunch_cola: {
-      2: "assets/items/runtime/item-horror-power_ignition_barrage_core_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_ignition_barrage_core_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_thermal_overdrive_tank_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_thermal_overdrive_tank_lv3_idle_SW_00.png?v=1",
     },
     pepper_broth: {
-      2: "assets/items/runtime/item-horror-power_pressure_bulwark_reactor_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_pressure_bulwark_reactor_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_pepper_armor_station_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_pepper_armor_station_lv3_idle_SW_00.png?v=1",
     },
     abyssal_shake: {
       2: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv2_idle_SW_00.png?v=1",
       3: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv3_idle_SW_00.png?v=1",
     },
     cream_soda_float: {
-      2: "assets/items/runtime/item-horror-power_cryo_guard_battery_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_cryo_guard_battery_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_foam_shield_station_lv2_idle_SW_00.png?v=1",
+      3: "assets/items/runtime/item-horror-power_foam_shield_station_lv3_idle_SW_00.png?v=1",
     },
     tidepool_espresso: {
       2: "assets/items/runtime/item-horror-power_tide_turbo_source_lv2_idle_SW_00.png?v=1",
@@ -4248,8 +4291,8 @@
       3: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv3_idle_SW_00.png?v=1",
     },
     boba_night_tea: {
-      2: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv3_idle_SW_00.png?v=1",
+      2: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv2_idle_SW_00.png?v=4",
+      3: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv3_idle_SW_00.png?v=4",
     },
     pico_lime_agua: {
       2: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv2_idle_SW_00.png?v=1",
@@ -4324,16 +4367,16 @@
       3: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv3.png?v=1",
     },
     honey_drizzle: {
-      2: "assets/items/runtime/adhesive_gel-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/adhesive_gel-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/adhesive_gel-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/adhesive_gel-horror-evolution-v3-lv3.png?v=1",
     },
     garlic_clove: {
-      2: "assets/items/runtime/repulsor_module-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/repulsor_module-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/repulsor_module-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/repulsor_module-horror-evolution-v3-lv3.png?v=1",
     },
     rice_ball: {
-      2: "assets/items/runtime/impact_pellet-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/impact_pellet-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/impact_pellet-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/impact_pellet-horror-evolution-v3-lv3.png?v=1",
     },
     onion_ring: {
       2: "assets/items/runtime/razor_ring-horror-evolution-v1-lv2.png?v=1",
@@ -4344,36 +4387,36 @@
       3: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv3.png?v=1",
     },
     marshmallow_cube: {
-      2: "assets/items/runtime/soft_armor_cube-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/soft_armor_cube-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/soft_armor_cube-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/soft_armor_cube-horror-evolution-v3-lv3.png?v=1",
     },
     cookie_crumb: {
       2: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv2.png?v=1",
       3: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv3.png?v=1",
     },
     seaweed_wrap: {
-      2: "assets/items/runtime/tide_snare-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/tide_snare-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/tide_snare-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/tide_snare-horror-evolution-v3-lv3.png?v=1",
     },
     pretzel_stick: {
-      2: "assets/items/runtime/knotwire_spike-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/knotwire_spike-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/knotwire_spike-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/knotwire_spike-horror-evolution-v3-lv3.png?v=1",
     },
     waffle_cone: {
-      2: "assets/items/runtime/sabot_cone-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/sabot_cone-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/sabot_cone-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/sabot_cone-horror-evolution-v3-lv3.png?v=1",
     },
     skewer: {
-      2: "assets/items/runtime/rail_spear-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/rail_spear-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/rail_spear-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/rail_spear-horror-evolution-v3-lv3.png?v=1",
     },
     hot_sauce_bottle: {
-      2: "assets/items/runtime/thermal_spray-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/thermal_spray-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/thermal_spray-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/thermal_spray-horror-evolution-v3-lv3.png?v=1",
     },
     sugar_cube: {
-      2: "assets/items/runtime/stim_cube-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/stim_cube-horror-evolution-v1-lv3.png?v=1",
+      2: "assets/items/runtime/stim_cube-horror-evolution-v3-lv2.png?v=1",
+      3: "assets/items/runtime/stim_cube-horror-evolution-v3-lv3.png?v=1",
     },
     mint_leaf: {
       2: "assets/items/runtime/decon_patch-horror-evolution-v1-lv2.png?v=1",
@@ -4509,44 +4552,44 @@
     },
   };
   const ATTACK_PARTICLE_SPRITES = {
-    toast_tortoise: "assets/particles/runtime/food-attack-particle_toast_shard_idle_SW_00.png",
+    toast_tortoise: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_toast_tortoise_static_idle_SW_00.png?v=1",
     sushi_seal: "assets/particles/runtime/food-attack-particle_sushi_bite_idle_SW_00.png",
-    taco_tiger: "assets/particles/runtime/food-attack-particle_taco_chip_idle_SW_00.png",
-    berry_bat: "assets/particles/runtime/food-attack-particle_grape_cluster_idle_SW_00.png",
-    noodle_newt: "assets/particles/runtime/food-attack-particle_noodle_toss_idle_SW_00.png",
+    taco_tiger: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_taco_tiger_static_idle_SW_00.png?v=1",
+    berry_bat: "assets/particles/runtime/food-attack-particle_grape_cluster_idle_SW_00.png?v=2",
+    noodle_newt: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_noodle_newt_static_idle_SW_00.png?v=1",
     pepper_prawn: "assets/particles/runtime/food-attack-particle-expanded_pepper_prawn_static_idle_SW_00.png",
     hot_chip_hamster: "assets/particles/runtime/food-attack-particle-dedicated_hot_chip_hamster_static_idle_SW_00.png",
-    pancake_penguin: "assets/particles/runtime/food-attack-particle-uncommon_pancake_syrup_bite_idle_SW_00.png",
+    pancake_penguin: "assets/particles/runtime/food-attack-particle-cozy-static_pancake_penguin_static_idle_SW_00.png?v=1",
     benedict_lobster: "assets/particles/runtime/food-attack-particle-dedicated_benedict_lobster_static_idle_SW_00.png",
-    pretzel_python: "assets/particles/runtime/food-attack-particle-uncommon_pretzel_twist_idle_SW_00.png",
-    curry_crab: "assets/particles/runtime/food-attack-particle-uncommon_curry_claw_splash_idle_SW_00.png",
-    popcorn_porcupine: "assets/particles/runtime/food-attack-particle-missing_popcorn_kernel_burst_idle_SW_00.png",
-    yogurt_yeti: "assets/particles/runtime/food-attack-particle-missing_yogurt_frost_splash_idle_SW_00.png",
+    pretzel_python: "assets/particles/runtime/food-attack-particle-cozy-static_pretzel_python_static_idle_SW_00.png?v=1",
+    curry_crab: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_curry_crab_static_idle_SW_00.png?v=1",
+    popcorn_porcupine: "assets/particles/runtime/food-attack-particle-cozy-static_popcorn_porcupine_static_idle_SW_00.png?v=1",
+    yogurt_yeti: "assets/particles/runtime/food-attack-particle-cozy-static_yogurt_yeti_static_idle_SW_00.png?v=1",
     bagel_beaver: "assets/particles/runtime/food-attack-particle-expanded_bagel_beaver_static_idle_SW_00.png",
     bao_bun_badger: "assets/particles/runtime/food-attack-particle-dedicated_bao_bun_badger_static_idle_SW_00.png",
-    donut_dodo: "assets/particles/runtime/food-attack-particle-missing_donut_glaze_spin_idle_SW_00.png",
-    kimchi_chameleon: "assets/particles/runtime/food-attack-particle-missing_kimchi_chili_splash_idle_SW_00.png",
-    waffle_walrus: "assets/particles/runtime/food-attack-particle-missing_waffle_syrup_shard_idle_SW_00.png",
-    dumpling_armadillo: "assets/particles/runtime/food-attack-particle-missing_dumpling_steam_puff_idle_SW_00.png",
-    lemon_meringue_lynx: "assets/particles/runtime/food-attack-particle-missing_lemon_meringue_spark_idle_SW_00.png",
+    donut_dodo: "assets/particles/runtime/food-attack-particle-cozy-static_donut_dodo_static_idle_SW_00.png?v=1",
+    kimchi_chameleon: "assets/particles/runtime/food-attack-particle-cozy-static_kimchi_chameleon_static_idle_SW_00.png?v=1",
+    waffle_walrus: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_waffle_walrus_static_idle_SW_00.png?v=1",
+    dumpling_armadillo: "assets/particles/runtime/food-attack-particle-cozy-static_dumpling_armadillo_static_idle_SW_00.png?v=1",
+    lemon_meringue_lynx: "assets/particles/runtime/food-attack-particle-cozy-static_lemon_meringue_lynx_static_idle_SW_00.png?v=1",
     shakshuka_shark: "assets/particles/runtime/food-attack-particle-expanded_shakshuka_shark_static_idle_SW_00.png",
-    saltwater_taffy_otter: "assets/particles/runtime/food-attack-particle-dedicated_saltwater_taffy_otter_static_idle_SW_00.png",
-    croissant_kraken: "assets/particles/runtime/food-attack-particle-missing_croissant_tentacle_crescent_idle_SW_00.png",
-    fortune_cookie_fox: "assets/particles/runtime/food-attack-particle-missing_fortune_cookie_shard_idle_SW_00.png",
+    saltwater_taffy_otter: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_saltwater_taffy_otter_static_idle_SW_00.png?v=1",
+    croissant_kraken: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_croissant_kraken_static_idle_SW_00.png?v=1",
+    fortune_cookie_fox: "assets/particles/runtime/food-attack-particle-cozy-static_fortune_cookie_fox_static_idle_SW_00.png?v=1",
     mochi_mammoth: "assets/particles/runtime/food-attack-particle-missing_mochi_puff_idle_SW_00.png",
-    gingerbread_golem: "assets/particles/runtime/food-attack-particle-missing_gingerbread_crumble_idle_SW_00.png",
-    boba_basilisk: "assets/particles/runtime/food-attack-particle-missing_boba_pearl_burst_idle_SW_00.png",
+    gingerbread_golem: "assets/particles/runtime/food-attack-particle-cozy-static_gingerbread_golem_static_idle_SW_00.png?v=1",
+    boba_basilisk: "assets/particles/runtime/food-attack-particle-cozy-static_boba_basilisk_static_idle_SW_00.png?v=1",
     iceberg_oyster: "assets/particles/runtime/food-attack-particle-expanded_iceberg_oyster_static_idle_SW_00.png",
     churro_cheetah: "assets/particles/runtime/food-attack-particle-dedicated_churro_cheetah_static_idle_SW_00.png",
     granola_goat: "assets/particles/runtime/food-attack-particle-dedicated_granola_goat_static_idle_SW_00.png",
     breakfast_burrito_boar: "assets/particles/runtime/food-attack-particle-dedicated_breakfast_burrito_boar_static_idle_SW_00.png",
-    caesar_salamander: "assets/particles/runtime/food-attack-particle-fresh-garden_caesar_salamander_static_idle_SW_00.png",
-    cucumber_cobra: "assets/particles/runtime/food-attack-particle-fresh-garden_cucumber_cobra_static_idle_SW_00.png",
+    caesar_salamander: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_caesar_salamander_static_idle_SW_00.png?v=1",
+    cucumber_cobra: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_cucumber_cobra_static_idle_SW_00.png?v=1",
     avocado_axolotl: "assets/particles/runtime/food-attack-particle-fresh-garden_avocado_axolotl_static_idle_SW_00.png",
     herb_hare: "assets/particles/runtime/food-attack-particle-fresh-garden_herb_hare_static_idle_SW_00.png",
-    green_juice_goose: "assets/particles/runtime/food-attack-particle-green-juice-goose_static_idle_SW_00.png",
+    green_juice_goose: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_green_juice_goose_static_idle_SW_00.png?v=1",
     caprese_capybara: "assets/particles/runtime/food-attack-particle-fresh-garden_caprese_capybara_static_idle_SW_00.png",
-    vinaigrette_viper: "assets/particles/runtime/food-attack-particle-fresh-garden_vinaigrette_viper_static_idle_SW_00.png",
+    vinaigrette_viper: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_vinaigrette_viper_static_idle_SW_00.png?v=1",
     kelp_koala: "assets/particles/runtime/food-attack-particle-gap-fillers_kelp_koala_static_idle_SW_00.png",
     melon_mint_mantis: "assets/particles/runtime/food-attack-particle-gap-fillers_melon_mint_mantis_static_idle_SW_00.png",
     coconut_shrimp_sheep: "assets/particles/runtime/food-attack-particle-gap-fillers_coconut_shrimp_sheep_static_idle_SW_00.png",
@@ -4555,49 +4598,49 @@
     [GIRAFFE_BOSS_TYPE_ID]: "assets/particles/runtime/banana-split-giraffe-boss-ice-cream-sticker-particle-v2.png?v=1",
   };
   const REALITY_ATTACK_PARTICLE_SPRITES = {
-    toast_tortoise: "assets/particles/runtime/war-machine-toast-tortoise-static-rail-discharge-v3.png?v=1",
+    toast_tortoise: "assets/particles/runtime/war-machine-toast-tortoise-siege-discharge-core-v4.png?v=1",
     sushi_seal: "assets/particles/runtime/war-machine-sushi-seal-sonar-charge-v2.png?v=1",
-    taco_tiger: "assets/particles/runtime/war-machine-taco-tiger-static-breacher-charge-v2.png?v=1",
+    taco_tiger: "assets/particles/runtime/war-machine-taco-tiger-plasma-breacher-cell-v3.png?v=1",
     berry_bat: "assets/particles/runtime/war-machine-berry-bat-nightwing-pulse-mine-v1.png?v=1",
-    noodle_newt: "assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v1.png?v=1",
+    noodle_newt: "assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v3.png?v=3",
     pancake_penguin: "assets/particles/runtime/war-machine-pancake-penguin-aegis-charge-v1.png?v=1",
     pretzel_python: "assets/particles/runtime/war-machine-pretzel-python-coil-charge-v1.png?v=1",
-    popcorn_porcupine: "assets/particles/runtime/war-machine-popcorn-porcupine-shrapnel-mine-v1.png?v=1",
+    popcorn_porcupine: "assets/particles/runtime/war-machine-popcorn-porcupine-neon-shrapnel-mine-v2.png?v=2",
     yogurt_yeti: "assets/particles/runtime/war-machine-yogurt-yeti-cryo-capacitor-v2.png?v=1",
     bagel_beaver: "assets/particles/runtime/war-machine-bagel-beaver-rivet-mine-v2.png?v=1",
     bao_bun_badger: "assets/particles/runtime/war-machine-bao-bun-badger-pressure-mine-v1.png?v=1",
     donut_dodo: "assets/particles/runtime/war-machine-donut-dodo-scrap-charge-v2.png?v=1",
     kimchi_chameleon: "assets/particles/runtime/war-machine-kimchi-chameleon-camo-mine-v1.png?v=1",
-    waffle_walrus: "assets/particles/runtime/war-machine-waffle-walrus-lattice-charge-v2.png?v=1",
+    waffle_walrus: "assets/particles/runtime/war-machine-waffle-walrus-lattice-charge-v3.png?v=3",
     dumpling_armadillo: "assets/particles/runtime/war-machine-dumpling-armadillo-pressure-canister-v3.png?v=1",
     lemon_meringue_lynx: "assets/particles/runtime/war-machine-lemon-meringue-lynx-acid-cleanse-charge-v3.png?v=1",
-    shakshuka_shark: "assets/particles/runtime/war-machine-shakshuka-shark-thermal-brine-charge-v3.png?v=1",
+    shakshuka_shark: "assets/particles/runtime/war-machine-shakshuka-shark-thermal-brine-discharge-v4.png?v=1",
     saltwater_taffy_otter: "assets/particles/runtime/war-machine-saltwater-taffy-otter-bind-snare-v3.png?v=1",
     croissant_kraken: "assets/particles/runtime/war-machine-croissant-kraken-crescent-clamp-v3.png?v=1",
     fortune_cookie_fox: "assets/particles/runtime/war-machine-fortune-cookie-fox-oracle-core-v3.png?v=1",
-    mochi_mammoth: "assets/particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v3.png?v=1",
+    mochi_mammoth: "assets/particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v4.png?v=4",
     gingerbread_golem: "assets/particles/runtime/war-machine-gingerbread-golem-decoy-core-v3.png?v=1",
-    boba_basilisk: "assets/particles/runtime/war-machine-boba-basilisk-pearl-stun-mine-v3.png?v=1",
-    iceberg_oyster: "assets/particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v3.png?v=1",
-    herb_hare: "assets/particles/runtime/war-machine-herb-hare-lime-discharge-mine-v1.png?v=1",
-    green_juice_goose: "assets/particles/runtime/war-machine-green-juice-goose-plasma-battery-mine-v1.png?v=1",
+    boba_basilisk: "assets/particles/runtime/war-machine-boba-basilisk-pearl-stun-mine-v5.png?v=1",
+    iceberg_oyster: "assets/particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v4.png?v=1",
+    herb_hare: "assets/particles/runtime/war-machine-herb-hare-lime-discharge-mine-v2.png?v=1",
+    green_juice_goose: "assets/particles/runtime/war-machine-green-juice-goose-plasma-battery-mine-v2.png?v=2",
     caprese_capybara: "assets/particles/runtime/war-machine-caprese-capybara-repair-well-discharge-v1.png?v=1",
     vinaigrette_viper: "assets/particles/runtime/war-machine-vinaigrette-viper-corrosive-sprayer-mine-v1.png?v=1",
-    kelp_koala: "assets/particles/runtime/war-machine-kelp-koala-turbo-cooler-powercell-v1.png?v=1",
+    kelp_koala: "assets/particles/runtime/war-machine-kelp-koala-tide-lock-mine-v2.png?v=1",
     melon_mint_mantis: "assets/particles/runtime/war-machine-melon-mint-mantis-blade-array-charge-v1.png?v=1",
     coconut_shrimp_sheep: "assets/particles/runtime/war-machine-coconut-shrimp-sheep-pressure-canister-mine-v1.png?v=1",
     crab_cake_caterpillar: "assets/particles/runtime/war-machine-crab-cake-caterpillar-shellbreaker-rack-mine-v1.png?v=1",
     pico_de_gallo_gecko: "assets/particles/runtime/war-machine-pico-de-gallo-gecko-sensor-repair-mine-v1.png?v=1",
     pepper_prawn: "assets/particles/runtime/war-machine-pepper-prawn-thermal-torpedo-cell-v1.png?v=1",
-    hot_chip_hamster: "assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v1.png?v=1",
-    benedict_lobster: "assets/particles/runtime/war-machine-benedict-lobster-claw-charge-pod-v1.png?v=1",
+    hot_chip_hamster: "assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v3.png?v=3",
+    benedict_lobster: "assets/particles/runtime/war-machine-benedict-lobster-plasma-siege-cell-v2.png?v=1",
     curry_crab: "assets/particles/runtime/war-machine-curry-crab-thermal-core-mine-v1.png?v=1",
-    churro_cheetah: "assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v1.png?v=1",
+    churro_cheetah: "assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v2.png?v=3",
     granola_goat: "assets/particles/runtime/war-machine-granola-goat-seed-armor-mine-v1.png?v=1",
-    breakfast_burrito_boar: "assets/particles/runtime/war-machine-breakfast-burrito-boar-static-tusk-mine-v1.png?v=1",
-    caesar_salamander: "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v1.png?v=1",
-    cucumber_cobra: "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v1.png?v=1",
-    avocado_axolotl: "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v1.png?v=1",
+    breakfast_burrito_boar: "assets/particles/runtime/war-machine-breakfast-burrito-boar-static-tusk-mine-v2.png?v=2",
+    caesar_salamander: "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v2.png?v=2",
+    cucumber_cobra: "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v2.png?v=2",
+    avocado_axolotl: "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v2.png?v=2",
     [GIRAFFE_BOSS_TYPE_ID]: "assets/particles/runtime/banana-split-giraffe-boss-ice-cream-sticker-particle-v2.png?v=1",
     [FINAL_BOSS_TYPE_ID]: "assets/particles/runtime/cyber_brain_final_boss-attack-particle-v1.png?v=1",
     [FINAL_BOSS_MINION_TYPE_ID]: "assets/particles/runtime/brainstem_wire_minion-attack-particle-v1.png?v=1",
@@ -4627,14 +4670,14 @@
     night_bite_energy: "assets/particles/runtime/drink-buff-throwable_night_bite_energy_idle_SW_00.png?v=3",
   };
   const REALITY_DRINK_THROWABLE_SPRITES = {
-    bean_brew: "assets/particles/runtime/horror-power-particle_grav_rail_battery_static_idle_SW_00.png?v=1",
+    bean_brew: "assets/particles/runtime/horror-power-particle_caffeine_reactor_static_idle_SW_00.png?v=1",
     berry_fizz: "assets/particles/runtime/horror-power-particle_ion_bastion_reactor_static_idle_SW_00.png?v=1",
-    garden_spritz: "assets/particles/runtime/horror-power-particle_neutron_arsenal_core_static_idle_SW_00.png?v=1",
-    citrus_tea: "assets/particles/runtime/horror-power-particle_obsidian_missile_forge_static_idle_SW_00.png?v=1",
-    chili_crunch_cola: "assets/particles/runtime/horror-power-particle_ignition_barrage_core_static_idle_SW_00.png?v=1",
-    pepper_broth: "assets/particles/runtime/horror-power-particle_pressure_bulwark_reactor_static_idle_SW_00.png?v=1",
+    garden_spritz: "assets/particles/runtime/horror-power-particle_cleanroom_repair_source_static_idle_SW_00.png?v=1",
+    citrus_tea: "assets/particles/runtime/horror-power-particle_citrus_brine_battery_static_idle_SW_00.png?v=1",
+    chili_crunch_cola: "assets/particles/runtime/horror-power-particle_thermal_overdrive_tank_static_idle_SW_00.png?v=1",
+    pepper_broth: "assets/particles/runtime/horror-power-particle_pepper_armor_station_static_idle_SW_00.png?v=1",
     abyssal_shake: "assets/particles/runtime/horror-power-particle_abyssal_tide_singularity_static_idle_SW_00.png?v=1",
-    cream_soda_float: "assets/particles/runtime/horror-power-particle_cryo_guard_battery_static_idle_SW_00.png?v=1",
+    cream_soda_float: "assets/particles/runtime/horror-power-particle_foam_shield_station_static_idle_SW_00.png?v=1",
     tidepool_espresso: "assets/particles/runtime/horror-power-particle_tide_turbo_source_static_idle_SW_00.png?v=1",
     avocado_lassi: "assets/particles/runtime/horror-power-particle_pit_repair_reservoir_static_idle_SW_00.png?v=1",
     chili_brine_tonic: "assets/particles/runtime/horror-power-particle_thermal_brine_reactor_static_idle_SW_00.png?v=1",
@@ -4645,7 +4688,7 @@
     nori_pop_slush: "assets/particles/runtime/horror-power-particle_nori_pop_powercell_static_idle_SW_00.png?v=1",
     harissa_morning_shot: "assets/particles/runtime/horror-power-particle_harissa_brine_ampoule_static_idle_SW_00.png?v=1",
     pretzel_cream_soda: "assets/particles/runtime/horror-power-particle_pretzel_shield_reservoir_static_idle_SW_00.png?v=1",
-    boba_night_tea: "assets/particles/runtime/horror-power-particle_boba_night_overdrive_static_idle_SW_00.png?v=1",
+    boba_night_tea: "assets/particles/runtime/horror-power-particle_boba_night_overdrive_static_idle_SW_00.png?v=3",
     pico_lime_agua: "assets/particles/runtime/horror-power-particle_pico_lime_repair_well_static_idle_SW_00.png?v=1",
     night_bite_energy: "assets/particles/runtime/horror-power-particle_night_bite_warcell_static_idle_SW_00.png?v=1",
   };
@@ -4683,6 +4726,7 @@
     postCombatBattle: null,
     arenaId: randomArenaId(),
     keepArenaNextRound: false,
+    arenaHoldNotice: null,
     arenaScout: null,
     arenaPrepBuff: null,
     enemyPreview: null,
@@ -4699,6 +4743,8 @@
     realityBroken: false,
     realityOverride: initialRealityOverride(),
     realityBreakTimer: 0,
+    postGiraffeHorrorTransition: null,
+    shopReturnStaticTransition: null,
     rebootTransition: null,
     finalVictoryTransition: null,
     victoryCutscene: null,
@@ -5037,18 +5083,18 @@
       4: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_market-bowl-basilisk_idle_SW_00.png",
     },
     [GIRAFFE_BOSS_TYPE_ID]: {
-      1: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/banana-split-giraffe-boss-v1/banana-split-giraffe-boss_banana-split-giraffe-boss_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
     },
   };
   const REALITY_RUNTIME_SPRITES = {
     toast_tortoise: {
-      1: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-toast-tortoise-v3/toast_tortoise-bulwark-siege-tank-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk4_idle_SW_00.png?v=1",
     },
     sushi_seal: {
       1: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk1_idle_SW_00.png?v=1",
@@ -5057,10 +5103,10 @@
       4: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk4_idle_SW_00.png?v=1",
     },
     taco_tiger: {
-      1: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-taco-tiger-v2/taco_tiger-shellbreaker-assault-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk4_idle_SW_00.png?v=1",
     },
     berry_bat: {
       1: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk1_idle_SW_00.png?v=1",
@@ -5069,10 +5115,10 @@
       4: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk4_idle_SW_00.png?v=1",
     },
     noodle_newt: {
-      1: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-noodle-newt-v1/noodle_newt-serpent-medic-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk1_idle_SW_00.png?v=3",
+      2: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk2_idle_SW_00.png?v=3",
+      3: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk3_idle_SW_00.png?v=3",
+      4: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk4_idle_SW_00.png?v=3",
     },
     pancake_penguin: {
       1: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk1_idle_SW_00.png?v=1",
@@ -5087,10 +5133,10 @@
       4: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk4_idle_SW_00.png?v=1",
     },
     popcorn_porcupine: {
-      1: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-popcorn-porcupine-v1/popcorn_porcupine-shrapnel-quill-battery-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk1_idle_SW_00.png?v=2",
+      2: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk2_idle_SW_00.png?v=2",
+      3: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk3_idle_SW_00.png?v=2",
+      4: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk4_idle_SW_00.png?v=2",
     },
     yogurt_yeti: {
       1: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk1_idle_SW_00.png?v=1",
@@ -5123,10 +5169,10 @@
       4: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk4_idle_SW_00.png?v=1",
     },
     waffle_walrus: {
-      1: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-waffle-walrus-v2/waffle_walrus-syrup-tusk-siege-engine-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk1_idle_SW_00.png?v=3",
+      2: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk2_idle_SW_00.png?v=3",
+      3: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk3_idle_SW_00.png?v=3",
+      4: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk4_idle_SW_00.png?v=3",
     },
     dumpling_armadillo: {
       1: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk1_idle_SW_00.png?v=1",
@@ -5141,10 +5187,10 @@
       4: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk4_idle_SW_00.png?v=1",
     },
     shakshuka_shark: {
-      1: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-shakshuka-shark-v3/shakshuka_shark-thermal-megalodon-subtank-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk4_idle_SW_00.png?v=1",
     },
     saltwater_taffy_otter: {
       1: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk1_idle_SW_00.png?v=1",
@@ -5165,10 +5211,10 @@
       4: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk4_idle_SW_00.png?v=1",
     },
     mochi_mammoth: {
-      1: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-mochi-mammoth-v3/mochi_mammoth-festival-colossus-walker-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk1_idle_SW_00.png?v=4",
+      2: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk2_idle_SW_00.png?v=4",
+      3: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk3_idle_SW_00.png?v=4",
+      4: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk4_idle_SW_00.png?v=4",
     },
     gingerbread_golem: {
       1: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk1_idle_SW_00.png?v=1",
@@ -5177,28 +5223,28 @@
       4: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk4_idle_SW_00.png?v=1",
     },
     boba_basilisk: {
-      1: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-boba-basilisk-v3/boba_basilisk-pearl-gorgon-artillery-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk4_idle_SW_00.png?v=1",
     },
     iceberg_oyster: {
-      1: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-iceberg-oyster-v3/iceberg_oyster-abyssal-lock-core-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk4_idle_SW_00.png?v=1",
     },
     herb_hare: {
-      1: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-herb-hare-v1/herb_hare-greenhouse-jumper-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk4_idle_SW_00.png?v=1",
     },
     green_juice_goose: {
-      1: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-green-juice-goose-v1/green_juice_goose-garden-volley-gunship-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk1_idle_SW_00.png?v=2",
+      2: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk2_idle_SW_00.png?v=2",
+      3: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk3_idle_SW_00.png?v=2",
+      4: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk4_idle_SW_00.png?v=2",
     },
     caprese_capybara: {
       1: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk1_idle_SW_00.png?v=1",
@@ -5213,10 +5259,10 @@
       4: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk4_idle_SW_00.png?v=1",
     },
     kelp_koala: {
-      1: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-kelp-koala-v1/kelp_koala-tide-grove-lock-drone-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk4_idle_SW_00.png?v=1",
     },
     melon_mint_mantis: {
       1: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk1_idle_SW_00.png?v=1",
@@ -5249,16 +5295,16 @@
       4: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk4_idle_SW_00.png?v=1",
     },
     hot_chip_hamster: {
-      1: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-hot-chip-hamster-v1/hot_chip_hamster-kettlefire-wheel-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk1_idle_SW_00.png?v=3",
+      2: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk2_idle_SW_00.png?v=3",
+      3: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk3_idle_SW_00.png?v=3",
+      4: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk4_idle_SW_00.png?v=3",
     },
     benedict_lobster: {
-      1: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-benedict-lobster-v1/benedict_lobster-brunch-breaker-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk4_idle_SW_00.png?v=1",
     },
     curry_crab: {
       1: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk1_idle_SW_00.png?v=1",
@@ -5267,10 +5313,10 @@
       4: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk4_idle_SW_00.png?v=1",
     },
     churro_cheetah: {
-      1: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-churro-cheetah-v1/churro_cheetah-dulce-striker-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk1_idle_SW_00.png?v=3",
+      2: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk2_idle_SW_00.png?v=3",
+      3: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk3_idle_SW_00.png?v=3",
+      4: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk4_idle_SW_00.png?v=3",
     },
     granola_goat: {
       1: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk1_idle_SW_00.png?v=1",
@@ -5279,28 +5325,28 @@
       4: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk4_idle_SW_00.png?v=1",
     },
     breakfast_burrito_boar: {
-      1: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v1/breakfast_burrito_boar-brunch-cart-dozer-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk1_idle_SW_00.png?v=2",
+      2: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk2_idle_SW_00.png?v=2",
+      3: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk3_idle_SW_00.png?v=2",
+      4: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk4_idle_SW_00.png?v=2",
     },
     caesar_salamander: {
-      1: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-caesar-salamander-v1/caesar_salamander-sovereign-support-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk1_idle_SW_00.png?v=2",
+      2: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk2_idle_SW_00.png?v=2",
+      3: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk3_idle_SW_00.png?v=2",
+      4: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk4_idle_SW_00.png?v=2",
     },
     cucumber_cobra: {
-      1: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-cucumber-cobra-v1/cucumber_cobra-garden-coil-control-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk1_idle_SW_00.png?v=2",
+      2: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk2_idle_SW_00.png?v=2",
+      3: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk3_idle_SW_00.png?v=2",
+      4: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk4_idle_SW_00.png?v=2",
     },
     avocado_axolotl: {
-      1: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-avocado-axolotl-v1/avocado_axolotl-orchard-oracle-support-rig-mk4_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk1_idle_SW_00.png?v=2",
+      2: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk2_idle_SW_00.png?v=2",
+      3: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk3_idle_SW_00.png?v=2",
+      4: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk4_idle_SW_00.png?v=2",
     },
     [GIRAFFE_BOSS_TYPE_ID]: {
       1: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
@@ -5315,11 +5361,11 @@
       4: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
     },
     [FINAL_BOSS_MINION_TYPE_ID]: {
-      1: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-4_idle_SW_00.png?v=1",
-      5: "assets/sprites/runtime/brainstem-wire-minions-v1/brainstem_wire_minion-5_idle_SW_00.png?v=1",
+      1: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-1_idle_SW_00.png?v=1",
+      2: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-2_idle_SW_00.png?v=1",
+      3: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-3_idle_SW_00.png?v=1",
+      4: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-4_idle_SW_00.png?v=1",
+      5: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-5_idle_SW_00.png?v=1",
     },
   };
   const DEFEAT_STILL_SPRITES = {
@@ -5369,57 +5415,57 @@
     [GIRAFFE_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
   };
   const REALITY_DEFEAT_STILL_SPRITES = {
-    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v3.png?v=1",
+    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v4.png?v=1",
     sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-war-machine-defeat-v2.png?v=1",
-    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-war-machine-defeat-v2.png?v=1",
+    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-war-machine-defeat-v3.png?v=1",
     berry_bat: "assets/sprites/runtime/defeat-stills/berry-bat-war-machine-defeat-v1.png?v=1",
-    noodle_newt: "assets/sprites/runtime/defeat-stills/noodle-newt-war-machine-defeat-v1.png?v=1",
+    noodle_newt: "assets/sprites/runtime/defeat-stills/noodle-newt-war-machine-defeat-v3.png?v=3",
     pancake_penguin: "assets/sprites/runtime/defeat-stills/pancake-penguin-war-machine-defeat-v1.png?v=1",
     pretzel_python: "assets/sprites/runtime/defeat-stills/pretzel-python-war-machine-defeat-v1.png?v=1",
-    popcorn_porcupine: "assets/sprites/runtime/defeat-stills/popcorn-porcupine-war-machine-defeat-v1.png?v=1",
+    popcorn_porcupine: "assets/sprites/runtime/defeat-stills/popcorn-porcupine-war-machine-defeat-v2.png?v=2",
     yogurt_yeti: "assets/sprites/runtime/defeat-stills/yogurt-yeti-war-machine-defeat-v2.png?v=1",
     bagel_beaver: "assets/sprites/runtime/defeat-stills/bagel-beaver-war-machine-defeat-v2.png?v=1",
     bao_bun_badger: "assets/sprites/runtime/defeat-stills/bao-bun-badger-war-machine-defeat-v1.png?v=1",
     donut_dodo: "assets/sprites/runtime/defeat-stills/donut-dodo-war-machine-defeat-v2.png?v=1",
     kimchi_chameleon: "assets/sprites/runtime/defeat-stills/kimchi-chameleon-war-machine-defeat-v1.png?v=1",
-    waffle_walrus: "assets/sprites/runtime/defeat-stills/waffle-walrus-war-machine-defeat-v2.png?v=1",
+    waffle_walrus: "assets/sprites/runtime/defeat-stills/waffle-walrus-war-machine-defeat-v3.png?v=3",
     dumpling_armadillo: "assets/sprites/runtime/defeat-stills/dumpling-armadillo-war-machine-defeat-v3.png?v=1",
     lemon_meringue_lynx: "assets/sprites/runtime/defeat-stills/lemon-meringue-lynx-war-machine-defeat-v3.png?v=1",
-    shakshuka_shark: "assets/sprites/runtime/defeat-stills/shakshuka-shark-war-machine-defeat-v3.png?v=1",
+    shakshuka_shark: "assets/sprites/runtime/defeat-stills/shakshuka-shark-war-machine-defeat-v4.png?v=1",
     saltwater_taffy_otter: "assets/sprites/runtime/defeat-stills/saltwater-taffy-otter-war-machine-defeat-v3.png?v=1",
     croissant_kraken: "assets/sprites/runtime/defeat-stills/croissant-kraken-war-machine-defeat-v3.png?v=1",
     fortune_cookie_fox: "assets/sprites/runtime/defeat-stills/fortune-cookie-fox-war-machine-defeat-v3.png?v=1",
-    mochi_mammoth: "assets/sprites/runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v3.png?v=1",
+    mochi_mammoth: "assets/sprites/runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v4.png?v=4",
     gingerbread_golem: "assets/sprites/runtime/defeat-stills/gingerbread-golem-war-machine-defeat-v3.png?v=1",
-    boba_basilisk: "assets/sprites/runtime/defeat-stills/boba-basilisk-war-machine-defeat-v3.png?v=1",
-    iceberg_oyster: "assets/sprites/runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v3.png?v=1",
-    herb_hare: "assets/sprites/runtime/defeat-stills/herb-hare-war-machine-defeat-v1.png?v=1",
-    green_juice_goose: "assets/sprites/runtime/defeat-stills/green-juice-goose-war-machine-defeat-v1.png?v=1",
+    boba_basilisk: "assets/sprites/runtime/defeat-stills/boba-basilisk-war-machine-defeat-v5.png?v=1",
+    iceberg_oyster: "assets/sprites/runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v4.png?v=1",
+    herb_hare: "assets/sprites/runtime/defeat-stills/herb-hare-war-machine-defeat-v2.png?v=1",
+    green_juice_goose: "assets/sprites/runtime/defeat-stills/green-juice-goose-war-machine-defeat-v2.png?v=2",
     caprese_capybara: "assets/sprites/runtime/defeat-stills/caprese-capybara-war-machine-defeat-v1.png?v=1",
     vinaigrette_viper: "assets/sprites/runtime/defeat-stills/vinaigrette-viper-war-machine-defeat-v1.png?v=1",
-    kelp_koala: "assets/sprites/runtime/defeat-stills/kelp-koala-war-machine-defeat-v1.png?v=1",
+    kelp_koala: "assets/sprites/runtime/defeat-stills/kelp-koala-war-machine-defeat-v2.png?v=1",
     melon_mint_mantis: "assets/sprites/runtime/defeat-stills/melon-mint-mantis-war-machine-defeat-v1.png?v=1",
     coconut_shrimp_sheep: "assets/sprites/runtime/defeat-stills/coconut-shrimp-sheep-war-machine-defeat-v1.png?v=1",
     crab_cake_caterpillar: "assets/sprites/runtime/defeat-stills/crab-cake-caterpillar-war-machine-defeat-v1.png?v=1",
     pico_de_gallo_gecko: "assets/sprites/runtime/defeat-stills/pico-de-gallo-gecko-war-machine-defeat-v1.png?v=1",
     pepper_prawn: "assets/sprites/runtime/defeat-stills/pepper-prawn-war-machine-defeat-v1.png?v=1",
-    hot_chip_hamster: "assets/sprites/runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v1.png?v=1",
-    benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v1.png?v=1",
+    hot_chip_hamster: "assets/sprites/runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v3.png?v=3",
+    benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v2.png?v=1",
     curry_crab: "assets/sprites/runtime/defeat-stills/curry-crab-war-machine-defeat-v1.png?v=1",
-    churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v1.png?v=1",
+    churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v2.png?v=3",
     [GIRAFFE_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
     granola_goat: "assets/sprites/runtime/defeat-stills/granola-goat-war-machine-defeat-v1.png?v=1",
-    breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v1.png?v=1",
-    caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v1.png?v=1",
-    cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v1.png?v=1",
-    avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v1.png?v=1",
+    breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v2.png?v=2",
+    caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v2.png?v=2",
+    cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v2.png?v=2",
+    avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v2.png?v=2",
     [FINAL_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/cyber-brain-final-boss-defeat-v1.png?v=1",
     [FINAL_BOSS_MINION_TYPE_ID]: {
-      1: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier1.png?v=1",
-      2: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier2.png?v=1",
-      3: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier3.png?v=1",
-      4: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier4.png?v=1",
-      5: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v1-tier5.png?v=1",
+      1: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier1.png?v=1",
+      2: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier2.png?v=1",
+      3: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier3.png?v=1",
+      4: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier4.png?v=1",
+      5: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier5.png?v=1",
     },
   };
   let unitSeq = 1;
@@ -5490,8 +5536,17 @@
     return item ? { ...item } : null;
   }
 
-  function entryCost(entry) {
+  function baseEntryCost(entry) {
     return isItem(entry) ? entry.price || ECONOMY.itemCost : ECONOMY.unitCost;
+  }
+
+  function shopTierCostMultiplier(entry) {
+    const tier = isItem(entry) ? itemTier(entry?.tier) : Math.max(1, entry?.tier || 1);
+    return SHOP_TIER_COST_MULTIPLIERS[Math.min(3, tier)] || 1;
+  }
+
+  function entryCost(entry) {
+    return baseEntryCost(entry) * shopTierCostMultiplier(entry);
   }
 
   function shopSlotOnSale(index) {
@@ -5949,8 +6004,11 @@
   function makeFinalBossUnit(typeId, options = {}) {
     const boss = typeId === FINAL_BOSS_TYPE_ID;
     const tier = options.tier || (boss ? 4 : 2);
-    const maxHp = boss ? 2100 : Math.round(340 + tier * 70);
-    const atk = boss ? 34 : Math.round(10 + tier * 3);
+    const hpMultiplier = options.hpMultiplier || 1;
+    const atkMultiplier = options.atkMultiplier || 1;
+    const maxHp = Math.round((boss ? 2100 : Math.round(340 + tier * 70)) * hpMultiplier);
+    const atk = Math.max(1, Math.round((boss ? 34 : Math.round(10 + tier * 3)) * atkMultiplier));
+    const abilityPower = Math.max(1, Math.round((boss ? 38 : Math.round(10 + tier * 2)) * atkMultiplier));
     return {
       kind: "unit",
       uid: unitSeq++,
@@ -5972,7 +6030,7 @@
       maxHp,
       baseAtk: atk,
       atk,
-      abilityPower: boss ? 38 : Math.round(10 + tier * 2),
+      abilityPower,
       speed: boss ? 1.36 : Math.max(0.74, 1.16 - tier * 0.04),
       cooldown: boss ? 0.42 : 0.24 + Math.random() * 0.2,
       targetUid: null,
@@ -6028,7 +6086,7 @@
       dead: false,
       enemySlot: plan.bossSlot ?? GIRAFFE_BOSS_SLOT,
       battleSpriteScale: 1.7,
-      battleSpriteOffsetY: 22,
+      battleSpriteOffsetY: -24,
       defeatStillScale: 1.45,
       giraffeBossUnit: true,
       glitchToRobot: true,
@@ -6069,6 +6127,21 @@
 
   function currentItemShopChance() {
     return Math.min(0.95, currentDrinkShopChance() + currentToppingShopChance());
+  }
+
+  function currentShopEntryTierChances(level = state.shopLevel) {
+    const completedUpgrades = Math.max(0, (level || 1) - 1);
+    if (completedUpgrades >= 4) return { tier2: 0.25, tier3: 0.1 };
+    if (completedUpgrades >= 2) return { tier2: 0.1, tier3: 0 };
+    return { tier2: 0, tier3: 0 };
+  }
+
+  function rollShopEntryTier(level = state.shopLevel) {
+    const chances = currentShopEntryTierChances(level);
+    const roll = Math.random();
+    if (roll < chances.tier3) return 3;
+    if (roll < chances.tier3 + chances.tier2) return 2;
+    return 1;
   }
 
   function currentShopkeeperSrc() {
@@ -6113,6 +6186,18 @@
     return realityBroken() ? SHOPKEEPER_DISPLAY.realityCodexButton : SHOPKEEPER_DISPLAY.codexButton;
   }
 
+  function codexMenuSignBleedPhase() {
+    return realityBroken() ? illusionBleedPhase(4, 0.16) : { active: false, phase: "idle", progress: 0 };
+  }
+
+  function shopStallBleedPhase() {
+    return realityBroken() ? illusionBleedPhase(3, 0.16) : { active: false, phase: "idle", progress: 0 };
+  }
+
+  function shopLockBleedPhase(index = 0) {
+    return realityBroken() ? illusionBleedPhase(940 + (index || 0), 0.12) : { active: false, phase: "idle", progress: 0 };
+  }
+
   function currentBattleFieldBgSrc() {
     return realityBroken() ? REALITY_BATTLE_FIELD_BG_SRC : BATTLE_FIELD_BG_SRC;
   }
@@ -6129,8 +6214,8 @@
     return realityBroken() ? REALITY_TOPPING_STORAGE_SLOT_SRC : TOPPING_CUTTING_BOARD_SLOT_SRC;
   }
 
-  function currentStatusBoardSrc(kind) {
-    if (!realityBroken()) {
+  function currentStatusBoardSrc(kind, options = {}) {
+    if (options.cozy || (!options.horror && !realityBroken())) {
       if (kind === "coins") return STATUS_CHALK_COINS_SRC;
       if (kind === "health") return STATUS_CHALK_HEALTH_SRC;
       return STATUS_CHALK_COURSE_SRC;
@@ -6400,9 +6485,19 @@
 
   function triggerRealityBreak() {
     state.realityBroken = true;
-    state.realityBreakTimer = 5.5;
+    state.realityBreakTimer = REALITY_BREAK_REVEAL_SECONDS;
     state.message = copy("ui.reality.triggerMessage", "ILLUSION FAILURE - combat layer exposed");
     state.log.unshift(copy("ui.reality.triggerLog", "Illusion failed: future war layer exposed"));
+  }
+
+  function startPostGiraffeHorrorTransition() {
+    state.postGiraffeHorrorTransition = {
+      active: true,
+      source: "giraffeDefeat",
+      elapsed: 0,
+      duration: POST_GIRAFFE_HORROR_ITEM_TRANSITION_SECONDS,
+      clearAt: POST_GIRAFFE_HORROR_ITEM_TRANSITION_CLEAR_SECONDS,
+    };
   }
 
   function setRealityTheme(mode = "auto") {
@@ -6456,18 +6551,19 @@
   function shopUnit() {
     const sameLineChance = ownedItemMax("sameLineShopChancePct") + ownedAbilityMax("copy_luck", fortuneShopChance);
     const ownedTypes = [...new Set(allOwnedRefs().map((ref) => ref.unit.typeId))];
+    const tier = rollShopEntryTier();
     if (ownedTypes.length && Math.random() < sameLineChance) {
-      return makeUnit(ownedTypes[randInt(ownedTypes.length)]);
+      return makeUnit(ownedTypes[randInt(ownedTypes.length)], tier);
     }
     const rarity = chooseShopRarity();
     const pool = CATALOG.filter((unit) => (unit.rarity || "common") === rarity);
     const scoutTraits = state.arenaScout?.shopsRemaining > 0 ? state.arenaScout.traitIds || [] : [];
     const scoutPool = scoutTraits.length ? pool.filter((unit) => unit.traits?.some((traitId) => scoutTraits.includes(traitId))) : [];
     if (scoutPool.length && Math.random() < 0.75) {
-      return makeUnit(scoutPool[randInt(scoutPool.length)].id);
+      return makeUnit(scoutPool[randInt(scoutPool.length)].id, tier);
     }
     const available = pool.length ? pool : CATALOG.filter((unit) => (unit.rarity || "common") === "common");
-    return makeUnit(available[randInt(available.length)].id);
+    return makeUnit(available[randInt(available.length)].id, tier);
   }
 
   function shopEntry() {
@@ -6489,24 +6585,24 @@
     const rarity = chooseShopRarity();
     const pool = ITEMS.filter((item) => isDrink(item) && (item.rarity || "common") === rarity);
     const available = pool.length ? pool : ITEMS.filter((item) => isDrink(item) && (item.rarity || "common") === "common");
-    return weightedItemFrom(available);
+    return weightedItemFrom(available, rollShopEntryTier());
   }
 
   function shopTopping() {
     const rarity = chooseShopRarity();
     const pool = ITEMS.filter((item) => isTopping(item) && (item.rarity || "common") === rarity);
     const available = pool.length ? pool : ITEMS.filter((item) => isTopping(item) && (item.rarity || "common") === "common");
-    return weightedItemFrom(available);
+    return weightedItemFrom(available, rollShopEntryTier());
   }
 
-  function weightedItemFrom(available) {
+  function weightedItemFrom(available, tier = 1) {
     const total = available.reduce((sum, item) => sum + (item.shopWeight || 1), 0);
     let roll = Math.random() * total;
     for (const item of available) {
       roll -= item.shopWeight || 1;
-      if (roll <= 0) return makeItem(item.id);
+      if (roll <= 0) return makeItem(item.id, tier);
     }
-    return makeItem(available[available.length - 1]?.id || "sunny_side_egg");
+    return makeItem(available[available.length - 1]?.id || "sunny_side_egg", tier);
   }
 
   function chooseShopRarity() {
@@ -6951,9 +7047,14 @@
     state.freeRolls += startingFreeRollsForShopLevel();
     state.itemDiscountUsed = false;
     if (state.keepArenaNextRound) {
+      state.arenaHoldNotice = {
+        arenaId: state.arenaId,
+        arenaShort: themedArena(currentArena()).short,
+      };
       state.keepArenaNextRound = false;
     } else {
       state.arenaId = randomArenaId(state.arenaId);
+      state.arenaHoldNotice = null;
     }
     state.enemyPreview = null;
     refreshShop(true);
@@ -6974,6 +7075,7 @@
     if (state.phase !== "prep") return false;
     const cost = nextShopUpgradeCost();
     if (cost === null) {
+      state.nextShopUpgradeDiscountGold = 0;
       state.message = realityBroken() ? "Rig maxed" : "Shop maxed";
       return false;
     }
@@ -7709,7 +7811,7 @@
 
   function itemSellValue(item) {
     const itemCopies = 3 ** (itemTier(item?.tier) - 1);
-    return Math.max(1, Math.floor((entryCost(item) * itemCopies) / 2));
+    return Math.max(1, Math.floor((baseEntryCost(item) * itemCopies) / 2));
   }
 
   function sellOwnedUnit(area, index) {
@@ -8015,16 +8117,32 @@
   }
 
   function expectedPlayerPowerForRound(round) {
-    return Math.min(32, 3.2 + round * 1.0);
+    return Math.min(34, 4 + round * 1.15);
   }
 
   function enemyAdaptivePressure(round) {
     const overage = playerBoardPowerScore() - expectedPlayerPowerForRound(round);
-    return clamp(overage / 20, 0, 0.28);
+    return clamp(overage / 28, 0, 0.2);
   }
 
   function enemyLatePressure(round) {
     return Math.max(0, round - 14);
+  }
+
+  function steppedRoundBonus(round, table) {
+    return table.find((entry) => round >= entry.round)?.bonus || 0;
+  }
+
+  function enemyShopPowerStatBonus(round) {
+    return steppedRoundBonus(round, SHOP_POWER_ENEMY_STAT_BONUS_BY_ROUND);
+  }
+
+  function enemyShopPowerTierBonus(round) {
+    return steppedRoundBonus(round, SHOP_POWER_ENEMY_TIER_BONUS_BY_ROUND);
+  }
+
+  function enemyShopPowerTier3Bonus(round) {
+    return steppedRoundBonus(round, SHOP_POWER_ENEMY_TIER3_BONUS_BY_ROUND);
   }
 
   function isFinalBossRound(round = state.round) {
@@ -8047,11 +8165,14 @@
       targetExtraTier: 0,
       tier3Chance: 0,
       tier4Chance: 0,
-      hpMultiplier: 1,
-      atkMultiplier: 1,
+      hpMultiplier: FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER,
+      atkMultiplier: FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER,
       toppingCount: 0,
       drinkCount: 0,
       adaptivePressure: 0,
+      shopPowerStatBonus: FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER - 1,
+      shopPowerTierBonus: 0,
+      shopPowerTier3Bonus: 0,
     };
   }
 
@@ -8094,6 +8215,7 @@
     const rarityWeights = enemyRarityWeights(round, archetype);
     const adaptivePressure = enemyAdaptivePressure(round);
     const latePressure = enemyLatePressure(round);
+    const shopPowerStatBonus = enemyShopPowerStatBonus(round);
     return {
       round,
       archetypeId: archetype.id,
@@ -8108,11 +8230,14 @@
       targetExtraTier: enemyTargetExtraTier(round, archetype, adaptivePressure),
       tier3Chance: enemyTier3Chance(round, archetype, adaptivePressure),
       tier4Chance: enemyTier4Chance(round, archetype, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.78 + round * 0.034 + latePressure * 0.012 + adaptivePressure * 0.16 + (archetype.statBias || 0)),
-      atkMultiplier: Math.max(0.55, 0.78 + round * 0.032 + latePressure * 0.008 + adaptivePressure * 0.12 + (archetype.statBias || 0)),
+      hpMultiplier: Math.max(0.55, 0.78 + round * 0.034 + latePressure * 0.012 + adaptivePressure * 0.16 + shopPowerStatBonus + (archetype.statBias || 0)),
+      atkMultiplier: Math.max(0.55, 0.78 + round * 0.032 + latePressure * 0.008 + adaptivePressure * 0.12 + shopPowerStatBonus + (archetype.statBias || 0)),
       toppingCount: enemySupportCount(round, count, 3, archetype.itemBias || 0),
       drinkCount: enemySupportCount(round, drinkSlots.length, 4, archetype.drinkBias || 0),
       adaptivePressure,
+      shopPowerStatBonus,
+      shopPowerTierBonus: enemyShopPowerTierBonus(round),
+      shopPowerTier3Bonus: enemyShopPowerTier3Bonus(round),
     };
   }
 
@@ -8187,12 +8312,12 @@
   }
 
   function enemyTargetExtraTier(round, archetype, adaptivePressure = 0) {
-    return clamp(Math.min(0.62, round * 0.045) + enemyLatePressure(round) * 0.012 + adaptivePressure * 0.34 + (archetype.tierBias || 0), 0, 0.98);
+    return clamp(Math.min(0.62, round * 0.045) + enemyLatePressure(round) * 0.012 + adaptivePressure * 0.34 + enemyShopPowerTierBonus(round) + (archetype.tierBias || 0), 0, 0.98);
   }
 
   function enemyTier3Chance(round, archetype, adaptivePressure = 0) {
     if (round < 8 && adaptivePressure < 0.15) return 0;
-    return clamp((round - 7) * 0.014 + adaptivePressure * 0.09 + (archetype.tier3Bias || 0), 0, 0.26);
+    return clamp((round - 7) * 0.014 + adaptivePressure * 0.09 + enemyShopPowerTier3Bonus(round) + (archetype.tier3Bias || 0), 0, 0.26);
   }
 
   function enemyTier4Chance(round, archetype, adaptivePressure = 0) {
@@ -8304,10 +8429,11 @@
 
   function makeGiraffeBossTeam(plan = makeEnemyPlan()) {
     const boss = makeGiraffeBossUnit(plan);
-    const mobCount = Math.max(0, Math.min(boardSlots.length - 1, (plan.count || 1) - 1));
+    const reservedSlots = giraffeBossReservedSlots(plan.bossSlot ?? GIRAFFE_BOSS_SLOT);
     const openSlots = [...Array(boardSlots.length).keys()]
-      .filter((slot) => slot !== (plan.bossSlot ?? GIRAFFE_BOSS_SLOT))
+      .filter((slot) => !reservedSlots.has(slot))
       .sort(() => Math.random() - 0.5);
+    const mobCount = Math.max(0, Math.min(openSlots.length, (plan.count || 1) - 1));
     const usedTypeIds = [GIRAFFE_BOSS_TYPE_ID];
     const mobs = Array.from({ length: mobCount }, (_, index) => {
       const typeId = chooseEnemyUnitId(plan, usedTypeIds);
@@ -8321,14 +8447,25 @@
     return [boss, ...mobs];
   }
 
+  function giraffeBossReservedSlots(bossSlot = GIRAFFE_BOSS_SLOT) {
+    const { col } = slotGrid(bossSlot);
+    return new Set(Array.from({ length: BOARD_ROWS }, (_, row) => row * BOARD_COLS + col));
+  }
+
   function makeFinalBossTeam() {
+    const finalBossTuning = {
+      hpMultiplier: FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER,
+      atkMultiplier: FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER,
+    };
     return [
-      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 2, enemySlot: 5 }),
-      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 1, enemySlot: 2 }),
-      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 3, enemySlot: 8 }),
-      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 4, enemySlot: 4 }),
-      makeFinalBossUnit(FINAL_BOSS_TYPE_ID, { tier: 4, enemySlot: 3 }),
-      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { tier: 5, enemySlot: 1 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 2, enemySlot: 5 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 1, enemySlot: 2 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 3, enemySlot: 8 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 4, enemySlot: 0 }),
+      makeFinalBossUnit(FINAL_BOSS_TYPE_ID, { ...finalBossTuning, tier: 4, enemySlot: 3 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 5, enemySlot: 1 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 5, enemySlot: 6 }),
+      makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 5, enemySlot: 7 }),
     ];
   }
 
@@ -8416,6 +8553,9 @@
       tier3ChancePct: Number((plan.tier3Chance * 100).toFixed(1)),
       tier4ChancePct: Number(((plan.tier4Chance || 0) * 100).toFixed(1)),
       adaptivePressurePct: Number(((plan.adaptivePressure || 0) * 100).toFixed(1)),
+      shopPowerStatBonusPct: Number(((plan.shopPowerStatBonus || 0) * 100).toFixed(1)),
+      shopPowerTierBonusPct: Number(((plan.shopPowerTierBonus || 0) * 100).toFixed(1)),
+      shopPowerTier3BonusPct: Number(((plan.shopPowerTier3Bonus || 0) * 100).toFixed(1)),
       rarityWeights: { ...plan.rarityWeights },
     };
   }
@@ -8502,6 +8642,7 @@
     applyBattleStartAbilities(enemies, allies);
     normalizeBossBattleSpeed();
     state.phase = "battle";
+    state.arenaHoldNotice = null;
     state.selected = null;
     state.drag = null;
     state.message = realityBroken() ? "Simulation malfunction" : "Battle";
@@ -8811,9 +8952,11 @@
     state.gold = Math.min(ECONOMY.maxGold, state.gold + income.total);
     state.lastIncome = income;
     const retryFinalBoss = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
-    if (!retryFinalBoss && !finalDefeat) state.round += 1;
+    const retryGiraffeBoss = !won && completedRound === GIRAFFE_BOSS_ROUND;
+    if (!retryGiraffeBoss && !retryFinalBoss && !finalDefeat) state.round += 1;
     const justBrokeReality = !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
     if (justBrokeReality) triggerRealityBreak();
+    if (justBrokeReality && won && completedRound === GIRAFFE_BOSS_ROUND) startPostGiraffeHorrorTransition();
     state.phase = "result";
     state.enemyPreview = null;
     state.rewardChoices = state.hearts > 0 && !finalVictory ? generateRewardChoices(won) : [];
@@ -8822,7 +8965,7 @@
       : state.hearts > 0
       ? realityBroken()
         ? `${won ? "Target cleared" : retryFinalBoss ? "Overmind still active" : "Unit loss"} +${income.total} scrap - choose salvage`
-        : `${won ? "Victory" : "Defeat"} +${income.total} coins - choose a reward`
+        : `${won ? "Victory" : retryGiraffeBoss ? "Giraffe still active" : "Defeat"} +${income.total} coins - choose a reward`
       : realityBroken() ? "Core offline" : "Run over";
     if (justBrokeReality && state.hearts > 0) state.message = "ILLUSION FAILURE - combat layer exposed";
     state.log.unshift(realityBroken()
@@ -8831,6 +8974,7 @@
     clearParticles();
     state.battle.attacks = [];
     state.battle.drinkTosses = [];
+    clearBattleStatusVisuals(state.battle);
     state.postCombatBattle = state.battle;
     state.battle = null;
     combatEndExplosion(won);
@@ -9012,6 +9156,43 @@
     return mapping[arenaId] || [];
   }
 
+  function arenaRewardTraitText(traitIds = arenaRewardTraits(), maxTraits = 3) {
+    const labels = traitIds.filter((traitId) => TRAITS[traitId]).map((traitId) => traitLabel(traitId));
+    if (!labels.length) return realityBroken() ? "zone traits" : "arena traits";
+    const shown = labels.slice(0, maxTraits);
+    const extra = labels.length - shown.length;
+    return extra > 0 ? `${shown.join(", ")} +${extra} more` : shown.join(", ");
+  }
+
+  function arenaRewardPendingRows() {
+    const rows = [];
+    const arenaWord = arenaTerm();
+    const shopWord = realityBroken() ? "scan" : "shop";
+    if (state.arenaHoldNotice) {
+      rows.push({
+        label: "Hold",
+        title: `${state.arenaHoldNotice.arenaShort} held`,
+        body: `This ${arenaWord.toLowerCase()} stays for the next battle.`,
+      });
+    }
+    if (state.arenaScout?.shopsRemaining > 0) {
+      const count = state.arenaScout.shopsRemaining;
+      rows.push({
+        label: "Scout",
+        title: `${state.arenaScout.arenaShort} scout`,
+        body: `${count} favored ${shopWord}${count === 1 ? "" : "s"} left: ${arenaRewardTraitText(state.arenaScout.traitIds, 2)}.`,
+      });
+    }
+    if (state.arenaPrepBuff) {
+      rows.push({
+        label: "Prep",
+        title: `${state.arenaPrepBuff.arenaShort} prep armed`,
+        body: `Next battle buffs a favored unit: shield, speed, attack.`,
+      });
+    }
+    return rows;
+  }
+
   function rewardRarityAvailable(rarityId) {
     const weights = currentShopRarityWeights();
     return rarityId === "common" || (weights[rarityId] || 0) > 0;
@@ -9174,6 +9355,7 @@
     const displayArena = themedArena(arena);
     const traitIds = arenaRewardTraits(arena.id);
     if (!traitIds.length) return null;
+    const shopWord = realityBroken() ? "scans" : "shops";
     return {
       type: "arenaScout",
       arenaId: arena.id,
@@ -9181,8 +9363,8 @@
       traitIds,
       shopsRemaining: 2,
       freeRolls: 1,
-      title: `${displayArena.short} Scout`,
-      body: `+1 ${rollTerm({ lower: true })}; next 2 ${realityBroken() ? "scans" : "shops"} favor ${arenaTerm({ lower: true })} traits.`,
+      title: `${arenaTerm()} Scout: ${displayArena.short}`,
+      body: `+1 ${rollTerm({ lower: true })}. Next 2 ${shopWord} favor ${arenaRewardTraitText(traitIds)} units.`,
       key: `arena-scout:${arena.id}`,
     };
   }
@@ -9201,8 +9383,8 @@
       hastePct: 0.1,
       attackPct: 0.08,
       duration: 3,
-      title: `${displayArena.short} Prep`,
-      body: "Next battle: one favored unit gets buffs.",
+      title: `${arenaTerm()} Prep: ${displayArena.short}`,
+      body: `Next battle: a ${arenaRewardTraitText(traitIds, 2)} unit gets shield, speed, and attack.`,
       key: `arena-prep:${arena.id}`,
     };
   }
@@ -9215,8 +9397,8 @@
       arenaId: arena.id,
       arenaShort: displayArena.short,
       freeRolls: 1,
-      title: `Hold ${displayArena.short}`,
-      body: `Keep this ${arenaTerm({ lower: true })} next battle; +1 ${rollTerm({ lower: true })}.`,
+      title: `${arenaTerm()} Hold: ${displayArena.short}`,
+      body: `Keep this ${arenaTerm({ lower: true })} for the next battle; +1 ${rollTerm({ lower: true })}.`,
       key: `arena-hold:${arena.id}`,
     };
   }
@@ -9230,8 +9412,8 @@
       arenaId: arena.id,
       amount,
       freeRolls: 1,
-      title: `${displayArena.short} Purse`,
-      body: `Gain ${amount} ${currencyTerm({ lower: true })} and 1 free ${rollTerm({ lower: true })}.`,
+      title: `${arenaTerm()} Purse: ${displayArena.short}`,
+      body: `Immediate payout: +${amount} ${currencyTerm({ lower: true })} and +1 free ${rollTerm({ lower: true })}.`,
       key: `arena-purse:${arena.id}`,
     };
   }
@@ -9252,7 +9434,7 @@
 
   function upgradeDiscountReward() {
     const nextCost = nextShopUpgradeCost();
-    if (nextCost === null) return null;
+    if (nextCost === null || nextCost <= 0) return null;
     const amount = Math.min(25, nextCost);
     return {
       type: "upgradeDiscount",
@@ -9341,7 +9523,7 @@
     } else if (reward.type === "shopSlotUnlock") {
       if (!openShopSlot(reward.slotIndex)) state.gold = Math.min(ECONOMY.maxGold, state.gold + Math.min(25, reward.amount || 0));
     } else if (reward.type === "upgradeDiscount") {
-      state.nextShopUpgradeDiscountGold = Math.max(state.nextShopUpgradeDiscountGold || 0, reward.amount || 0);
+      state.nextShopUpgradeDiscountGold = Math.max(0, (state.nextShopUpgradeDiscountGold || 0) + (reward.amount || 0));
     } else if (reward.type === "item") {
       if (!moveItemToBench(makeItem(reward.itemId))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
       resolveItemMerges();
@@ -9351,11 +9533,21 @@
     }
     state.message = realityBroken() ? `Salvaged ${reward.title}` : `Claimed ${reward.title}`;
     state.log.unshift(realityBroken() ? `Salvage: ${reward.title}` : `Reward: ${reward.title}`);
-    const rewardParticles = state.particles.slice();
+    const clearResultParticlesForRetry = state.round === GIRAFFE_BOSS_ROUND && state.postCombatBattle?.result === "loss";
+    const rewardParticles = clearResultParticlesForRetry ? [] : state.particles.slice();
+    const startShopReturnTransition = shouldStartShopReturnTransition();
     state.rewardChoices = [];
-    continuePrep();
-    state.particles.push(...rewardParticles);
+    if (startShopReturnTransition) {
+      startShopReturnTransitionOverlay({ rewardParticles });
+    } else {
+      continuePrep();
+      if (rewardParticles.length) state.particles.push(...rewardParticles);
+    }
     return true;
+  }
+
+  function shouldStartShopReturnTransition() {
+    return state.hearts > 0 && Boolean(state.postCombatBattle?.result);
   }
 
   function continuePrep() {
@@ -9369,6 +9561,38 @@
     state.rewardChoices = [];
     state.postCombatBattle = null;
     startNextRoundShop();
+  }
+
+  function continueFromResult() {
+    if (state.phase === "result" && state.hearts <= 0 && !realityBroken()) {
+      return startShopReturnTransitionOverlay({
+        source: "cozyDefeatReturn",
+        message: "Market resetting",
+      });
+    }
+    continuePrep();
+    return true;
+  }
+
+  function startShopReturnTransitionOverlay(options = {}) {
+    const horror = realityBroken();
+    const duration = horror ? HORROR_SHOP_RETURN_STATIC_SECONDS : COZY_SHOP_RETURN_AWNING_SECONDS;
+    if (!horror) clearParticles();
+    state.shopReturnStaticTransition = {
+      elapsed: 0,
+      duration,
+      switchAt: duration * 0.48,
+      screenChanged: false,
+      theme: horror ? "horror" : "cozy",
+      rewardParticles: horror && Array.isArray(options.rewardParticles) ? options.rewardParticles : [],
+      source: options.source || (horror ? "horrorRewardReturn" : "cozyRewardReturn"),
+    };
+    state.pointer = null;
+    state.hover = null;
+    state.selected = null;
+    state.drag = null;
+    state.message = options.message || (horror ? "Signal stabilizing" : "Market restocking");
+    return true;
   }
 
   function startRebootTransition(options = {}) {
@@ -9391,10 +9615,13 @@
 
   function startFinalVictoryTransition() {
     if (state.finalVictoryTransition) return false;
+    const holdDuration = FINAL_VICTORY_HOLD_SECONDS;
+    const staticDuration = FINAL_VICTORY_STATIC_FADE_SECONDS;
     state.finalVictoryTransition = {
       elapsed: 0,
-      duration: FINAL_VICTORY_STATIC_FADE_SECONDS,
-      resetAt: FINAL_VICTORY_STATIC_FADE_SECONDS * FINAL_VICTORY_STATIC_RESET_AT,
+      duration: holdDuration + staticDuration,
+      holdDuration,
+      resetAt: holdDuration + staticDuration * FINAL_VICTORY_STATIC_RESET_AT,
       resetDone: false,
     };
     state.pointer = null;
@@ -9465,6 +9692,7 @@
     state.postCombatBattle = null;
     state.arenaId = randomArenaId();
     state.keepArenaNextRound = false;
+    state.arenaHoldNotice = null;
     state.arenaScout = null;
     state.arenaPrepBuff = null;
     state.enemyPreview = null;
@@ -9480,6 +9708,8 @@
     state.realityOverride = initialRealityOverride();
     state.realityBroken = false;
     state.realityBreakTimer = 0;
+    state.postGiraffeHorrorTransition = null;
+    state.shopReturnStaticTransition = null;
     state.rebootTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
@@ -9571,7 +9801,10 @@
       drinkTossImpact(toss, battle);
       return false;
     });
-    if (battle.enemies.every((u) => u.dead)) {
+    if (state.round === GIRAFFE_BOSS_ROUND && battle.elapsed > BATTLE_TIMEOUT_SECONDS) {
+      battle.result = "loss";
+      endBattle(false);
+    } else if (battle.enemies.every((u) => u.dead)) {
       battle.result = "win";
       endBattle(true);
     } else if (battle.allies.every((u) => u.dead)) {
@@ -10409,7 +10642,7 @@
 
   function applyKrakenPull(unit, foes) {
     const target = foes
-      .filter((foe) => !foe.dead && foe.col === BACK_COL && foe.typeId !== FINAL_BOSS_TYPE_ID)
+      .filter((foe) => !foe.dead && foe.col === BACK_COL && !isFinalBossUnitType(foe.typeId) && !isGiraffeBossUnitType(foe.typeId))
       .sort((a, b) => (a.col - b.col) || distSq(unit, b) - distSq(unit, a))[0];
     if (!target) return;
     const nextCol = Math.min(FRONT_COL, (target.col ?? BACK_COL) + 1);
@@ -10537,6 +10770,26 @@
     unit.attackSlow = null;
   }
 
+  function clearCombatStatusVisuals(unit) {
+    if (!unit) return;
+    unit.burn = null;
+    unit.mark = null;
+    unit.teamVulnerable = null;
+    unit.taunt = null;
+    unit.haste = null;
+    unit.attackBoost = null;
+    unit.attackSlow = null;
+    unit.antiSupport = null;
+    unit.slowed = null;
+    unit.lateFightStacks = 0;
+    unit.moldStacks = 0;
+  }
+
+  function clearBattleStatusVisuals(battle) {
+    if (!battle) return;
+    [...(battle.allies || []), ...(battle.enemies || [])].forEach(clearCombatStatusVisuals);
+  }
+
   function triggerCombatAttackMotion(source, target, battle, options = {}) {
     if (!source || !target || !battle || source.dead || options.status) return;
     if (source.uid === target.uid || (source.side && target.side && source.side === target.side)) return;
@@ -10573,6 +10826,39 @@
       strength: clamp(0.72 + totalImpact / maxHp, 0.72, 1.35),
       shieldOnly: hpDamage <= 0 && shieldDamage > 0,
     };
+    if (target.glitchToRobot || isGiraffeBossUnitType(target.typeId)) {
+      target.giraffeHitGlitchUntil = Math.max(
+        target.giraffeHitGlitchUntil || 0,
+        (battle.elapsed || 0) + GIRAFFE_BOSS_HIT_GLITCH_SECONDS
+      );
+      target.giraffeHitGlitchSeed = Math.floor((battle.elapsed || 0) * 60) + (source?.uid || 0) * 23 + totalImpact * 7;
+    }
+    if (isFinalBossUnitType(target.typeId)) {
+      target.finalBossHitGlitchUntil = Math.max(
+        target.finalBossHitGlitchUntil || 0,
+        (battle.elapsed || 0) + FINAL_BOSS_HIT_GLITCH_SECONDS
+      );
+      target.finalBossHitGlitchSeed = Math.floor((battle.elapsed || 0) * 72) + (source?.uid || 0) * 29 + totalImpact * 11;
+    }
+  }
+
+  function makeAttackProjectile(source, target, options = {}) {
+    const sourceSide = source.side || "ally";
+    const spinDirection = sourceSide === "enemy" ? -1 : 1;
+    return {
+      from: source.uid,
+      to: target.uid,
+      sourceSide,
+      t: ATTACK_ANIMATION_SECONDS,
+      duration: ATTACK_ANIMATION_SECONDS,
+      color: options.color || source.accent,
+      particleType: options.particleType || source.typeId || source.id,
+      particleTier: options.particleTier || 1,
+      particleSprite: options.particleSprite,
+      kind: options.kind,
+      rotationStart: options.rotationStart ?? 0,
+      spin: spinDirection * (ATTACK_PROJECTILE_SPIN_MIN + Math.random() * (ATTACK_PROJECTILE_SPIN_MAX - ATTACK_PROJECTILE_SPIN_MIN)),
+    };
   }
 
   function applyDamage(target, amount, source, battle, options = {}) {
@@ -10580,14 +10866,10 @@
     triggerCombatAttackMotion(source, target, battle, options);
     if (!options.status && !options.noItemTriggers && target.item?.firstHitRedirect && !target.firstHitRedirectUsed) {
       target.firstHitRedirectUsed = true;
-      battle.attacks.push({
-        from: source.uid,
-        to: target.uid,
-        t: ATTACK_ANIMATION_SECONDS,
-        duration: ATTACK_ANIMATION_SECONDS,
+      battle.attacks.push(makeAttackProjectile(source, target, {
         color: target.item.accent || "#6f9231",
         particleType: target.item.id,
-      });
+      }));
       burst({ x: target.x, y: target.y }, target.item.accent || "#6f9231");
       return 0;
     }
@@ -10722,14 +11004,10 @@
       target.hp = Math.max(0, target.hp - gingerDecoyCrumbleOnHit(target));
     }
     if (!options.noProjectile) {
-      battle.attacks.push({
-        from: source.uid,
-        to: target.uid,
-        t: ATTACK_ANIMATION_SECONDS,
-        duration: ATTACK_ANIMATION_SECONDS,
+      battle.attacks.push(makeAttackProjectile(source, target, {
         color: options.color || source.accent,
         particleType: options.particleType || source.typeId || source.id,
-      });
+      }));
     }
     const attackParticleType = options.particleType || source.typeId || source.id;
     const willDefeat = target.hp <= 0 && !target.dead;
@@ -10760,15 +11038,11 @@
   function emitSupportProjectile(source, target, battle, color = "#55a375") {
     if (!source || !target || !battle || source.dead || target.dead) return;
     triggerCombatSupportMotion(source, target, battle);
-    battle.attacks.push({
-      from: source.uid,
-      to: target.uid,
-      t: ATTACK_ANIMATION_SECONDS,
-      duration: ATTACK_ANIMATION_SECONDS,
+    battle.attacks.push(makeAttackProjectile(source, target, {
       color,
       particleType: source.typeId || source.id,
       kind: "support",
-    });
+    }));
   }
 
   function emitSupportFeedback(source, target, battle, color = "#55a375", options = {}) {
@@ -11155,13 +11429,13 @@
     return particleSpriteInfo(spriteKind, particleType, particleTier).src;
   }
 
-  function particleSpriteInfo(spriteKind, particleType, particleTier) {
+  function particleSpriteInfo(spriteKind, particleType, particleTier, options = {}) {
     if (!particleType) return { src: null, cacheKind: null };
     if (spriteKind === "drink") return { src: drinkThrowableSpriteSrcFor(particleType), cacheKind: "drink" };
-    if (spriteKind === "item") return { src: itemSpriteSrcForId(particleType, particleTier), cacheKind: "item" };
-    const attackSrc = attackParticleSpriteSrcFor(particleType);
+    if (spriteKind === "item") return { src: itemSpriteSrcForId(particleType, particleTier, options), cacheKind: "item" };
+    const attackSrc = attackParticleSpriteSrcFor(particleType, options);
     if (attackSrc) return { src: attackSrc, cacheKind: "attack" };
-    return { src: itemSpriteSrcForId(particleType, particleTier), cacheKind: "item" };
+    return { src: itemSpriteSrcForId(particleType, particleTier, options), cacheKind: "item" };
   }
 
   function burst(pos, color, options = {}) {
@@ -11169,7 +11443,9 @@
     const particleType = options.particleType;
     const particleSprite = options.particleSprite || (options.food ? "attack" : null);
     const particleTier = options.particleTier || 1;
-    const spriteInfo = particleSpriteInfo(particleSprite, particleType, particleTier);
+    const spriteInfo = options.imageSrc
+      ? { src: options.imageSrc, cacheKind: options.imageCacheKind || particleSprite }
+      : particleSpriteInfo(particleSprite, particleType, particleTier, options.spriteOptions || {});
     const imageSrc = spriteInfo.src;
     const foodParticles = Boolean(options.food && imageSrc);
     for (let i = 0; i < count; i++) {
@@ -11206,13 +11482,22 @@
   }
 
   function foodExplosion(pos, color, particleType, options = {}) {
-    const horror = realityBroken();
+    const horror = options.horror ?? realityBroken();
     const speedScale = horror ? HORROR_PARTICLE_SPEED_SCALE : 1;
     const lifeScale = horror ? HORROR_PARTICLE_LIFE_SCALE : 1;
+    const spriteOptions = {
+      cozy: options.cozy === true,
+      horror: options.horror === true,
+    };
+    if (!spriteOptions.cozy && !spriteOptions.horror) spriteOptions[horror ? "horror" : "cozy"] = true;
+    const spriteInfo = particleSpriteInfo("attack", particleType, 1, spriteOptions);
     burst(pos, color, {
       food: true,
       particleSprite: "attack",
       particleType,
+      spriteOptions,
+      imageSrc: spriteInfo.src,
+      imageCacheKind: spriteInfo.cacheKind,
       count: options.count || 11,
       size: options.size,
       spread: options.spread || 16,
@@ -11280,7 +11565,10 @@
   function defeatExplosion(unit, particleType) {
     if (!unit) return;
     const type = particleType || unit.typeId || unit.id;
+    const horror = realityBroken();
     foodExplosion({ x: unit.x, y: unit.y }, unit.accent, type, {
+      cozy: !horror,
+      horror,
       count: 30,
       spread: 34,
       size: 38,
@@ -11389,6 +11677,8 @@
     state.idleTime += dt;
     updateRebootTransition(dt);
     updateFinalVictoryTransition(dt);
+    updateShopReturnStaticTransition(dt);
+    updatePostGiraffeHorrorTransition(dt);
     if (state.phase === "victoryCutscene" && state.victoryCutscene) {
       state.victoryCutscene.elapsed += dt;
     }
@@ -11435,6 +11725,40 @@
     }
   }
 
+  function updateShopReturnStaticTransition(dt) {
+    const transition = state.shopReturnStaticTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration, (transition.elapsed || 0) + dt);
+    if (!transition.screenChanged && transition.elapsed >= (transition.switchAt || transition.duration * 0.5)) {
+      completeShopReturnStaticScreenChange(transition);
+      return;
+    }
+    if (transition.elapsed >= transition.duration) {
+      state.shopReturnStaticTransition = null;
+      if (state.phase === "prep") state.message = themedArena(currentArena()).short;
+    }
+  }
+
+  function completeShopReturnStaticScreenChange(transition) {
+    const rewardParticles = Array.isArray(transition.rewardParticles) ? transition.rewardParticles : [];
+    continuePrep();
+    if (rewardParticles.length) state.particles.push(...rewardParticles);
+    state.shopReturnStaticTransition = {
+      ...transition,
+      screenChanged: true,
+      rewardParticles: [],
+    };
+  }
+
+  function updatePostGiraffeHorrorTransition(dt) {
+    const transition = state.postGiraffeHorrorTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.clearAt || transition.duration || POST_GIRAFFE_HORROR_ITEM_TRANSITION_CLEAR_SECONDS, (transition.elapsed || 0) + dt);
+    if (transition.elapsed >= (transition.clearAt || POST_GIRAFFE_HORROR_ITEM_TRANSITION_CLEAR_SECONDS)) {
+      state.postGiraffeHorrorTransition = null;
+    }
+  }
+
   function roundedRect(x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -11460,16 +11784,19 @@
         drawPrep();
       }
       drawTopBar();
-      drawParticles();
+      if (state.phase !== "result") drawParticles();
       if (state.codexOpen) {
         state.tooltipTargets = [];
         drawCodexOverlay();
       }
       drawRealityOverlay();
+      drawRealityRevealDistortionOverlay();
       drawMergeOpportunityOverlay();
+      if (state.phase === "prep" && !state.codexOpen) drawCodexMenuButton();
     }
     drawRebootTransitionOverlay();
     drawFinalVictoryTransitionOverlay();
+    drawShopReturnStaticTransitionOverlay();
     drawTooltip();
   }
 
@@ -11793,9 +12120,9 @@
   }
 
   function drawTopBar() {
-    drawChalkStatusBoard(currentStatusBoardSrc("course"), 9, 4, 126, 52, statusLabel("Course"), `${state.round}`, `Course ${state.round}`);
-    drawChalkStatusBoard(currentStatusBoardSrc("coins"), 149, 4, 104, 52, statusLabel("Coins"), `${state.gold}`, `${state.gold} ${currencyTerm({ lower: true })}`);
-    drawChalkStatusBoard(currentStatusBoardSrc("health"), 266, 4, 104, 52, statusLabel("Health"), `${state.hearts}`, healthStatusTooltip());
+    drawStatusBoard("course", 9, 4, 126, 52, statusLabel("Course"), "Course", `${state.round}`, `Course ${state.round}`);
+    drawStatusBoard("coins", 149, 4, 104, 52, statusLabel("Coins"), "Coins", `${state.gold}`, `${state.gold} ${currencyTerm({ lower: true })}`);
+    drawStatusBoard("health", 266, 4, 104, 52, statusLabel("Health"), "Health", `${state.hearts}`, healthStatusTooltip());
 
     if (state.phase === "prep") {
       const upgradeCost = nextShopUpgradeCost();
@@ -11812,6 +12139,27 @@
     }
   }
 
+  function postGiraffeHorrorHudEntry(kind) {
+    return { id: `hud_${kind}`, uid: `hud_${kind}`, tier: 1 };
+  }
+
+  function drawStatusBoard(kind, x, y, w, h, label, cozyLabel, value, tooltip) {
+    const phase = postGiraffeHorrorContentPhase("hud", postGiraffeHorrorHudEntry(kind));
+    const cozy = phase?.mode === "cozy";
+    const horror = phase?.mode === "horror" ? true : cozy ? false : realityBroken();
+    drawChalkStatusBoard(
+      currentStatusBoardSrc(kind, { cozy, horror }),
+      x,
+      y,
+      w,
+      h,
+      cozy ? cozyLabel : label,
+      value,
+      tooltip,
+      { horror, postGiraffePhase: phase }
+    );
+  }
+
   function healthStatusTooltip() {
     const lossDamage = roundLossDamage(state.round);
     const label = statusLabel("Course").toLowerCase();
@@ -11823,16 +12171,19 @@
     };
   }
 
-  function drawChalkStatusBoard(src, x, y, w, h, label, value, tooltip) {
+  function drawChalkStatusBoard(src, x, y, w, h, label, value, tooltip, options = {}) {
     const image = getUiSprite(src);
     const tooltipInfo = typeof tooltip === "string" ? { title: tooltip, body: "" } : tooltip;
+    const horror = options.horror ?? realityBroken();
+    const effectRect = { x: x - 6, y: Math.max(0, y - 6), w: w + 12, h: h + 12 };
     registerTooltip(x, y, w, h, tooltipInfo);
     if (!(image && image.complete && image.naturalWidth > 0)) {
-      pill(x + 8, y + 8, w - 16, h - 16, `${label} ${value}`, realityBroken() ? "#071512" : "#fff5cc", realityBroken() ? "#e7ffe0" : "#16392d");
+      pill(x + 8, y + 8, w - 16, h - 16, `${label} ${value}`, horror ? "#071512" : "#fff5cc", horror ? "#e7ffe0" : "#16392d");
+      drawPostGiraffeHorrorContentEffect(effectRect, "hud", null, options.postGiraffePhase);
       return;
     }
-    ctx.drawImage(image, x - 6, Math.max(0, y - 6), w + 12, h + 12);
-    if (realityBroken()) {
+    ctx.drawImage(image, effectRect.x, effectRect.y, effectRect.w, effectRect.h);
+    if (horror) {
       drawWarHudText(String(label).toUpperCase(), x + w / 2, y + 18, {
         font: "900 8px Inter, sans-serif",
         alpha: 0.94,
@@ -11847,6 +12198,7 @@
       });
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
+      drawPostGiraffeHorrorContentEffect(effectRect, "hud", null, options.postGiraffePhase);
       return;
     }
     drawChalkButtonText(String(label).toUpperCase(), x + w / 2, y + 19, {
@@ -11857,6 +12209,7 @@
       font: "900 19px Inter, sans-serif",
       alpha: 0.98,
     });
+    drawPostGiraffeHorrorContentEffect(effectRect, "hud", null, options.postGiraffePhase);
   }
 
   function drawRealityOverlay() {
@@ -11881,6 +12234,97 @@
   function glitchNoise(seed) {
     const value = Math.sin(seed * 12.9898) * 43758.5453;
     return value - Math.floor(value);
+  }
+
+  function realityRevealDistortionState() {
+    if (!state.realityBroken || !(state.realityBreakTimer > 0)) {
+      return { active: false, intensity: 0, elapsed: 0, remaining: 0 };
+    }
+    const remaining = clamp(state.realityBreakTimer, 0, REALITY_BREAK_REVEAL_SECONDS);
+    const elapsed = Math.max(0, REALITY_BREAK_REVEAL_SECONDS - remaining);
+    const shock = 1 - clamp01(elapsed / REALITY_REVEAL_DISTORT_SECONDS);
+    const tail = 0.16 * clamp01(remaining / REALITY_BREAK_REVEAL_SECONDS);
+    const intensity = clamp01(Math.max(shock, tail));
+    return {
+      active: intensity > 0.01,
+      intensity,
+      elapsed,
+      remaining,
+      frame: Math.floor((state.idleTime + elapsed) * 38),
+    };
+  }
+
+  function drawRealityRevealDistortionOverlay() {
+    const distortion = realityRevealDistortionState();
+    if (!distortion.active) return;
+    const { intensity, frame, elapsed } = distortion;
+    const shockPulse = 1 - clamp01(elapsed / REALITY_REVEAL_DISTORT_SECONDS);
+    const bandCount = Math.floor(7 + intensity * 18);
+    const maxOffset = 18 + intensity * 68;
+
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+
+    for (let i = 0; i < bandCount; i += 1) {
+      const gate = glitchNoise(frame * 89 + i * 31);
+      if (gate < 0.16 + (1 - intensity) * 0.24) continue;
+      const y = Math.floor(glitchNoise(frame * 97 + i * 37) * H);
+      const h = 2 + Math.floor(glitchNoise(frame * 103 + i * 41) * (9 + intensity * 24));
+      const offset = Math.round((glitchNoise(frame * 109 + i * 43) - 0.5) * maxOffset);
+      ctx.drawImage(canvas, 0, y, W, h, offset, y, W, h);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = i % 2 === 0
+        ? `rgba(70, 255, 99, ${0.08 * intensity})`
+        : `rgba(255, 55, 82, ${0.07 * intensity})`;
+      ctx.fillRect(Math.max(0, offset), y, W, h);
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    ctx.fillStyle = `rgba(0, 4, 5, ${0.04 + intensity * 0.2})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(frame * 97 + y * 13);
+      const bandAlpha = (0.025 + roll * 0.11) * intensity;
+      ctx.fillStyle = y % 2 === 0
+        ? `rgba(88, 255, 105, ${bandAlpha})`
+        : `rgba(255, 55, 82, ${bandAlpha * 0.72})`;
+      ctx.fillRect(0, y, W, roll > 0.82 ? 2 : 1);
+    }
+
+    const speckCount = Math.floor(260 + intensity * 360);
+    for (let i = 0; i < speckCount; i += 1) {
+      const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
+      const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
+      const size = glitchNoise(frame * 167 + i * 23) > 0.86 ? 2 : 1;
+      const speckAlpha = (0.05 + glitchNoise(frame * 181 + i * 29) * 0.3) * intensity;
+      ctx.fillStyle = i % 5 === 0
+        ? `rgba(0, 238, 255, ${speckAlpha})`
+        : `rgba(238, 255, 232, ${speckAlpha})`;
+      ctx.fillRect(x, y, size, size);
+    }
+
+    const blockCount = Math.floor(5 + intensity * 10);
+    for (let i = 0; i < blockCount; i += 1) {
+      if (glitchNoise(frame * 211 + i * 31) < 0.32) continue;
+      const x = Math.floor(glitchNoise(frame * 223 + i * 37) * W);
+      const y = Math.floor(glitchNoise(frame * 227 + i * 41) * H);
+      const w = 18 + Math.floor(glitchNoise(frame * 239 + i * 43) * (60 + intensity * 110));
+      const h = 4 + Math.floor(glitchNoise(frame * 251 + i * 47) * (12 + intensity * 34));
+      ctx.fillStyle = i % 3 === 0
+        ? `rgba(255, 255, 244, ${0.08 * intensity})`
+        : `rgba(61, 255, 124, ${0.08 * intensity})`;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    if (shockPulse > 0.01) {
+      const whiteFlash = Math.max(0, glitchNoise(frame * 43) - 0.72) * shockPulse;
+      ctx.fillStyle = `rgba(255, 247, 216, ${whiteFlash * 0.38})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    ctx.restore();
   }
 
   function drawSimulationFailureArtifacts() {
@@ -11991,15 +12435,19 @@
   function drawFinalVictoryTransitionOverlay() {
     const transition = state.finalVictoryTransition;
     if (!transition) return;
-    const progress = clamp01(transition.elapsed / Math.max(0.001, transition.duration));
-    const resetPoint = clamp01(transition.resetAt / Math.max(0.001, transition.duration));
+    const holdDuration = Math.max(0, transition.holdDuration || 0);
+    const staticDuration = Math.max(0.001, transition.duration - holdDuration);
+    const staticElapsed = transition.elapsed - holdDuration;
+    if (staticElapsed <= 0) return;
+    const progress = clamp01(staticElapsed / staticDuration);
+    const resetPoint = clamp01((transition.resetAt - holdDuration) / staticDuration);
     const fadeIn = clamp01(progress / Math.max(0.001, resetPoint));
     const fadeOut = clamp01((progress - resetPoint) / Math.max(0.001, 1 - resetPoint));
     const staticAlpha = transition.resetDone
       ? 0.86 * (1 - fadeOut)
       : 0.18 + 0.76 * fadeIn;
     const warmAlpha = transition.resetDone ? 0.34 * fadeOut : 0;
-    const frame = Math.floor((state.idleTime + transition.elapsed) * 36);
+    const frame = Math.floor((state.idleTime + staticElapsed) * 36);
 
     ctx.save();
     ctx.fillStyle = transition.resetDone
@@ -12047,6 +12495,146 @@
       ctx.fillRect(0, 0, W, H);
     }
     ctx.restore();
+  }
+
+  function drawShopReturnStaticTransitionOverlay() {
+    const transition = state.shopReturnStaticTransition;
+    if (!transition) return;
+    if (transition.theme === "cozy") {
+      drawCozyShopReturnAwningTransitionOverlay(transition);
+      return;
+    }
+    drawHorrorShopReturnStaticTransitionOverlay(transition);
+  }
+
+  function drawHorrorShopReturnStaticTransitionOverlay(transition) {
+    const duration = Math.max(0.001, transition.duration || HORROR_SHOP_RETURN_STATIC_SECONDS);
+    const elapsed = transition.elapsed || 0;
+    const switchAt = clamp(transition.switchAt || duration * 0.5, 0.001, duration - 0.001);
+    const fadeIn = clamp01(elapsed / switchAt);
+    const fadeOut = clamp01((elapsed - switchAt) / Math.max(0.001, duration - switchAt));
+    const staticAlpha = transition.screenChanged
+      ? 0.94 * (1 - fadeOut)
+      : 0.18 + 0.78 * fadeIn;
+    const frame = Math.floor((state.idleTime + (transition.elapsed || 0)) * 48);
+
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 5, 5, ${0.1 + staticAlpha * 0.42})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(frame * 83 + y * 17);
+      const bandAlpha = (0.025 + roll * 0.11) * staticAlpha;
+      ctx.fillStyle = y % 2 === 0
+        ? `rgba(74, 255, 99, ${bandAlpha})`
+        : `rgba(0, 225, 255, ${bandAlpha * 0.62})`;
+      ctx.fillRect(0, y, W, 1);
+    }
+    for (let i = 0; i < 420; i++) {
+      const x = Math.floor(glitchNoise(frame * 127 + i * 19) * W);
+      const y = Math.floor(glitchNoise(frame * 139 + i * 23) * H);
+      const size = glitchNoise(frame * 151 + i * 29) > 0.88 ? 2 : 1;
+      const speckAlpha = (0.06 + glitchNoise(frame * 163 + i * 31) * 0.26) * staticAlpha;
+      ctx.fillStyle = i % 7 === 0
+        ? `rgba(255, 57, 86, ${speckAlpha * 0.72})`
+        : `rgba(232, 255, 230, ${speckAlpha})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    for (let i = 0; i < 6; i++) {
+      if (glitchNoise(frame * 181 + i * 37) < 0.18) continue;
+      const y = Math.floor(glitchNoise(frame * 193 + i * 41) * H);
+      const h = 2 + Math.floor(glitchNoise(frame * 211 + i * 43) * 13);
+      const x = Math.floor((glitchNoise(frame * 223 + i * 47) - 0.5) * 56);
+      ctx.fillStyle = `rgba(70, 255, 99, ${0.1 * staticAlpha})`;
+      ctx.fillRect(x, y, W + 112, h);
+    }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = `rgba(170, 255, 181, ${0.1 * staticAlpha * (1 - fadeOut)})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  function drawCozyShopReturnAwningTransitionOverlay(transition) {
+    const duration = Math.max(0.001, transition.duration || COZY_SHOP_RETURN_AWNING_SECONDS);
+    const elapsed = transition.elapsed || 0;
+    const switchAt = clamp(transition.switchAt || duration * 0.5, 0.001, duration - 0.001);
+    const cover = transition.screenChanged
+      ? 1 - clamp01((elapsed - switchAt) / Math.max(0.001, duration - switchAt))
+      : clamp01(elapsed / switchAt);
+    const ease = cover * cover * (3 - 2 * cover);
+    const image = getUiSprite(COZY_AWNING_TRANSITION_SRC);
+    const drawW = W + 112;
+    const drawH = drawW * (image?.naturalHeight || 941) / Math.max(1, image?.naturalWidth || 1672);
+    const x = -56;
+    const y = -drawH + 18 + ease * (drawH - 18);
+
+    ctx.save();
+    const warmAlpha = 0.16 * ease;
+    ctx.fillStyle = `rgba(255, 235, 186, ${warmAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(image, x, y, drawW, drawH);
+    } else {
+      const fallbackH = H * 0.9;
+      ctx.fillStyle = "#d94a3f";
+      ctx.fillRect(0, -fallbackH + ease * fallbackH, W, fallbackH);
+      for (let sx = 0; sx < W; sx += 96) {
+        ctx.fillStyle = (sx / 96) % 2 ? "#fff2c8" : "#d94a3f";
+        ctx.fillRect(sx, -fallbackH + ease * fallbackH, 48, fallbackH);
+      }
+    }
+    drawCozyTransitionFoodParticles(ease, transition);
+    ctx.restore();
+  }
+
+  function drawCozyTransitionFoodParticles(cover, transition) {
+    const t = state.idleTime + (transition.elapsed || 0);
+    const alpha = 0.82 * Math.sin(clamp01(cover) * Math.PI);
+    if (alpha <= 0.01) return;
+    for (let i = 0; i < 38; i++) {
+      const baseX = glitchNoise(i * 97 + 31) * (W + 140) - 70;
+      const baseY = 54 + glitchNoise(i * 113 + 43) * (H - 108);
+      const x = baseX + Math.sin(t * 0.55 + i * 1.7) * 10 + Math.cos(t * 0.23 + i) * 4;
+      const y = baseY + Math.cos(t * 0.45 + i * 1.3) * 7 + clamp01(cover) * 10;
+      const size = 3 + glitchNoise(i * 131 + 59) * 7;
+      const kind = i % 5;
+      ctx.save();
+      ctx.globalAlpha = alpha * (0.55 + glitchNoise(i * 149 + 67) * 0.45);
+      ctx.translate(x, y);
+      ctx.rotate((glitchNoise(i * 167 + 83) - 0.5) * 1 + Math.sin(t * 0.4 + i) * 0.22);
+      if (kind === 0) {
+        ctx.fillStyle = "#e84b4b";
+        ctx.beginPath();
+        ctx.moveTo(0, -size * 0.8);
+        ctx.bezierCurveTo(size, -size * 1.1, size * 0.9, size * 0.5, 0, size);
+        ctx.bezierCurveTo(-size * 0.9, size * 0.5, -size, -size * 1.1, 0, -size * 0.8);
+        ctx.fill();
+        ctx.fillStyle = "#4fa35e";
+        ctx.fillRect(-size * 0.25, -size * 1.25, size * 0.5, size * 0.35);
+      } else if (kind === 1) {
+        ctx.fillStyle = "#c98a4c";
+        ctx.fillRect(-size * 0.5, -size * 0.35, size, size * 0.7);
+        ctx.fillStyle = "#f3d39c";
+        ctx.fillRect(-size * 0.22, -size * 0.16, size * 0.44, size * 0.32);
+      } else if (kind === 2) {
+        ctx.fillStyle = "#5aa65f";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size * 0.45, size, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (kind === 3) {
+        ctx.strokeStyle = ["#f26b5f", "#7cc46b", "#fff0a8", "#b85bd8"][i % 4];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.8, 0);
+        ctx.lineTo(size * 0.8, 0);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "#7d4b2a";
+        ctx.fillRect(-size * 0.35, -size * 0.35, size * 0.7, size * 0.7);
+      }
+      ctx.restore();
+    }
   }
 
   function illusionBleedFrame() {
@@ -12220,11 +12808,19 @@
     const bleed = slotBackdropBleedPhase(area, index, slotKind);
     if (!bleed.active) return;
     const id = (area === "shop" ? 100 : area === "board" ? 220 : area === "bench" ? 340 : area === "drinks" ? 460 : slotKind === "drink" ? 560 : 620) + (index || 0);
+    const clipToTileLayer = state.phase === "battle" && (area === "board" || area === "drinks");
+    if (clipToTileLayer) {
+      ctx.save();
+      roundedRect(rect.x, rect.y, rect.w, rect.h, Math.min(8, Math.max(3, rect.w * 0.08)));
+      ctx.clip();
+    }
     if (bleed.phase === "flash") {
       drawHeavyStaticAroundRect(rect, id, area === "shop" ? 0.72 : 0.58);
+      if (clipToTileLayer) ctx.restore();
       return;
     }
     drawBlueStaticAroundRect(rect, id, area === "shop" ? 0.68 : 0.54);
+    if (clipToTileLayer) ctx.restore();
   }
 
   function contentBleedId(kind, entry) {
@@ -12238,6 +12834,66 @@
     if (!entry || !realityBroken()) return { active: false, phase: "idle", progress: 0 };
     const chance = kind === "drink" ? 0.085 : kind === "topping" ? 0.08 : 0.075;
     return illusionBleedPhase(contentBleedId(kind, entry), chance, { allowCombat: true });
+  }
+
+  function postGiraffeHorrorContentPhase(kind, entry) {
+    const transition = state.postGiraffeHorrorTransition;
+    if (!transition?.active || !entry || !realityBroken()) return null;
+    const duration = transition.duration || POST_GIRAFFE_HORROR_ITEM_TRANSITION_SECONDS;
+    const elapsed = Math.max(0, transition.elapsed || 0);
+    const id = contentBleedId(kind, entry);
+    const seed = hashString(`giraffe-horror:${kind}:${entry.uid || ""}:${entry.typeId || entry.id || ""}:${entry.tier || 1}`);
+    const stagger = 0.08 + glitchNoise(seed + 17) * 2.05;
+    const lockAt = Math.min(duration - 0.28, stagger + 1.95 + glitchNoise(seed + 43) * 2.3);
+    if (elapsed >= lockAt) {
+      const sinceLock = elapsed - lockAt;
+      return {
+        active: sinceLock < 0.95,
+        retained: true,
+        mode: "horror",
+        progress: 1,
+        intensity: Math.max(0, 0.62 * (1 - clamp01(sinceLock / 0.95))),
+        id,
+      };
+    }
+    if (elapsed < stagger) {
+      const frame = Math.floor(elapsed * 26);
+      const earlyFlash = glitchNoise(seed * 71 + frame * 19) > 0.88;
+      return {
+        active: earlyFlash,
+        retained: false,
+        mode: earlyFlash ? "horror" : "cozy",
+        progress: 0,
+        intensity: earlyFlash ? 0.54 : 0,
+        id,
+      };
+    }
+    const local = elapsed - stagger;
+    const progress = clamp01(local / Math.max(0.001, lockAt - stagger));
+    const cycle = 0.12 + glitchNoise(seed + 89) * 0.11;
+    const holdFraction = clamp(0.16 + progress * 0.76, 0.16, 0.9);
+    const cyclePhase = (local + glitchNoise(seed + 101) * cycle) % cycle;
+    const frame = Math.floor(local * (18 + progress * 18));
+    const rapidSpike = glitchNoise(seed * 113 + frame * 29) > 0.74 - progress * 0.16;
+    const horrorHeld = cyclePhase < cycle * holdFraction;
+    return {
+      active: true,
+      retained: false,
+      mode: horrorHeld || rapidSpike ? "horror" : "cozy",
+      progress,
+      intensity: 0.68 + progress * 0.44,
+      id,
+    };
+  }
+
+  function drawPostGiraffeHorrorContentEffect(rect, kind, entry, phase = postGiraffeHorrorContentPhase(kind, entry)) {
+    if (!phase?.active || !rect) return;
+    const intensity = phase.intensity || 0.6;
+    if (phase.mode === "horror") {
+      drawHeavyStaticAroundRect(rect, phase.id || contentBleedId(kind, entry), intensity);
+    } else {
+      drawBlueStaticAroundRect(rect, phase.id || contentBleedId(kind, entry), intensity * 0.82);
+    }
   }
 
   function drawContentSequenceEffect(rect, kind, entry) {
@@ -12807,9 +13463,14 @@
   function buttonTooltip(button, enabled) {
     const label = String(button.label || "");
     if (button === buttons.shopUpgrade || label.startsWith("Lv ") || label === "Max Lv") {
+      const tierNote = realityBroken()
+        ? "Per slot: Mk 2 entries can appear at Lv 3; Mk 3 entries can appear at max level."
+        : "Per slot: 2-star entries can appear at Lv 3; 3-star entries can appear at max level.";
       return {
         title: label === "Max Lv" ? (realityBroken() ? "Rig maxed" : "Shop maxed") : `${upgradeTerm()} ${realityBroken() ? "rig" : "shop"}`,
-        body: enabled ? `Raises ${realityBroken() ? "rig" : "shop"} level and improves rarity odds.` : `Need more ${currencyTerm({ lower: true })} or already at max level.`,
+        body: enabled
+          ? `Raises ${realityBroken() ? "rig" : "shop"} level and improves rarity odds. ${tierNote}`
+          : `Need more ${currencyTerm({ lower: true })} or already at max level. ${tierNote}`,
       };
     }
     if (button === buttons.roll || label === "Roll") {
@@ -12835,7 +13496,6 @@
 
   function drawPrep() {
     drawShopkeeperStall();
-    drawCodexMenuButton();
     shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, shopEntryAt(i), "shop", i));
     itemBenchSlots.forEach((slot, i) => drawItemBenchSlot(slot, i));
     boardSlots.forEach((slot, i) => drawBoardSlot(slot, i));
@@ -12847,9 +13507,12 @@
 
   function drawShopkeeperStall() {
     const keeperBleed = illusionBleedPhase(2, 0.16);
+    const stallBleed = shopStallBleedPhase();
     const keeperFlash = keeperBleed.phase === "flash";
+    const stallFlash = stallBleed.phase === "flash";
     const keeper = getUiSprite(keeperFlash ? cozyShopkeeperSrc() : currentShopkeeperSrc());
-    const stall = getUiSprite(currentShopkeeperStallSrc());
+    if (realityBroken()) getUiSprite(SHOPKEEPER_STALL_SRC);
+    const stall = getUiSprite(stallFlash ? SHOPKEEPER_STALL_SRC : currentShopkeeperStallSrc());
     const keeperRect = SHOPKEEPER_DISPLAY.keeper;
     const stallRect = SHOPKEEPER_DISPLAY.stall;
 
@@ -12871,9 +13534,12 @@
     }
     if (keeperFlash) {
       drawHeavyStaticAroundRect(keeperRect, 2, 0.86);
-      drawHeavyStaticAroundRect(stallRect, 3, 0.56);
     } else if (keeperBleed.phase === "pre" || keeperBleed.phase === "post") {
       drawBlueStaticAroundRect(keeperRect, 2, 1.08);
+    }
+    if (stallFlash) {
+      drawHeavyStaticAroundRect(stallRect, 3, 0.72);
+    } else if (stallBleed.phase === "pre" || stallBleed.phase === "post") {
       drawBlueStaticAroundRect(stallRect, 3, 0.82);
     }
     drawShopkeeperSellTarget();
@@ -12881,6 +13547,10 @@
 
   function drawCodexMenuButton() {
     const rect = currentCodexMenuButtonRect();
+    const horror = realityBroken();
+    const signBleed = codexMenuSignBleedPhase();
+    const signFlash = signBleed.phase === "flash";
+    if (horror) getUiSprite(CODEX_MENU_BUTTON_SRC);
     const image = getUiSprite(currentCodexMenuButtonSrc());
     registerTooltip(rect.x, rect.y, rect.w, rect.h, {
       title: copy("ui.panels.foodMenu", "Food menu"),
@@ -12889,7 +13559,6 @@
     ctx.save();
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.imageSmoothingEnabled = true;
-      const horror = realityBroken();
       const pad = horror ? 0 : 4;
       const box = { x: rect.x - pad, y: rect.y - pad, w: rect.w + pad * 2, h: rect.h + pad * 2 };
       const metrics = horror ? runtimeSpriteMetrics(image) : { x: 0, y: 0, w: image.naturalWidth, h: image.naturalHeight };
@@ -12925,6 +13594,24 @@
       ctx.fillText("?", rect.x + rect.w / 2, rect.y + rect.h / 2);
     }
     ctx.restore();
+    if (signFlash) {
+      const cozyImage = getUiSprite(CODEX_MENU_BUTTON_SRC);
+      if (cozyImage && cozyImage.complete && cozyImage.naturalWidth > 0) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.filter = "blur(0.7px)";
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(cozyImage, rect.x, rect.y, rect.w, rect.h);
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = 0.18;
+        ctx.drawImage(cozyImage, rect.x - 2, rect.y, rect.w, rect.h);
+        ctx.drawImage(cozyImage, rect.x + 2, rect.y, rect.w, rect.h);
+        ctx.restore();
+      }
+      drawHeavyStaticAroundRect(rect, 4, 0.86);
+    } else if (signBleed.phase === "pre" || signBleed.phase === "post") {
+      drawBlueStaticAroundRect(rect, 4, 1.02);
+    }
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     ctx.lineWidth = 1;
@@ -12965,6 +13652,7 @@
   function drawResult() {
     const battle = visibleBattle();
     if (battle) drawBattle(battle);
+    drawParticles();
     drawResultPanel();
   }
 
@@ -13268,27 +13956,36 @@
   function drawShopSlotUnlock(x, y, w, h, index) {
     const cost = shopSlotUnlockCost(index);
     const horror = realityBroken();
+    const lockBleed = shopLockBleedPhase(index);
+    const lockFlash = lockBleed.phase === "flash";
     const panelX = x - w / 2 + 7;
     const panelY = y - h / 2 + 9;
     const panelW = w - 14;
     const panelH = h - 18;
-    const cloth = getUiSprite(currentShopLockClothBgSrc());
+    if (horror) getUiSprite(SHOP_LOCK_CLOTH_BG_SRC);
+    const cloth = getUiSprite(lockFlash ? SHOP_LOCK_CLOTH_BG_SRC : currentShopLockClothBgSrc());
     roundedRect(panelX, panelY, panelW, panelH, 8);
     if (cloth && cloth.complete && cloth.naturalWidth > 0) {
       ctx.save();
       ctx.clip();
       ctx.drawImage(cloth, panelX, panelY, panelW, panelH);
-      ctx.fillStyle = horror ? "rgba(10, 21, 18, 0.20)" : "rgba(255, 247, 224, 0.16)";
+      ctx.fillStyle = horror && !lockFlash ? "rgba(10, 21, 18, 0.20)" : "rgba(255, 247, 224, 0.16)";
       ctx.fillRect(panelX, panelY, panelW, panelH);
       ctx.restore();
       roundedRect(panelX, panelY, panelW, panelH, 8);
     } else {
-      ctx.fillStyle = horror ? "rgba(8, 18, 18, 0.86)" : "rgba(255, 253, 232, 0.76)";
+      ctx.fillStyle = horror && !lockFlash ? "rgba(8, 18, 18, 0.86)" : "rgba(255, 253, 232, 0.76)";
       ctx.fill();
     }
     ctx.strokeStyle = horror ? "rgba(97, 255, 108, 0.38)" : "rgba(111, 67, 33, 0.36)";
     ctx.lineWidth = 2;
     ctx.stroke();
+    const lockRect = { x: panelX, y: panelY, w: panelW, h: panelH };
+    if (lockFlash) {
+      drawHeavyStaticAroundRect(lockRect, 940 + (index || 0), 0.74);
+    } else if (lockBleed.phase === "pre" || lockBleed.phase === "post") {
+      drawBlueStaticAroundRect(lockRect, 940 + (index || 0), 0.68);
+    }
 
     const medallionY = y - 44;
     const image = getUiSprite(SHOP_LOCKED_SRC);
@@ -13906,6 +14603,34 @@
       ctx.textBaseline = "alphabetic";
       fitText(effect.text, x + 42, rowY, maxWidth - 42, "700 9px Inter, sans-serif", colors.text);
     });
+  }
+
+  function drawArenaRewardPendingRows(x, y, maxWidth) {
+    const rows = arenaRewardPendingRows();
+    if (!rows.length) return 0;
+    const horror = realityBroken();
+    drawInfoSectionTitle(realityBroken() ? "Zone rewards" : "Arena rewards", x, y);
+    rows.slice(0, 3).forEach((row, index) => {
+      const rowY = y + 20 + index * 18;
+      roundedRect(x, rowY - 12, 40, 15, 4);
+      ctx.fillStyle = horror ? "rgba(101, 255, 96, 0.72)" : "rgba(247, 209, 91, 0.86)";
+      ctx.fill();
+      ctx.strokeStyle = horror ? "rgba(244, 255, 246, 0.22)" : "rgba(138, 82, 35, 0.2)";
+      ctx.stroke();
+      registerTooltip(x, rowY - 12, maxWidth, 15, {
+        title: row.title,
+        body: row.body,
+      });
+      ctx.fillStyle = horror ? "#07100b" : "#6a3f14";
+      ctx.font = "900 7px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(row.label.toUpperCase(), x + 20, rowY - 4, 34);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      fitText(row.body, x + 48, rowY, maxWidth - 48, "700 9px Inter, sans-serif", horror ? "#9efaaa" : "#6a4b35");
+    });
+    return 24 + rows.slice(0, 3).length * 18;
   }
 
   function drawArenaBattlePanel() {
@@ -15311,13 +16036,29 @@
     const battle = visibleBattle();
     if (!unit?.glitchToRobot || unit.dead || !battle) return { active: false, alpha: 0, jitterX: 0, jitterY: 0, seed: 0 };
     const t = battle.elapsed || 0;
-    if (t < 0.6) return { active: false, alpha: 0, jitterX: 0, jitterY: 0, seed: 0 };
-    const seedBase = Math.floor(t * 12) + (unit.uid || 0) * 17;
-    const ramp = clamp((t - 0.6) / 7, 0, 1);
-    const pulse = Math.sin(t * (5.4 + ramp * 2.2) + (unit.uid || 0) * 0.13) > 0.4;
-    const noiseGate = glitchNoise(seedBase * 47 + 19) > 0.68 - ramp * 0.16;
-    const active = pulse || noiseGate;
-    const alpha = active ? clamp(0.18 + ramp * 0.22 + glitchNoise(seedBase * 73 + 11) * 0.2, 0.18, 0.58) : 0;
+    const hitRemaining = Math.max(0, (unit.giraffeHitGlitchUntil || 0) - t);
+    if (hitRemaining > 0) {
+      const hitProgress = clamp01(1 - hitRemaining / GIRAFFE_BOSS_HIT_GLITCH_SECONDS);
+      const seedBase = Math.floor((unit.giraffeHitGlitchSeed || 0) + t * 34);
+      const pulse = 0.72 + Math.sin(hitProgress * Math.PI) * 0.18;
+      return {
+        active: true,
+        alpha: clamp(pulse, 0.64, 0.9),
+        jitterX: Math.round((glitchNoise(seedBase * 97 + 5) - 0.5) * (10 - hitProgress * 3)),
+        jitterY: Math.round((glitchNoise(seedBase * 131 + 7) - 0.5) * (6 - hitProgress * 2)),
+        seed: seedBase,
+        source: "hit",
+      };
+    }
+    if (t < 1.2) return { active: false, alpha: 0, jitterX: 0, jitterY: 0, seed: 0 };
+    const ramp = clamp((t - 1.2) / 8, 0, 1);
+    const burstRate = 1.75;
+    const burstStep = Math.floor(t * burstRate);
+    const burstSlice = (t * burstRate) - burstStep;
+    const seedBase = burstStep + (unit.uid || 0) * 17;
+    const burstGate = glitchNoise(seedBase * 47 + 19) > 0.78 - ramp * 0.06;
+    const active = burstGate && burstSlice < 0.42;
+    const alpha = active ? clamp(0.44 + glitchNoise(seedBase * 73 + 11) * 0.18, 0.44, 0.62) : 0;
     return {
       active,
       alpha,
@@ -15327,38 +16068,130 @@
     };
   }
 
-  function drawGiraffeBossRobotGlitchOverlay(unit, x, y, r, facingRight, drawScale, rotation, options = {}) {
-    const phase = giraffeBossGlitchPhase(unit);
+  function drawGiraffeBossGlitchStatic(phase, x, y, r, options = {}) {
     if (!phase.active) return;
-    const robotSprite = getRuntimeSprite(unit, { horror: true });
-    if (!spriteImageReady(robotSprite)) return;
     const presentationScale = Math.max(0.01, options.presentationScale || 1);
-    const preserveBase = Boolean(options.preserveBase && presentationScale !== 1);
-    const robotFacingRight = runtimeSpriteFacingRight(unit, facingRight, { horror: true });
     const effectRadius = r * presentationScale;
+    const rect = {
+      x: Math.round(x - effectRadius * 1.22),
+      y: Math.round(y - effectRadius * 1.33),
+      w: Math.round(effectRadius * 2.44),
+      h: Math.round(effectRadius * 2.5),
+    };
 
     ctx.save();
-    ctx.globalAlpha = phase.alpha;
-    drawRuntimeFoodAnimal(robotSprite, x + phase.jitterX, y + phase.jitterY, r, robotFacingRight, drawScale, rotation, 0, {
-      presentationScale,
-      preserveBase,
-    });
+    drawBlueStaticAroundRect(rect, phase.seed + 31, 0.9 + phase.alpha * 0.32);
+    drawHeavyStaticAroundRect(rect, phase.seed + 37, 0.62 + phase.alpha * 0.46);
+    ctx.globalCompositeOperation = "lighter";
+    const frame = illusionBleedFrame() + phase.seed * 11;
+    const scanAlpha = 0.48 + phase.alpha * 0.5;
+    for (let yLine = rect.y; yLine < rect.y + rect.h; yLine += 3) {
+      const roll = glitchNoise(frame * 97 + yLine * 13);
+      if (roll < 0.36) continue;
+      ctx.fillStyle = yLine % 2 === 0
+        ? `rgba(88, 255, 105, ${(0.025 + roll * 0.07) * scanAlpha})`
+        : `rgba(255, 55, 82, ${(0.02 + roll * 0.06) * scanAlpha})`;
+      ctx.fillRect(rect.x, yLine, rect.w, 1);
+    }
+    for (let i = 0; i < 7; i += 1) {
+      const gate = glitchNoise(frame * 211 + i * 31);
+      if (gate < 0.26) continue;
+      const barY = Math.round(rect.y + glitchNoise(frame * 227 + i * 37) * rect.h);
+      const barX = Math.round(rect.x + (glitchNoise(frame * 241 + i * 41) - 0.5) * 18);
+      const barW = Math.round(rect.w * (0.55 + glitchNoise(frame * 251 + i * 43) * 0.62));
+      const barH = 2 + Math.floor(glitchNoise(frame * 263 + i * 47) * 12);
+      ctx.fillStyle = i % 2 === 0
+        ? `rgba(70, 255, 99, ${0.1 * scanAlpha})`
+        : `rgba(255, 55, 82, ${0.08 * scanAlpha})`;
+      ctx.fillRect(barX, barY, barW, barH);
+    }
+    for (let i = 0; i < 120; i += 1) {
+      if (glitchNoise(frame * 281 + i * 17) < 0.38) continue;
+      const dotX = Math.floor(rect.x + glitchNoise(frame * 293 + i * 19) * rect.w);
+      const dotY = Math.floor(rect.y + glitchNoise(frame * 307 + i * 23) * rect.h);
+      const size = glitchNoise(frame * 311 + i * 29) > 0.86 ? 2 : 1;
+      ctx.fillStyle = i % 5 === 0
+        ? `rgba(0, 238, 255, ${(0.08 + glitchNoise(frame * 313 + i * 31) * 0.22) * scanAlpha})`
+        : `rgba(238, 255, 232, ${(0.08 + glitchNoise(frame * 317 + i * 37) * 0.24) * scanAlpha})`;
+      ctx.fillRect(dotX, dotY, size, size);
+    }
     ctx.restore();
+  }
+
+  function finalBossVisualGlitchPhase(unit) {
+    if (!(unit?.finalBossUnit || isFinalBossUnitType(unit?.typeId)) || unit.dead) {
+      return { active: false, alpha: 0, splitX: 0, splitY: 0, seed: 0 };
+    }
+    const battle = visibleBattle();
+    const t = battle?.elapsed ?? state.idleTime;
+    const boss = unit.typeId === FINAL_BOSS_TYPE_ID;
+    const hitRemaining = Math.max(0, (unit.finalBossHitGlitchUntil || 0) - t);
+    if (hitRemaining > 0) {
+      const hitProgress = clamp01(1 - hitRemaining / FINAL_BOSS_HIT_GLITCH_SECONDS);
+      const seedBase = Math.floor((unit.finalBossHitGlitchSeed || 0) + t * (boss ? 58 : 66));
+      const pulse = 0.74 + Math.sin(hitProgress * Math.PI) * 0.22;
+      const intensity = boss ? 1.22 : 1.05;
+      return {
+        active: true,
+        alpha: clamp(pulse * intensity, 0.62, boss ? 0.78 : 0.68),
+        splitX: Math.round((6 + glitchNoise(seedBase * 59 + 11) * (boss ? 11 : 8)) * intensity),
+        splitY: Math.round((glitchNoise(seedBase * 67 + 13) - 0.5) * (boss ? 12 : 9)),
+        seed: seedBase,
+        burst: true,
+        source: "hit",
+      };
+    }
+    const seedBase = Math.floor(t * (boss ? 12 : 15)) + (unit.uid || 0) * 37 + (boss ? 997 : 313);
+    const pulse = 0.5 + Math.sin(t * (boss ? 5.1 : 6.7) + (unit.uid || 0)) * 0.5;
+    const burst = glitchNoise(seedBase * 43 + 7) > (boss ? 0.58 : 0.66);
+    const intensity = boss ? 1.05 : 0.82;
+    const alpha = (0.16 + pulse * 0.08 + (burst ? 0.16 : 0)) * intensity;
+    return {
+      active: true,
+      alpha: clamp(alpha, 0.12, boss ? 0.42 : 0.34),
+      splitX: Math.round((1.5 + (burst ? 3.5 : 1.5) * glitchNoise(seedBase * 59 + 11)) * intensity),
+      splitY: Math.round((glitchNoise(seedBase * 67 + 13) - 0.5) * (boss ? 4 : 3)),
+      seed: seedBase,
+      burst,
+    };
+  }
+
+  function drawFinalBossVisualGlitchStatic(phase, x, y, r, options = {}) {
+    if (!phase.active) return;
+    const presentationScale = Math.max(0.01, options.presentationScale || 1);
+    const effectRadius = r * presentationScale;
+    const rect = {
+      x: Math.round(x - effectRadius * 1.1),
+      y: Math.round(y - effectRadius * 1.18),
+      w: Math.round(effectRadius * 2.2),
+      h: Math.round(effectRadius * 2.3),
+    };
+    const frame = illusionBleedFrame() + phase.seed * 7;
+    const intensity = phase.burst ? 0.95 : 0.58;
 
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     for (let i = 0; i < 5; i += 1) {
-      const gate = glitchNoise(phase.seed * 173 + i * 29);
-      if (gate < 0.34) continue;
-      const barX = Math.round(x - effectRadius * 1.35 + glitchNoise(phase.seed * 211 + i * 31) * effectRadius * 2.7);
-      const barY = Math.round(y - effectRadius * 1.24 + glitchNoise(phase.seed * 227 + i * 37) * effectRadius * 2.45);
-      const barW = Math.round(8 + glitchNoise(phase.seed * 241 + i * 41) * effectRadius * 0.85);
-      const barH = Math.max(2, Math.round(2 + glitchNoise(phase.seed * 257 + i * 43) * 5));
-      const offset = Math.round((glitchNoise(phase.seed * 269 + i * 47) - 0.5) * 12);
-      ctx.fillStyle = `rgba(0, 236, 255, ${0.1 + phase.alpha * 0.22})`;
-      ctx.fillRect(barX + offset, barY, barW, barH);
-      ctx.fillStyle = `rgba(255, 35, 83, ${0.08 + phase.alpha * 0.18})`;
-      ctx.fillRect(barX - offset, barY + barH + 1, Math.max(5, Math.round(barW * 0.65)), 2);
+      if (!phase.burst && glitchNoise(frame * 37 + i * 19) < 0.42) continue;
+      const barY = Math.round(rect.y + glitchNoise(frame * 47 + i * 23) * rect.h);
+      const barX = Math.round(rect.x + (glitchNoise(frame * 53 + i * 29) - 0.5) * 20);
+      const barW = Math.round(rect.w * (0.38 + glitchNoise(frame * 61 + i * 31) * 0.72));
+      const barH = 1 + Math.floor(glitchNoise(frame * 67 + i * 37) * (phase.burst ? 8 : 4));
+      ctx.fillStyle = i % 3 === 0
+        ? `rgba(0, 238, 255, ${0.11 * intensity})`
+        : i % 3 === 1
+          ? `rgba(255, 45, 78, ${0.1 * intensity})`
+          : `rgba(238, 255, 232, ${0.08 * intensity})`;
+      ctx.fillRect(barX, barY, barW, barH);
+    }
+    for (let i = 0; i < 38; i += 1) {
+      if (glitchNoise(frame * 71 + i * 17) < 0.62) continue;
+      const dotX = Math.floor(rect.x + glitchNoise(frame * 79 + i * 19) * rect.w);
+      const dotY = Math.floor(rect.y + glitchNoise(frame * 83 + i * 23) * rect.h);
+      ctx.fillStyle = i % 4 === 0
+        ? `rgba(255, 51, 79, ${0.16 * intensity})`
+        : `rgba(66, 244, 255, ${0.14 * intensity})`;
+      ctx.fillRect(dotX, dotY, 1, 1);
     }
     ctx.restore();
   }
@@ -15375,27 +16208,40 @@
       scaleY: breath.scaleY * combatMotion.scaleY,
     };
     const bleed = contentBleedPhase("unit", unit);
-    const forceCozyRuntime = Boolean(unit?.giraffeBossUnit || isGiraffeBossUnitType(unit?.typeId));
-    const cozyRuntime = forceCozyRuntime || bleed.phase === "flash";
-    const runtimeSprite = getRuntimeSprite(unit, { cozy: cozyRuntime });
-    const runtimeFacingRight = runtimeSpriteFacingRight(unit, facingRight, { cozy: cozyRuntime });
+    const postGiraffeTransition = postGiraffeHorrorContentPhase("unit", unit);
+    const giraffeBoss = Boolean(unit?.giraffeBossUnit || isGiraffeBossUnitType(unit?.typeId));
+    const giraffeGlitch = giraffeBoss ? giraffeBossGlitchPhase(unit) : null;
+    const robotRuntimeSprite = giraffeGlitch?.active ? getRuntimeSprite(unit, { horror: true }) : null;
+    const swapToRobot = Boolean(giraffeGlitch?.active && spriteImageReady(robotRuntimeSprite));
+    const lockHorrorRuntimeSprite = isFinalBossUnitType(unit?.typeId);
+    const runtimeOptions = swapToRobot
+      ? { horror: true }
+      : lockHorrorRuntimeSprite || postGiraffeTransition?.mode === "horror"
+        ? { horror: true }
+        : { cozy: giraffeBoss || postGiraffeTransition?.mode === "cozy" || (!postGiraffeTransition && bleed.phase === "flash") };
+    const runtimeSprite = swapToRobot ? robotRuntimeSprite : getRuntimeSprite(unit, runtimeOptions);
+    const runtimeFacingRight = runtimeSpriteFacingRight(unit, facingRight, runtimeOptions);
+    const runtimeX = swapToRobot ? drawX + giraffeGlitch.jitterX : drawX;
+    const runtimeY = swapToRobot ? drawY + giraffeGlitch.jitterY : drawY;
+    const finalBossGlitch = finalBossVisualGlitchPhase(unit);
     if (spriteImageReady(runtimeSprite)) {
-      drawRuntimeFoodAnimal(runtimeSprite, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash, {
+      drawRuntimeFoodAnimal(runtimeSprite, runtimeX, runtimeY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash, {
         presentationScale,
         preserveBase,
+        glitch: finalBossGlitch,
       });
-      drawGiraffeBossRobotGlitchOverlay(unit, drawX, drawY, r, runtimeFacingRight, drawScale, combatMotion.rotation, {
-        presentationScale,
-        preserveBase,
-      });
+      if (swapToRobot) drawGiraffeBossGlitchStatic(giraffeGlitch, drawX, drawY, r, { presentationScale });
+      drawFinalBossVisualGlitchStatic(finalBossGlitch, drawX, drawY, r, { presentationScale });
       const effectRadius = r * presentationScale;
       drawContentSequenceEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit);
+      drawPostGiraffeHorrorContentEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit, postGiraffeTransition);
       drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
       return;
     }
     if (runtimeSprite && !spriteImageFailed(runtimeSprite)) {
       const effectRadius = r * presentationScale;
       drawContentSequenceEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit);
+      drawPostGiraffeHorrorContentEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit, postGiraffeTransition);
       drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
       return;
     }
@@ -15431,6 +16277,7 @@
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
     drawContentSequenceEffect({ x: drawX - size / 2, y: drawY - size / 2, w: size, h: size }, "unit", unit);
+    drawPostGiraffeHorrorContentEffect({ x: drawX - size / 2, y: drawY - size / 2, w: size, h: size }, "unit", unit, postGiraffeTransition);
     drawUnitToppings(unit, drawX, drawY, r, facingRight);
   }
 
@@ -15512,7 +16359,11 @@
   function drawItemIcon(item, x, y, r, options = {}) {
     const bleedKind = isDrink(item) ? "drink" : "topping";
     const bleed = contentBleedPhase(bleedKind, item);
-    const image = getItemSprite(item, { cozy: bleed.phase === "flash" });
+    const postGiraffeTransition = postGiraffeHorrorContentPhase(bleedKind, item);
+    const image = getItemSprite(item, {
+      cozy: postGiraffeTransition?.mode === "cozy" || (!postGiraffeTransition && bleed.phase === "flash"),
+      horror: postGiraffeTransition?.mode === "horror",
+    });
     const size = Math.round(r * 2.4);
     ctx.save();
     if (spriteImageReady(image)) {
@@ -15529,15 +16380,19 @@
         ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
       }
       drawContentSequenceEffect(drawRect, bleedKind, item);
+      drawPostGiraffeHorrorContentEffect(drawRect, bleedKind, item, postGiraffeTransition);
       ctx.imageSmoothingEnabled = true;
     } else if (image && !spriteImageFailed(image)) {
       drawContentSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item);
+      drawPostGiraffeHorrorContentEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item, postGiraffeTransition);
     } else if (isDrink(item)) {
       drawFallbackDrink(item, x, y, r);
       drawContentSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item);
+      drawPostGiraffeHorrorContentEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item, postGiraffeTransition);
     } else {
       drawFallbackEgg(x, y, r);
       drawContentSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item);
+      drawPostGiraffeHorrorContentEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, bleedKind, item, postGiraffeTransition);
     }
     ctx.restore();
   }
@@ -15624,7 +16479,7 @@
     ctx.restore();
   }
 
-  const REALITY_RUNTIME_INVERT_FACING = new Set(["crab_cake_caterpillar"]);
+  const REALITY_RUNTIME_INVERT_FACING = new Set(["crab_cake_caterpillar", "cucumber_cobra"]);
 
   function runtimeSpriteFacingRight(unit, facingRight, options = {}) {
     if (options.cozy || !realityBroken()) return facingRight;
@@ -15658,9 +16513,11 @@
     return entry[tier] || entry[Math.min(4, tier)] || entry[1] || null;
   }
 
-  function defeatStillSpriteSrcFor(unit) {
+  function defeatStillSpriteSrcFor(unit, options = {}) {
     const typeId = unit?.typeId || unit?.id;
     const tier = Math.max(1, unit?.tier || 1);
+    if (options.cozy) return defeatStillSpriteFromEntry(DEFEAT_STILL_SPRITES[typeId], tier);
+    if (options.horror) return defeatStillSpriteFromEntry(REALITY_DEFEAT_STILL_SPRITES[typeId], tier) || defeatStillSpriteFromEntry(DEFEAT_STILL_SPRITES[typeId], tier);
     return (realityBroken() || unit?.forceRealityDefeatStill ? defeatStillSpriteFromEntry(REALITY_DEFEAT_STILL_SPRITES[typeId], tier) : null) || defeatStillSpriteFromEntry(DEFEAT_STILL_SPRITES[typeId], tier);
   }
 
@@ -15673,8 +16530,8 @@
     return image;
   }
 
-  function getDefeatStillSprite(unit) {
-    const src = defeatStillSpriteSrcFor(unit);
+  function getDefeatStillSprite(unit, options = {}) {
+    const src = defeatStillSpriteSrcFor(unit, options);
     if (!src) return null;
     if (runtimeSpriteCache.has(src)) return runtimeSpriteCache.get(src);
     const image = loadSpriteImage(src);
@@ -15718,6 +16575,7 @@
   function itemSpriteSrcForId(itemId, tierValue, options = {}) {
     const tier = itemTier(tierValue);
     if (options.cozy) return ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null;
+    if (options.horror) return REALITY_ITEM_TIER_SPRITES[itemId]?.[tier] || REALITY_ITEM_SPRITES[itemId] || ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null;
     return realityBroken()
       ? REALITY_ITEM_TIER_SPRITES[itemId]?.[tier] || REALITY_ITEM_SPRITES[itemId] || ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null
       : ITEM_TIER_SPRITES[itemId]?.[tier] || ITEM_SPRITES[itemId] || null;
@@ -15791,6 +16649,7 @@
 
   function preloadDrinkThrowableSprites() {
     DRINK_THROWABLE_TYPES.forEach((drinkId) => getDrinkThrowableSprite(drinkId));
+    Object.values(REALITY_DRINK_THROWABLE_SPRITES).forEach((src) => getDrinkThrowableSpriteBySrc(src));
   }
 
   function preloadDefeatStillSprites() {
@@ -15949,12 +16808,45 @@
     const drawW = baseDrawW * presentationScale;
     const drawH = baseDrawH * presentationScale;
     const drawTop = options.preserveBase ? baseDrawH / 2 - drawH : -drawH / 2;
+    const glitch = options.glitch;
+    const glitchActive = Boolean(glitch?.active);
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.translate(Math.round(x), Math.round(y));
     ctx.rotate(rotation);
     ctx.scale(facingRight ? -breath.scaleX : breath.scaleX, breath.scaleY);
+    if (glitchActive) {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = glitch.alpha * 0.58;
+      ctx.filter = "saturate(1.45) brightness(1.1)";
+      ctx.drawImage(
+        image,
+        metrics.x,
+        metrics.y,
+        metrics.w,
+        metrics.h,
+        -drawW / 2 - glitch.splitX,
+        drawTop + glitch.splitY,
+        drawW,
+        drawH
+      );
+      ctx.globalAlpha = glitch.alpha * 0.5;
+      ctx.filter = "hue-rotate(145deg) saturate(1.8) brightness(1.05)";
+      ctx.drawImage(
+        image,
+        metrics.x,
+        metrics.y,
+        metrics.w,
+        metrics.h,
+        -drawW / 2 + glitch.splitX,
+        drawTop - glitch.splitY,
+        drawW,
+        drawH
+      );
+      ctx.restore();
+    }
     ctx.drawImage(
       image,
       metrics.x,
@@ -17269,15 +18161,24 @@
       const titleY = 166 + panelDy;
       const arenaDividerY = 190 + panelDy;
       const arenaY = 212 + panelDy;
-      const traitDividerY = 318 + panelDy;
-      const traitY = 340 + panelDy;
+      const pendingArenaRewards = arenaRewardPendingRows();
+      const arenaRows = pendingArenaRewards.length ? 2 : 3;
+      const rewardDividerY = arenaY + 92;
+      const rewardY = rewardDividerY + 22;
+      const rewardHeight = pendingArenaRewards.length ? 24 + Math.min(3, pendingArenaRewards.length) * 18 : 0;
+      const traitDividerY = pendingArenaRewards.length ? rewardY + rewardHeight + 10 : 318 + panelDy;
+      const traitY = traitDividerY + 22;
       ctx.fillStyle = primary;
       ctx.font = "900 17px Inter, sans-serif";
       ctx.fillText(copy("ui.panels.teamIntel", horror ? "War Intel" : "Team Intel"), contentX, titleY);
       drawInfoDivider(contentX, arenaDividerY, contentW);
-      drawArenaInfoRows(contentX, arenaY, contentW, 3);
+      drawArenaInfoRows(contentX, arenaY, contentW, arenaRows);
+      if (pendingArenaRewards.length) {
+        drawInfoDivider(contentX, rewardDividerY, contentW);
+        drawArenaRewardPendingRows(contentX, rewardY, contentW);
+      }
       drawInfoDivider(contentX, traitDividerY, contentW);
-      drawActiveTraitRows(contentX, traitY, contentW);
+      drawActiveTraitRows(contentX, traitY, contentW, pendingArenaRewards.length ? 4 : Infinity);
       return;
     }
 
@@ -17384,8 +18285,9 @@
     const muted = themeColor("muted", "#6a4b35");
     const panelSoft = themeColor("panelSoft", "rgba(255, 253, 232, 0.86)");
     const borderDim = themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
+    const gameOver = state.hearts <= 0;
     roundedRect(700, 76, 306, 466, 8);
-    ctx.fillStyle = panelSoft;
+    ctx.fillStyle = horror && gameOver ? "rgba(3, 12, 11, 0.97)" : panelSoft;
     ctx.fill();
     ctx.strokeStyle = borderDim;
     ctx.stroke();
@@ -17393,14 +18295,14 @@
     const income = state.lastIncome;
     const hasReward = state.hearts > 0 && state.rewardChoices?.length;
     const won = income?.result === "win";
-    const resultTitle = state.hearts <= 0
+    const resultTitle = gameOver
       ? copy("ui.result.runOver", "Run Over")
       : won
         ? copy("ui.result.victory", "Victory!")
         : copy("ui.result.defeat", "Defeat");
-    const resultColor = state.hearts <= 0 ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
+    const resultColor = gameOver ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
     roundedRect(718, 92, 268, 34, 8);
-    ctx.fillStyle = horror ? "rgba(5, 19, 18, 0.92)" : won ? "rgba(219, 246, 198, 0.92)" : state.hearts <= 0 ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
+    ctx.fillStyle = horror ? "rgba(5, 19, 18, 0.92)" : won ? "rgba(219, 246, 198, 0.92)" : gameOver ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
     ctx.fill();
     ctx.strokeStyle = borderDim;
     ctx.stroke();
@@ -17441,7 +18343,7 @@
     }
     drawCombatLedger(state.lastCombatLedger, 720, 188, 268);
     if (!state.rewardChoices?.length) {
-      wrapText(state.hearts <= 0 ? copy("ui.result.runEnded", "Your run has ended. Restart from the top bar.") : copy("ui.result.rewardClaimed", "Reward claimed."), 720, 320, 268, 15);
+      wrapText(gameOver ? copy("ui.result.runEnded", "Your run has ended. Restart from the top bar.") : copy("ui.result.rewardClaimed", "Reward claimed."), 720, 320, 268, 15);
       return;
     }
     drawRewardPrompt();
@@ -17508,24 +18410,24 @@
 
   function rewardIconId(reward) {
     if (!reward) return "reward_gold";
+    if (reward.type?.startsWith("arena")) return "reward_arena";
     if (reward.type === "gold" || reward.type === "arenaPurse") return "reward_gold";
     if (reward.type === "freeRolls" || reward.type === "arenaScout" || reward.type === "arenaHold") return "reward_freeRolls";
     if (reward.type === "item") return reward.key?.startsWith("favorite:") ? "reward_favorite" : "reward_item";
     if (reward.type === "copy") return "reward_copy";
     if (reward.type === "upgradeDiscount" || reward.type === "shopSlotUnlock") return "reward_discount";
-    if (reward.type?.startsWith("arena")) return "reward_arena";
     return "reward_gold";
   }
 
   function rewardKindLabel(reward) {
     if (!reward) return copy("ui.result.reward", "REWARD");
+    if (reward.type?.startsWith("arena")) return realityBroken() ? "ZONE" : "ARENA";
     if (reward.type === "gold" || reward.type === "arenaPurse") return realityBroken() ? "SCRAP" : "COINS";
     if (reward.type === "freeRolls") return realityBroken() ? "SCAN" : "ROLL";
     if (reward.type === "item") return reward.key?.startsWith("favorite:") ? "FAV" : (realityBroken() ? "WPN" : "TOP");
     if (reward.type === "copy") return realityBroken() ? "UNIT" : "COPY";
     if (reward.type === "upgradeDiscount") return realityBroken() ? "RIG" : "UPG";
     if (reward.type === "shopSlotUnlock") return "SLOT";
-    if (reward.type?.startsWith("arena")) return realityBroken() ? "ZONE" : "ARENA";
     return "REWARD";
   }
 
@@ -17970,7 +18872,7 @@
     drawBattleGrid("enemy");
     drawBattleDrinkSlots("ally", battle.allyDrinks || state.drinks);
     drawBattleDrinkSlots("enemy", battle.enemyDrinks || []);
-    [...battle.allies, ...battle.enemies].forEach((unit) => {
+    battleUnitsInRenderOrder(battle).forEach((unit) => {
       if (unit.dead) {
         drawBattleDefeatStill(unit);
       } else {
@@ -17981,6 +18883,44 @@
     (battle.drinkTosses || []).forEach((toss) => drawDrinkToss(toss, battle));
     drawBattleMoldPanel(battle);
     drawArenaBattlePanel();
+  }
+
+  function battleUnitsInRenderOrder(battle) {
+    return [
+      ...sideUnitsInRenderOrder(battle.allies || []),
+      ...sideUnitsInRenderOrder(battle.enemies || []),
+    ];
+  }
+
+  function sideUnitsInRenderOrder(units) {
+    return units
+      .map((unit, index) => ({ unit, index }))
+      .sort((a, b) => {
+        const colDelta = battleUnitRenderLayer(b.unit) - battleUnitRenderLayer(a.unit);
+        return colDelta || a.index - b.index;
+      })
+      .map((entry) => entry.unit);
+  }
+
+  function battleUnitRenderLayer(unit) {
+    const col = battleUnitRenderColumn(unit);
+    if (unit?.typeId === FINAL_BOSS_TYPE_ID) return col + 0.5;
+    if (unit?.typeId === FINAL_BOSS_MINION_TYPE_ID && col === BACK_COL) {
+      const row = Number.isFinite(unit.row) ? unit.row : Number.isInteger(unit.slot) ? slotGrid(unit.slot).row : 1;
+      if (row === 0) return col + 1;
+      if (row === BOARD_ROWS - 1) return col;
+    }
+    if (unit?.typeId === FINAL_BOSS_MINION_TYPE_ID && col === 1) {
+      const row = Number.isFinite(unit.row) ? unit.row : Number.isInteger(unit.slot) ? slotGrid(unit.slot).row : 1;
+      if (row === BOARD_ROWS - 1) return 0.25;
+    }
+    return col;
+  }
+
+  function battleUnitRenderColumn(unit) {
+    if (Number.isFinite(unit?.col)) return unit.col;
+    if (Number.isInteger(unit?.slot)) return slotGrid(unit.slot).col;
+    return FRONT_COL;
   }
 
   function battleUnitByUid(battle, uid) {
@@ -18074,6 +19014,9 @@
     const dy = to.y - from.y;
     const angle = Math.atan2(dy, dx);
     const mirrorLeft = dx < 0;
+    const fallbackSpinDirection = (attack.sourceSide || from.side) === "enemy" ? -1 : 1;
+    const spin = attack.spin ?? fallbackSpinDirection * ATTACK_PROJECTILE_SPIN_MIN;
+    const spinRotation = (attack.rotationStart || 0) + spin * progress;
 
     if (!attack.particleSrc) {
       const spriteInfo = particleSpriteInfo(attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1);
@@ -18084,7 +19027,7 @@
     const size = ATTACK_PROJECTILE_SIZE + Math.min(4, from.tier || 1) * 5;
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(mirrorLeft ? angle - Math.PI : angle);
+    ctx.rotate((mirrorLeft ? angle - Math.PI : angle) + spinRotation);
     if (mirrorLeft) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = Math.min(1, 0.25 + progress * 1.35);
@@ -18315,22 +19258,29 @@
   }
 
   function drawBattleDefeatStill(unit) {
-    const image = getDefeatStillSprite(unit);
+    const postGiraffeTransition = postGiraffeHorrorContentPhase("defeatedUnit", unit);
+    const image = getDefeatStillSprite(unit, {
+      cozy: postGiraffeTransition?.mode === "cozy",
+      horror: postGiraffeTransition?.mode === "horror",
+    });
     if (!(image && image.complete && image.naturalWidth > 0)) return;
     const radius = 28 + unit.tier * 4;
     const baseSize = Math.round(radius * 2.7);
-    const scale = unit.defeatStillScale || (realityBroken() ? HORROR_DEFEAT_STILL_SCALE : 1);
+    const horrorStill = postGiraffeTransition?.mode === "cozy" ? false : realityBroken();
+    const scale = unit.defeatStillScale || (horrorStill ? HORROR_DEFEAT_STILL_SCALE : 1);
     const size = Math.round(baseSize * scale);
     const y = unit.y + radius * 0.08;
     const baseY = y + baseSize / 2;
-    const facingRight = realityBroken() && unit.side === "ally";
+    const facingRight = horrorStill && unit.side === "ally";
+    const rect = { x: Math.round(unit.x - size / 2), y: Math.round(baseY - size), w: size, h: size };
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.86;
-    drawImageFacing(image, Math.round(unit.x - size / 2), Math.round(baseY - size), size, size, facingRight);
+    drawImageFacing(image, rect.x, rect.y, rect.w, rect.h, facingRight);
     ctx.restore();
     ctx.imageSmoothingEnabled = true;
+    drawPostGiraffeHorrorContentEffect(rect, "defeatedUnit", unit, postGiraffeTransition);
   }
 
   function activeStatusEffects(unit) {
@@ -18590,7 +19540,7 @@
   }
 
   function hitTest(pos) {
-    if (state.rebootTransition || state.finalVictoryTransition) return null;
+    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
         return { area: "button", index: "victoryReboot" };
@@ -18682,7 +19632,7 @@
       if (hit.index === "roll") refreshShop(false);
       if (hit.index === "battle") startBattle();
       if (hit.index === "battleSpeed") cycleBattleSpeed();
-      if (hit.index === "next") continuePrep();
+      if (hit.index === "next") continueFromResult();
       if (hit.index === "victoryReboot") rebootFromVictoryCutscene();
       if (String(hit.index).startsWith("reward")) applyRewardChoice(Number(String(hit.index).slice(6)));
       if (hit.index === "sell") {
@@ -19008,7 +19958,7 @@
 
   function onKeyDown(event) {
     const key = event.key.toLowerCase();
-    if (state.rebootTransition || state.finalVictoryTransition || state.phase === "victoryCutscene") {
+    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phase === "victoryCutscene") {
       if (event.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) canvas.requestFullscreen?.();
         else document.exitFullscreen?.();
@@ -19087,10 +20037,13 @@
           attacks: shownBattle.attacks.map((attack) => ({
             from: attack.from,
             to: attack.to,
+            sourceSide: attack.sourceSide,
             kind: attack.kind || "damage",
             particleType: attack.particleType,
             particleSrc: attack.particleSrc || particleSpriteSrc(attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1),
             progress: Number(clamp01(1 - attack.t / (attack.duration || ATTACK_ANIMATION_SECONDS)).toFixed(2)),
+            spin: Number((attack.spin || 0).toFixed(2)),
+            rotation: Number(((attack.rotationStart || 0) + (attack.spin || 0) * clamp01(1 - attack.t / (attack.duration || ATTACK_ANIMATION_SECONDS))).toFixed(2)),
           })),
           drinkTosses: (shownBattle.drinkTosses || []).map((toss) => ({
             id: toss.id,
@@ -19118,6 +20071,26 @@
         override: state.realityOverride,
         breakRound: REALITY_BREAK_ROUND,
         breakTimer: Number((state.realityBreakTimer || 0).toFixed(2)),
+        postGiraffeHorrorTransition: state.postGiraffeHorrorTransition ? {
+          active: true,
+          source: state.postGiraffeHorrorTransition.source || "giraffeDefeat",
+          elapsed: Number((state.postGiraffeHorrorTransition.elapsed || 0).toFixed(2)),
+          duration: state.postGiraffeHorrorTransition.duration || POST_GIRAFFE_HORROR_ITEM_TRANSITION_SECONDS,
+          clearAt: state.postGiraffeHorrorTransition.clearAt || POST_GIRAFFE_HORROR_ITEM_TRANSITION_CLEAR_SECONDS,
+          style: "individual-items-defeated-enemies-and-hud-glitch-then-retain-horror",
+        } : { active: false },
+        shopReturnStaticTransition: state.shopReturnStaticTransition ? {
+          active: true,
+          source: state.shopReturnStaticTransition.source || "horrorRewardReturn",
+          theme: state.shopReturnStaticTransition.theme || "horror",
+          elapsed: Number((state.shopReturnStaticTransition.elapsed || 0).toFixed(2)),
+          duration: state.shopReturnStaticTransition.duration || HORROR_SHOP_RETURN_STATIC_SECONDS,
+          switchAt: Number((state.shopReturnStaticTransition.switchAt || 0).toFixed(2)),
+          screenChanged: Boolean(state.shopReturnStaticTransition.screenChanged),
+          style: state.shopReturnStaticTransition.theme === "cozy"
+            ? "cozy-awning-food-particle-fade-out-switch-fade-in"
+            : "fade-out-static-then-switch-to-shop-then-fade-in",
+        } : { active: false },
         rebootTransition: state.rebootTransition ? {
           active: true,
           elapsed: Number((state.rebootTransition.elapsed || 0).toFixed(2)),
@@ -19129,6 +20102,9 @@
           active: true,
           elapsed: Number((state.finalVictoryTransition.elapsed || 0).toFixed(2)),
           duration: state.finalVictoryTransition.duration,
+          holdDuration: state.finalVictoryTransition.holdDuration || 0,
+          staticElapsed: Number(Math.max(0, (state.finalVictoryTransition.elapsed || 0) - (state.finalVictoryTransition.holdDuration || 0)).toFixed(2)),
+          resetAt: state.finalVictoryTransition.resetAt,
           resetDone: Boolean(state.finalVictoryTransition.resetDone),
         } : { active: false },
         victoryCutscene: state.victoryCutscene ? {
@@ -19142,9 +20118,19 @@
           rebootButton: victoryCutsceneStage(state.victoryCutscene.elapsed || 0) === "ideal" ? { ...VICTORY_REBOOT_BUTTON } : null,
         } : { active: false },
         simulationArtifacts: realityBroken(),
+        revealDistortion: realityRevealDistortionState().active ? {
+          active: true,
+          intensity: Number(realityRevealDistortionState().intensity.toFixed(2)),
+          remaining: Number(realityRevealDistortionState().remaining.toFixed(2)),
+          style: "reboot-static-screen-tear",
+        } : { active: false },
         assetIllusionBleed: realityBroken()
-          ? { enabled: illusionBleedAllowed({ allowCombat: true }), frame: illusionBleedFrame(), rate: "sequenced_slightly_more_frequent_combat_visual", sequenceSeconds: { preStatic: 0.5, flash: 0.3, postStatic: 0.5 }, affectedAreas: ["shopkeeper", "stall", "hud", "shop", "tiles", "foodAnimals", "drinks", "toppings", "combatFoodAnimals", "combatDrinks", "combatTiles"] }
+          ? { enabled: illusionBleedAllowed({ allowCombat: true }), frame: illusionBleedFrame(), rate: "sequenced_slightly_more_frequent_combat_visual", sequenceSeconds: { preStatic: 0.5, flash: 0.3, postStatic: 0.5 }, affectedAreas: ["shopkeeper", "stall", "hud", "shop", "tiles", "foodAnimals", "drinks", "toppings", "combatFoodAnimals", "combatDrinks", "combatTiles"], combatTileLayer: state.phase === "battle" ? "clipped-under-units" : "normal-ui-layer" }
           : { enabled: false, frame: null, rate: "off", affectedAreas: [] },
+        codexMenuSignBleed: codexMenuSignBleedPhase(),
+        shopStallBleed: shopStallBleedPhase(),
+        shopLockBleed: shopSlots.map((_, index) => shopLockBleedPhase(index)),
+        combatTileBleed: combatTileBleedText(),
         malfunctionBanner: realityBroken() && !(state.realityBreakTimer > 0) ? { x: 386, y: 3, w: 248, h: 58, effects: true } : null,
         shopkeeperSrc: currentShopkeeperSrc(),
         stallSrc: currentShopkeeperStallSrc(),
@@ -19190,6 +20176,7 @@
           y: Number(particle.y.toFixed(1)),
           life: Number(particle.life.toFixed(2)),
           particleType: particle.particleType || null,
+          imageSrc: particle.imageSrc || null,
           food: Boolean(particle.foodParticles),
         })),
       },
@@ -19197,6 +20184,11 @@
       arenas: ARENAS.map((arena) => arenaText(arena)),
       arenaRewards: {
         keepArenaNextRound: state.keepArenaNextRound,
+        pendingRows: arenaRewardPendingRows(),
+        held: state.arenaHoldNotice ? {
+          arenaId: state.arenaHoldNotice.arenaId,
+          arenaShort: state.arenaHoldNotice.arenaShort,
+        } : null,
         scout: state.arenaScout ? {
           arenaId: state.arenaScout.arenaId,
           arenaShort: state.arenaScout.arenaShort,
@@ -19238,6 +20230,10 @@
         drinkShopChancePct: Number((currentDrinkShopChance() * 100).toFixed(1)),
         toppingShopChancePct: Number((currentToppingShopChance() * 100).toFixed(1)),
         saleChancePct: Number((currentShopSaleChance() * 100).toFixed(1)),
+        tierChancePctPerSlot: {
+          twoStar: Number((currentShopEntryTierChances().tier2 * 100).toFixed(1)),
+          threeStar: Number((currentShopEntryTierChances().tier3 * 100).toFixed(1)),
+        },
       },
       currentRollCost: currentRollCost(),
       freeRolls: state.freeRolls,
@@ -19473,6 +20469,18 @@
     };
   }
 
+  function motionText(unit, motionKey, fallbackDuration, battle = visibleBattle()) {
+    if (!unit || !battle) return { active: false, remaining: 0 };
+    const motion = unit[motionKey];
+    if (!motion || typeof motion.start !== "number") return { active: false, remaining: 0 };
+    const duration = Math.max(0.001, motion.duration || fallbackDuration);
+    const remaining = Math.max(0, motion.start + duration - (battle.elapsed || 0));
+    return {
+      active: remaining > 0,
+      remaining: Number(remaining.toFixed(2)),
+    };
+  }
+
   function unitText(unit, includePosition = false) {
     const payload = {
       kind: "unit",
@@ -19525,6 +20533,16 @@
       drinkEffects: unit.drinkEffects || [],
       item: unit.item ? itemText(unit.item) : null,
     };
+    if (unit.giraffeBossUnit || isGiraffeBossUnitType(unit.typeId)) {
+      const battle = visibleBattle();
+      payload.giraffeHitGlitchActive = Boolean(battle && (unit.giraffeHitGlitchUntil || 0) > (battle.elapsed || 0));
+      payload.giraffeHitGlitchRemaining = battle ? Number(Math.max(0, (unit.giraffeHitGlitchUntil || 0) - (battle.elapsed || 0)).toFixed(2)) : 0;
+    }
+    if (isFinalBossUnitType(unit.typeId)) {
+      const battle = visibleBattle();
+      payload.finalBossHitGlitchActive = Boolean(battle && (unit.finalBossHitGlitchUntil || 0) > (battle.elapsed || 0));
+      payload.finalBossHitGlitchRemaining = battle ? Number(Math.max(0, (unit.finalBossHitGlitchUntil || 0) - (battle.elapsed || 0)).toFixed(2)) : 0;
+    }
     if (realityBroken()) payload.radiationDose = unit.moldStacks || 0;
     if (includePosition) {
       payload.x = Math.round(unit.x);
@@ -19534,6 +20552,11 @@
       payload.row = unit.row;
       payload.col = unit.col;
       payload.depth = unit.col === FRONT_COL ? "front" : unit.col === BACK_COL ? "back" : "middle";
+      payload.motion = {
+        attack: motionText(unit, "attackMotion", COMBAT_ATTACK_MOTION_SECONDS),
+        support: motionText(unit, "supportMotion", COMBAT_SUPPORT_MOTION_SECONDS),
+        hit: motionText(unit, "hitMotion", COMBAT_HIT_MOTION_SECONDS),
+      };
     }
     return payload;
   }
@@ -19611,6 +20634,8 @@
     state.postCombatBattle = null;
     state.rewardChoices = [];
     state.rebootTransition = null;
+    state.postGiraffeHorrorTransition = null;
+    state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = {
       elapsed: victoryEpilogueRouteElapsed(),
@@ -19652,6 +20677,7 @@
     state.postCombatBattle = null;
     state.arenaId = "blackout_street_carnival";
     state.keepArenaNextRound = false;
+    state.arenaHoldNotice = null;
     state.arenaScout = null;
     state.arenaPrepBuff = null;
     state.enemyPreview = null;
@@ -19669,6 +20695,8 @@
     state.realityBroken = true;
     state.realityBreakTimer = 0;
     state.rebootTransition = null;
+    state.postGiraffeHorrorTransition = null;
+    state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
     clearParticles();
@@ -19691,8 +20719,79 @@
     return true;
   }
 
+  function applyLevel10Route() {
+    state.phase = "prep";
+    state.round = GIRAFFE_BOSS_ROUND;
+    state.gold = 160;
+    state.hearts = 10;
+    state.shopLevel = 3;
+    state.message = "Level 10 ready";
+    state.shopFrozen = Array(shopSlots.length).fill(false);
+    state.shopSales = Array(shopSlots.length).fill(false);
+    state.shopUnlocked = shopSlots.map(() => true);
+    state.bench = Array(8).fill(null);
+    state.itemBench = Array(itemBenchSlots.length).fill(null);
+    state.board = Array(boardSlots.length).fill(null);
+    state.drinks = Array(drinkSlots.length).fill(null);
+    state.selected = null;
+    state.codexOpen = false;
+    state.hover = null;
+    state.pointer = null;
+    state.drag = null;
+    state.battle = null;
+    state.postCombatBattle = null;
+    state.arenaId = "sunny_breakfast_patio";
+    state.keepArenaNextRound = false;
+    state.arenaHoldNotice = null;
+    state.arenaScout = null;
+    state.arenaPrepBuff = null;
+    state.enemyPreview = null;
+    state.rewardChoices = [];
+    state.lastCombatLedger = null;
+    state.freeRolls = startingFreeRollsForShopLevel(3);
+    state.rollsThisRound = 0;
+    state.nextShopUpgradeDiscountGold = 0;
+    state.winStreak = 3;
+    state.lossStreak = 0;
+    state.lastIncome = null;
+    state.itemDiscountUsed = false;
+    state.battleSpeedIndex = 1;
+    state.realityOverride = null;
+    state.realityBroken = false;
+    state.realityBreakTimer = 0;
+    state.rebootTransition = null;
+    state.postGiraffeHorrorTransition = null;
+    state.shopReturnStaticTransition = null;
+    state.finalVictoryTransition = null;
+    state.victoryCutscene = null;
+    clearParticles();
+
+    state.board[0] = makeUnit("toast_tortoise", 2);
+    state.board[1] = makeUnit("taco_tiger", 2);
+    state.board[2] = makeUnit("mochi_mammoth", 2);
+    state.board[3] = makeUnit("shakshuka_shark", 2);
+    state.board[4] = makeUnit("boba_basilisk", 2);
+    state.board[5] = makeUnit("croissant_kraken", 2);
+    state.board[6] = makeUnit("caesar_salamander", 2);
+    state.board[7] = makeUnit("caprese_capybara", 2);
+    state.board[8] = makeUnit("noodle_newt", 2);
+    state.drinks[0] = makeItem("bean_brew", 2);
+    state.drinks[1] = makeItem("berry_fizz", 2);
+    state.drinks[3] = makeItem("tidepool_espresso", 2);
+
+    refreshShop(true);
+    ensureEnemyPreview();
+    state.log = ["Review route: level 10 Banana Split Giraffe boss"];
+    if (finalFightRouteShouldStartBattle()) startBattle();
+    if (state.phase === "prep") state.message = "Level 10 ready";
+    return true;
+  }
+
   function applyInitialRouteScreen() {
     const screen = routeParam("screen") || routeParam("scene");
+    if (screen === "level-10" || screen === "level10" || screen === "wave-10" || screen === "wave10" || screen === "giraffe-boss") {
+      return applyLevel10Route();
+    }
     if (screen === "final-fight" || screen === "final-boss" || screen === "overmind") {
       return applyFinalFightRoute();
     }
@@ -19801,6 +20900,24 @@
     return { theme: currentCopyThemeId(), broken: realityBroken(), texts };
   }
 
+  function combatTileBleedText() {
+    if (state.phase !== "battle" || !realityBroken()) {
+      return { active: false, layer: "inactive", board: [], drinks: [] };
+    }
+    const activeBoard = boardSlots
+      .map((_, index) => ({ index, ...slotBackdropBleedPhase("board", index) }))
+      .filter((entry) => entry.active);
+    const activeDrinks = drinkSlots
+      .map((_, index) => ({ index, ...slotBackdropBleedPhase("drinks", index) }))
+      .filter((entry) => entry.active);
+    return {
+      active: activeBoard.length > 0 || activeDrinks.length > 0,
+      layer: "clipped-under-units",
+      board: activeBoard,
+      drinks: activeDrinks,
+    };
+  }
+
   window.render_game_to_text = renderGameToText;
   window.advanceTime = (ms) => {
     const steps = Math.max(1, Math.round(ms / (1000 / 60)));
@@ -19822,6 +20939,7 @@
     currentToppingShopChance,
     currentItemShopChance,
     currentShopSaleChance,
+    currentShopEntryTierChances,
     shopSlotOnSale,
     currentCopyThemeId,
     copy,
@@ -19879,6 +20997,7 @@
   refreshShop(true);
   applySmokeScenario();
   applyInitialRouteScreen();
+  getUiSprite(COZY_AWNING_TRANSITION_SRC);
   ensureEnemyPreview();
   draw();
   requestAnimationFrame(gameLoop);

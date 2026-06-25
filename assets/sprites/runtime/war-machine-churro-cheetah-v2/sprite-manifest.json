@@ -1,0 +1,48 @@
+{
+  "packageId": "war-machine-churro-cheetah-v2",
+  "packageStatus": "horror-theme-neon-redo-pure-robot-equal-footprint-munition-defeat-safe-inset-wired",
+  "unitId": "churro_cheetah",
+  "sourceChromaKey": "assets/sprites/source/war-machine-churro-cheetah-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-churro-cheetah-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Churro Cub",
+      "frame": "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Cinnamon Cheetah",
+      "frame": "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Chili Churro Cheetah",
+      "frame": "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Dulce Firecat",
+      "frame": "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v2.png",
+  "notes": [
+    "Generated with built-in image generation as a stronger neon redo of the prior Dulce Firecat horror war-machine line.",
+    "The source sheet contains four pure robot evolution stages, one static munition/discharge object, and one disabled mechanical defeat still.",
+    "Progression is expressed through added armor, weapons, sensors, reactor nodes, tail hardware, and command equipment rather than small-to-large scaling.",
+    "The particle and defeat still were extracted from isolated alpha masks because their square crops overlap neighboring x bounds on the source sheet.",
+    "Runtime frames were repacked with safe transparent insets after the first v2 slice clipped MK3 and MK4 against the 192px frame edges."
+  ]
+}

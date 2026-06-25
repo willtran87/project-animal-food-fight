@@ -1,0 +1,50 @@
+{
+  "packageId": "war-machine-noodle-newt-v3",
+  "packageStatus": "horror-theme-neon-pure-robot-imagegen-alpha-corrected-runtime-wired",
+  "unitId": "noodle_newt",
+  "sourceChromaKey": "assets/sprites/source/war-machine-noodle-newt-evolution-v3-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-noodle-newt-evolution-v3-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Serpent Field Crawler",
+      "frame": "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Serpent Repair Rig",
+      "frame": "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Combat Surgeon Engine",
+      "frame": "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Recovery Core Siege Rig",
+      "frame": "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v3.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/noodle-newt-war-machine-defeat-v3.png",
+  "contactPreview": "output/war-machine-noodle-newt-v3-contact.png",
+  "alphaAudit": "output/war-machine-noodle-newt-v3-alpha-audit.png",
+  "notes": [
+    "Generated with built-in image generation to correct the V2 green-chroma alpha damage at the source instead of repairing holes locally.",
+    "The image-gen prompt preserved the V2 Serpent Medic Rig layout and switched the source sheet to a flat magenta chroma key so toxic green medic cores remain solid artwork.",
+    "Magenta key removal found exactly six large alpha groups with source gutters of 39, 50, 31, 78, and 82px at threshold 24.",
+    "Runtime frames were grouped-mask sliced to avoid neighbor bleed; final frame checks found transparent corners, zero tiny-alpha dust, zero semi-transparent green pixels, zero semi-transparent magenta pixels, zero visible key-magenta pixels, and zero nontransparent border pixels.",
+    "The fifth cell remains a static nanite munition without trails or movement cues, and the sixth cell is the disabled mechanical wreck."
+  ]
+}

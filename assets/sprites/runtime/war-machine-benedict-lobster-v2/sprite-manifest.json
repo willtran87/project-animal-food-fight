@@ -1,0 +1,47 @@
+{
+  "packageId": "war-machine-benedict-lobster-v2",
+  "packageStatus": "horror-theme-neon-redo-pure-robot-equal-footprint-munition-defeat-wired",
+  "unitId": "benedict_lobster",
+  "sourceChromaKey": "assets/sprites/source/war-machine-benedict-lobster-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-benedict-lobster-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Benny Lobster",
+      "frame": "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Benedict Lobster",
+      "frame": "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Hollandaise Reef Lobster",
+      "frame": "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Brunch Tide Monarch",
+      "frame": "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-benedict-lobster-plasma-siege-cell-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v2.png",
+  "notes": [
+    "Redo generated with built-in image generation after feedback that the original Brunchbreaker Siege Rig was too tame.",
+    "The source sheet contains four same-footprint neon pure-robot evolution stages, one static munition/discharge cell, and one disabled mechanical defeat still.",
+    "Progression is expressed through brighter cyan and magenta reactors, heavier armor, additional turrets, sensor masts, missile pods, and command hardware rather than size growth.",
+    "Runtime frames were extracted from the transparent chroma-key sheet and packed into 192px frames; the munition was packed into a 96px particle frame."
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "packageId": "war-machine-cucumber-cobra-v2",
+  "packageStatus": "horror-theme-neon-pure-robot-chromakey-transparent-runtime-wired",
+  "unitId": "cucumber_cobra",
+  "sourceChromaKey": "assets/sprites/source/war-machine-cucumber-cobra-evolution-v2-chromakey.png",
+  "transparentSource": "assets/sprites/transparent/war-machine-cucumber-cobra-evolution-v2-transparent.png",
+  "runtimeFrameSize": {
+    "w": 192,
+    "h": 192
+  },
+  "particleFrameSize": {
+    "w": 96,
+    "h": 96
+  },
+  "theme": "horror",
+  "forms": [
+    {
+      "tier": 1,
+      "formName": "Cuke Hatchling",
+      "frame": "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk1_idle_SW_00.png"
+    },
+    {
+      "tier": 2,
+      "formName": "Cucumber Cobra",
+      "frame": "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk2_idle_SW_00.png"
+    },
+    {
+      "tier": 3,
+      "formName": "Ribbon Cucumber",
+      "frame": "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk3_idle_SW_00.png"
+    },
+    {
+      "tier": 4,
+      "formName": "Garden Coil Hydra",
+      "frame": "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk4_idle_SW_00.png"
+    }
+  ],
+  "sheet": "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig_evolution_SW_sheet.png",
+  "attackParticle": "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v2.png",
+  "defeatStill": "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v2.png",
+  "notes": [
+    "Generated with built-in image generation on a flat magenta chroma key, then converted to transparent alpha.",
+    "The accepted source sheet contains four same-footprint robotic evolution stages, one static snare-signal munition, and one disabled mechanical defeat still.",
+    "Runtime frames were grouped by alpha components to keep detached neon details, smoke, and discharge pieces with their nearest sprite.",
+    "Progression is expressed through serpent-head count, armor architecture, control modules, snare launchers, reactor cells, neon conduits, and command sensors rather than size."
+  ]
+}

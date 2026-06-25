@@ -13,6 +13,7 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `runtime/status-chalk-course-v1.png`, `runtime/status-chalk-coins-v1.png`, and `runtime/status-chalk-health-v1.png` - generated blank chalk status boards for the top HUD.
 - `runtime/battle-speed-chalk-board-v1.png` - generated blank chalk board for the battle speed control.
 - `runtime/chalk-sign-restart-v1.png` - generated defeated-state restart chalk sign.
+- `runtime/cozy-awning-transition-v1.png` - generated transparent market awning used for cozy reward-to-shop transitions.
 
 ## Source Pipeline
 
@@ -32,6 +33,9 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `transparent/battle-speed-chalk-board-v1-transparent.png` - magenta key removed, then cropped into the runtime speed-board PNG.
 - `source/chalk-sign-restart-v1-chromakey.png` - built-in image generation source for the defeated-state restart chalk sign on a flat magenta key.
 - `transparent/chalk-sign-restart-v1-transparent.png` - magenta key removed, then cropped into the runtime restart-sign PNG.
+- `source/cozy-awning-transition-v1-chromakey.png` - built-in image generation source for the cozy reward-return awning on a flat green key.
+- `transparent/cozy-awning-transition-v1-transparent.png` - green key removed with `remove_chroma_key.py`.
+- `runtime/cozy-awning-transition-v1.png` - transparent runtime copy used by `game.js`; no text, no coins, food motifs only.
 
 Prompt summary: a charming pixel-art game UI icon atlas for traits, rewards, actions, combat ledger info, row/column drink lanes, and mold, arranged as an 8x4 no-text grid on a flat `#ff00ff` background. Some generated cells are intentionally unused after later readability passes.
 
