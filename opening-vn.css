@@ -93,6 +93,14 @@ button {
   animation: sceneCurtainFade 620ms ease-out both;
 }
 
+.scene-transition-curtain.is-completing {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 247, 202, 0.44), transparent 34%),
+    linear-gradient(180deg, rgba(255, 246, 206, 0.34), rgba(35, 39, 28, 0.34)),
+    url("assets/opening-vn/runtime/presentation-briefing-room-bg-v1.webp") center / cover no-repeat;
+  animation: tutorialCompleteCurtain 760ms ease-in both;
+}
+
 .paddock-preview,
 .dialogue-panel {
   border: 3px solid var(--line);
@@ -1039,6 +1047,20 @@ button {
 
   100% {
     opacity: 0;
+  }
+}
+
+@keyframes tutorialCompleteCurtain {
+  0% {
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 0.98;
+  }
+
+  100% {
+    opacity: 1;
   }
 }
 

@@ -394,6 +394,7 @@ const tutorialShop = document.querySelector(".tutorial-shop");
 const playerStandee = document.querySelector(".player-standee");
 const tabsCounter = document.querySelector(".tabs-counter");
 const SCENE_TRANSITION_MS = 640;
+const TUTORIAL_COMPLETE_TRANSITION_MS = 760;
 const BOARD_DOCUMENT_DELAY_MS = 320;
 const DOCUMENT_SWAP_DELAY_MS = 170;
 const BOARD_REVEAL_MS = 520;
@@ -676,21 +677,25 @@ function completeTutorial() {
   playVnSfx("transition");
   state.phase = "complete";
   state.skipConfirm = false;
-  window.dispatchEvent(new CustomEvent("food-animals:opening-vn:complete", {
-    detail: { targetUrl: TUTORIAL_COMPLETE_TARGET_URL },
-  }));
+  sceneTransitionCurtain.classList.remove("is-transitioning", "is-completing");
+  void sceneTransitionCurtain.offsetWidth;
+  sceneTransitionCurtain.classList.add("is-completing");
   render();
-  if (isCampaignEmbedded()) {
-    window.parent.postMessage(
-      { type: "food-animals:opening-vn:complete", targetUrl: TUTORIAL_COMPLETE_TARGET_URL },
-      window.location.origin,
-    );
-    return;
-  }
+  window.clearTimeout(tutorialCompleteNavigationTimer);
   tutorialCompleteNavigationTimer = window.setTimeout(() => {
     tutorialCompleteNavigationTimer = null;
+    window.dispatchEvent(new CustomEvent("food-animals:opening-vn:complete", {
+      detail: { targetUrl: TUTORIAL_COMPLETE_TARGET_URL },
+    }));
+    if (isCampaignEmbedded()) {
+      window.parent.postMessage(
+        { type: "food-animals:opening-vn:complete", targetUrl: TUTORIAL_COMPLETE_TARGET_URL },
+        window.location.origin,
+      );
+      return;
+    }
     window.location.href = TUTORIAL_COMPLETE_TARGET_URL;
-  }, 120);
+  }, TUTORIAL_COMPLETE_TRANSITION_MS);
 }
 
 function advance() {
@@ -793,6 +798,11 @@ window.render_game_to_text = () =>
     tutorialStep: currentTutorialStep(),
     completeTargetUrl: TUTORIAL_COMPLETE_TARGET_URL,
     skipConfirm: state.skipConfirm,
+    completionTransition: {
+      active: sceneTransitionCurtain.classList.contains("is-completing"),
+      durationMs: TUTORIAL_COMPLETE_TRANSITION_MS,
+      targetUrl: TUTORIAL_COMPLETE_TARGET_URL,
+    },
     innerMonologue: currentBeat().inner === true,
     visualBoard: boardForBeat(currentBeat(), state.index)?.src || null,
     tutorialShop: {

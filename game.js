@@ -134,6 +134,8 @@
   const STORY_DIALOGUE_PAPER_BG_SRC = "assets/ui/runtime/conversation-paper-bg-v1.webp";
   const STORY_DIALOGUE_WAR_BG_SRC = "assets/ui/runtime/conversation-panel-war-v1.webp?v=1";
   const STORY_TRANSITION_SECONDS = 0.36;
+  const STORY_BEAT_TRANSITION_SECONDS = 0.18;
+  const MODAL_TRANSITION_SECONDS = 0.22;
   const BATTLE_DEPLOY_TRANSITION_SECONDS = 0.68;
   const BATTLE_RESULT_TRANSITION_SECONDS = 0.82;
   const SHOP_SLOT_TRANSITION_SECONDS = 0.48;
@@ -442,7 +444,7 @@
         {
           speaker: "You",
           tone: "shock",
-          text: "Human extinction. You said humanity had a future. You said the hearts were what humanity could absorb.",
+          text: "Human extinction. You said that meter was humanity's failure budget. You said people could still survive my mistakes.",
         },
         {
           speaker: "T.A.B.S.",
@@ -452,7 +454,7 @@
         {
           speaker: "You",
           tone: "shock",
-          text: "The hearts are hull. The coins are scrap. The shop was never a shop.",
+          text: "The failure budget is hull integrity. The coins are scrap. The shop was never a shop.",
         },
         {
           speaker: "T.A.B.S.",
@@ -5519,6 +5521,7 @@
     postGiraffeHorrorTransition: null,
     shopReturnStaticTransition: null,
     phaseTransition: null,
+    modalTransitions: {},
     shopSlotTransitions: Array(shopSlots.length).fill(null),
     rebootTransition: null,
     menuRebootTransition: null,
@@ -6023,6 +6026,7 @@
   }
 
   function saveCurrentRun(options = {}) {
+    if (state.menuRebootTransition) return false;
     let snapshot = null;
     try {
       snapshot = createRunSnapshot();
@@ -6079,10 +6083,20 @@
     return new URL("./", window.location.href).href;
   }
 
-  function exitToMainMenuWithSave() {
-    saveCurrentRun({ message: false });
-    state.message = "Run saved";
-    state.optionsMenu.open = false;
+  function markMenuRebootStaticReveal() {
+    try {
+      const targetWindow = window.top && window.top !== window ? window.top : window;
+      targetWindow.sessionStorage?.setItem(MENU_REBOOT_STATIC_STORAGE_KEY, "1");
+    } catch {
+      try {
+        window.sessionStorage?.setItem(MENU_REBOOT_STATIC_STORAGE_KEY, "1");
+      } catch {
+        // The menu handoff should still navigate if session storage is unavailable.
+      }
+    }
+  }
+
+  function navigateToMainMenu() {
     const target = mainMenuUrl();
     try {
       if (window.top && window.top !== window) {
@@ -6093,6 +6107,13 @@
     } catch {
       window.location.href = target;
     }
+  }
+
+  function exitToMainMenuWithSave() {
+    saveCurrentRun({ message: false });
+    state.message = "Run saved";
+    state.optionsMenu.open = false;
+    navigateToMainMenu();
   }
   const backgroundImageCache = new Map();
   const RUNTIME_SPRITES = {
@@ -11305,6 +11326,11 @@
     if (!story || !storyCanGoBack()) return false;
     story.skipConfirm = false;
     story.index -= 1;
+    story.beatTransition = {
+      elapsed: 0,
+      duration: STORY_BEAT_TRANSITION_SECONDS,
+      direction: -1,
+    };
     return true;
   }
 
@@ -11319,6 +11345,11 @@
     }
     story.skipConfirm = false;
     story.index += 1;
+    story.beatTransition = {
+      elapsed: 0,
+      duration: STORY_BEAT_TRANSITION_SECONDS,
+      direction: 1,
+    };
     return true;
   }
 
@@ -11358,6 +11389,28 @@
       return;
     }
     story.transition = null;
+  }
+
+  function updateStoryBeatTransition(dt) {
+    const beatTransition = state.activeStory?.beatTransition;
+    if (!beatTransition) return;
+    beatTransition.elapsed = Math.min(beatTransition.duration || STORY_BEAT_TRANSITION_SECONDS, (beatTransition.elapsed || 0) + dt);
+    if (beatTransition.elapsed >= (beatTransition.duration || STORY_BEAT_TRANSITION_SECONDS)) {
+      state.activeStory.beatTransition = null;
+    }
+  }
+
+  function storyBeatTransitionVisual(story = state.activeStory) {
+    const transition = story?.beatTransition;
+    if (!transition) return { alpha: 1, offsetX: 0, direction: 0 };
+    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || STORY_BEAT_TRANSITION_SECONDS));
+    const eased = easeOutCubic(progress);
+    const direction = transition.direction || 1;
+    return {
+      alpha: 0.2 + eased * 0.8,
+      offsetX: direction * (1 - eased) * 14,
+      direction,
+    };
   }
 
   function applyStoryHit(hit) {
@@ -11485,18 +11538,21 @@
   }
 
   function rebootFromVictoryCutscene() {
+    if (state.menuRebootTransition) return false;
     clearActiveRunRoute();
+    markMenuRebootStaticReveal();
+    state.menuRebootTransition = {
+      elapsed: 0,
+      duration: VICTORY_MENU_REBOOT_STATIC_SECONDS,
+      navigated: false,
+    };
+    state.pointer = null;
+    state.hover = null;
+    state.selected = null;
+    state.drag = null;
     state.message = "Returning to menu";
-    const target = mainMenuUrl();
-    try {
-      if (window.top && window.top !== window) {
-        window.top.location.href = target;
-      } else {
-        window.location.href = target;
-      }
-    } catch {
-      window.location.href = target;
-    }
+    playGameSfx("reboot", { theme: "horror", volume: 1 });
+    return true;
   }
 
   function completeRebootTransitionReset(transition) {
@@ -11552,6 +11608,7 @@
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
     state.phaseTransition = null;
+    state.modalTransitions = {};
     state.shopSlotTransitions = Array(shopSlots.length).fill(null);
     state.rebootTransition = null;
     state.menuRebootTransition = null;
@@ -13535,15 +13592,18 @@
 
   function update(dt) {
     syncGameMusic();
-    updateRunAutosave(dt);
+    if (!state.menuRebootTransition) updateRunAutosave(dt);
     state.idleTime += dt;
     updatePhaseTransition(dt);
+    updateModalTransitions(dt);
     updateShopSlotTransitions(dt);
     updateRebootTransition(dt);
+    updateMenuRebootTransition(dt);
     updateFinalVictoryTransition(dt);
     updateShopReturnStaticTransition(dt);
     updatePostGiraffeHorrorTransition(dt);
     updateStoryConversationTransition(dt);
+    updateStoryBeatTransition(dt);
     if (state.optionsMenu.open) return;
     if (state.phase === "victoryCutscene" && state.victoryCutscene) {
       state.victoryCutscene.elapsed += dt;
@@ -13577,6 +13637,59 @@
     return state.phaseTransition?.type === "prepToBattle";
   }
 
+  function startModalTransition(id, phase = "enter") {
+    state.modalTransitions = state.modalTransitions || {};
+    state.modalTransitions[id] = {
+      phase,
+      elapsed: 0,
+      duration: MODAL_TRANSITION_SECONDS,
+    };
+  }
+
+  function modalTransition(id) {
+    return state.modalTransitions?.[id] || null;
+  }
+
+  function modalTransitionClosing(id) {
+    return modalTransition(id)?.phase === "exit";
+  }
+
+  function modalTransitionVisual(id) {
+    const transition = modalTransition(id);
+    if (!transition) return { alpha: 1, scale: 1, offsetY: 0, closing: false, progress: 1 };
+    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || MODAL_TRANSITION_SECONDS));
+    const eased = easeOutCubic(progress);
+    const alpha = transition.phase === "exit" ? 1 - eased : eased;
+    return {
+      alpha,
+      scale: 0.965 + alpha * 0.035,
+      offsetY: (1 - alpha) * (transition.phase === "exit" ? -10 : 12),
+      closing: transition.phase === "exit",
+      progress,
+    };
+  }
+
+  function updateModalTransitions(dt) {
+    const transitions = state.modalTransitions || {};
+    Object.entries(transitions).forEach(([id, transition]) => {
+      if (!transition) return;
+      transition.elapsed = Math.min(transition.duration || MODAL_TRANSITION_SECONDS, (transition.elapsed || 0) + dt);
+      if (transition.elapsed < (transition.duration || MODAL_TRANSITION_SECONDS)) return;
+      if (transition.phase === "exit") {
+        if (id === "codex") {
+          state.codexOpen = false;
+          if (state.codexPreview) state.codexPreview.dragging = false;
+        } else if (id === "options") {
+          state.optionsMenu.open = false;
+          state.optionsMenu.dragSlider = null;
+        } else if (id === "ledger") {
+          state.combatLedgerReview.open = false;
+        }
+      }
+      delete transitions[id];
+    });
+  }
+
   function updateShopSlotTransitions(dt) {
     if (!state.shopSlotTransitions) return;
     state.shopSlotTransitions = state.shopSlotTransitions.map((transition) => {
@@ -13601,6 +13714,21 @@
       state.rebootTransition = null;
       state.menuRebootTransition = null;
       state.message = "Prep";
+    }
+  }
+
+  function updateMenuRebootTransition(dt) {
+    const transition = state.menuRebootTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    if (!transition.navigated && transition.elapsed >= transition.duration) {
+      clearActiveRunRoute();
+      state.menuRebootTransition = {
+        ...transition,
+        elapsed: transition.duration,
+        navigated: true,
+      };
+      navigateToMainMenu();
     }
   }
 
@@ -13690,6 +13818,7 @@
     }
     drawPhaseTransitionOverlay();
     drawRebootTransitionOverlay();
+    drawMenuRebootTransitionOverlay();
     drawFinalVictoryTransitionOverlay();
     drawShopReturnStaticTransitionOverlay();
     drawOptionsMenuOverlay();
@@ -14418,6 +14547,49 @@
       ctx.fillStyle = `rgba(255, 250, 224, ${clearAlpha * 0.18})`;
       ctx.fillRect(0, 0, W, H);
     }
+    ctx.restore();
+  }
+
+  function drawMenuRebootTransitionOverlay() {
+    const transition = state.menuRebootTransition;
+    if (!transition) return;
+    const progress = clamp01(transition.elapsed / Math.max(0.001, transition.duration));
+    const staticAlpha = 0.08 + 0.92 * easeOutCubic(progress);
+    const frame = Math.floor((state.idleTime + transition.elapsed) * 42);
+
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 4, 5, ${0.12 + staticAlpha * 0.58})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(frame * 103 + y * 17);
+      const bandAlpha = (0.035 + roll * 0.16) * staticAlpha;
+      ctx.fillStyle = y % 2 === 0
+        ? `rgba(88, 255, 105, ${bandAlpha})`
+        : `rgba(255, 55, 82, ${bandAlpha * 0.78})`;
+      ctx.fillRect(0, y, W, 1);
+    }
+    for (let i = 0; i < 650; i++) {
+      const x = Math.floor(glitchNoise(frame * 137 + i * 17) * W);
+      const y = Math.floor(glitchNoise(frame * 151 + i * 19) * H);
+      const size = glitchNoise(frame * 173 + i * 23) > 0.84 ? 2 : 1;
+      const speckAlpha = (0.08 + glitchNoise(frame * 191 + i * 29) * 0.34) * staticAlpha;
+      ctx.fillStyle = i % 6 === 0
+        ? `rgba(0, 238, 255, ${speckAlpha})`
+        : `rgba(238, 255, 232, ${speckAlpha})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    for (let i = 0; i < 10; i++) {
+      if (glitchNoise(frame * 211 + i * 31) < 0.2) continue;
+      const y = Math.floor(glitchNoise(frame * 229 + i * 37) * H);
+      const x = Math.floor((glitchNoise(frame * 251 + i * 41) - 0.5) * 60);
+      const h = 2 + Math.floor(glitchNoise(frame * 269 + i * 43) * 19);
+      ctx.fillStyle = `rgba(70, 255, 99, ${0.14 * staticAlpha})`;
+      ctx.fillRect(x, y, W + 120, h);
+    }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = `rgba(0, 0, 0, ${0.18 * staticAlpha})`;
+    ctx.fillRect(0, 0, W, H);
     ctx.restore();
   }
 
@@ -15482,6 +15654,44 @@
     return label ? { title: label, body: "" } : null;
   }
 
+  function openCodexOverlay() {
+    state.codexOpen = true;
+    startModalTransition("codex", "enter");
+    state.codexSelectedId = state.codexSelectedId || CATALOG[0]?.id || null;
+    state.codexSelectedToppingId = state.codexSelectedToppingId || codexToppings()[0]?.id || null;
+    state.codexSelectedDrinkId = state.codexSelectedDrinkId || codexDrinks()[0]?.id || null;
+    syncCodexSelectionToVisibleEntry();
+    resetCodexPreviewView();
+    state.selected = null;
+    state.message = copy("ui.panels.foodMenu", "Food menu");
+    playGameSfx("ui-confirm", { volume: 0.55 });
+    return true;
+  }
+
+  function closeCodexOverlay() {
+    if (!state.codexOpen) return false;
+    if (modalTransitionClosing("codex")) return true;
+    startModalTransition("codex", "exit");
+    if (state.codexPreview) state.codexPreview.dragging = false;
+    state.message = "Prep";
+    playGameSfx("ui-back", { volume: 0.5 });
+    return true;
+  }
+
+  function openCombatLedgerReview() {
+    if (!state.lastCombatLedger) return false;
+    state.combatLedgerReview.open = true;
+    startModalTransition("ledger", "enter");
+    return true;
+  }
+
+  function closeCombatLedgerReview() {
+    if (!state.combatLedgerReview?.open) return false;
+    if (modalTransitionClosing("ledger")) return true;
+    startModalTransition("ledger", "exit");
+    return true;
+  }
+
   function optionsMenuCanOpen() {
     if (state.activeStory || state.codexOpen || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return false;
     if (state.phase === "victoryCutscene") return false;
@@ -15491,6 +15701,7 @@
   function openOptionsMenu() {
     if (!optionsMenuCanOpen()) return false;
     state.optionsMenu.open = true;
+    startModalTransition("options", "enter");
     state.optionsMenu.selected = "resume";
     state.optionsMenu.dragSlider = null;
     state.selected = null;
@@ -15503,7 +15714,8 @@
 
   function closeOptionsMenu() {
     if (!state.optionsMenu.open) return false;
-    state.optionsMenu.open = false;
+    if (modalTransitionClosing("options")) return true;
+    startModalTransition("options", "exit");
     state.optionsMenu.dragSlider = null;
     state.message = state.phase === "battle" ? "Battle" : state.phase === "result" ? "Result" : realityBroken() ? themedArena(currentArena()).short : "Prep";
     playGameSfx("ui-back", { volume: 0.48 });
@@ -15530,6 +15742,7 @@
 
   function applyOptionsMenuHit(hit) {
     if (!state.optionsMenu.open || !hit || hit.area !== "optionsMenu") return false;
+    if (modalTransitionClosing("options")) return true;
     if (hit.action === "resume" || hit.action === "close") return closeOptionsMenu();
     if (hit.action === "save") {
       saveCurrentRun();
@@ -15658,9 +15871,14 @@
     state.tooltipTargets = [];
     const layout = optionsMenuLayout();
     const { panel } = layout;
+    const modal = modalTransitionVisual("options");
     ctx.save();
+    ctx.globalAlpha *= modal.alpha;
     ctx.fillStyle = realityBroken() ? "rgba(0, 7, 8, 0.72)" : "rgba(22, 57, 45, 0.34)";
     ctx.fillRect(0, 0, W, H);
+    ctx.translate(panel.x + panel.w / 2, panel.y + panel.h / 2 + modal.offsetY);
+    ctx.scale(modal.scale, modal.scale);
+    ctx.translate(-(panel.x + panel.w / 2), -(panel.y + panel.h / 2));
     ctx.shadowColor = realityBroken() ? "rgba(70, 255, 99, 0.18)" : "rgba(22, 57, 45, 0.28)";
     ctx.shadowBlur = 22;
     ctx.shadowOffsetY = 8;
@@ -17750,9 +17968,14 @@
     const panel = CODEX_PANEL;
     const entries = codexEntries();
     const entry = currentCodexEntry();
+    const modal = modalTransitionVisual("codex");
     ctx.save();
+    ctx.globalAlpha *= modal.alpha;
     ctx.fillStyle = realityBroken() ? "rgba(0, 0, 0, 0.68)" : "rgba(23, 34, 29, 0.48)";
     ctx.fillRect(0, 0, W, H);
+    ctx.translate(panel.x + panel.w / 2, panel.y + panel.h / 2 + modal.offsetY);
+    ctx.scale(modal.scale, modal.scale);
+    ctx.translate(-(panel.x + panel.w / 2), -(panel.y + panel.h / 2));
 
     const menuBg = getUiSprite(currentFoodMenuBgSrc());
     roundedRect(panel.x, panel.y, panel.w, panel.h, 12);
@@ -21019,8 +21242,13 @@
     const panelFill = horror ? "rgba(4, 12, 14, 0.9)" : "rgba(255, 253, 232, 0.9)";
     const panelStroke = horror ? "rgba(70, 255, 99, 0.28)" : "rgba(22, 57, 45, 0.24)";
     const panelBg = getUiSprite(currentCombatLedgerPanelBgSrc());
+    const modal = modalTransitionVisual("ledger");
 
     ctx.save();
+    ctx.globalAlpha *= modal.alpha;
+    ctx.translate(panel.x + panel.w / 2, panel.y + panel.h / 2 + modal.offsetY);
+    ctx.scale(modal.scale, modal.scale);
+    ctx.translate(-(panel.x + panel.w / 2), -(panel.y + panel.h / 2));
     roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
     if (panelBg && panelBg.complete && panelBg.naturalWidth > 0) {
       ctx.save();
@@ -22810,6 +23038,12 @@
         w: 216,
         h: 324,
       },
+      horrorTabs: {
+        x: 790,
+        y: 372,
+        w: 292,
+        h: 292,
+      },
       label: {
         x: panel.x + 24,
         y: panel.y - 16,
@@ -22935,8 +23169,9 @@
     const tabsActive = tabsSpeaker;
     const tabsPortraitSrc = storySpeakerPortraitSrc("Tabs", story);
     const tabsRect = storyUsesHorrorTabs(story)
-      ? { x: 785, y: 274, w: 286, h: 286 }
+      ? layout.horrorTabs
       : layout.tabs;
+    const beatMotion = storyBeatTransitionVisual(story);
     const transitionAlpha = storyTransitionAlpha(story);
     if (transitionAlpha <= 0) return;
     const transitionPhase = storyTransitionPhase(story);
@@ -22954,8 +23189,14 @@
     ctx.globalAlpha *= transitionAlpha;
     ctx.translate(0, transitionOffsetY);
 
-    drawStoryStandee(PLAYER_STORY_PORTRAIT_SRC, layout.player, playerActive, "Y");
-    drawStoryStandee(tabsPortraitSrc, tabsRect, tabsActive, "T");
+    drawStoryStandee(PLAYER_STORY_PORTRAIT_SRC, {
+      ...layout.player,
+      x: layout.player.x + (playerActive ? beatMotion.offsetX * 0.45 : 0),
+    }, playerActive, "Y");
+    drawStoryStandee(tabsPortraitSrc, {
+      ...tabsRect,
+      x: tabsRect.x + (tabsActive ? beatMotion.offsetX * 0.45 : 0),
+    }, tabsActive, "T");
 
     roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
     ctx.save();
@@ -23033,7 +23274,11 @@
     ctx.fillStyle = horror ? (hostile ? "#ff9aa4" : "#d7ffe0") : hostile ? "#243f2f" : "#1b2617";
     ctx.font = "900 17px Inter, sans-serif";
     const lines = wrappedTextLines(beat.text, textW).slice(0, 4);
+    ctx.save();
+    ctx.globalAlpha *= beatMotion.alpha;
+    ctx.translate(beatMotion.offsetX, 0);
     lines.forEach((line, index) => ctx.fillText(line, textX, layout.text.y + index * 23));
+    ctx.restore();
 
     drawStoryProgressDots(story, textX, panel.y + panel.h - 22, horror);
 
@@ -23123,7 +23368,7 @@
       if (pointInRect(pos.x, pos.y, storyAdvanceButtonRect())) return { area: "story", action: "advance" };
       return { area: "story", action: "panel" };
     }
-    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
+    if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
         return { area: "button", index: "victoryReboot" };
@@ -23257,12 +23502,13 @@
     const ledger = state.lastCombatLedger;
     const frames = ledger?.frames || [];
     if (!ledger) return;
+    if (modalTransitionClosing("ledger")) return;
     if (hit.action === "openDetails") {
-      state.combatLedgerReview.open = true;
+      openCombatLedgerReview();
       return;
     }
     if (hit.action === "closeDetails") {
-      state.combatLedgerReview.open = false;
+      closeCombatLedgerReview();
       return;
     }
     if (hit.action === "prevFrame") {
@@ -23325,6 +23571,10 @@
       event.preventDefault();
       return;
     }
+    if (modalTransitionClosing("codex") || modalTransitionClosing("ledger")) {
+      event.preventDefault();
+      return;
+    }
     if (!hit) {
       state.selected = null;
       return;
@@ -23353,15 +23603,7 @@
       return;
     }
     if (hit.area === "codexButton") {
-      state.codexOpen = true;
-      state.codexSelectedId = state.codexSelectedId || CATALOG[0]?.id || null;
-      state.codexSelectedToppingId = state.codexSelectedToppingId || codexToppings()[0]?.id || null;
-      state.codexSelectedDrinkId = state.codexSelectedDrinkId || codexDrinks()[0]?.id || null;
-      syncCodexSelectionToVisibleEntry();
-      resetCodexPreviewView();
-      state.selected = null;
-      state.message = copy("ui.panels.foodMenu", "Food menu");
-      playGameSfx("ui-confirm", { volume: 0.55 });
+      openCodexOverlay();
       event.preventDefault();
       return;
     }
@@ -23435,10 +23677,7 @@
       return;
     }
     if (hit.area === "codexClose") {
-      state.codexOpen = false;
-      if (state.codexPreview) state.codexPreview.dragging = false;
-      state.message = "Prep";
-      playGameSfx("ui-back", { volume: 0.5 });
+      closeCodexOverlay();
       event.preventDefault();
       return;
     }
@@ -23776,11 +24015,11 @@
       }
       return;
     }
-    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition || state.phase === "victoryCutscene") {
+    if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition || state.phase === "victoryCutscene") {
       if (event.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) canvas.requestFullscreen?.();
         else document.exitFullscreen?.();
-      } else if (state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || key === "r")) {
+      } else if (!state.menuRebootTransition && state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || key === "r")) {
         rebootFromVictoryCutscene();
       }
       event.preventDefault();
@@ -23792,14 +24031,12 @@
     }
     if (event.key === "Escape") {
       if (state.codexOpen) {
-        state.codexOpen = false;
-        if (state.codexPreview) state.codexPreview.dragging = false;
-        state.message = "Prep";
+        closeCodexOverlay();
         event.preventDefault();
         return;
       }
       if (state.phase === "result" && state.combatLedgerReview?.open) {
-        state.combatLedgerReview.open = false;
+        closeCombatLedgerReview();
         event.preventDefault();
         return;
       }
@@ -23932,6 +24169,10 @@
         savedAt: state.optionsMenu.savedAt,
         music: optionSliderValue("music"),
         sfx: optionSliderValue("sfx"),
+        transition: modalTransition("options") ? {
+          phase: modalTransition("options").phase,
+          progress: Number(clamp01((modalTransition("options").elapsed || 0) / Math.max(0.001, modalTransition("options").duration || MODAL_TRANSITION_SECONDS)).toFixed(2)),
+        } : null,
       },
       story: state.activeStory ? {
         active: true,
@@ -23945,6 +24186,12 @@
           elapsed: Number((state.activeStory.transition.elapsed || 0).toFixed(3)),
           duration: Number((state.activeStory.transition.duration || STORY_TRANSITION_SECONDS).toFixed(3)),
           alpha: Number(storyTransitionAlpha(state.activeStory).toFixed(3)),
+        } : null,
+        beatTransition: state.activeStory.beatTransition ? {
+          elapsed: Number((state.activeStory.beatTransition.elapsed || 0).toFixed(3)),
+          duration: Number((state.activeStory.beatTransition.duration || STORY_BEAT_TRANSITION_SECONDS).toFixed(3)),
+          alpha: Number(storyBeatTransitionVisual(state.activeStory).alpha.toFixed(3)),
+          direction: state.activeStory.beatTransition.direction || 1,
         } : null,
         beat: currentStoryBeat(),
         portraitSrc: storySpeakerPortraitSrc(currentStoryBeat()?.speaker, state.activeStory),
@@ -23989,6 +24236,11 @@
           duration: Number((state.phaseTransition.duration || 0).toFixed(2)),
           progress: Number(clamp01((state.phaseTransition.elapsed || 0) / Math.max(0.001, state.phaseTransition.duration || 0.001)).toFixed(2)),
         } : { active: false },
+        modalTransitions: Object.fromEntries(Object.entries(state.modalTransitions || {}).map(([id, transition]) => [id, {
+          phase: transition.phase,
+          progress: Number(clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || MODAL_TRANSITION_SECONDS)).toFixed(2)),
+          alpha: Number(modalTransitionVisual(id).alpha.toFixed(2)),
+        }])),
         shopSlotTransitions: state.shopSlotTransitions
           .map((transition, index) => transition ? {
             index,
@@ -24002,6 +24254,14 @@
           duration: state.rebootTransition.duration,
           resetDone: Boolean(state.rebootTransition.resetDone),
           source: state.rebootTransition.source || "defeat",
+        } : { active: false },
+        menuRebootTransition: state.menuRebootTransition ? {
+          active: true,
+          elapsed: Number((state.menuRebootTransition.elapsed || 0).toFixed(2)),
+          duration: state.menuRebootTransition.duration,
+          navigated: Boolean(state.menuRebootTransition.navigated),
+          source: "finalVictoryReboot",
+          style: "static-fade-out-then-menu-static-fade-in",
         } : { active: false },
         finalVictoryTransition: state.finalVictoryTransition ? {
           active: true,
@@ -24160,6 +24420,11 @@
       expandedCombatLedger: state.lastCombatLedger ? {
         enabled: true,
         open: Boolean(state.combatLedgerReview.open),
+        transition: modalTransition("ledger") ? {
+          phase: modalTransition("ledger").phase,
+          progress: Number(clamp01((modalTransition("ledger").elapsed || 0) / Math.max(0.001, modalTransition("ledger").duration || MODAL_TRANSITION_SECONDS)).toFixed(2)),
+          alpha: Number(modalTransitionVisual("ledger").alpha.toFixed(2)),
+        } : null,
         selectedUnitUid: state.combatLedgerReview.unitUid,
         filter: state.combatLedgerReview.filter,
         effectiveFilter: combatLedgerEffectiveFilterId(),
@@ -24196,6 +24461,11 @@
       rewardChoices: state.rewardChoices.map((reward, index) => ({ index, ...reward })),
       codex: {
         open: state.codexOpen,
+        transition: modalTransition("codex") ? {
+          phase: modalTransition("codex").phase,
+          progress: Number(clamp01((modalTransition("codex").elapsed || 0) / Math.max(0.001, modalTransition("codex").duration || MODAL_TRANSITION_SECONDS)).toFixed(2)),
+          alpha: Number(modalTransitionVisual("codex").alpha.toFixed(2)),
+        } : null,
         tab: state.codexTab,
         filters: JSON.parse(JSON.stringify(state.codexFilters || {})),
         visibleCount: codexEntries().length,
@@ -24985,6 +25255,10 @@
     playGameSfx,
     openOptionsMenu,
     closeOptionsMenu,
+    openCodexOverlay,
+    closeCodexOverlay,
+    openCombatLedgerReview,
+    closeCombatLedgerReview,
     saveCurrentRun,
     restoreSavedRunIfRequested,
     setGameMusicSetting,
@@ -24995,6 +25269,9 @@
     itemSellValue,
     rarityInfo,
     chooseShopRarity,
+    startStoryConversation,
+    advanceStoryConversation,
+    goBackStoryConversation,
     startBattle,
     continuePrep,
     makeUnit,
