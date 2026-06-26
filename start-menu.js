@@ -142,6 +142,7 @@ const FOOD_LOB_PARTICLES = [
   "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-08-v1.png",
 ];
 
+const FIELD_GUIDE_ASSET_BASE = "assets/start-menu/field-guide";
 const FIELD_GUIDE_SLUGS = [
   "toast-tortoise",
   "sushi-seal",
@@ -204,8 +205,8 @@ const FIELD_GUIDE_PAGES = [
     label: slug === "banana-split-giraffe-boss" ? "Banana Split Giraffe" : titleCaseSlug(slug),
     src:
       slug === "bao-bun-badger"
-        ? "output/imagegen/bao-bun-badger-anatomy-journal-v2-hd-pixel-transparent.png"
-        : `output/imagegen/${slug}-anatomy-journal-v1-hd-pixel-transparent.png`,
+        ? `${FIELD_GUIDE_ASSET_BASE}/cozy/bao-bun-badger-anatomy-journal-v2-hd-pixel-transparent.png`
+        : `${FIELD_GUIDE_ASSET_BASE}/cozy/${slug}-anatomy-journal-v1-hd-pixel-transparent.png`,
   })),
 ];
 
@@ -747,15 +748,15 @@ function titleCaseSlug(slug) {
 
 function horrorFieldGuideSrc(slug, plate) {
   if (slug === "toast-tortoise") {
-    return "output/imagegen/toast-tortoise-invasive-pilot-brain-war-machine-journal-v3-hd-pixel-chromakey-clean.png";
+    return `${FIELD_GUIDE_ASSET_BASE}/horror/toast-tortoise-invasive-pilot-brain-war-machine-journal-v3-hd-pixel-chromakey-clean.png`;
   }
   if (slug === "sushi-seal") {
-    return "output/imagegen/sushi-seal-invasive-pilot-brain-war-machine-journal-v1-hd-pixel-chromakey-clean.png";
+    return `${FIELD_GUIDE_ASSET_BASE}/horror/sushi-seal-invasive-pilot-brain-war-machine-journal-v1-hd-pixel-chromakey-clean.png`;
   }
   if (slug === "cucumber-cobra") {
-    return "output/imagegen/cucumber-cobra-horror-engineering-field-journal-plate-32-v2-hd-pixel-transparent.png";
+    return `${FIELD_GUIDE_ASSET_BASE}/horror/cucumber-cobra-horror-engineering-field-journal-plate-32-v2-hd-pixel-transparent.png`;
   }
-  return `output/imagegen/${slug}-horror-engineering-field-journal-plate-${plate}-v1-hd-pixel-chromakey.png`;
+  return `${FIELD_GUIDE_ASSET_BASE}/horror/${slug}-horror-engineering-field-journal-plate-${plate}-v1-hd-pixel-chromakey.png`;
 }
 
 function currentFieldGuidePages() {
