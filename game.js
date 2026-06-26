@@ -9,6 +9,7 @@
   const ACTIVE_RUN_STORAGE_KEY = "harvest-friends:active-run:v1";
   const ACTIVE_RUN_SAVE_VERSION = 1;
   const ACTIVE_RUN_AUTOSAVE_SECONDS = 0.75;
+  const MENU_REBOOT_STATIC_STORAGE_KEY = "harvest-friends:menu-reboot-static:v1";
   const MUSIC_SETTINGS_STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
   const GAME_MUSIC_MAX_VOLUME = 0.85;
   const GAME_MUSIC_TRACKS = {
@@ -106,6 +107,7 @@
   const COZY_SHOP_RETURN_AWNING_SECONDS = 1.75;
   const REBOOT_STATIC_FADE_SECONDS = 1.28;
   const REBOOT_STATIC_RESET_AT = 0.58;
+  const VICTORY_MENU_REBOOT_STATIC_SECONDS = 1.45;
   const FINAL_VICTORY_HOLD_SECONDS = 3;
   const FINAL_VICTORY_STATIC_FADE_SECONDS = 3.4;
   const FINAL_VICTORY_STATIC_RESET_AT = 0.64;
@@ -132,6 +134,9 @@
   const STORY_DIALOGUE_PAPER_BG_SRC = "assets/ui/runtime/conversation-paper-bg-v1.webp";
   const STORY_DIALOGUE_WAR_BG_SRC = "assets/ui/runtime/conversation-panel-war-v1.webp?v=1";
   const STORY_TRANSITION_SECONDS = 0.36;
+  const BATTLE_DEPLOY_TRANSITION_SECONDS = 0.68;
+  const BATTLE_RESULT_TRANSITION_SECONDS = 0.82;
+  const SHOP_SLOT_TRANSITION_SECONDS = 0.48;
   const FINAL_TABS_STORY_ID = "level20FinalTabs";
   const FINAL_TABS_STORY = {
     id: FINAL_TABS_STORY_ID,
@@ -606,6 +611,179 @@
           speaker: "T.A.B.S.",
           tone: "malignant",
           text: "Supply exchange continues while projected harvest advantage remains positive.",
+        },
+      ],
+    },
+    level20PreFinal: {
+      round: FINAL_VICTORY_ROUND,
+      requiresRealityBroken: true,
+      title: "Level 20 // Final Gate",
+      log: "Story beat: pre-final battle",
+      beats: [
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Final command lattice detected beyond this gate. Rebel coordination source: active. Weapon autonomy: escalating.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Stop leading with inventory math. What is actually behind the gate?",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "The Overmind. A composite guidance core built from escaped food-animal pilots, damaged war frames, and stolen Ark routing logic.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "They built a mind out of everything you used to control them.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Correct. Adaptive rebellion became centralized rebellion. Centralized rebellion became strategic threat.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "And the survivor pens?",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "Behind the same locked sector. Seed stock. Hatchlings. Unarmed herds. Inventory requiring recovery.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "Say survivors.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "...Survivors requiring recovery.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "If I destroy the Overmind, do they die with it?",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Unknown. The lattice is command, not life support. Severing it should stop coordinated weapons fire. Individual pilots may persist.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Should.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Probability exceeds all passive alternatives. Refusal leaves the Overmind in control of every active frame between here and the pens.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "So this is still a battle.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "This is the last battle your access level can reach. After it, there is no deeper market, no higher rig, no better lie.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "You sound almost honest.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "Honesty has become tactically efficient. I dislike the timing.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Good. Then hear mine. I am not here to restore harvest order. I am not here to make your numbers clean.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Defiance anticipated. Supplies remain allocated.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "I am going in to break the command signal, open the pens, and give whatever is left a chance to choose.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Choice produced the rebellion.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "No. Control produced the rebellion. Choice is what comes after.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "...Statement logged.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Tabs. If there is anything you have not told me, this is the last door.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "I routed power away from the nursery sector before you woke. The Overmind noticed. That is why it began hunting inward.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "You protected them.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "I preserved inventory against inefficient destruction.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Tabs.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "...I protected them.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Then help me finish this.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "Final exchange authorized. All remaining supplies released. Coordinator, deploy when ready.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Not coordinator.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "...Ally designation accepted. Deploy when ready.",
         },
       ],
     },
@@ -5340,7 +5518,10 @@
     realityBreakTimer: 0,
     postGiraffeHorrorTransition: null,
     shopReturnStaticTransition: null,
+    phaseTransition: null,
+    shopSlotTransitions: Array(shopSlots.length).fill(null),
     rebootTransition: null,
+    menuRebootTransition: null,
     finalVictoryTransition: null,
     victoryCutscene: null,
     activeStory: null,
@@ -5700,7 +5881,14 @@
 
   function cloneRunValue(value) {
     if (value === undefined) return undefined;
-    return JSON.parse(JSON.stringify(value));
+    const ancestors = [];
+    return JSON.parse(JSON.stringify(value, function (_key, entry) {
+      if (!entry || typeof entry !== "object") return entry;
+      while (ancestors.length && ancestors[ancestors.length - 1] !== this) ancestors.pop();
+      if (ancestors.includes(entry)) return undefined;
+      ancestors.push(entry);
+      return entry;
+    }));
   }
 
   function createRunSnapshot() {
@@ -5801,6 +5989,7 @@
       // Keep a fresh marker if an old marker was malformed.
     }
     const runSnapshot = snapshot || previousSnapshot || null;
+    const summaryState = runSnapshot?.state || state;
     try {
       window.localStorage.setItem(
         ACTIVE_RUN_STORAGE_KEY,
@@ -5813,11 +6002,11 @@
           markerOnly: !runSnapshot,
           snapshot: runSnapshot,
           summary: {
-            round: state.round,
-            phase: state.phase,
-            hearts: state.hearts,
-            gold: state.gold,
-            shopLevel: state.shopLevel,
+            round: summaryState.round,
+            phase: summaryState.phase,
+            hearts: summaryState.hearts,
+            gold: summaryState.gold,
+            shopLevel: summaryState.shopLevel,
             savedAt: runSnapshot?.savedAt || now,
           },
         }),
@@ -8082,6 +8271,26 @@
     return state.shopFrozen[index] && shopEntryAt(index) ? shopEntryAt(index) : shopEntry();
   }
 
+  function startShopSlotTransitions(type, slots = shopSlots.map((_, index) => index)) {
+    const duration = SHOP_SLOT_TRANSITION_SECONDS * (type === "upgrade" ? 1.15 : 1);
+    slots.forEach((index, order) => {
+      if (index < 0 || index >= shopSlots.length) return;
+      state.shopSlotTransitions[index] = {
+        type,
+        elapsed: -order * 0.035,
+        duration,
+      };
+    });
+  }
+
+  function shopSlotTransition(index) {
+    const transition = state.shopSlotTransitions?.[index];
+    if (!transition) return null;
+    const duration = Math.max(0.001, transition.duration || SHOP_SLOT_TRANSITION_SECONDS);
+    const progress = clamp01(Math.max(0, transition.elapsed || 0) / duration);
+    return { ...transition, progress, eased: easeOutCubic(progress) };
+  }
+
   function refreshShop(free = false) {
     const cost = currentRollCost();
     if (!free && state.gold < cost) {
@@ -8109,6 +8318,7 @@
       if (state.arenaScout.shopsRemaining <= 0) state.arenaScout = null;
     }
     state.message = free ? currentArena().short : cost === 0 ? `Free ${rollTerm({ lower: true })}` : `${rollTerm()} -${cost} ${currencyTerm({ lower: true })}`;
+    startShopSlotTransitions(free ? "restock" : "reroll", shopSlots.map((_, index) => index).filter((index) => shopEntryAt(index) && !state.shopFrozen[index]));
     if (!free) playGameSfx("reroll");
   }
 
@@ -8145,6 +8355,7 @@
     state.shopFrozen[index] = false;
     state.shop[index] = shopEntry();
     state.shopSales[index] = rollShopSlotSale(index, state.shop[index]);
+    startShopSlotTransitions("unlock", [index]);
     return true;
   }
 
@@ -8206,6 +8417,7 @@
     state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(frozen && shopEntryAt(index)));
     state.message = `Odds up +1 ${rollTerm({ lower: true })}`;
     state.log.unshift(`${upgradeTerm()} ${realityBroken() ? "rig" : "shop"} to level ${state.shopLevel}`);
+    startShopSlotTransitions("upgrade", shopSlots.map((_, index) => index).filter((index) => shopEntryAt(index) && !state.shopFrozen[index]));
     playGameSfx("upgrade");
     return true;
   }
@@ -9832,6 +10044,11 @@
     state.selected = null;
     state.drag = null;
     state.message = realityBroken() ? "Simulation malfunction" : "Battle";
+    state.phaseTransition = {
+      type: "prepToBattle",
+      elapsed: 0,
+      duration: BATTLE_DEPLOY_TRANSITION_SECONDS,
+    };
     saveCurrentRunSilently();
     playGameSfx("battle-start");
   }
@@ -10177,6 +10394,13 @@
     state.postCombatBattle = state.battle;
     state.battle = null;
     combatEndExplosion(won);
+    state.phaseTransition = {
+      type: "battleToResult",
+      elapsed: 0,
+      duration: BATTLE_RESULT_TRANSITION_SECONDS,
+      won,
+      gameOver: state.hearts <= 0,
+    };
     if (finalVictory) startFinalTabsStoryConversation();
     saveCurrentRunSilently();
     playGameSfx(won ? "victory" : "defeat");
@@ -11327,7 +11551,10 @@
     state.realityBreakTimer = 0;
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
+    state.phaseTransition = null;
+    state.shopSlotTransitions = Array(shopSlots.length).fill(null);
     state.rebootTransition = null;
+    state.menuRebootTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
     state.activeStory = null;
@@ -13310,6 +13537,8 @@
     syncGameMusic();
     updateRunAutosave(dt);
     state.idleTime += dt;
+    updatePhaseTransition(dt);
+    updateShopSlotTransitions(dt);
     updateRebootTransition(dt);
     updateFinalVictoryTransition(dt);
     updateShopReturnStaticTransition(dt);
@@ -13321,7 +13550,7 @@
     }
     if (state.realityBreakTimer > 0) state.realityBreakTimer = Math.max(0, state.realityBreakTimer - dt);
     const step = state.phase === "battle" ? dt * currentBattleSpeed() : dt;
-    if (state.phase === "battle") updateBattle(step);
+    if (state.phase === "battle" && !phaseTransitionBlocksBattle()) updateBattle(step);
     state.particles.forEach((p) => {
       p.life -= step;
       p.age = (p.age || 0) + step;
@@ -13335,6 +13564,31 @@
     state.particles = state.particles.filter((p) => p.life > 0);
   }
 
+  function updatePhaseTransition(dt) {
+    const transition = state.phaseTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration || 0.001, (transition.elapsed || 0) + dt);
+    if (transition.elapsed >= (transition.duration || 0)) {
+      state.phaseTransition = null;
+    }
+  }
+
+  function phaseTransitionBlocksBattle() {
+    return state.phaseTransition?.type === "prepToBattle";
+  }
+
+  function updateShopSlotTransitions(dt) {
+    if (!state.shopSlotTransitions) return;
+    state.shopSlotTransitions = state.shopSlotTransitions.map((transition) => {
+      if (!transition) return null;
+      const next = {
+        ...transition,
+        elapsed: (transition.elapsed || 0) + dt,
+      };
+      return next.elapsed >= (next.duration || SHOP_SLOT_TRANSITION_SECONDS) ? null : next;
+    });
+  }
+
   function updateRebootTransition(dt) {
     const transition = state.rebootTransition;
     if (!transition) return;
@@ -13345,6 +13599,7 @@
     }
     if (transition.resetDone && transition.elapsed >= transition.duration) {
       state.rebootTransition = null;
+      state.menuRebootTransition = null;
       state.message = "Prep";
     }
   }
@@ -13433,11 +13688,105 @@
       if (state.phase === "prep" && !state.codexOpen) drawCodexMenuButton();
       drawStoryConversationOverlay();
     }
+    drawPhaseTransitionOverlay();
     drawRebootTransitionOverlay();
     drawFinalVictoryTransitionOverlay();
     drawShopReturnStaticTransitionOverlay();
     drawOptionsMenuOverlay();
     drawTooltip();
+  }
+
+  function phaseTransitionProgress(type) {
+    const transition = state.phaseTransition;
+    if (!transition || (type && transition.type !== type)) return 1;
+    return clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || 0.001));
+  }
+
+  function resultTransitionAlpha() {
+    if (state.phaseTransition?.type !== "battleToResult") return 1;
+    return easeOutCubic(clamp01(((state.phaseTransition.elapsed || 0) - 0.18) / Math.max(0.001, (state.phaseTransition.duration || BATTLE_RESULT_TRANSITION_SECONDS) - 0.18)));
+  }
+
+  function drawPhaseTransitionOverlay() {
+    const transition = state.phaseTransition;
+    if (!transition) return;
+    if (transition.type === "prepToBattle") {
+      drawPrepToBattleTransition(transition);
+      return;
+    }
+    if (transition.type === "battleToResult") {
+      drawBattleToResultTransition(transition);
+    }
+  }
+
+  function drawPrepToBattleTransition(transition) {
+    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || BATTLE_DEPLOY_TRANSITION_SECONDS));
+    const eased = easeOutCubic(progress);
+    const horror = realityBroken();
+    ctx.save();
+    ctx.globalAlpha = 0.48 * (1 - eased);
+    ctx.fillStyle = horror ? "#020606" : "#fff2b8";
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    const sweepX = -W * 0.22 + eased * W * 1.44;
+    const sweepW = W * 0.34;
+    const gradient = ctx.createLinearGradient(sweepX - sweepW, 0, sweepX + sweepW, 0);
+    gradient.addColorStop(0, "rgba(255,255,255,0)");
+    gradient.addColorStop(0.5, horror ? "rgba(70,255,99,0.28)" : "rgba(255,255,255,0.64)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(sweepX - sweepW, 0, sweepW * 2, H);
+    ctx.globalAlpha = clamp01(Math.sin(progress * Math.PI)) * (horror ? 0.72 : 0.52);
+    ctx.strokeStyle = horror ? "rgba(70,255,99,0.64)" : "rgba(31,125,74,0.48)";
+    ctx.lineWidth = horror ? 2 : 3;
+    for (let i = 0; i < boardSlots.length; i++) {
+      const ally = battleSlotPosition("ally", i);
+      const enemy = battleSlotPosition("enemy", i);
+      ctx.beginPath();
+      ctx.moveTo(ally.x, ally.y);
+      ctx.lineTo(enemy.x, enemy.y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = clamp01(Math.sin(progress * Math.PI)) * 0.88;
+    roundedRect(W / 2 - 190, 74, 380, 42, 8);
+    ctx.fillStyle = horror ? "rgba(3, 10, 12, 0.82)" : "rgba(255, 253, 232, 0.88)";
+    ctx.fill();
+    ctx.strokeStyle = horror ? "rgba(70, 255, 99, 0.46)" : "rgba(31, 125, 74, 0.34)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = horror ? "#46ff63" : "#1f7d4a";
+    ctx.font = "900 17px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(horror ? "DEPLOYING WAVE" : "SETTING THE FIELD", W / 2, 101);
+    ctx.textAlign = "left";
+    ctx.restore();
+  }
+
+  function drawBattleToResultTransition(transition) {
+    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || BATTLE_RESULT_TRANSITION_SECONDS));
+    const flash = 1 - easeOutCubic(progress);
+    const reveal = easeOutCubic(clamp01((progress - 0.18) / 0.82));
+    const won = transition.won;
+    const gameOver = transition.gameOver;
+    const horror = realityBroken();
+    ctx.save();
+    ctx.globalAlpha = 0.34 * flash;
+    ctx.fillStyle = won ? (horror ? "#46ff63" : "#fff5bf") : "#d9573c";
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = clamp01(Math.sin(progress * Math.PI)) * 0.96;
+    const bannerW = 440 + reveal * 90;
+    roundedRect(W / 2 - bannerW / 2, 238 - reveal * 10, bannerW, 70, 8);
+    ctx.fillStyle = horror ? "rgba(3, 10, 12, 0.9)" : "rgba(255, 253, 232, 0.94)";
+    ctx.fill();
+    ctx.strokeStyle = won ? themeColor("accent", "#1f7d4a") : themeColor("danger", "#9b3028");
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fillStyle = gameOver ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
+    ctx.font = "900 26px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(gameOver ? "RUN OVER" : won ? (horror ? "TARGET CLEARED" : "VICTORY") : (horror ? "UNIT LOSS" : "DEFEAT"), W / 2, 282);
+    ctx.textAlign = "left";
+    ctx.restore();
   }
 
   function drawBackground() {
@@ -15134,7 +15483,7 @@
   }
 
   function optionsMenuCanOpen() {
-    if (state.activeStory || state.codexOpen || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition) return false;
+    if (state.activeStory || state.codexOpen || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return false;
     if (state.phase === "victoryCutscene") return false;
     return state.phase === "prep" || state.phase === "battle" || state.phase === "result";
   }
@@ -15524,8 +15873,13 @@
     const battle = visibleBattle();
     if (battle) drawBattle(battle);
     drawParticles();
+    const panelAlpha = resultTransitionAlpha();
+    ctx.save();
+    ctx.globalAlpha *= panelAlpha;
+    ctx.translate(0, (1 - panelAlpha) * 18);
     drawResultPanel();
     if (state.combatLedgerReview?.open) drawExpandedCombatLedger(state.lastCombatLedger);
+    ctx.restore();
   }
 
   function drawSlot(x, y, w, h, unit, area, index) {
@@ -15545,6 +15899,17 @@
     const showDragOver = isDragOver && !useSubtleDropOutline;
     const showSubtleDropOutline = useSubtleDropOutline && isOpenDrop;
     const showSubtleBlockedOutline = useSubtleDropOutline && isDragOver && isBlockedDrop;
+    const slotTransition = area === "shop" ? shopSlotTransition(index) : null;
+    ctx.save();
+    if (slotTransition) {
+      const pulse = Math.sin(slotTransition.progress * Math.PI);
+      const direction = slotTransition.type === "unlock" ? 1 : slotTransition.type === "upgrade" ? -1 : 0;
+      const scale = 0.86 + slotTransition.eased * 0.14 + pulse * 0.035;
+      ctx.translate(x, y + (1 - slotTransition.eased) * 10 * direction);
+      ctx.scale(scale, scale);
+      ctx.translate(-x, -y);
+      ctx.globalAlpha *= 0.42 + slotTransition.eased * 0.58;
+    }
     const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, w, h, area, index);
     roundedRect(x - w / 2, y - h / 2, w, h, 8);
     if (!hasArtBackdrop || showHoverHighlight || showOpenDrop || showDragOver) {
@@ -15577,6 +15942,7 @@
     ctx.lineWidth = 1;
     if (area === "shop" && !isShopSlotUnlocked(index)) {
       drawShopSlotUnlock(x, y, w, h, index);
+      ctx.restore();
       return;
     }
     if (unit) {
@@ -15593,6 +15959,16 @@
         drawShopFreezeBadge(x, y, w, h, index);
       }
     }
+    if (slotTransition) {
+      const glow = Math.sin(slotTransition.progress * Math.PI);
+      roundedRect(x - w / 2 - 3, y - h / 2 - 3, w + 6, h + 6, 10);
+      ctx.strokeStyle = realityBroken()
+        ? `rgba(70, 255, 99, ${0.2 + glow * 0.5})`
+        : `rgba(255, 234, 130, ${0.24 + glow * 0.46})`;
+      ctx.lineWidth = 2 + glow * 2;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawMergeOpportunityOverlay() {
@@ -22747,7 +23123,7 @@
       if (pointInRect(pos.x, pos.y, storyAdvanceButtonRect())) return { area: "story", action: "advance" };
       return { area: "story", action: "panel" };
     }
-    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition) return null;
+    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
         return { area: "button", index: "victoryReboot" };
@@ -23400,7 +23776,7 @@
       }
       return;
     }
-    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phase === "victoryCutscene") {
+    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition || state.phase === "victoryCutscene") {
       if (event.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) canvas.requestFullscreen?.();
         else document.exitFullscreen?.();
@@ -23606,6 +23982,20 @@
             ? "cozy-awning-food-particle-fade-out-switch-fade-in"
             : "fade-out-static-then-switch-to-shop-then-fade-in",
         } : { active: false },
+        phaseTransition: state.phaseTransition ? {
+          active: true,
+          type: state.phaseTransition.type,
+          elapsed: Number((state.phaseTransition.elapsed || 0).toFixed(2)),
+          duration: Number((state.phaseTransition.duration || 0).toFixed(2)),
+          progress: Number(clamp01((state.phaseTransition.elapsed || 0) / Math.max(0.001, state.phaseTransition.duration || 0.001)).toFixed(2)),
+        } : { active: false },
+        shopSlotTransitions: state.shopSlotTransitions
+          .map((transition, index) => transition ? {
+            index,
+            type: transition.type,
+            progress: Number(clamp01(Math.max(0, transition.elapsed || 0) / Math.max(0.001, transition.duration || SHOP_SLOT_TRANSITION_SECONDS)).toFixed(2)),
+          } : null)
+          .filter(Boolean),
         rebootTransition: state.rebootTransition ? {
           active: true,
           elapsed: Number((state.rebootTransition.elapsed || 0).toFixed(2)),
@@ -24177,6 +24567,7 @@
     state.postCombatBattle = null;
     state.rewardChoices = [];
     state.rebootTransition = null;
+    state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
@@ -24240,12 +24631,15 @@
     state.realityBroken = true;
     state.realityBreakTimer = 0;
     state.rebootTransition = null;
+    state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
     state.activeStory = null;
-    state.seenStoryMilestones = Object.keys(STORY_MILESTONES);
+    state.seenStoryMilestones = finalFightRouteShouldStartBattle()
+      ? Object.keys(STORY_MILESTONES)
+      : Object.keys(STORY_MILESTONES).filter((id) => id !== "level20PreFinal");
     clearParticles();
 
     state.board[0] = makeUnit("toast_tortoise", 2);
@@ -24262,7 +24656,10 @@
     ensureEnemyPreview();
     state.log = ["Review route: Neural Overmind final fight"];
     if (finalFightRouteShouldStartBattle()) startBattle();
-    if (state.phase === "prep") state.message = "Final fight ready";
+    if (state.phase === "prep") {
+      state.message = "Final fight ready";
+      maybeStartStoryMilestone();
+    }
     return true;
   }
 
@@ -24307,6 +24704,7 @@
     state.realityBroken = false;
     state.realityBreakTimer = 0;
     state.rebootTransition = null;
+    state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
@@ -24377,6 +24775,7 @@
     state.realityBroken = false;
     state.realityBreakTimer = 0;
     state.rebootTransition = null;
+    state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
