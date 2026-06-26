@@ -58,7 +58,7 @@ select {
   background:
     linear-gradient(90deg, rgba(12, 31, 20, 0.68) 0%, rgba(12, 31, 20, 0.25) 42%, rgba(12, 31, 20, 0.04) 72%),
     linear-gradient(180deg, rgba(26, 23, 16, 0.1) 0%, rgba(26, 23, 16, 0.24) 100%),
-    url("assets/start-menu/cozy-picnic-start-bg-v1.png") center / cover no-repeat;
+    url("../assets/start-menu/cozy-picnic-start-bg-v1.png") center / cover no-repeat;
   box-shadow: 0 18px 48px rgba(22, 57, 45, 0.18);
   isolation: isolate;
 }
@@ -80,7 +80,7 @@ select {
   background:
     linear-gradient(90deg, rgba(0, 6, 8, 0.84) 0%, rgba(0, 8, 9, 0.54) 36%, rgba(0, 8, 9, 0.12) 70%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.38) 100%),
-    url("assets/start-menu/horror-start-bg-v1.png") center / cover no-repeat;
+    url("../assets/start-menu/horror-start-bg-v1.png") center / cover no-repeat;
   box-shadow:
     0 0 0 1px rgba(70, 255, 99, 0.16),
     0 24px 60px rgba(0, 0, 0, 0.48);
@@ -410,7 +410,7 @@ h1 {
   text-transform: uppercase;
   color: #e4ffe5;
   background:
-    url("assets/start-menu/runtime/horror-title-plate-v1.png") center / 100% 100%
+    url("../assets/start-menu/runtime/horror-title-plate-v1.png") center / 100% 100%
       no-repeat;
   text-shadow:
     2px 0 0 rgba(217, 87, 60, 0.78),
@@ -435,7 +435,7 @@ h1 {
   opacity: 0;
   pointer-events: none;
   background:
-    url("assets/start-menu/runtime/horror-title-plate-v1.png") center / 100% 100%
+    url("../assets/start-menu/runtime/horror-title-plate-v1.png") center / 100% 100%
       no-repeat;
   text-shadow:
     3px 0 0 rgba(217, 87, 60, 0.72),
@@ -468,7 +468,7 @@ h1 {
   border: 0;
   padding: 0 clamp(56px, 6.2vw, 82px) 0 clamp(58px, 6.2vw, 90px);
   background:
-    url("assets/start-menu/runtime/horror-button-plate-v1.png") center / 100% 100%
+    url("../assets/start-menu/runtime/horror-button-plate-v1.png") center / 100% 100%
       no-repeat;
   box-shadow:
     0 16px 22px rgba(0, 0, 0, 0.32),
@@ -497,7 +497,7 @@ h1 {
 .start-menu[data-theme="horror"] .menu-action:focus-visible,
 .start-menu[data-theme="horror"] .menu-action.is-selected {
   background:
-    url("assets/start-menu/runtime/horror-button-plate-v1.png") center / 100% 100%
+    url("../assets/start-menu/runtime/horror-button-plate-v1.png") center / 100% 100%
       no-repeat;
   box-shadow:
     0 16px 22px rgba(0, 0, 0, 0.34),
@@ -506,7 +506,7 @@ h1 {
 
 .start-menu[data-theme="horror"] .menu-action:active {
   background:
-    url("assets/start-menu/runtime/horror-button-plate-v1.png") center / 100% 100%
+    url("../assets/start-menu/runtime/horror-button-plate-v1.png") center / 100% 100%
       no-repeat;
 }
 
@@ -525,7 +525,7 @@ h1 {
   text-align: left;
   color: #f8f1d4;
   background:
-    url("assets/start-menu/runtime/chalk-button-normal-v1.png") center / 100% 100%
+    url("../assets/start-menu/runtime/chalk-button-normal-v1.png") center / 100% 100%
       no-repeat;
   box-shadow: 0 14px 22px rgba(0, 0, 0, 0.18);
 }
@@ -566,7 +566,7 @@ h1 {
 .menu-action:hover,
 .menu-action:focus-visible,
 .menu-action.is-selected {
-  background-image: url("assets/start-menu/runtime/chalk-button-selected-v1.png");
+  background-image: url("../assets/start-menu/runtime/chalk-button-selected-v1.png");
   outline: none;
 }
 
@@ -582,7 +582,85 @@ h1 {
 }
 
 .menu-action:active {
-  background-image: url("assets/start-menu/runtime/chalk-button-pressed-v1.png");
+  background-image: url("../assets/start-menu/runtime/chalk-button-pressed-v1.png");
+}
+
+.run-mode-panel {
+  grid-column: 1;
+  grid-row: 3 / span 2;
+  align-self: start;
+  display: grid;
+  gap: clamp(10px, 1.8vh, 16px);
+  padding: clamp(12px, 1.8vw, 18px);
+  border: 2px solid rgba(49, 66, 38, 0.55);
+  border-radius: 8px;
+  background: rgba(255, 247, 215, 0.9);
+  box-shadow: 0 14px 28px rgba(20, 35, 22, 0.2);
+}
+
+.run-mode-panel[hidden] {
+  display: none;
+}
+
+.run-mode-choice {
+  min-height: 86px;
+  padding: 14px 16px;
+  border: 2px solid rgba(49, 66, 38, 0.45);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  color: #20311e;
+  background: rgba(255, 244, 203, 0.92);
+  box-shadow: 0 8px 16px rgba(20, 35, 22, 0.14);
+}
+
+.run-mode-choice:hover,
+.run-mode-choice:focus-visible,
+.run-mode-choice.is-selected {
+  outline: none;
+  border-color: rgba(141, 36, 52, 0.72);
+  background: rgba(255, 250, 228, 0.98);
+  transform: translateY(-1px);
+}
+
+.run-mode-title {
+  font-weight: 900;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1;
+}
+
+.run-mode-copy {
+  font-weight: 800;
+  font-size: clamp(0.76rem, 1.45vw, 0.92rem);
+  line-height: 1.2;
+  color: rgba(32, 49, 30, 0.78);
+}
+
+.start-menu[data-theme="horror"] .run-mode-panel {
+  border-color: rgba(70, 255, 99, 0.26);
+  background: rgba(3, 12, 14, 0.84);
+  box-shadow:
+    0 0 0 1px rgba(70, 255, 99, 0.1),
+    0 16px 32px rgba(0, 0, 0, 0.5);
+}
+
+.start-menu[data-theme="horror"] .run-mode-choice {
+  color: #e4ffe5;
+  border-color: rgba(70, 255, 99, 0.3);
+  background: rgba(4, 15, 17, 0.92);
+  box-shadow: inset 0 0 18px rgba(70, 255, 99, 0.06);
+}
+
+.start-menu[data-theme="horror"] .run-mode-choice:hover,
+.start-menu[data-theme="horror"] .run-mode-choice:focus-visible,
+.start-menu[data-theme="horror"] .run-mode-choice.is-selected {
+  border-color: rgba(70, 255, 99, 0.72);
+  background: rgba(8, 28, 28, 0.96);
+}
+
+.start-menu[data-theme="horror"] .run-mode-copy {
+  color: rgba(228, 255, 229, 0.78);
 }
 
 .start-transition {
@@ -596,7 +674,7 @@ h1 {
   background:
     radial-gradient(circle at 50% 47%, rgba(255, 244, 203, 0.1), transparent 30%),
     linear-gradient(180deg, rgba(61, 24, 18, 0.1), rgba(61, 24, 18, 0.26)),
-    url("assets/start-menu/start-transition-tablecloth-v1.png") center / cover no-repeat,
+    url("../assets/start-menu/start-transition-tablecloth-v1.png") center / cover no-repeat,
     #9b3f31;
   transform-origin: center;
   animation: picnic-transition-reveal 620ms cubic-bezier(0.16, 0.84, 0.28, 1) both;
@@ -606,7 +684,7 @@ h1 {
   background:
     radial-gradient(circle at 50% 47%, rgba(70, 255, 99, 0.12), transparent 28%),
     linear-gradient(180deg, rgba(0, 6, 8, 0.4), rgba(0, 0, 0, 0.72)),
-    url("assets/start-menu/horror-start-bg-v1.png") center / cover no-repeat,
+    url("../assets/start-menu/horror-start-bg-v1.png") center / cover no-repeat,
     #030707;
 }
 
@@ -971,7 +1049,7 @@ select:focus-visible {
   background:
     radial-gradient(circle at 50% 48%, rgba(17, 26, 19, 0.26), rgba(7, 15, 10, 0.58) 64%),
     linear-gradient(90deg, rgba(10, 20, 14, 0.8), rgba(29, 41, 23, 0.38)),
-    url("assets/start-menu/field-guide-bg-v1.png") center / cover no-repeat,
+    url("../assets/start-menu/field-guide-bg-v1.png") center / cover no-repeat,
     rgba(17, 26, 19, 0.72);
   backdrop-filter: blur(6px);
 }
@@ -996,7 +1074,7 @@ select:focus-visible {
   background:
     radial-gradient(ellipse at 50% 50%, rgba(255, 235, 177, 0.1), rgba(35, 25, 15, 0.38) 72%),
     linear-gradient(180deg, rgba(35, 26, 15, 0.08), rgba(25, 20, 13, 0.3)),
-    url("assets/start-menu/field-guide-desk-bg-v1.png") center / cover no-repeat,
+    url("../assets/start-menu/field-guide-desk-bg-v1.png") center / cover no-repeat,
     rgba(89, 56, 26, 0.72);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.42),
@@ -1162,7 +1240,7 @@ select:focus-visible {
 
 .start-menu[data-theme="horror"] .field-guide {
   background:
-    url("assets/start-menu/horror-field-guide-bg-v1.png") center / cover no-repeat,
+    url("../assets/start-menu/horror-field-guide-bg-v1.png") center / cover no-repeat,
     #030607;
   backdrop-filter: none;
   padding: clamp(8px, 1.4vw, 18px);
@@ -1175,7 +1253,7 @@ select:focus-visible {
   padding: clamp(7px, 1.2vw, 12px);
   border-color: rgba(255, 74, 74, 0.5);
   background:
-    url("assets/start-menu/horror-field-guide-desk-bg-v1.png") center / cover no-repeat,
+    url("../assets/start-menu/horror-field-guide-desk-bg-v1.png") center / cover no-repeat,
     rgba(5, 8, 9, 0.94);
   box-shadow:
     0 24px 68px rgba(0, 0, 0, 0.68),
@@ -1620,6 +1698,12 @@ select:focus-visible {
   .start-menu.is-field-guide-open:not(.is-field-guide-closing) .mascot-cluster,
   .start-menu.is-field-guide-open:not(.is-field-guide-closing) .food-lob-layer {
     animation: field-guide-menu-recede 300ms ease-out both;
+  }
+
+  .start-menu[data-theme="horror"].is-field-guide-open .mascot-cluster,
+  .start-menu[data-theme="horror"].is-field-guide-closing .mascot-cluster {
+    animation: none;
+    opacity: 0;
   }
 }
 

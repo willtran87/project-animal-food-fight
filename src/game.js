@@ -71,7 +71,7 @@
       Object.fromEntries(GAME_SFX_IDS.map((id) => [id, `assets/audio/sfx/${theme}-${id}.wav`])),
     ]),
   );
-  const DISPLAY_SCALE = 1.25;
+  const DISPLAY_SCALE = 1.5625;
   const MAX_BACKING_SCALE = 2.5;
   const BACKING_SCALE = Math.max(1.5, Math.min(MAX_BACKING_SCALE, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
   const IDLE_BREATH = {
@@ -126,8 +126,10 @@
     "Machines still march. Recipes still collide.",
     "Somewhere beneath the static, something gentle survives.",
     "A seed in a cracked plaza. A lantern left burning.",
-    "A table set for tomorrow, even when no one is certain tomorrow will come.",
-    "There is still always hope.",
+    "The table is still set.",
+    "Not for command.",
+    "Not for harvest.",
+    "For whatever comes next.",
   ];
   const PLAYER_STORY_PORTRAIT_SRC = "assets/player/runtime/player-tutorial-dialogue-cutout-v6.png";
   const TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png";
@@ -5491,6 +5493,7 @@
     arenaPrepBuff: null,
     enemyPreview: null,
     rewardChoices: [],
+    runMode: initialRunMode(),
     lastCombatLedger: null,
     combatLedgerReview: {
       open: false,
@@ -5836,6 +5839,7 @@
 
   const RUN_SNAPSHOT_KEYS = [
     "phase",
+    "runMode",
     "round",
     "gold",
     "hearts",
@@ -5947,6 +5951,7 @@
     if (!snapshot?.state || typeof snapshot.state !== "object") return false;
     const restored = cloneRunValue(snapshot.state);
     Object.assign(state, restored);
+    state.runMode = normalizeRunMode(state.runMode);
     state.optionsMenu = { open: false, selected: "resume", savedAt: snapshot.savedAt || null, dragSlider: null };
     state.pointer = null;
     state.hover = null;
@@ -6081,7 +6086,7 @@
   }
 
   function mainMenuUrl() {
-    return new URL("./", window.location.href).href;
+    return new URL("../", window.location.href).href;
   }
 
   function markMenuRebootStaticReveal() {
@@ -9569,7 +9574,7 @@
   }
 
   function isFinalBossRound(round = state.round) {
-    return round === FINAL_VICTORY_ROUND;
+    return !isInfiniteMode() && round === FINAL_VICTORY_ROUND;
   }
 
   function makeFinalBossEnemyPlan(round = FINAL_VICTORY_ROUND) {
@@ -9606,7 +9611,7 @@
   }
 
   function isGiraffeBossRound(round = state.round) {
-    return round === GIRAFFE_BOSS_ROUND;
+    return !isInfiniteMode() && round === GIRAFFE_BOSS_ROUND;
   }
 
   function isBossRound(round = state.round) {
@@ -10375,8 +10380,8 @@
 
   function endBattle(won) {
     const completedRound = state.round;
-    const finalVictory = won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
-    const finalDefeat = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
+    const finalVictory = !isInfiniteMode() && won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
+    const finalDefeat = !isInfiniteMode() && !won && completedRound === FINAL_VICTORY_ROUND && realityBroken();
     const damage = won ? 0 : finalDefeat ? state.hearts : roundLossDamage(state.round);
     if (!won) state.hearts = Math.max(0, state.hearts - damage);
     if (won) {
@@ -10402,10 +10407,10 @@
     };
     state.gold = Math.min(ECONOMY.maxGold, state.gold + income.total);
     state.lastIncome = income;
-    const retryFinalBoss = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
-    const retryGiraffeBoss = !won && completedRound === GIRAFFE_BOSS_ROUND;
+    const retryFinalBoss = !isInfiniteMode() && !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
+    const retryGiraffeBoss = !isInfiniteMode() && !won && completedRound === GIRAFFE_BOSS_ROUND;
     if (!retryGiraffeBoss && !retryFinalBoss && !finalDefeat) state.round += 1;
-    const justBrokeReality = !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
+    const justBrokeReality = !isInfiniteMode() && !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
     if (justBrokeReality) triggerRealityBreak();
     if (justBrokeReality && won && completedRound === GIRAFFE_BOSS_ROUND) startPostGiraffeHorrorTransition();
     state.phase = "result";
@@ -11271,6 +11276,7 @@
   }
 
   function eligibleStoryMilestone() {
+    if (isInfiniteMode()) return null;
     if (state.activeStory || state.phase !== "prep" || state.codexOpen) return null;
     if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.victoryCutscene) return null;
     return storyMilestoneEntries().find((milestone) => {
@@ -11584,6 +11590,7 @@
 
   function resetGame() {
     state.phase = "prep";
+    state.runMode = initialRunMode();
     state.round = 1;
     state.gold = ECONOMY.startingGold;
     state.hearts = 10;
@@ -11721,7 +11728,7 @@
       return false;
     });
     captureDueCombatLedgerFrames(battle);
-    if (state.round === GIRAFFE_BOSS_ROUND && battle.elapsed > BATTLE_TIMEOUT_SECONDS) {
+    if (isGiraffeBossRound(state.round) && battle.elapsed > BATTLE_TIMEOUT_SECONDS) {
       battle.result = "loss";
       endBattle(false);
     } else if (battle.enemies.every((u) => u.dead)) {
@@ -16865,15 +16872,22 @@
 
   function drawUpgradeStars(tier, x, y, size = 10, align = "left") {
     const count = Math.max(1, tier || 1);
-    const gap = Math.max(1, Math.round(size * 0.16));
-    const totalWidth = count * size + (count - 1) * gap;
+    const pipSize = Math.max(3, size * 0.78);
+    const gap = Math.max(1, Math.round(pipSize * 0.16));
+    const totalWidth = count * pipSize + (count - 1) * gap;
     const startX = align === "center" ? x - totalWidth / 2 : align === "right" ? x - totalWidth : x;
     const image = getUiSprite(UPGRADE_STAR_SRC);
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
       for (let i = 0; i < count; i += 1) {
-        ctx.drawImage(image, Math.round(startX + i * (size + gap)), Math.round(y - size / 2), size, size);
+        ctx.drawImage(
+          image,
+          Math.round(startX + i * (pipSize + gap)),
+          Math.round(y - pipSize / 2),
+          pipSize,
+          pipSize,
+        );
       }
       ctx.restore();
       return;
@@ -16882,7 +16896,7 @@
     ctx.fillStyle = "#f0c64a";
     ctx.strokeStyle = "#85512e";
     ctx.lineWidth = 2;
-    ctx.font = `900 ${Math.max(8, Math.round(size * 0.95))}px Inter, sans-serif`;
+    ctx.font = `900 ${Math.max(6, Math.round(pipSize * 0.95))}px Inter, sans-serif`;
     ctx.textAlign = align === "center" ? "center" : align === "right" ? "right" : "left";
     ctx.textBaseline = "middle";
     ctx.strokeText(stars(count), x, y);
@@ -16893,18 +16907,18 @@
   function drawRarityBadge(x, y, rarityId, size = "normal") {
     const rarity = rarityInfo(rarityId);
     const small = size === "small";
-    const w = small ? Math.max(48, Math.ceil(rarity.label.length * 6.8)) : 68;
-    const h = small ? 17 : 20;
-    roundedRect(x, y, w, h, 5);
+    const w = small ? Math.max(38, Math.ceil(rarity.label.length * 5.4)) : 68;
+    const h = small ? 13 : 20;
+    roundedRect(x, y, w, h, small ? 4 : 5);
     if (realityBroken() && rarity.glow) {
       ctx.save();
       ctx.shadowColor = rarity.glow;
-      ctx.shadowBlur = small ? 9 : 12;
+      ctx.shadowBlur = small ? 6 : 12;
       ctx.shadowOffsetY = 0;
       ctx.fillStyle = rarity.fill;
       ctx.fill();
       ctx.restore();
-      roundedRect(x, y, w, h, 5);
+      roundedRect(x, y, w, h, small ? 4 : 5);
     }
     ctx.fillStyle = rarity.fill;
     ctx.fill();
@@ -16912,7 +16926,7 @@
     ctx.lineWidth = small ? 1 : 2;
     ctx.stroke();
     ctx.fillStyle = rarity.text;
-    ctx.font = small ? "900 7px Inter, sans-serif" : "900 11px Inter, sans-serif";
+    ctx.font = small ? "900 6.5px Inter, sans-serif" : "900 11px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(small ? rarity.label.toUpperCase() : rarity.label, x + w / 2, y + h / 2 + 1);
@@ -16926,19 +16940,19 @@
     if (realityBroken() && rarity.glow) {
       ctx.save();
       ctx.shadowColor = rarity.glow;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 7;
       ctx.beginPath();
-      ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.arc(x, y, 3.9, 0, Math.PI * 2);
       ctx.fillStyle = rarity.fill;
       ctx.fill();
       ctx.restore();
     }
     ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.arc(x, y, 3.4, 0, Math.PI * 2);
     ctx.fillStyle = rarity.fill;
     ctx.fill();
     ctx.strokeStyle = rarity.stroke;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.75;
     ctx.stroke();
   }
 
@@ -24158,6 +24172,7 @@
     const musicTrack = currentGameMusicTrack();
     return JSON.stringify({
       coordinateSystem: "origin top-left; x increases right; y increases down",
+      runMode: state.runMode,
       phase: state.phase,
       round: state.round,
       gold: state.gold,
@@ -24806,6 +24821,24 @@
     } catch (_err) {
       return "";
     }
+  }
+
+  function normalizeRunMode(value) {
+    const mode = String(value || "").trim().toLowerCase();
+    return ["infinite", "endless", "arcade", "freeplay", "free-play"].includes(mode) ? "infinite" : "story";
+  }
+
+  function initialRunMode() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return normalizeRunMode(params.get("runMode") || params.get("run") || params.get("mode"));
+    } catch (_err) {
+      return "story";
+    }
+  }
+
+  function isInfiniteMode() {
+    return state.runMode === "infinite";
   }
 
   function routeParam(name) {

@@ -58,7 +58,7 @@ What to tighten in the next pass:
 
 The current playable game has:
 
-- 43 food-animal catalog lines in `game.js`.
+- 43 food-animal catalog lines in `src/game.js`.
 - Cozy runtime sprite mappings for every catalog line under `RUNTIME_SPRITES`.
 - Horror/future-war runtime override mappings for every catalog line under `REALITY_RUNTIME_SPRITES`.
 - Cozy and horror attack-particle mappings, defeat-still mappings, status-effect sprite sets, and item/drink art mappings.
@@ -139,7 +139,7 @@ Do not label sprite packages `production-ready` until every required animation h
 - Use `assets/sprites/README.md` for the authoritative package-by-package sprite pipeline and active-version history.
 - Use `assets/items/README.md` for topping/drink art, horror weapons, and horror fuel-source replacements.
 - Use `assets/ui/README.md` for active UI atlas, HUD, shop, manifest, combat-ledger, and reality-break panel assets.
-- Use `assets/backgrounds/README.md` and `HORROR_ARENA_MAPPING.md` for arena and cutscene background mappings.
+- Use `../assets/backgrounds/README.md` and `HORROR_ARENA_MAPPING.md` for arena and cutscene background mappings.
 
 ## V1 Image Prompt
 

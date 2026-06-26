@@ -2,14 +2,14 @@
 
 A browser-playable food-animal auto-battler prototype with a cozy food-market surface and a horror/future-war reality layer underneath it.
 
-The current build is a static HTML/CSS/JavaScript project. The default route opens the start menu, then keeps `/` stable while the campaign shell flows into the opening VN, tutorial, and cozy level 1. The auto-battler itself lives in one canvas-driven file behind `game.html`.
+The current build is a static HTML/CSS/JavaScript project. The default route opens the start menu, then keeps `/` stable while the campaign shell flows into the opening VN, tutorial, and cozy level 1. Direct local test pages live under `local-test-pages/`.
 
 ## Entry Points
 
 - `index.html` loads the Harvest Friends start menu as the default campaign entry at `/`, then embeds the opening/tutorial/game flow without changing the visible route.
-- `game.html` loads `game.js`, the playable auto-battler and all direct gameplay/test routes.
-- `start-menu.html` loads `start-menu.js` / `start-menu.css`, the direct test route for the Harvest Friends start menu with music settings, animated food-lob ambience, and a Start Run transition into the opening VN route.
-- `opening-vn.html` loads `opening-vn.js` / `opening-vn.css`, the direct test route for the opening/tutorial dialogue flow. In the root campaign shell, this is embedded rather than exposed as the gameplay route.
+- `local-test-pages/start-menu.html` loads `src/start-menu.js` / `styles/start-menu.css`, the direct local test route for the Harvest Friends start menu.
+- `local-test-pages/opening-vn.html` loads `src/opening-vn.js` / `styles/opening-vn.css`, the direct local test route for the opening/tutorial dialogue flow.
+- `local-test-pages/game.html` loads `src/game.js`, the playable auto-battler and all direct gameplay/test routes.
 
 ## Local Development
 
@@ -34,23 +34,23 @@ http://127.0.0.1:8173/
 The individual screens are also available at:
 
 ```text
-http://127.0.0.1:8173/start-menu.html
-http://127.0.0.1:8173/opening-vn.html
-http://127.0.0.1:8173/game.html
+http://127.0.0.1:8173/local-test-pages/start-menu.html
+http://127.0.0.1:8173/local-test-pages/opening-vn.html
+http://127.0.0.1:8173/local-test-pages/game.html
 ```
 
 ## Useful Routes
 
-- `/start-menu.html?theme=horror` opens the horror/future-war side of the start menu, then Start Run enters the shared opening/tutorial flow.
-- `/game.html?smoke=basic` or `/game.html?smoke=core-loop` seeds a deterministic smoke-test team.
-- `/game.html?theme=cozy` starts in the cozy illusion layer but still allows the story reveal; use `/game.html?reality=cozy` to force cozy.
-- `/game.html?theme=horror` forces the horror/future-war layer.
-- `/game.html?screen=level-10` opens the wave-10 Banana Split Giraffe boss setup.
-- `/game.html?screen=level-10&start=battle` starts that boss route immediately.
-- `/game.html?screen=final-fight` opens the wave-20 Neural Overmind setup.
-- `/game.html?screen=final-fight&start=battle` starts the final fight immediately.
-- `/game.html?screen=victory-epilogue` opens the final victory cutscene.
-- `/game.html?screen=victory-epilogue&stage=crawl`, `stage=static`, or `stage=ideal` jumps to later cutscene beats.
+- `/local-test-pages/start-menu.html?theme=horror` opens the horror/future-war side of the start menu, then Start Run enters the shared opening/tutorial flow.
+- `/local-test-pages/game.html?smoke=basic` or `/local-test-pages/game.html?smoke=core-loop` seeds a deterministic smoke-test team.
+- `/local-test-pages/game.html?theme=cozy` starts in the cozy illusion layer but still allows the story reveal; use `/local-test-pages/game.html?reality=cozy` to force cozy.
+- `/local-test-pages/game.html?theme=horror` forces the horror/future-war layer.
+- `/local-test-pages/game.html?screen=level-10` opens the wave-10 Banana Split Giraffe boss setup.
+- `/local-test-pages/game.html?screen=level-10&start=battle` starts that boss route immediately.
+- `/local-test-pages/game.html?screen=final-fight` opens the wave-20 Neural Overmind setup.
+- `/local-test-pages/game.html?screen=final-fight&start=battle` starts the final fight immediately.
+- `/local-test-pages/game.html?screen=victory-epilogue` opens the final victory cutscene.
+- `/local-test-pages/game.html?screen=victory-epilogue&stage=crawl`, `stage=static`, or `stage=ideal` jumps to later cutscene beats.
 
 ## Current Game Shape
 
@@ -65,8 +65,8 @@ http://127.0.0.1:8173/game.html
 
 ## Design Docs
 
-- `ART_DIRECTION.md` defines the cozy sticker-sprite target, evolution-read rules, production pipeline, and current status of source-reference art.
-- `HORROR_ARENA_MAPPING.md` maps cozy arena modifiers to their post-human automated food-infrastructure horror variants.
+- `docs/ART_DIRECTION.md` defines the cozy sticker-sprite target, evolution-read rules, production pipeline, and current status of source-reference art.
+- `docs/HORROR_ARENA_MAPPING.md` maps cozy arena modifiers to their post-human automated food-infrastructure horror variants.
 - `assets/sprites/README.md` records the sprite-generation, chroma-key, slicing, manifest, attack-particle, and defeat-still pipeline.
 - `assets/items/README.md` records topping/drink art, horror weapon/fuel-source replacements, and item evolution slices.
 - `assets/ui/README.md` records UI atlas, HUD, command, shop, combat-ledger, manifest, and reality-break UI art.
@@ -76,15 +76,15 @@ http://127.0.0.1:8173/game.html
 
 ## Code Map
 
-- `game.js`
+- `src/game.js`
   - Data: copy themes, unit catalog, traits, arenas, economy, items, sprite maps, and horror override maps.
   - State: prep, battle, result, reboot/static transitions, final victory transition, victory cutscene, codex, drag/drop, rewards, and combat ledger review state.
   - Systems: shop generation, purchase/merge/equipment, arena rewards, enemy plan generation, combat simulation, item/drink effects, particles, reality theme switching, and route setup.
   - Rendering: canvas UI, prep board, shop, codex/War Manifest, battle field, particles, status glyphs, result panel, expanded combat ledger, reality distortion, and cutscene layers.
   - Test hooks: `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__foodAnimals`.
-- `start-menu.js`
+- `src/start-menu.js`
   - DOM menu navigation, persisted audio settings, music-track selection, animated food lobs, click explosions, and `render_game_to_text()`.
-- `opening-vn.js`
+- `src/opening-vn.js`
   - Dialogue beat data, speaker/inner-monologue state, paddock preview reveal, completion event, and `render_game_to_text()`.
 
 ## Verification
@@ -92,17 +92,17 @@ http://127.0.0.1:8173/game.html
 Syntax-check the JavaScript entry points:
 
 ```powershell
-node --check game.js
-node --check start-menu.js
-node --check opening-vn.js
+node --check src/game.js
+node --check src/start-menu.js
+node --check src/opening-vn.js
 ```
 
 Common browser smoke targets:
 
 ```text
-http://127.0.0.1:8173/game.html?smoke=basic
-http://127.0.0.1:8173/game.html?screen=level-10&start=battle
-http://127.0.0.1:8173/game.html?screen=final-fight&start=battle
+http://127.0.0.1:8173/local-test-pages/game.html?smoke=basic
+http://127.0.0.1:8173/local-test-pages/game.html?screen=level-10&start=battle
+http://127.0.0.1:8173/local-test-pages/game.html?screen=final-fight&start=battle
 ```
 
 When changing asset wiring, prefer checking both cozy and horror themes because most runtime sprite, item, status, UI, and copy paths have theme-specific mappings.
@@ -110,9 +110,10 @@ When changing asset wiring, prefer checking both cozy and horror themes because 
 ## Contents
 
 - `index.html`: default start menu entry for `/`.
-- `game.html`, `styles.css`, `game.js`: playable game.
-- `start-menu.html`, `start-menu.css`, `start-menu.js`: start menu and first-run campaign entry.
-- `opening-vn.html`, `opening-vn.css`, `opening-vn.js`: opening/tutorial VN and cozy level-1 handoff.
+- `local-test-pages/game.html`, `styles/game.css`, `src/game.js`: playable game local test route.
+- `local-test-pages/start-menu.html`, `styles/start-menu.css`, `src/start-menu.js`: start menu local test route.
+- `local-test-pages/opening-vn.html`, `styles/opening-vn.css`, `src/opening-vn.js`: opening/tutorial VN local test route.
+- `docs/`: project-level design and mapping notes.
 - `assets/`: runtime game art, source/intermediate asset pipeline outputs, audio, and design references.
 - `tools/`: local asset-processing utilities.
-- `test-actions-*.json`: browser interaction payloads used during smoke testing.
+- `test-actions/`: browser interaction payloads used during smoke testing.

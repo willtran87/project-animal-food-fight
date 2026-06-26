@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Animals - Opening VN Prototype</title>
+    <base href="../" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f7d4a'/%3E%3Ccircle cx='32' cy='34' r='18' fill='%23fff4cb'/%3E%3Cpath d='M22 31h20v8H22z' fill='%23d9573c'/%3E%3Cpath d='M32 13c8 0 12 5 12 5-9 0-12 5-12 5s-3-5-12-5c0 0 4-5 12-5z' fill='%239bd36a'/%3E%3C/svg%3E" />
     <link rel="preload" as="image" href="assets/backgrounds/picnic-arena-background-v1-2048x1280.webp" />
     <link rel="preload" as="image" href="assets/backgrounds/arena-dim-sum-kitchen-v1.webp" />
     <link rel="preload" as="image" href="assets/opening-vn/runtime/awakening-greenhouse-lab-bg-v1.webp" />
@@ -27,7 +29,7 @@
     <link rel="preload" as="image" href="assets/opening-vn/runtime/stability-pressure-doc-v2.png?v=position-1" />
     <link rel="preload" as="image" href="assets/opening-vn/runtime/broken-pattern-vats-doc-v2.png?v=position-1" />
     <link rel="preload" as="image" href="assets/opening-vn/runtime/tutorial-paddock-placement-doc-v2.png?v=position-1" />
-    <link rel="stylesheet" href="opening-vn.css?v=dialogue-skip-confirm-1" />
+    <link rel="stylesheet" href="styles/opening-vn.css?v=dialogue-skip-confirm-1-1600x1000-screens-1" />
   </head>
   <body>
     <main class="vn-shell" aria-label="Food Animals opening visual novel prototype">
@@ -43,7 +45,7 @@
         </section>
 
         <section class="tutorial-shop" aria-label="Actual frozen tutorial shop screen" hidden>
-          <iframe class="actual-shop-frame" title="Actual Food Animals shop tutorial route" src="game.html?screen=opening-tutorial-shop&embed=opening-vn"></iframe>
+          <iframe class="actual-shop-frame" title="Actual Food Animals shop tutorial route" src="local-test-pages/game.html?screen=opening-tutorial-shop&embed=opening-vn"></iframe>
           <div class="actual-shop-highlights" aria-hidden="true">
             <span class="actual-highlight hud" data-highlight="hud"></span>
             <span class="actual-highlight shop" data-highlight="shop"></span>
@@ -76,6 +78,6 @@
         </section>
       </section>
     </main>
-    <script src="opening-vn.js?v=dialogue-skip-confirm-1-auto-reveal-1-story-tightening-1"></script>
+    <script src="src/opening-vn.js?v=dialogue-skip-confirm-1-auto-reveal-1-story-tightening-1"></script>
   </body>
 </html>

@@ -19,6 +19,8 @@ const state = {
   selectedIndex: 0,
   lastAction: "none",
   optionsOpen: false,
+  runModeOpen: false,
+  selectedRunMode: "story",
   fieldGuideOpen: false,
   fieldGuideClosing: false,
   startingGame: false,
@@ -260,11 +262,21 @@ const START_TABLE_SCENE_MS = 1500;
 const START_RUN_EXIT_MS = 560;
 const START_TRANSITION_MS = START_TABLE_SCENE_MS + START_RUN_EXIT_MS;
 const FIELD_GUIDE_CLOSE_MS = 380;
-const START_TARGET_BASE_URL = "opening-vn.html";
+const LOCAL_TEST_PAGE_DIR = "local-test-pages";
+const START_MENU_TEST_URL = `${LOCAL_TEST_PAGE_DIR}/start-menu.html`;
+const START_TARGET_BASE_URL = `${LOCAL_TEST_PAGE_DIR}/opening-vn.html`;
+const GAME_TARGET_BASE_URL = `${LOCAL_TEST_PAGE_DIR}/game.html`;
+
+function appUrl(path) {
+  return new URL(path, document.baseURI || window.location.href);
+}
 const HORROR_START_BG_SRC = "assets/start-menu/horror-start-bg-v1.png";
 const FIELD_GUIDE_ZOOM_MIN = 1;
 const FIELD_GUIDE_ZOOM_MAX = 2.75;
 const FIELD_GUIDE_ZOOM_STEP = 1.14;
+const FIELD_GUIDE_TAP_MAX_PX = 9;
+const FIELD_GUIDE_SWIPE_MIN_PX = 46;
+const FIELD_GUIDE_SWIPE_AXIS_BIAS = 1.25;
 const FIELD_GUIDE_CONTROL_ICONS = {
   cozy: {
     close: "assets/start-menu/runtime/field-guide-icon-close-v1.png",
@@ -282,6 +294,8 @@ const actions = Array.from(document.querySelectorAll(".menu-action"));
 const startMenu = document.querySelector(".start-menu");
 const lobLayer = document.querySelector(".food-lob-layer");
 const optionsPanel = document.querySelector(".options-panel");
+const runModePanel = document.querySelector(".run-mode-panel");
+const runModeButtons = Array.from(document.querySelectorAll("[data-run-mode]"));
 const themeOptionRow = document.querySelector(".option-row-theme");
 const themeButtons = Array.from(document.querySelectorAll("[data-menu-theme-option]"));
 const musicSlider = document.querySelector("#music-volume");
@@ -341,6 +355,12 @@ function render() {
   });
 
   optionsPanel.hidden = !state.optionsOpen;
+  if (runModePanel) runModePanel.hidden = !state.runModeOpen;
+  runModeButtons.forEach((button) => {
+    const active = button.dataset.runMode === state.selectedRunMode;
+    button.classList.toggle("is-selected", active);
+    button.tabIndex = active ? 0 : -1;
+  });
   if (themeOptionRow) themeOptionRow.hidden = !horrorMenuUnlocked;
   themeButtons.forEach((button) => {
     const active = normalizeMenuTheme(button.dataset.menuThemeOption) === state.theme;
@@ -374,7 +394,7 @@ function render() {
   startTransition.dataset.phase = state.startTransitionPhase;
   startTransition.classList.toggle("is-entering-run", state.startTransitionPhase === "enteringRun");
   actions.forEach((button) => {
-    button.disabled = state.startingGame;
+    button.disabled = state.startingGame || state.runModeOpen;
   });
   musicSlider.value = String(state.settings.music);
   renderMusicTrackOptions(horrorMenuUnlocked);
@@ -391,14 +411,14 @@ function chooseAction(action) {
   playMenuSfx(action === "start" || action === "continue" ? "transition" : "ui-confirm");
 
   if (action === "start") {
-    clearActiveRun();
-    beginStartTransition("start");
+    openRunModeSelect();
   } else if (action === "continue") {
     beginStartTransition("continue");
   } else if (action === "fieldGuide") {
     clearFieldGuideCloseTimer();
     state.phase = "fieldGuide";
     state.optionsOpen = false;
+    state.runModeOpen = false;
     state.fieldGuideOpen = true;
     state.fieldGuideClosing = false;
     resetFieldGuideView();
@@ -407,17 +427,50 @@ function chooseAction(action) {
     clearFieldGuideCloseTimer();
     state.phase = "options";
     state.optionsOpen = !state.optionsOpen;
+    state.runModeOpen = false;
     state.fieldGuideOpen = false;
     state.fieldGuideClosing = false;
   } else {
     clearFieldGuideCloseTimer();
     state.phase = "menu";
     state.optionsOpen = false;
+    state.runModeOpen = false;
     state.fieldGuideOpen = false;
     state.fieldGuideClosing = false;
   }
 
   render();
+}
+
+function openRunModeSelect() {
+  clearActiveRun();
+  clearFieldGuideCloseTimer();
+  state.phase = "runMode";
+  state.optionsOpen = false;
+  state.runModeOpen = true;
+  state.fieldGuideOpen = false;
+  state.fieldGuideClosing = false;
+  state.selectedRunMode = "story";
+  render();
+  runModeButtons.find((button) => button.dataset.runMode === state.selectedRunMode)
+    ?.focus({ preventScroll: true });
+}
+
+function closeRunModeSelect() {
+  if (!state.runModeOpen) return false;
+  state.runModeOpen = false;
+  state.phase = "menu";
+  render();
+  visibleMenuActions()[state.selectedIndex]?.focus({ preventScroll: true });
+  return true;
+}
+
+function chooseRunMode(mode) {
+  const normalized = mode === "infinite" ? "infinite" : "story";
+  state.selectedRunMode = normalized;
+  state.runModeOpen = false;
+  clearActiveRun();
+  beginStartTransition(normalized === "infinite" ? "infinite" : "story");
 }
 
 function selectIndex(index) {
@@ -441,6 +494,23 @@ actions.forEach((button) => {
     render();
   });
   button.addEventListener("click", () => chooseAction(button.dataset.action));
+});
+
+runModeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    state.selectedRunMode = button.dataset.runMode === "infinite" ? "infinite" : "story";
+    playMenuSfx("transition", { volume: 0.7 });
+    chooseRunMode(state.selectedRunMode);
+  });
+  button.addEventListener("pointerenter", () => {
+    state.selectedRunMode = button.dataset.runMode === "infinite" ? "infinite" : "story";
+    playMenuSfx("ui-hover", { volume: 0.45 });
+    render();
+  });
+  button.addEventListener("focus", () => {
+    state.selectedRunMode = button.dataset.runMode === "infinite" ? "infinite" : "story";
+    render();
+  });
 });
 
 fieldGuideButtons.forEach((button) => {
@@ -468,6 +538,7 @@ fieldGuidePageArt?.addEventListener("pointerdown", (event) => {
   ensureMenuMusicPlaying();
   const view = state.fieldGuideView || (state.fieldGuideView = {});
   view.dragging = true;
+  view.pointerId = event.pointerId;
   view.startX = event.clientX;
   view.startY = event.clientY;
   view.startPanX = view.panX || 0;
@@ -480,6 +551,7 @@ fieldGuidePageArt?.addEventListener("pointerdown", (event) => {
 fieldGuidePageArt?.addEventListener("pointermove", (event) => {
   const view = state.fieldGuideView;
   if (!state.fieldGuideOpen || !view?.dragging) return;
+  if (view.pointerId != null && event.pointerId !== view.pointerId) return;
   view.panX = (view.startPanX || 0) + event.clientX - (view.startX || event.clientX);
   view.panY = (view.startPanY || 0) + event.clientY - (view.startY || event.clientY);
   applyFieldGuideView();
@@ -489,9 +561,16 @@ fieldGuidePageArt?.addEventListener("pointermove", (event) => {
 function stopFieldGuidePan(event) {
   const view = state.fieldGuideView;
   if (!view?.dragging) return;
+  if (view.pointerId != null && event?.pointerId != null && event.pointerId !== view.pointerId) return;
+  const pageTurnDelta = fieldGuidePageTurnFromPointer(event, view);
   view.dragging = false;
+  view.pointerId = null;
   applyFieldGuideView();
   if (event?.pointerId != null) fieldGuidePageArt?.releasePointerCapture?.(event.pointerId);
+  if (pageTurnDelta !== 0) {
+    turnFieldGuidePage(pageTurnDelta);
+    playMenuSfx(pageTurnDelta < 0 ? "ui-back" : "ui-confirm", { volume: 0.7 });
+  }
   event?.preventDefault?.();
 }
 
@@ -558,6 +637,33 @@ window.addEventListener("keydown", (event) => {
 
   if (state.startingGame) {
     event.preventDefault();
+    return;
+  }
+
+  if (state.runModeOpen) {
+    if (event.key === "ArrowDown" || event.key === "ArrowRight" || event.key === "s" || event.key === "S" || event.key === "d" || event.key === "D") {
+      event.preventDefault();
+      state.selectedRunMode = state.selectedRunMode === "story" ? "infinite" : "story";
+      runModeButtons.find((button) => button.dataset.runMode === state.selectedRunMode)
+        ?.focus({ preventScroll: true });
+      playMenuSfx("ui-hover", { volume: 0.45 });
+      render();
+    } else if (event.key === "ArrowUp" || event.key === "ArrowLeft" || event.key === "w" || event.key === "W" || event.key === "a" || event.key === "A") {
+      event.preventDefault();
+      state.selectedRunMode = state.selectedRunMode === "story" ? "infinite" : "story";
+      runModeButtons.find((button) => button.dataset.runMode === state.selectedRunMode)
+        ?.focus({ preventScroll: true });
+      playMenuSfx("ui-hover", { volume: 0.45 });
+      render();
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      playMenuSfx("transition", { volume: 0.7 });
+      chooseRunMode(state.selectedRunMode);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeRunModeSelect();
+      playMenuSfx("ui-back", { volume: 0.65 });
+    }
     return;
   }
 
@@ -648,6 +754,8 @@ window.render_game_to_text = () =>
       updatedAt: state.activeRun.updatedAt || null,
     } : { available: false, storageKey: ACTIVE_RUN_STORAGE_KEY },
     optionsOpen: state.optionsOpen,
+    runModeOpen: state.runModeOpen,
+    selectedRunMode: state.selectedRunMode,
     fieldGuideClosing: state.fieldGuideClosing,
     fieldGuideCloseMs: FIELD_GUIDE_CLOSE_MS,
     startingGame: state.startingGame,
@@ -660,7 +768,7 @@ window.render_game_to_text = () =>
     startTargetUrl: startTargetUrl(),
     continueTargetUrl: state.activeRun ? startTargetUrl("continue") : null,
     theme: state.theme,
-    themeRoute: `start-menu.html?theme=${state.theme}`,
+    themeRoute: `${START_MENU_TEST_URL}?theme=${state.theme}`,
     themeScope: "start-menu-only-look-field-guide-specifications",
     horrorMenuUnlocked: isHorrorMenuUnlocked(),
     themeOptionsVisible: Boolean(themeOptionRow && !themeOptionRow.hidden),
@@ -669,7 +777,7 @@ window.render_game_to_text = () =>
     horrorTitleScreen:
       state.theme === "horror"
         ? {
-            route: "start-menu.html?theme=horror",
+            route: `${START_MENU_TEST_URL}?theme=horror`,
             effects: [
               "simulation-malfunction-static",
               "css-only-illusion-bleed-no-asset-swap",
@@ -856,6 +964,24 @@ function zoomFieldGuideView(deltaY, clientX, clientY) {
   return true;
 }
 
+function fieldGuidePageTurnFromPointer(event, view) {
+  if (!state.fieldGuideOpen || state.fieldGuideClosing || event?.type !== "pointerup") return 0;
+  const startX = Number.isFinite(view.startX) ? view.startX : event.clientX;
+  const startY = Number.isFinite(view.startY) ? view.startY : event.clientY;
+  const dx = event.clientX - startX;
+  const dy = event.clientY - startY;
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+  const canSwipePage = (view.zoom || FIELD_GUIDE_ZOOM_MIN) <= FIELD_GUIDE_ZOOM_MIN + 0.01;
+  if (canSwipePage && absX >= FIELD_GUIDE_SWIPE_MIN_PX && absX >= absY * FIELD_GUIDE_SWIPE_AXIS_BIAS) {
+    return dx < 0 ? 1 : -1;
+  }
+  if (Math.hypot(dx, dy) > FIELD_GUIDE_TAP_MAX_PX) return 0;
+  const rect = fieldGuidePageArt?.getBoundingClientRect();
+  if (!rect) return 1;
+  return event.clientX < rect.left + rect.width / 2 ? -1 : 1;
+}
+
 function renderFieldGuide() {
   if (!fieldGuideImage || !fieldGuideTitle || !fieldGuideCount) return;
 
@@ -1009,7 +1135,7 @@ function beginStartTransition(mode = "start") {
     startRunTimer = window.setTimeout(() => {
       startRunTimer = null;
       window.dispatchEvent(new CustomEvent("food-animals:start-menu:navigate-run"));
-      openCampaignTarget(startTargetUrl(mode), mode === "continue" ? "game" : "opening");
+      openCampaignTarget(startTargetUrl(mode), mode === "continue" || mode === "infinite" ? "game" : "opening");
     }, START_RUN_EXIT_MS);
   }, START_TABLE_SCENE_MS);
 }
@@ -1071,7 +1197,7 @@ window.addEventListener("pagehide", () => {
 function navigateToRunNow() {
   clearStartTransitionTimers();
   window.dispatchEvent(new CustomEvent("food-animals:start-menu:navigate-run"));
-  openCampaignTarget(startTargetUrl(state.startMode || "start"), state.startMode === "continue" ? "game" : "opening");
+  openCampaignTarget(startTargetUrl(state.startMode || "start"), state.startMode === "continue" || state.startMode === "infinite" ? "game" : "opening");
 }
 
 window.startMenuNavigateToRunNow = () => {
@@ -1199,9 +1325,11 @@ function startTargetUrl(mode = "start") {
   if (mode === "continue" && state.activeRun?.route) {
     return activeRunTargetUrl(state.activeRun);
   }
-  const url = new URL(START_TARGET_BASE_URL, window.location.href);
+  const targetBase = mode === "infinite" ? GAME_TARGET_BASE_URL : START_TARGET_BASE_URL;
+  const url = appUrl(targetBase);
   url.searchParams.set("from", "start-menu");
-  return `${START_TARGET_BASE_URL}${url.search}`;
+  if (mode === "infinite") url.searchParams.set("mode", "infinite");
+  return url.href;
 }
 
 function visibleMenuActions() {
@@ -1218,15 +1346,20 @@ function normalizeSelectedIndex() {
 }
 
 function activeRunTargetUrl(run) {
-  const fallback = "game.html?from=start-menu&continue=1";
-  if (!run || typeof run.route !== "string") return fallback;
+  const fallback = appUrl(GAME_TARGET_BASE_URL);
+  fallback.searchParams.set("from", "start-menu");
+  fallback.searchParams.set("continue", "1");
+  if (!run || typeof run.route !== "string") return fallback.href;
   try {
-    const url = new URL(run.route, window.location.href);
+    const url = new URL(run.route, document.baseURI || window.location.href);
     url.searchParams.set("from", "start-menu");
     url.searchParams.set("continue", "1");
-    return `${url.pathname.split("/").pop()}${url.search}${url.hash}`;
+    const target = appUrl(GAME_TARGET_BASE_URL);
+    target.search = url.search;
+    target.hash = url.hash;
+    return target.href;
   } catch {
-    return fallback;
+    return fallback.href;
   }
 }
 
@@ -1279,7 +1412,7 @@ window.addEventListener("message", (event) => {
   if (event.origin !== window.location.origin) return;
   const data = event.data || {};
   if (data.type !== "food-animals:opening-vn:complete") return;
-  openCampaignTarget(data.targetUrl || "game.html", "game");
+  openCampaignTarget(data.targetUrl || appUrl(GAME_TARGET_BASE_URL).href, "game");
 });
 
 function clearActiveFoodLobs() {

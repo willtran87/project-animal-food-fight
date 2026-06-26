@@ -412,13 +412,17 @@ const vnSfx = {
   next: new Map(),
 };
 const DOCUMENT_REVEAL_MS = 280;
-const TUTORIAL_COMPLETE_TARGET_URL = "game.html";
+const TUTORIAL_COMPLETE_TARGET_URL = "local-test-pages/game.html";
 let desiredBoardHref = "";
 let displayedBoardHref = "";
 let visualTransitionToken = 0;
 let visualTransitionTimers = [];
 let sceneTransitionTimer = null;
 let tutorialCompleteNavigationTimer = null;
+
+function appUrl(path) {
+  return new URL(path, document.baseURI || window.location.href);
+}
 
 function currentBeat() {
   if (state.phase !== "opening") {
@@ -684,17 +688,18 @@ function completeTutorial() {
   window.clearTimeout(tutorialCompleteNavigationTimer);
   tutorialCompleteNavigationTimer = window.setTimeout(() => {
     tutorialCompleteNavigationTimer = null;
+    const targetUrl = appUrl(TUTORIAL_COMPLETE_TARGET_URL).href;
     window.dispatchEvent(new CustomEvent("food-animals:opening-vn:complete", {
-      detail: { targetUrl: TUTORIAL_COMPLETE_TARGET_URL },
+      detail: { targetUrl },
     }));
     if (isCampaignEmbedded()) {
       window.parent.postMessage(
-        { type: "food-animals:opening-vn:complete", targetUrl: TUTORIAL_COMPLETE_TARGET_URL },
+        { type: "food-animals:opening-vn:complete", targetUrl },
         window.location.origin,
       );
       return;
     }
-    window.location.href = TUTORIAL_COMPLETE_TARGET_URL;
+    window.location.href = targetUrl;
   }, TUTORIAL_COMPLETE_TRANSITION_MS);
 }
 
@@ -808,7 +813,7 @@ window.render_game_to_text = () =>
     tutorialShop: {
       visible: state.phase !== "opening",
       screen: "Actual frozen tutorial shop",
-      route: "game.html?screen=opening-tutorial-shop&embed=opening-vn",
+      route: "local-test-pages/game.html?screen=opening-tutorial-shop&embed=opening-vn",
       highlightedStep: currentTutorialStep(),
       plannedInteractions: [
         "review the fixed shop shelf",

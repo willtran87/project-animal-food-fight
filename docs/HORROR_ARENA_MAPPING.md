@@ -34,5 +34,5 @@ In the current game, these backgrounds are selected by the same arena modifier s
 
 - Cozy and horror arenas should preserve the same modifier semantics; only the visual skin and copy layer change.
 - Backgrounds must remain crop-safe at the `16:10` game ratio and readable under the 3x3 combat board, drink rails, top HUD, result panel, and expanded combat ledger.
-- New horror arena art should avoid baking labels into the bitmap. `game.js` renders dynamic arena/zone copy, tooltips, and status text live.
+- New horror arena art should avoid baking labels into the bitmap. `src/game.js` renders dynamic arena/zone copy, tooltips, and status text live.
 - The post-boss war-market background and final victory backgrounds are documented in `assets/backgrounds/README.md` because they are route/cutscene art rather than arena-modifier art.

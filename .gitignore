@@ -3,6 +3,10 @@ output/
 progress.md
 tmp/
 
+local-test-pages/*
+!local-test-pages/
+!local-test-pages/*.html
+
 assets/**/source/
 assets/**/transparent/
 
