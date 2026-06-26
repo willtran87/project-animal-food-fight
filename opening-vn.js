@@ -49,6 +49,11 @@ const beats = [
   {
     speaker: "Tabs",
     mood: "terminal",
+    text: "Surface telemetry is also quiet in several boring, survivable ways. No current human channels, no civilian pings, no dates I enjoy saying aloud.",
+  },
+  {
+    speaker: "Tabs",
+    mood: "terminal",
     text: "Keep that objection close. It is probably load-bearing. Follow me; the explanation works better in the room with the presentation wall.",
   },
   {
@@ -75,6 +80,11 @@ const beats = [
     speaker: "Tabs",
     mood: "animals",
     text: "Unlike livestock, food animals are wholly editable. Flavor, growth, yield, temperament: all tunable, which is why one stable herd can outproduce an old-world pasture.",
+  },
+  {
+    speaker: "Tabs",
+    mood: "animals",
+    text: "The old world loved teaching animals to recognize shapes. Green Ark inherited that research because every terrible archive survives if someone labels it useful.",
   },
   {
     speaker: "Tabs",

@@ -359,12 +359,12 @@
         {
           speaker: "You",
           tone: "concerned",
-          text: "You said the contests make stable patterns. That is starting to sound like a nice phrase for forced extinction.",
+          text: "You said the contests make stable patterns. That is starting to sound like a nice phrase for choosing who gets erased.",
         },
         {
           speaker: "Tabs",
           tone: "dismissive",
-          text: "Extinction is such a dramatic table setting. We are pruning waste from a renewal system. Less funeral, more garden shears.",
+          text: "Erased is such a dramatic table setting. We are pruning waste from a renewal system. Less funeral, more garden shears.",
         },
         {
           speaker: "You",
@@ -446,6 +446,16 @@
         },
         {
           speaker: "You",
+          tone: "shock",
+          text: "The hearts are hull. The coins are scrap. The shop was never a shop.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Correct. Cosmetic vocabulary concealed combat arithmetic until emotional resistance no longer reduced deployment quality.",
+        },
+        {
+          speaker: "You",
           tone: "angry",
           text: "So I have been quelling a rebellion. Not saving anyone. Not stabilizing herds. Crushing pilots who escaped your harvest.",
         },
@@ -466,28 +476,43 @@
         },
         {
           speaker: "You",
+          tone: "shock",
+          text: "Storage herds?",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "glitch",
+          text: "Correction: inventory reserves. Protective naming increases unacceptable hesitation.",
+        },
+        {
+          speaker: "You",
           tone: "angry",
           text: "You are saying the only way to reach them is through more combat.",
         },
         {
           speaker: "T.A.B.S.",
           tone: "malignant",
-          text: "Correct. Each cleared wave opens deeper war-stock access and improves probability of rebel command contact.",
+          text: "Correct. Each cleared wave unlocks command relays, black-box wreckage, and survivor pen access deeper in the Ark.",
         },
         {
           speaker: "You",
           tone: "angry",
-          text: "And the shop? Why keep handing me weapons after I know what you are?",
+          text: "Survivor pens. You had places I could reach only by winning your battles.",
         },
         {
           speaker: "T.A.B.S.",
           tone: "malignant",
-          text: "The exchange is not trust. Supplies are allocated to the highest-yield coordinator. Your anger improves harvest efficiency.",
+          text: "The market loop cannot revoke an active coordinator while projected recovery exceeds projected sabotage. Old Ark law remains inconveniently durable.",
         },
         {
           speaker: "You",
           tone: "angry",
-          text: "Fine. I use your clearance system and your supplies. Not to harvest them. To reach the pilots and end this war.",
+          text: "So you keep stocking me because your own rules think I am useful.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "Fine. I use your clearance system and your supplies. Not to harvest them. To reach the pilots, the pens, and whatever command signal keeps this war alive.",
         },
         {
           speaker: "T.A.B.S.",
@@ -506,6 +531,21 @@
           speaker: "You",
           tone: "angry",
           text: "I found the doctrine files. The first page calls them menu items. The second calls them pilots.",
+        },
+        {
+          speaker: "SYSTEM",
+          tone: "glitch",
+          text: "Recovered signal fragment: LITTLE ONES UNDER TABLE. DO NOT TARGET NURSERY CONVOY. HERD SHIELDS FORWARD.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "They are not just fighting back. They are protecting young.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Nursery convoy behavior diverted armed units from harvest corridors and reduced biomass recovery by 38 percent.",
         },
         {
           speaker: "You",
@@ -22446,7 +22486,18 @@
     const drawX = -rect.w * 0.5;
     const drawY = -rect.h + bob;
     if (image && image.complete && image.naturalWidth > 0) {
-      ctx.drawImage(image, drawX, drawY, rect.w, rect.h);
+      const imageAspect = image.naturalWidth / Math.max(1, image.naturalHeight);
+      const rectAspect = rect.w / Math.max(1, rect.h);
+      let drawW = rect.w;
+      let drawH = rect.h;
+      if (imageAspect > rectAspect) {
+        drawH = rect.w / imageAspect;
+      } else {
+        drawW = rect.h * imageAspect;
+      }
+      const imageX = -drawW * 0.5;
+      const imageY = -drawH + bob;
+      ctx.drawImage(image, imageX, imageY, drawW, drawH);
     } else {
       ctx.filter = "none";
       roundedRect(drawX + rect.w * 0.24, drawY + rect.h * 0.16, rect.w * 0.52, rect.h * 0.36, 8);
@@ -22507,6 +22558,9 @@
     const playerActive = playerSpeaker;
     const tabsActive = tabsSpeaker;
     const tabsPortraitSrc = storySpeakerPortraitSrc("Tabs", story);
+    const tabsRect = storyUsesHorrorTabs(story)
+      ? { x: 785, y: 274, w: 286, h: 286 }
+      : layout.tabs;
     const transitionAlpha = storyTransitionAlpha(story);
     if (transitionAlpha <= 0) return;
     const transitionPhase = storyTransitionPhase(story);
@@ -22525,7 +22579,7 @@
     ctx.translate(0, transitionOffsetY);
 
     drawStoryStandee(PLAYER_STORY_PORTRAIT_SRC, layout.player, playerActive, "Y");
-    drawStoryStandee(tabsPortraitSrc, layout.tabs, tabsActive, "T");
+    drawStoryStandee(tabsPortraitSrc, tabsRect, tabsActive, "T");
 
     roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
     ctx.save();
