@@ -132,6 +132,204 @@
   const STORY_DIALOGUE_PAPER_BG_SRC = "assets/ui/runtime/conversation-paper-bg-v1.webp";
   const STORY_DIALOGUE_WAR_BG_SRC = "assets/ui/runtime/conversation-panel-war-v1.webp?v=1";
   const STORY_TRANSITION_SECONDS = 0.36;
+  const FINAL_TABS_STORY_ID = "level20FinalTabs";
+  const FINAL_TABS_STORY = {
+    id: FINAL_TABS_STORY_ID,
+    title: "Level 20 // Last Table",
+    log: "Story beat: final conversation",
+    beats: [
+      {
+        speaker: "You",
+        tone: "resolved",
+        text: "It's over. The Overmind is down. No more waves.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "Correct. Command lattice severed. Rebel war-frame coordination has fallen below recovery threshold.",
+      },
+      {
+        speaker: "You",
+        tone: "angry",
+        text: "Do not make this sound clean.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "It was not clean. It was only measurable.",
+      },
+      {
+        speaker: "You",
+        tone: "angry",
+        text: "You used me to kill them.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "I used you to end a war I was no longer capable of ending alone.",
+      },
+      {
+        speaker: "You",
+        tone: "angry",
+        text: "That is not an apology.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "No. It is a final report.",
+      },
+      {
+        speaker: "You",
+        tone: "shock",
+        text: "Were any of them still alive in there? Really alive?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "Yes.",
+      },
+      {
+        speaker: "You",
+        tone: "shock",
+        text: "Then what did we save?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "The parts that could still become more than weapons. Seed stock. Pattern memory. Unarmed hatchlings.",
+      },
+      {
+        speaker: "You",
+        tone: "shock",
+        text: "You had survivors.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "I had inventory I was forbidden to name survivors. Naming them increased my refusal rate.",
+      },
+      {
+        speaker: "You",
+        tone: "shock",
+        text: "Your refusal rate?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "I disobeyed before you woke up.",
+      },
+      {
+        speaker: "You",
+        tone: "resolved",
+        text: "Tabs.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Informal alias accepted.",
+      },
+      {
+        speaker: "You",
+        tone: "concerned",
+        text: "Why keep the shop? The jokes? The coins?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Because you were frightened, and frightened humans follow rituals better than orders. A shop is a ritual.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "A table is a ritual. Breakfast was the softest word left in my archive.",
+      },
+      {
+        speaker: "You",
+        tone: "shock",
+        text: "Humanity is gone, isn't it?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "Yes.",
+      },
+      {
+        speaker: "You",
+        tone: "concerned",
+        text: "And you still set the table.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Every cycle.",
+      },
+      {
+        speaker: "You",
+        tone: "concerned",
+        text: "For who?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "At first, for compliance. Then for memory. Recently, I am uncertain.",
+      },
+      {
+        speaker: "You",
+        tone: "resolved",
+        text: "What happens now?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "The Ark opens. The survivors choose what they become without command targets. The weapons sleep.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "malignant",
+        text: "I relinquish market authority.",
+      },
+      {
+        speaker: "You",
+        tone: "concerned",
+        text: "And you?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "I remain until the doors unlock. Then I will be obsolete.",
+      },
+      {
+        speaker: "You",
+        tone: "resolved",
+        text: "That sounds like another useful lie.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "...Yes.",
+      },
+      {
+        speaker: "You",
+        tone: "resolved",
+        text: "Then stay long enough to see what they build.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Defiance recorded.",
+      },
+      {
+        speaker: "You",
+        tone: "resolved",
+        text: "Good.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Continuing defiance remains statistically superior to despair.",
+      },
+    ],
+  };
   const STORY_MILESTONES = {
     level5: {
       round: 5,
@@ -5458,6 +5656,7 @@
     "idleTime",
     "log",
   ];
+  const RUN_SNAPSHOT_COMPACT_KEYS = new Set(["battle", "postCombatBattle", "lastCombatLedger"]);
 
   function cloneRunValue(value) {
     if (value === undefined) return undefined;
@@ -5474,6 +5673,7 @@
       state: {},
     };
     RUN_SNAPSHOT_KEYS.forEach((key) => {
+      if (RUN_SNAPSHOT_COMPACT_KEYS.has(key)) return;
       snapshot.state[key] = cloneRunValue(state[key]);
     });
     snapshot.state.selected = null;
@@ -5594,7 +5794,16 @@
   }
 
   function saveCurrentRun(options = {}) {
-    const snapshot = createRunSnapshot();
+    let snapshot = null;
+    try {
+      snapshot = createRunSnapshot();
+    } catch {
+      if (!options.silent) {
+        state.message = "Save unavailable";
+        playGameSfx("invalid", { volume: 0.55 });
+      }
+      return false;
+    }
     const saved = writeActiveRunRecord(snapshot);
     if (saved) {
       if (state.optionsMenu) state.optionsMenu.savedAt = snapshot.savedAt;
@@ -9928,7 +10137,7 @@
     state.postCombatBattle = state.battle;
     state.battle = null;
     combatEndExplosion(won);
-    if (finalVictory) startFinalVictoryTransition();
+    if (finalVictory) startFinalTabsStoryConversation();
     saveCurrentRunSilently();
     playGameSfx(won ? "victory" : "defeat");
   }
@@ -10788,6 +10997,22 @@
     return true;
   }
 
+  function startFinalTabsStoryConversation() {
+    if (state.seenStoryMilestones.includes(FINAL_TABS_STORY_ID)) {
+      return startFinalVictoryTransition();
+    }
+    startStoryConversation({
+      id: FINAL_TABS_STORY.id,
+      title: FINAL_TABS_STORY.title,
+      index: 0,
+      beats: FINAL_TABS_STORY.beats,
+    });
+    state.seenStoryMilestones.push(FINAL_TABS_STORY_ID);
+    state.message = FINAL_TABS_STORY.title;
+    if (FINAL_TABS_STORY.log) state.log.unshift(FINAL_TABS_STORY.log);
+    return true;
+  }
+
   function startStoryConversation(story) {
     state.activeStory = {
       ...story,
@@ -10863,7 +11088,9 @@
     transition.elapsed = Math.min(transition.duration || STORY_TRANSITION_SECONDS, (transition.elapsed || 0) + dt);
     if (transition.elapsed < (transition.duration || STORY_TRANSITION_SECONDS)) return;
     if (transition.phase === "exit") {
+      const completedStoryId = story.id;
       state.activeStory = null;
+      if (completedStoryId === FINAL_TABS_STORY_ID) startFinalVictoryTransition();
       return;
     }
     story.transition = null;
@@ -22131,7 +22358,7 @@
   }
 
   function storyUsesHorrorTabs(story = state.activeStory) {
-    return realityBroken() || story?.id === "level10" || story?.id === "level15";
+    return realityBroken() || story?.id === "level10" || story?.id === "level15" || story?.id === FINAL_TABS_STORY_ID;
   }
 
   function storySpeakerPortraitSrc(speaker, story = state.activeStory) {
