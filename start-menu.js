@@ -9,6 +9,9 @@ const MENU_THEME_ALIASES = {
   future: "horror",
 };
 
+const MENU_REBOOT_STATIC_STORAGE_KEY = "harvest-friends:menu-reboot-static:v1";
+const DEFAULT_MENU_THEME = "horror";
+
 const state = {
   phase: "menu",
   theme: initialMenuTheme(),
@@ -43,6 +46,7 @@ const state = {
     musicStarted: false,
     musicBlocked: false,
   },
+  rebootStaticReveal: false,
   activeLobs: 0,
   lobSpawnCount: 0,
   lobExplosionCount: 0,
@@ -276,6 +280,7 @@ const actions = Array.from(document.querySelectorAll(".menu-action"));
 const startMenu = document.querySelector(".start-menu");
 const lobLayer = document.querySelector(".food-lob-layer");
 const optionsPanel = document.querySelector(".options-panel");
+const themeButtons = Array.from(document.querySelectorAll("[data-menu-theme-option]"));
 const musicSlider = document.querySelector("#music-volume");
 const musicTrackSelect = document.querySelector("#music-track");
 const sfxSlider = document.querySelector("#sfx-volume");
@@ -290,6 +295,7 @@ const fieldGuideActionLabel = document.querySelector('[data-action="fieldGuide"]
 const continueRunAction = document.querySelector('[data-action="continue"]');
 const startTransition = document.querySelector(".start-transition");
 const campaignFrame = document.querySelector(".campaign-frame");
+const rebootStaticOverlay = document.querySelector(".menu-reboot-static-overlay");
 const menuMusic = new Audio(getSelectedMusicTrack().src);
 const menuSfx = {
   armed: false,
@@ -305,6 +311,7 @@ let nextLobFromLeft = Math.random() > 0.5;
 let startTableTimer = null;
 let startRunTimer = null;
 let fieldGuideCloseTimer = null;
+let rebootStaticTimer = null;
 let fieldGuideImageLoadToken = 0;
 let campaignFrameLoadToken = 0;
 const activeLobs = [];
@@ -330,6 +337,16 @@ function render() {
   });
 
   optionsPanel.hidden = !state.optionsOpen;
+  themeButtons.forEach((button) => {
+    const active = normalizeMenuTheme(button.dataset.menuThemeOption) === state.theme;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-checked", String(active));
+    button.tabIndex = active ? 0 : -1;
+  });
+  if (rebootStaticOverlay) {
+    rebootStaticOverlay.hidden = !state.rebootStaticReveal;
+    rebootStaticOverlay.classList.toggle("is-active", state.rebootStaticReveal);
+  }
   const fieldGuideVisible = state.fieldGuideOpen || state.fieldGuideClosing;
   fieldGuide.hidden = !fieldGuideVisible;
   fieldGuide.dataset.theme = state.theme;
@@ -498,6 +515,28 @@ musicTrackSelect.addEventListener("change", () => {
   playMenuSfx("ui-confirm", { volume: 0.65 });
 });
 
+themeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const nextTheme = setStartMenuTheme(button.dataset.menuThemeOption);
+    playMenuSfx(nextTheme === "horror" ? "transition" : "ui-confirm", { volume: 0.7 });
+  });
+  button.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const themes = ["cozy", "horror"];
+    const currentIndex = Math.max(0, themes.indexOf(state.theme));
+    const nextIndex =
+      event.key === "Home" ? 0 :
+      event.key === "End" ? themes.length - 1 :
+      event.key === "ArrowLeft" ? currentIndex - 1 :
+      currentIndex + 1;
+    const nextTheme = setStartMenuTheme(themes[(nextIndex + themes.length) % themes.length]);
+    themeButtons.find((themeButton) => normalizeMenuTheme(themeButton.dataset.menuThemeOption) === nextTheme)
+      ?.focus({ preventScroll: true });
+    playMenuSfx("ui-hover", { volume: 0.5 });
+  });
+});
+
 sfxSlider.addEventListener("input", () => {
   state.settings.sfx = Number(sfxSlider.value);
   saveSettings();
@@ -612,7 +651,8 @@ window.render_game_to_text = () =>
     startTargetUrl: startTargetUrl(),
     continueTargetUrl: state.activeRun ? startTargetUrl("continue") : null,
     theme: state.theme,
-    themeRoute: "start-menu.html?theme=horror",
+    themeRoute: `start-menu.html?theme=${state.theme}`,
+    themeScope: "start-menu-only-look-field-guide-specifications",
     themeToggleApi: "window.setStartMenuTheme('horror'|'cozy')",
     horrorAsset: HORROR_START_BG_SRC,
     horrorTitleScreen:
@@ -978,6 +1018,24 @@ function clearFieldGuideCloseTimer() {
   }
 }
 
+function clearRebootStaticTimer() {
+  if (rebootStaticTimer !== null) {
+    window.clearTimeout(rebootStaticTimer);
+    rebootStaticTimer = null;
+  }
+}
+
+function beginMenuRebootStaticReveal() {
+  if (!rebootStaticOverlay || !consumeMenuRebootStaticReveal()) return;
+  clearRebootStaticTimer();
+  state.rebootStaticReveal = true;
+  rebootStaticTimer = window.setTimeout(() => {
+    rebootStaticTimer = null;
+    state.rebootStaticReveal = false;
+    render();
+  }, 1500);
+}
+
 function fieldGuideCloseDuration() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? 1 : FIELD_GUIDE_CLOSE_MS;
 }
@@ -993,6 +1051,7 @@ function finishFieldGuideClose() {
 window.addEventListener("pagehide", () => {
   clearStartTransitionTimers();
   clearFieldGuideCloseTimer();
+  clearRebootStaticTimer();
 });
 
 function navigateToRunNow() {
@@ -1061,12 +1120,22 @@ function maxActiveFoodLobs(width = window.innerWidth) {
 
 function normalizeMenuTheme(value) {
   const key = String(value || "").trim().toLowerCase();
-  return MENU_THEME_ALIASES[key] || "cozy";
+  return MENU_THEME_ALIASES[key] || DEFAULT_MENU_THEME;
+}
+
+function hasExplicitMenuThemeParam() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return ["menuTheme", "theme", "reality", "startTheme"].some((key) => params.has(key));
+  } catch {
+    return false;
+  }
 }
 
 function initialMenuTheme() {
   try {
     const params = new URLSearchParams(window.location.search);
+    if (!hasExplicitMenuThemeParam()) return DEFAULT_MENU_THEME;
     return normalizeMenuTheme(
       params.get("menuTheme") ||
         params.get("theme") ||
@@ -1074,7 +1143,7 @@ function initialMenuTheme() {
         params.get("startTheme"),
     );
   } catch {
-    return "cozy";
+    return DEFAULT_MENU_THEME;
   }
 }
 
@@ -1084,9 +1153,6 @@ function startTargetUrl(mode = "start") {
   }
   const url = new URL(START_TARGET_BASE_URL, window.location.href);
   url.searchParams.set("from", "start-menu");
-  if (state.theme === "horror") {
-    url.searchParams.set("menuTheme", "horror");
-  }
   return `${START_TARGET_BASE_URL}${url.search}`;
 }
 
@@ -1190,6 +1256,7 @@ function setStartMenuTheme(theme) {
   } else {
     scheduleNextFoodLob(FOOD_LOB_SPAWN_DELAY.initial);
   }
+  saveSettings();
   render();
   return state.theme;
 }
@@ -1332,6 +1399,28 @@ function canUseLocalStorage() {
   }
 }
 
+function canUseSessionStorage() {
+  try {
+    const key = `${MENU_REBOOT_STATIC_STORAGE_KEY}:probe`;
+    window.sessionStorage.setItem(key, "1");
+    window.sessionStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function consumeMenuRebootStaticReveal() {
+  if (!canUseSessionStorage()) return false;
+  try {
+    const active = window.sessionStorage.getItem(MENU_REBOOT_STATIC_STORAGE_KEY) === "1";
+    window.sessionStorage.removeItem(MENU_REBOOT_STATIC_STORAGE_KEY);
+    return active;
+  } catch {
+    return false;
+  }
+}
+
 function loadSettings() {
   try {
     const rawSettings = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -1341,6 +1430,9 @@ function loadSettings() {
     state.settings.music = clampSetting(savedSettings.music, 0, 10, state.settings.music);
     state.settings.sfx = clampSetting(savedSettings.sfx, 0, 10, state.settings.sfx);
     state.settings.musicTrack = getMusicTrack(savedSettings.musicTrack).id;
+    if (!hasExplicitMenuThemeParam() && typeof savedSettings.menuTheme === "string") {
+      state.theme = normalizeMenuTheme(savedSettings.menuTheme);
+    }
 
     if (typeof savedSettings.motion === "boolean") {
       state.settings.motion = savedSettings.motion;
@@ -1361,6 +1453,7 @@ function saveSettings() {
         musicTrack: getSelectedMusicTrack().id,
         sfx: state.settings.sfx,
         motion: state.settings.motion,
+        menuTheme: state.theme,
       }),
     );
   } catch {
@@ -1620,5 +1713,6 @@ window.spawnFoodLob = spawnFoodLob;
 window.explodeFirstFoodLob = () => explodeLobAt(activeLobs.length - 1);
 window.setStartMenuTheme = setStartMenuTheme;
 
+beginMenuRebootStaticReveal();
 render();
 scheduleNextFoodLob(FOOD_LOB_SPAWN_DELAY.initial);
