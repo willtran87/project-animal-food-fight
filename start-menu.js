@@ -10,7 +10,8 @@ const MENU_THEME_ALIASES = {
 };
 
 const MENU_REBOOT_STATIC_STORAGE_KEY = "harvest-friends:menu-reboot-static:v1";
-const DEFAULT_MENU_THEME = "horror";
+const HORROR_MENU_UNLOCK_STORAGE_KEY = "harvest-friends:horror-menu-unlocked:v1";
+const DEFAULT_MENU_THEME = "cozy";
 
 const state = {
   phase: "menu",
@@ -281,6 +282,7 @@ const actions = Array.from(document.querySelectorAll(".menu-action"));
 const startMenu = document.querySelector(".start-menu");
 const lobLayer = document.querySelector(".food-lob-layer");
 const optionsPanel = document.querySelector(".options-panel");
+const themeOptionRow = document.querySelector(".option-row-theme");
 const themeButtons = Array.from(document.querySelectorAll("[data-menu-theme-option]"));
 const musicSlider = document.querySelector("#music-volume");
 const musicTrackSelect = document.querySelector("#music-track");
@@ -322,6 +324,7 @@ menuMusic.loop = true;
 menuMusic.preload = "auto";
 
 function render() {
+  const horrorMenuUnlocked = coerceLockedMenuState();
   state.activeRun = getActiveRun();
   document.body.dataset.startMenuTheme = state.theme;
   startMenu.dataset.theme = state.theme;
@@ -338,8 +341,12 @@ function render() {
   });
 
   optionsPanel.hidden = !state.optionsOpen;
+  if (themeOptionRow) themeOptionRow.hidden = !horrorMenuUnlocked;
   themeButtons.forEach((button) => {
     const active = normalizeMenuTheme(button.dataset.menuThemeOption) === state.theme;
+    const isLockedHorror = normalizeMenuTheme(button.dataset.menuThemeOption) === "horror" && !horrorMenuUnlocked;
+    button.hidden = isLockedHorror;
+    button.disabled = isLockedHorror;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-checked", String(active));
     button.tabIndex = active ? 0 : -1;
@@ -370,6 +377,7 @@ function render() {
     button.disabled = state.startingGame;
   });
   musicSlider.value = String(state.settings.music);
+  renderMusicTrackOptions(horrorMenuUnlocked);
   musicTrackSelect.value = getSelectedMusicTrack().id;
   sfxSlider.value = String(state.settings.sfx);
   updateMenuMusicVolume();
@@ -524,7 +532,7 @@ themeButtons.forEach((button) => {
   button.addEventListener("keydown", (event) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const themes = ["cozy", "horror"];
+    const themes = isHorrorMenuUnlocked() ? ["cozy", "horror"] : ["cozy"];
     const currentIndex = Math.max(0, themes.indexOf(state.theme));
     const nextIndex =
       event.key === "Home" ? 0 :
@@ -654,7 +662,9 @@ window.render_game_to_text = () =>
     theme: state.theme,
     themeRoute: `start-menu.html?theme=${state.theme}`,
     themeScope: "start-menu-only-look-field-guide-specifications",
-    themeToggleApi: "window.setStartMenuTheme('horror'|'cozy')",
+    horrorMenuUnlocked: isHorrorMenuUnlocked(),
+    themeOptionsVisible: Boolean(themeOptionRow && !themeOptionRow.hidden),
+    themeToggleApi: isHorrorMenuUnlocked() ? "window.setStartMenuTheme('horror'|'cozy')" : null,
     horrorAsset: HORROR_START_BG_SRC,
     horrorTitleScreen:
       state.theme === "horror"
@@ -703,6 +713,9 @@ window.render_game_to_text = () =>
       musicTrack: getSelectedMusicTrack().id,
       musicTrackLabel: getSelectedMusicTrack().label,
       musicSource: getSelectedMusicTrack().src,
+      availableTracks: Array.from(musicTrackSelect.options)
+        .filter((option) => !option.hidden && !option.disabled)
+        .map((option) => option.value),
       musicStarted: state.audio.musicStarted,
       musicBlocked: state.audio.musicBlocked,
       musicVolume: Number(menuMusic.volume.toFixed(3)),
@@ -1124,6 +1137,40 @@ function normalizeMenuTheme(value) {
   return MENU_THEME_ALIASES[key] || DEFAULT_MENU_THEME;
 }
 
+function isHorrorMenuUnlocked() {
+  try {
+    return window.localStorage.getItem(HORROR_MENU_UNLOCK_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function allowedMenuTheme(theme) {
+  const normalized = normalizeMenuTheme(theme);
+  return normalized === "horror" && !isHorrorMenuUnlocked() ? "cozy" : normalized;
+}
+
+function isHorrorMusicTrack(trackId) {
+  return String(trackId || "").startsWith("horror-");
+}
+
+function coerceLockedMenuState() {
+  const horrorMenuUnlocked = isHorrorMenuUnlocked();
+  state.theme = horrorMenuUnlocked ? normalizeMenuTheme(state.theme) : "cozy";
+  if (!horrorMenuUnlocked && isHorrorMusicTrack(state.settings.musicTrack)) {
+    state.settings.musicTrack = DEFAULT_MUSIC_TRACK;
+  }
+  return horrorMenuUnlocked;
+}
+
+function renderMusicTrackOptions(horrorMenuUnlocked = isHorrorMenuUnlocked()) {
+  Array.from(musicTrackSelect.options).forEach((option) => {
+    const lockedHorrorTrack = isHorrorMusicTrack(option.value) && !horrorMenuUnlocked;
+    option.hidden = lockedHorrorTrack;
+    option.disabled = lockedHorrorTrack;
+  });
+}
+
 function hasExplicitMenuThemeParam() {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -1137,7 +1184,7 @@ function initialMenuTheme() {
   try {
     const params = new URLSearchParams(window.location.search);
     if (!hasExplicitMenuThemeParam()) return DEFAULT_MENU_THEME;
-    return normalizeMenuTheme(
+    return allowedMenuTheme(
       params.get("menuTheme") ||
         params.get("theme") ||
         params.get("reality") ||
@@ -1243,7 +1290,7 @@ function clearActiveFoodLobs() {
 }
 
 function setStartMenuTheme(theme) {
-  const nextTheme = normalizeMenuTheme(theme);
+  const nextTheme = allowedMenuTheme(theme);
   if (state.theme === nextTheme) {
     render();
     return state.theme;
@@ -1432,8 +1479,9 @@ function loadSettings() {
     state.settings.sfx = clampSetting(savedSettings.sfx, 0, 10, state.settings.sfx);
     state.settings.musicTrack = getMusicTrack(savedSettings.musicTrack).id;
     if (!hasExplicitMenuThemeParam() && typeof savedSettings.menuTheme === "string") {
-      state.theme = normalizeMenuTheme(savedSettings.menuTheme);
+      state.theme = allowedMenuTheme(savedSettings.menuTheme);
     }
+    coerceLockedMenuState();
 
     if (typeof savedSettings.motion === "boolean") {
       state.settings.motion = savedSettings.motion;
@@ -1513,11 +1561,15 @@ function defaultMusicTrackForTheme(theme) {
 }
 
 function getSelectedMusicTrack() {
-  return getMusicTrack(state.settings.musicTrack || DEFAULT_MUSIC_TRACK);
+  const track = getMusicTrack(state.settings.musicTrack || DEFAULT_MUSIC_TRACK);
+  return !isHorrorMenuUnlocked() && isHorrorMusicTrack(track.id) ? getMusicTrack(DEFAULT_MUSIC_TRACK) : track;
 }
 
 function setMusicTrack(trackId) {
-  const track = getMusicTrack(trackId);
+  const requestedTrack = getMusicTrack(trackId);
+  const track = !isHorrorMenuUnlocked() && isHorrorMusicTrack(requestedTrack.id)
+    ? getMusicTrack(DEFAULT_MUSIC_TRACK)
+    : requestedTrack;
   const wasPlaying = !menuMusic.paused || Boolean(menuMusicPlayPromise);
   state.settings.musicTrack = track.id;
   saveSettings();

@@ -10,6 +10,7 @@
   const ACTIVE_RUN_SAVE_VERSION = 1;
   const ACTIVE_RUN_AUTOSAVE_SECONDS = 0.75;
   const MENU_REBOOT_STATIC_STORAGE_KEY = "harvest-friends:menu-reboot-static:v1";
+  const HORROR_MENU_UNLOCK_STORAGE_KEY = "harvest-friends:horror-menu-unlocked:v1";
   const MUSIC_SETTINGS_STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
   const GAME_MUSIC_MAX_VOLUME = 0.85;
   const GAME_MUSIC_TRACKS = {
@@ -6096,6 +6097,19 @@
     }
   }
 
+  function markHorrorMenuUnlocked() {
+    if (!canUseLocalStorage()) return;
+    try {
+      window.localStorage.setItem(HORROR_MENU_UNLOCK_STORAGE_KEY, "1");
+      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
+      settings.menuTheme = "horror";
+      settings.musicTrack = "horror-market";
+      window.localStorage.setItem(MUSIC_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+      // Unlocking the post-game menu should not block the final return.
+    }
+  }
+
   function navigateToMainMenu() {
     const target = mainMenuUrl();
     try {
@@ -11540,6 +11554,7 @@
   function rebootFromVictoryCutscene() {
     if (state.menuRebootTransition) return false;
     clearActiveRunRoute();
+    markHorrorMenuUnlocked();
     markMenuRebootStaticReveal();
     state.menuRebootTransition = {
       elapsed: 0,

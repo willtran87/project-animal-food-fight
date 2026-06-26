@@ -867,6 +867,10 @@ h1 {
   color: var(--ink-soft);
 }
 
+.option-row[hidden] {
+  display: none;
+}
+
 .option-label {
   display: inline-flex;
   align-items: center;
