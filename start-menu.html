@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Harvest Friends - Start Menu</title>
+    <link rel="preload" as="image" href="assets/start-menu/cozy-picnic-start-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/horror-start-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/horror-title-plate-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/horror-button-plate-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/horror-overhead-cables-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/horror-broken-relics-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/horror-transition-plaque-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/harvest-friends-title-v2.png" />
+    <link rel="preload" as="image" href="assets/start-menu/start-transition-tablecloth-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/start-transition-message-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/field-guide-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/horror-field-guide-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/field-guide-desk-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/horror-field-guide-desk-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/field-guide-cover-v4.png" />
+    <link rel="preload" as="image" href="assets/start-menu/specifications-cover-v5.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/field-guide-icon-close-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/field-guide-icon-prev-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/field-guide-icon-next-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/field-guide-icon-close-horror-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/field-guide-icon-prev-horror-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/runtime/field-guide-icon-next-horror-v1.png" />
+    <link rel="preload" as="audio" href="assets/audio/cozy-market-menu-loop-v1.wav" />
+    <link rel="stylesheet" href="start-menu.css?v=field-guide-panzoom-1-campaign-flow-1-root-frame-2-no-lr-mask-1-hidden-action-1" />
+  </head>
+  <body>
+    <main class="start-menu" aria-label="Harvest Friends start menu">
+      <div class="food-lob-layer" aria-hidden="true"></div>
+      <div class="horror-illusion-bleed" aria-hidden="true"></div>
+      <div class="horror-static-layer" aria-hidden="true"></div>
+      <img
+        class="horror-overhead-layer"
+        src="assets/start-menu/runtime/horror-overhead-cables-v1.png"
+        alt=""
+        aria-hidden="true"
+      />
+      <img
+        class="horror-relic-layer"
+        src="assets/start-menu/runtime/horror-broken-relics-v1.png"
+        alt=""
+        aria-hidden="true"
+      />
+      <img
+        class="mascot-cluster"
+        src="assets/start-menu/harvest-friends-mascot-cluster-v1.png"
+        alt=""
+        aria-hidden="true"
+      />
+      <section class="menu-stage" aria-live="polite">
+        <div class="brand-lockup">
+          <h1>
+            <img
+              class="title-logo"
+              src="assets/start-menu/harvest-friends-title-v2.png"
+              alt="Harvest Friends"
+            />
+            <span class="horror-title" aria-hidden="true">Harvest Friends</span>
+          </h1>
+        </div>
+
+        <nav class="primary-menu" aria-label="Main menu">
+          <button class="menu-action continue-run-action" type="button" data-action="continue" hidden>
+            <span class="button-label">Continue Run</span>
+          </button>
+          <button class="menu-action is-selected" type="button" data-action="start">
+            <span class="button-label">Start Run</span>
+          </button>
+          <button class="menu-action" type="button" data-action="fieldGuide">
+            <span class="button-label">Field Guide</span>
+          </button>
+          <button class="menu-action" type="button" data-action="options">
+            <span class="button-label">Options</span>
+          </button>
+        </nav>
+
+        <aside class="options-panel" aria-label="Options" hidden>
+          <div class="option-row">
+            <label for="music-volume">Music</label>
+            <input id="music-volume" type="range" min="0" max="10" value="7" />
+          </div>
+          <div class="option-row option-row-select">
+            <label for="music-track">Tune</label>
+            <select id="music-track" aria-label="Music selection">
+              <option value="market">Sunny Market</option>
+              <option value="prep">Prep Counter</option>
+              <option value="battle">Picnic Skirmish</option>
+              <option value="victory">Little Victory</option>
+              <option value="defeat">Soft Defeat</option>
+              <option value="horror-market">Ruined Market</option>
+              <option value="horror-prep">Cold Prep Table</option>
+              <option value="horror-battle">Midnight Skirmish</option>
+              <option value="horror-victory">False Victory</option>
+              <option value="horror-defeat">Last Defeat</option>
+            </select>
+          </div>
+          <div class="option-row">
+            <label for="sfx-volume">SFX</label>
+            <input id="sfx-volume" type="range" min="0" max="10" value="8" />
+          </div>
+        </aside>
+      </section>
+
+      <section class="field-guide" aria-label="Food Animal Field Guide" hidden>
+        <div class="field-guide-shell">
+          <header class="field-guide-header">
+            <button class="field-guide-icon-button" type="button" data-guide-action="close" aria-label="Close field guide">
+              <img class="field-guide-control-icon" src="assets/start-menu/runtime/field-guide-icon-close-v1.png" alt="" aria-hidden="true" />
+            </button>
+          </header>
+
+          <div class="field-guide-book" aria-live="polite">
+            <button class="field-guide-nav field-guide-nav-prev" type="button" data-guide-action="prev" aria-label="Previous page">
+              <img class="field-guide-control-icon" src="assets/start-menu/runtime/field-guide-icon-prev-v1.png" alt="" aria-hidden="true" />
+            </button>
+            <figure class="field-guide-page">
+              <div class="field-guide-page-art">
+                <div class="field-guide-page-viewport">
+                  <img class="field-guide-page-image" alt="" />
+                </div>
+              </div>
+            </figure>
+            <button class="field-guide-nav field-guide-nav-next" type="button" data-guide-action="next" aria-label="Next page">
+              <img class="field-guide-control-icon" src="assets/start-menu/runtime/field-guide-icon-next-v1.png" alt="" aria-hidden="true" />
+            </button>
+          </div>
+
+          <footer class="field-guide-footer">
+            <div class="field-guide-page-title"></div>
+            <div class="field-guide-page-count"></div>
+          </footer>
+        </div>
+      </section>
+
+      <section class="start-transition" aria-label="Starting game" hidden>
+        <div class="start-transition-card">
+          <div class="start-transition-plate" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <img
+            class="start-transition-message"
+            src="assets/start-menu/start-transition-message-v1.png"
+            alt="Setting the table..."
+          />
+          <img
+            class="horror-transition-plaque"
+            src="assets/start-menu/runtime/horror-transition-plaque-v1.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <span class="start-transition-copy horror-transition-copy">Opening the breach...</span>
+        </div>
+      </section>
+    </main>
+    <script src="start-menu.js?v=field-guide-panzoom-1-campaign-flow-1-root-frame-2-continue-run-1-auto-reveal-1"></script>
+  </body>
+</html>

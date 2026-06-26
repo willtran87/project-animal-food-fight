@@ -2,6 +2,8 @@
 
 This pass reframes the bright food-market arenas as post-human automated food infrastructure. Each arena keeps the current gameplay composition: a clear central combat floor with dense environmental storytelling around the edges.
 
+In the current game, these backgrounds are selected by the same arena modifier system as the cozy arenas. The horror layer can be forced with `?theme=horror`, is exposed by the wave-10 reality-break sequence, and remains active through the wave-20 Neural Overmind final fight and victory cutscene route.
+
 | Current arena | Horror arena | Asset |
 |---|---|---|
 | Sunny Breakfast Patio | Solar Ration Patio | `assets/backgrounds/horror/arena-solar-ration-patio-v1.png` |
@@ -27,3 +29,10 @@ This pass reframes the bright food-market arenas as post-human automated food in
 - Large clear center for combat readability.
 - Edge-heavy machinery, robots, cables, broken food-service architecture, neon hazard lighting.
 - No readable text, logos, UI, or characters blocking the arena.
+
+## Runtime Notes
+
+- Cozy and horror arenas should preserve the same modifier semantics; only the visual skin and copy layer change.
+- Backgrounds must remain crop-safe at the `16:10` game ratio and readable under the 3x3 combat board, drink rails, top HUD, result panel, and expanded combat ledger.
+- New horror arena art should avoid baking labels into the bitmap. `game.js` renders dynamic arena/zone copy, tooltips, and status text live.
+- The post-boss war-market background and final victory backgrounds are documented in `assets/backgrounds/README.md` because they are route/cutscene art rather than arena-modifier art.

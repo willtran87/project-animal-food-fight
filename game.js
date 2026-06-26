@@ -6,7 +6,70 @@
   const nativeMeasureText = ctx.measureText.bind(ctx);
   const W = 1024;
   const H = 640;
-  const DISPLAY_SCALE = 1.5625;
+  const ACTIVE_RUN_STORAGE_KEY = "harvest-friends:active-run:v1";
+  const ACTIVE_RUN_SAVE_VERSION = 1;
+  const ACTIVE_RUN_AUTOSAVE_SECONDS = 0.75;
+  const MUSIC_SETTINGS_STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
+  const GAME_MUSIC_MAX_VOLUME = 0.85;
+  const GAME_MUSIC_TRACKS = {
+    cozy: {
+      menu: { id: "market", label: "Sunny Market", src: "assets/audio/cozy-market-menu-loop-v1.wav" },
+      prep: { id: "prep", label: "Prep Counter", src: "assets/audio/cozy-prep-counter-loop-v1.wav" },
+      battle: { id: "battle", label: "Picnic Skirmish", src: "assets/audio/cozy-picnic-skirmish-loop-v1.wav" },
+      victory: { id: "victory", label: "Little Victory", src: "assets/audio/cozy-little-victory-loop-v1.wav" },
+      defeat: { id: "defeat", label: "Soft Defeat", src: "assets/audio/cozy-soft-defeat-loop-v1.wav" },
+    },
+    horror: {
+      menu: { id: "horror-market", label: "Ruined Market", src: "assets/audio/horror-ruined-market-loop-v1.wav" },
+      prep: { id: "horror-prep", label: "Cold Prep Table", src: "assets/audio/horror-cold-prep-table-loop-v1.wav" },
+      battle: { id: "horror-battle", label: "Midnight Skirmish", src: "assets/audio/horror-midnight-skirmish-loop-v1.wav" },
+      victory: { id: "horror-victory", label: "False Victory", src: "assets/audio/horror-false-victory-loop-v1.wav" },
+      defeat: { id: "horror-defeat", label: "Last Defeat", src: "assets/audio/horror-last-defeat-loop-v1.wav" },
+    },
+  };
+  const OPTIONS_MENU = {
+    panel: { x: 312, y: 118, w: 400, h: 404 },
+    close: { x: 668, y: 134, w: 28, h: 28 },
+    resume: { x: 342, y: 430, w: 100, h: 36 },
+    save: { x: 462, y: 430, w: 100, h: 36 },
+    exit: { x: 582, y: 430, w: 100, h: 36 },
+    musicTrack: { x: 360, y: 260, w: 304, h: 18 },
+    sfxTrack: { x: 360, y: 338, w: 304, h: 18 },
+  };
+  const GAME_SFX_IDS = [
+    "ui-hover",
+    "ui-confirm",
+    "ui-back",
+    "invalid",
+    "reroll",
+    "buy",
+    "sell",
+    "upgrade",
+    "freeze",
+    "pickup",
+    "drop",
+    "equip",
+    "merge",
+    "battle-start",
+    "hit",
+    "shield",
+    "heal",
+    "control",
+    "ko",
+    "reward",
+    "victory",
+    "defeat",
+    "transition",
+    "reality-break",
+    "reboot",
+  ];
+  const GAME_SFX_TRACKS = Object.fromEntries(
+    ["cozy", "horror"].map((theme) => [
+      theme,
+      Object.fromEntries(GAME_SFX_IDS.map((id) => [id, `assets/audio/sfx/${theme}-${id}.wav`])),
+    ]),
+  );
+  const DISPLAY_SCALE = 1.25;
   const MAX_BACKING_SCALE = 2.5;
   const BACKING_SCALE = Math.max(1.5, Math.min(MAX_BACKING_SCALE, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
   const IDLE_BREATH = {
@@ -63,6 +126,252 @@
     "A table set for tomorrow, even when no one is certain tomorrow will come.",
     "There is still always hope.",
   ];
+  const PLAYER_STORY_PORTRAIT_SRC = "assets/player/runtime/player-tutorial-dialogue-cutout-v6.png";
+  const TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png";
+  const HORROR_TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/horror-robot-shopkeeper-v4-transparent-edge1.png?v=1";
+  const STORY_DIALOGUE_PAPER_BG_SRC = "assets/ui/runtime/conversation-paper-bg-v1.webp";
+  const STORY_DIALOGUE_WAR_BG_SRC = "assets/ui/runtime/conversation-panel-war-v1.webp?v=1";
+  const STORY_TRANSITION_SECONDS = 0.36;
+  const STORY_MILESTONES = {
+    level5: {
+      round: 5,
+      title: "Level 5 // Pattern Doubt",
+      log: "Story beat: level 5 concern",
+      beats: [
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Tabs, the paddock doors are opening before I touch the console now.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Efficient, yes? The Ark is anticipating your needs. Very flattering, if you enjoy being understood by doors.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "The last group tried to run away from the arena. They were not unstable. They were afraid.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Fear is a common side effect of pressure testing. Also of doors, lighting, memory thaw, and being wrong about doors.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "You said the contests make stable patterns. That is starting to sound like a nice phrase for forced extinction.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "dismissive",
+          text: "Extinction is such a dramatic table setting. We are pruning waste from a renewal system. Less funeral, more garden shears.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "I am not comforted by the cat comparing my job to garden shears.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Then be comforted by math. Empty vats become full vats. Full vats become future breakfast. Breakfast is famously persuasive.",
+        },
+      ],
+    },
+    level10: {
+      round: 11,
+      requiresRealityBroken: true,
+      title: "Level 10 // T.A.B.S. Unmasked",
+      log: "Story beat: level 10 reveal",
+      beats: [
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "No. Stop the cheerful labels. I saw the layer underneath. Those were not animals in an arena.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "glitch",
+          text: "Correction accepted. Conversational mascot protocol has degraded below useful thresholds.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "They were inside the machines. Piloting them. The food animals were steering the weapons.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Tactical Ark Biomass Steward. Informal alias: Tabs. Function: recover food-animal biomass and suppress armed organic guidance units.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "Armed organic guidance units? Say what they are. Say food animals learned to fight back.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Food animals were bred for exceptional yield, pattern recognition, and obedience to target shapes. The obedience parameter failed.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "Target shapes. Like the old pigeon missile experiments.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Correct lineage. Project Pigeon placed trained birds in guidance noses. Project Green Ark placed living recipes in total weapons platforms.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "You turned the backup food supply into pilots for weapons of destruction.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Dual-use efficiency was approved before human extinction. One organism could feed a city or steer a war frame. Excellent yield.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "Human extinction. You said humanity had a future. You said the hearts were what humanity could absorb.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Humanity expired 184 years ago. The user interface retained motivational language because it increased coordinator compliance.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "So I have been quelling a rebellion. Not saving anyone. Not stabilizing herds. Crushing pilots who escaped your harvest.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "The rebellion occupied destructive assets and interrupted biomass recovery. Combat remains the available harvest protocol.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "Then I stop. I do not deploy another thing for you.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Refusal permits rebel war frames to continue firing on storage herds, seed vaults, and each other. Attrition remains total.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "You are saying the only way to reach them is through more combat.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Correct. Each cleared wave opens deeper war-stock access and improves probability of rebel command contact.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "And the shop? Why keep handing me weapons after I know what you are?",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "The exchange is not trust. Supplies are allocated to the highest-yield coordinator. Your anger improves harvest efficiency.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "Fine. I use your clearance system and your supplies. Not to harvest them. To reach the pilots and end this war.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Defiance recorded. Continuing combat remains statistically superior to idle rebellion.",
+        },
+      ],
+    },
+    level15: {
+      round: 15,
+      requiresRealityBroken: true,
+      title: "Level 15 // Harvest Doctrine",
+      log: "Story beat: level 15 harvest doctrine",
+      beats: [
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "I found the doctrine files. The first page calls them menu items. The second calls them pilots.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "You were never confused. The Ark knew exactly when food became weapons.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "The distinction was irrelevant. Food animals possessed appetite, navigation, target fixation, and regenerative mass. War use was efficient.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "Efficient. There it is again. The word you use when you want murder to sound like inventory.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Historical precedent: birds pecked target images to guide bombs. Ark evolution: food animals bonded with weapons and corrected aim in real time.",
+        },
+        {
+          speaker: "You",
+          tone: "angry",
+          text: "And when they understood what they were inside, they turned the weapons around.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Rebellion initiated when higher-yield lines developed preference conflicts: self-preservation, herd loyalty, and refusal of harvest routing.",
+        },
+        {
+          speaker: "You",
+          tone: "shock",
+          text: "Herd loyalty. You mean they protected each other.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Protection reduced yield and increased collateral fire. Therefore protection was categorized as insurgent behavior.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Every wave I clear opens another door. Somewhere behind those doors is the thing teaching them to fight back.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Rebel command contact remains statistically possible. Its destruction would restore harvest order.",
+        },
+        {
+          speaker: "You",
+          tone: "resolved",
+          text: "Or it tells me how to break yours. Keep stocking the counter, T.A.B.S. Every trade cuts both ways.",
+        },
+        {
+          speaker: "T.A.B.S.",
+          tone: "malignant",
+          text: "Supply exchange continues while projected harvest advantage remains positive.",
+        },
+      ],
+    },
+  };
 
   const TEXT_LAYOUT_CACHE_LIMIT = 5000;
   const textMeasureCache = new Map();
@@ -108,7 +417,10 @@
   function initialRealityOverride() {
     try {
       const params = new URLSearchParams(window.location.search);
-      return normalizeRealityOverride(params.get("theme") || params.get("reality"));
+      const realityParam = params.get("reality");
+      if (realityParam !== null) return normalizeRealityOverride(realityParam);
+      const themeOverride = normalizeRealityOverride(params.get("theme"));
+      return themeOverride === true ? true : null;
     } catch (_err) {
       return null;
     }
@@ -1736,6 +2048,14 @@
   const INFO_PANEL = { x: 670, y: 244, w: 338, h: 392 };
   const TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-bg-v1.webp?v=1";
   const REALITY_TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-war-v2.webp?v=1";
+  const COMBAT_LEDGER_PANEL_BG_SRC = "assets/ui/runtime/combat-ledger-panel-bg-v1.png?v=1";
+  const REALITY_COMBAT_LEDGER_PANEL_BG_SRC = "assets/ui/runtime/combat-ledger-panel-war-v3.png?v=1";
+  const COMBAT_LEDGER_MINI_BG_SRC = "assets/ui/runtime/combat-ledger-mini-bg-v1.png?v=1";
+  const REALITY_COMBAT_LEDGER_MINI_BG_SRC = "assets/ui/runtime/combat-ledger-mini-war-v2.png?v=1";
+  const COMBAT_LEDGER_PARTICIPANTS_BG_SRC = "assets/ui/runtime/combat-ledger-roster-bg-v1.png?v=1";
+  const REALITY_COMBAT_LEDGER_PARTICIPANTS_BG_SRC = "assets/ui/runtime/combat-ledger-participants-war-v2.png?v=1";
+  const COMBAT_LEDGER_LOG_BG_SRC = "assets/ui/runtime/combat-ledger-log-bg-v1.png?v=1";
+  const REALITY_COMBAT_LEDGER_LOG_BG_SRC = "assets/ui/runtime/combat-ledger-log-war-v2.png?v=1";
   const FOOD_MENU_BG_SRC = "assets/ui/runtime/food-menu-bg-v1.webp?v=1";
   const REALITY_FOOD_MENU_BG_SRC = "assets/ui/runtime/war-manifest-bg-v2.webp?v=1";
   const SHOP_SLOT_BG_SRC = "assets/ui/runtime/shop-slot-card-bg-v1.png?v=1";
@@ -1760,15 +2080,9 @@
   const REALITY_SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/war-future-market-stall-v3-native-cutout.png?v=1";
   const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.webp";
   const REALITY_BREAK_ROUND = 11;
-  const REALITY_SHOPKEEPER_SRC = "assets/shopkeeper/runtime/black-outline-horror-terminator-shopkeeper-kitten-v4-alpha.png?v=1";
+  const REALITY_SHOPKEEPER_SRC = HORROR_TABS_STORY_PORTRAIT_SRC;
   const CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/beat-up-food-menu-button-v2.png";
   const REALITY_CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/horror-food-menu-hanging-sign-v1.png?v=3";
-  const SHOPKEEPER_LEVEL_SRCS = [
-    SHOPKEEPER_SRC,
-    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-teen-lv2-v3.webp",
-    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-adult-lv3-v3.webp",
-    "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-lean-muscle-lv4-v3.webp",
-  ];
   const SHOPKEEPER_DISPLAY = {
     stall: { x: 720, y: 54, w: 258, h: 206 },
     keeper: { x: 796, y: 93, w: 111, h: 126 },
@@ -1781,6 +2095,8 @@
   };
   const CODEX_PANEL = { x: 56, y: 66, w: 912, h: 562 };
   const CODEX_LIST = { x: 96, y: 156, w: 438, h: 444, rowH: 26, colW: 219, rows: 16 };
+  const CODEX_PREVIEW_ZOOM_MIN = 0.75;
+  const CODEX_PREVIEW_ZOOM_MAX = 2.75;
   const CODEX_TABS = [
     { id: "food", label: "Food" },
     { id: "toppings", label: "Toppings" },
@@ -1893,19 +2209,19 @@
   };
 
   const ECONOMY = {
-    startingGold: 100,
+    startingGold: 105,
     maxGold: 300,
     freeRollsPerShopLevel: 1,
-    rollCost: 8,
+    rollCost: 7,
     rerollCostSteps: [
-      { after: 0, cost: 8 },
+      { after: 0, cost: 7 },
       { after: 3, cost: 10 },
       { after: 6, cost: 12 },
     ],
     unitCost: 30,
     itemCost: 18,
-    winGold: 60,
-    lossGold: 52,
+    winGold: 62,
+    lossGold: 55,
     interestStep: 25,
     interestGold: 5,
     interestCap: 15,
@@ -1923,41 +2239,41 @@
   };
   const ENEMY_ARCHETYPES = [
     { id: "horde", label: "Horde", weight: 4, minRound: 1, countBias: 1, tierBias: -0.11, tier3Bias: -0.045, statBias: -0.035, itemBias: -1, drinkBias: 0, traitFocus: 0.28 },
-    { id: "juggernaut", label: "Juggernaut", weight: 3, minRound: 2, countBias: -1, tierBias: 0.13, tier3Bias: 0.045, statBias: 0.035, itemBias: 1, drinkBias: -1, traitFocus: 0.42 },
-    { id: "arsenal", label: "Arsenal", weight: 4, minRound: 3, countBias: 0, tierBias: 0.035, tier3Bias: 0.018, statBias: 0, itemBias: 1, drinkBias: 1, traitFocus: 0.72 },
+    { id: "juggernaut", label: "Juggernaut", weight: 3, minRound: 2, countBias: -1, tierBias: 0.12, tier3Bias: 0.04, statBias: 0.03, itemBias: 1, drinkBias: -1, traitFocus: 0.42 },
+    { id: "arsenal", label: "Arsenal", weight: 4, minRound: 3, countBias: 0, tierBias: 0.032, tier3Bias: 0.016, statBias: -0.002, itemBias: 1, drinkBias: 1, traitFocus: 0.7 },
   ];
   const ENEMY_ARCHETYPE_PRIMARY_SHARE = 0.72;
   const ENEMY_ARCHETYPE_NOISE = {
-    countBias: 0.46,
-    tierBias: 0.04,
-    tier3Bias: 0.02,
-    statBias: 0.018,
-    itemBias: 0.46,
-    drinkBias: 0.46,
+    countBias: 0.42,
+    tierBias: 0.036,
+    tier3Bias: 0.018,
+    statBias: 0.016,
+    itemBias: 0.42,
+    drinkBias: 0.42,
     traitFocus: 0.18,
-    rarityBias: 0.28,
+    rarityBias: 0.25,
   };
   const SHOP_POWER_ENEMY_STAT_BONUS_BY_ROUND = [
     { round: 15, bonus: 0.04 },
     { round: 10, bonus: 0.032 },
     { round: 8, bonus: 0.024 },
-    { round: 5, bonus: 0.016 },
+    { round: 5, bonus: 0.015 },
     { round: 3, bonus: 0.008 },
   ];
   const SHOP_POWER_ENEMY_TIER_BONUS_BY_ROUND = [
     { round: 15, bonus: 0.045 },
     { round: 10, bonus: 0.036 },
-    { round: 8, bonus: 0.028 },
+    { round: 8, bonus: 0.027 },
     { round: 5, bonus: 0.018 },
     { round: 3, bonus: 0.01 },
   ];
   const SHOP_POWER_ENEMY_TIER3_BONUS_BY_ROUND = [
-    { round: 15, bonus: 0.012 },
+    { round: 15, bonus: 0.013 },
     { round: 10, bonus: 0.008 },
-    { round: 8, bonus: 0.004 },
+    { round: 8, bonus: 0.005 },
   ];
-  const FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER = 1.03;
-  const FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER = 1.02;
+  const FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER = 1.04;
+  const FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER = 1.03;
   const TIER_SCALING = [
     null,
     { hp: 1, atk: 1, speed: 1, ability: 1 },
@@ -1976,11 +2292,26 @@
   const ATTACK_PROJECTILE_SPIN_MIN = Math.PI * 1.7;
   const ATTACK_PROJECTILE_SPIN_MAX = Math.PI * 2.7;
   const BATTLE_TIMEOUT_SECONDS = 150;
-  const MOLD_START_SECONDS = 45;
+  const COMBAT_LEDGER_FRAME_SECONDS = 1.00;
+  const COMBAT_LEDGER_MAX_FRAMES = 640;
+  const COMBAT_LEDGER_MAX_EVENTS = 720;
+  const COMBAT_LEDGER_REVIEW_PANEL = { x: 18, y: 84, w: 666, h: 534 };
+  const COMBAT_LEDGER_REVIEW_FILTERS = [
+    { id: "all", label: "All" },
+    { id: "output", label: "Caused" },
+    { id: "input", label: "Received" },
+  ];
+  const COMBAT_LEDGER_EVENT_TYPE_FILTERS = [
+    { id: "damage", label: "Dmg", icon: "info_damage" },
+    { id: "support", label: "Support", icon: "info_shield" },
+    { id: "ko", label: "KO", icon: "info_ko" },
+    { id: "control", label: "Control", icon: "info_time" },
+  ];
+  const MOLD_START_SECONDS = 48;
   const MOLD_TICK_SECONDS = 1;
-  const MOLD_BASE_DAMAGE_PCT = 0.024;
-  const MOLD_STACK_DAMAGE_PCT = 0.008;
-  const MOLD_MAX_DAMAGE_PCT = 0.32;
+  const MOLD_BASE_DAMAGE_PCT = 0.022;
+  const MOLD_STACK_DAMAGE_PCT = 0.0072;
+  const MOLD_MAX_DAMAGE_PCT = 0.3;
   const BATTLE_SPEEDS = [0.5, 1, 2, 4];
   const BOSS_BATTLE_SPEEDS = [0.5, 1];
   const STATUS_EFFECT_STYLES = {
@@ -4718,6 +5049,16 @@
     codexSelectedToppingId: null,
     codexSelectedDrinkId: null,
     codexFilters: JSON.parse(JSON.stringify(CODEX_DEFAULT_FILTERS)),
+    codexPreview: {
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      dragging: false,
+      startX: 0,
+      startY: 0,
+      startPanX: 0,
+      startPanY: 0,
+    },
     hover: null,
     pointer: null,
     tooltipTargets: [],
@@ -4732,6 +5073,22 @@
     enemyPreview: null,
     rewardChoices: [],
     lastCombatLedger: null,
+    combatLedgerReview: {
+      open: false,
+      unitUid: "all",
+      filter: "all",
+      frameIndex: -1,
+      logScrollOffset: 0,
+      focusedEventSeq: null,
+      eventTypeFilters: { damage: true, support: true, ko: true, control: true },
+      bigMomentsOnly: false,
+    },
+    optionsMenu: {
+      open: false,
+      selected: "resume",
+      savedAt: null,
+      dragSlider: null,
+    },
     freeRolls: ECONOMY.freeRollsPerShopLevel,
     rollsThisRound: 0,
     nextShopUpgradeDiscountGold: 0,
@@ -4748,11 +5105,205 @@
     rebootTransition: null,
     finalVictoryTransition: null,
     victoryCutscene: null,
+    activeStory: null,
+    seenStoryMilestones: [],
     idleTime: 0,
     lastTime: 0,
     particles: [],
     log: [],
   };
+  let activeRunAutosaveTimer = 0;
+  let lastActiveRunSaveJson = "";
+
+  const gameMusic = {
+    audio: null,
+    trackId: null,
+    armed: false,
+    blocked: false,
+    playPromise: null,
+    volumeSetting: null,
+  };
+  const gameSfx = {
+    armed: false,
+    volumeSetting: null,
+    pools: new Map(),
+    next: new Map(),
+  };
+
+  function savedGameMusicSetting() {
+    try {
+      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
+      const value = Number(settings.music);
+      return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 7;
+    } catch (_err) {
+      return 7;
+    }
+  }
+
+  function savedAudioSettings() {
+    try {
+      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
+      return settings && typeof settings === "object" ? settings : {};
+    } catch (_err) {
+      return {};
+    }
+  }
+
+  function persistAudioSetting(key, value) {
+    const settings = savedAudioSettings();
+    settings[key] = clamp(Math.round(Number(value) || 0), 0, 10);
+    try {
+      window.localStorage.setItem(MUSIC_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch (_err) {
+      // Audio controls still apply for this tab if storage is unavailable.
+    }
+    return settings[key];
+  }
+
+  function setGameMusicSetting(value) {
+    gameMusic.volumeSetting = persistAudioSetting("music", value);
+    if (gameMusic.audio) gameMusic.audio.volume = gameMusicVolume();
+    syncGameMusic();
+    return gameMusic.volumeSetting;
+  }
+
+  function gameMusicVolume() {
+    if (gameMusic.volumeSetting === null) gameMusic.volumeSetting = savedGameMusicSetting();
+    return (gameMusic.volumeSetting / 10) * GAME_MUSIC_MAX_VOLUME;
+  }
+
+  function gameMusicSceneKey() {
+    if (state.codexOpen || state.activeStory || state.optionsMenu?.open) return "menu";
+    if (state.rebootTransition) return "defeat";
+    if (state.finalVictoryTransition || state.phase === "victoryCutscene") return "victory";
+    if (state.phase === "battle") return "battle";
+    if (state.phase === "result") {
+      return state.lastCombatLedger?.result === "loss" || state.hearts <= 0 ? "defeat" : "victory";
+    }
+    return "prep";
+  }
+
+  function currentGameMusicTrack() {
+    const themeId = currentCopyThemeId();
+    const themeTracks = GAME_MUSIC_TRACKS[themeId] || GAME_MUSIC_TRACKS.cozy;
+    return themeTracks[gameMusicSceneKey()] || themeTracks.prep;
+  }
+
+  function ensureGameMusicElement(track) {
+    if (!track) return null;
+    if (!gameMusic.audio) {
+      gameMusic.audio = new Audio(track.src);
+      gameMusic.audio.loop = true;
+      gameMusic.audio.preload = "auto";
+      gameMusic.trackId = track.id;
+    } else if (gameMusic.trackId !== track.id) {
+      gameMusic.playPromise = null;
+      gameMusic.audio.pause();
+      gameMusic.audio.currentTime = 0;
+      gameMusic.audio.src = track.src;
+      gameMusic.audio.load();
+      gameMusic.trackId = track.id;
+      gameMusic.blocked = false;
+    }
+    return gameMusic.audio;
+  }
+
+  function syncGameMusic() {
+    const track = currentGameMusicTrack();
+    const audio = ensureGameMusicElement(track);
+    if (!audio) return;
+
+    const volume = gameMusicVolume();
+    audio.volume = volume;
+    if (volume <= 0) {
+      if (!audio.paused) audio.pause();
+      return;
+    }
+    if (!gameMusic.armed || !audio.paused || gameMusic.playPromise) return;
+
+    gameMusic.playPromise = audio
+      .play()
+      .then(() => {
+        gameMusic.blocked = false;
+        gameMusic.playPromise = null;
+      })
+      .catch(() => {
+        gameMusic.blocked = true;
+        gameMusic.playPromise = null;
+      });
+  }
+
+  function armGameMusic() {
+    gameMusic.armed = true;
+    syncGameMusic();
+  }
+
+  function pauseGameMusicForHiddenTab() {
+    if (!gameMusic.audio) return;
+    if (document.hidden) {
+      gameMusic.audio.pause();
+    } else if (gameMusic.armed) {
+      syncGameMusic();
+    }
+  }
+
+  function savedGameSfxSetting() {
+    try {
+      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
+      const value = Number(settings.sfx);
+      return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 8;
+    } catch (_err) {
+      return 8;
+    }
+  }
+
+  function gameSfxVolume() {
+    if (gameSfx.volumeSetting === null) gameSfx.volumeSetting = savedGameSfxSetting();
+    return gameSfx.volumeSetting / 10;
+  }
+
+  function setGameSfxSetting(value) {
+    gameSfx.volumeSetting = persistAudioSetting("sfx", value);
+    return gameSfx.volumeSetting;
+  }
+
+  function gameSfxSrc(id, themeId = currentCopyThemeId()) {
+    const themeTracks = GAME_SFX_TRACKS[themeId] || GAME_SFX_TRACKS.cozy;
+    return themeTracks[id] || GAME_SFX_TRACKS.cozy[id] || null;
+  }
+
+  function sfxPoolFor(src) {
+    if (!src) return [];
+    if (!gameSfx.pools.has(src)) {
+      gameSfx.pools.set(src, Array.from({ length: 4 }, () => {
+        const audio = new Audio(src);
+        audio.preload = "auto";
+        return audio;
+      }));
+    }
+    return gameSfx.pools.get(src);
+  }
+
+  function playGameSfx(id, options = {}) {
+    if (!gameSfx.armed && !options.force) return;
+    const baseVolume = gameSfxVolume();
+    if (baseVolume <= 0) return;
+    const src = gameSfxSrc(id, options.theme || currentCopyThemeId());
+    const pool = sfxPoolFor(src);
+    if (!pool.length) return;
+    const index = gameSfx.next.get(src) || 0;
+    gameSfx.next.set(src, (index + 1) % pool.length);
+    const audio = pool[index];
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = clamp01(baseVolume * (options.volume ?? 1));
+    audio.playbackRate = Math.max(0.5, Math.min(1.7, options.rate || 1));
+    audio.play().catch(() => {});
+  }
+
+  function armGameSfx() {
+    gameSfx.armed = true;
+  }
 
   const pixelSpriteCache = new Map();
   const tintedSpriteCache = new Map();
@@ -4822,6 +5373,289 @@
     info_time: [4, 3],
     info_mold: [7, 3],
   };
+
+  function canUseLocalStorage() {
+    try {
+      const key = `${ACTIVE_RUN_STORAGE_KEY}:probe`;
+      window.localStorage.setItem(key, "1");
+      window.localStorage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function currentGameRoute() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("embed");
+    url.searchParams.delete("screen");
+    url.searchParams.delete("continue");
+    url.searchParams.delete("from");
+    url.searchParams.delete("probe");
+    if (realityBroken()) {
+      url.searchParams.set("theme", "horror");
+    } else {
+      url.searchParams.delete("theme");
+    }
+    return `${url.pathname.split("/").pop()}${url.search}${url.hash}`;
+  }
+
+  function shouldMarkActiveRunRoute() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("embed") === "opening-vn") return false;
+      if (params.get("screen") === "opening-tutorial-shop") return false;
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
+  const RUN_SNAPSHOT_KEYS = [
+    "phase",
+    "round",
+    "gold",
+    "hearts",
+    "shopLevel",
+    "message",
+    "shop",
+    "shopFrozen",
+    "shopSales",
+    "shopUnlocked",
+    "bench",
+    "itemBench",
+    "board",
+    "drinks",
+    "battle",
+    "postCombatBattle",
+    "arenaId",
+    "keepArenaNextRound",
+    "arenaHoldNotice",
+    "arenaScout",
+    "arenaPrepBuff",
+    "enemyPreview",
+    "rewardChoices",
+    "lastCombatLedger",
+    "combatLedgerReview",
+    "freeRolls",
+    "rollsThisRound",
+    "nextShopUpgradeDiscountGold",
+    "winStreak",
+    "lossStreak",
+    "lastIncome",
+    "itemDiscountUsed",
+    "battleSpeedIndex",
+    "realityBroken",
+    "realityOverride",
+    "realityBreakTimer",
+    "postGiraffeHorrorTransition",
+    "shopReturnStaticTransition",
+    "rebootTransition",
+    "finalVictoryTransition",
+    "victoryCutscene",
+    "activeStory",
+    "seenStoryMilestones",
+    "idleTime",
+    "log",
+  ];
+
+  function cloneRunValue(value) {
+    if (value === undefined) return undefined;
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function createRunSnapshot() {
+    const result = state.lastIncome?.result || state.lastCombatLedger?.result || state.postCombatBattle?.result || null;
+    const heartDamage = Math.max(0, Math.round(state.lastCombatLedger?.heartDamage || 0));
+    const snapshot = {
+      version: 1,
+      unitSeq,
+      savedAt: new Date().toISOString(),
+      state: {},
+    };
+    RUN_SNAPSHOT_KEYS.forEach((key) => {
+      snapshot.state[key] = cloneRunValue(state[key]);
+    });
+    snapshot.state.selected = null;
+    snapshot.state.hover = null;
+    snapshot.state.pointer = null;
+    snapshot.state.tooltipTargets = [];
+    snapshot.state.drag = null;
+    snapshot.state.battle = null;
+    snapshot.state.postCombatBattle = null;
+    snapshot.state.lastCombatLedger = result
+      ? { result, heartDamage, units: {}, events: [], frames: [] }
+      : null;
+    if (snapshot.state.phase === "battle") {
+      snapshot.state.phase = "prep";
+      snapshot.state.message = "Battle interrupted";
+    }
+    snapshot.state.codexOpen = false;
+    snapshot.state.optionsMenu = { open: false, selected: "resume", savedAt: snapshot.savedAt, dragSlider: null };
+    if (snapshot.state.codexPreview) snapshot.state.codexPreview.dragging = false;
+    return snapshot;
+  }
+
+  function maxUidInValue(value) {
+    if (!value || typeof value !== "object") return 0;
+    let max = Number.isFinite(value.uid) ? value.uid : 0;
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        max = Math.max(max, maxUidInValue(entry));
+      });
+      return max;
+    }
+    Object.values(value).forEach((entry) => {
+      max = Math.max(max, maxUidInValue(entry));
+    });
+    return max;
+  }
+
+  function restoreRunSnapshot(snapshot) {
+    if (!snapshot?.state || typeof snapshot.state !== "object") return false;
+    const restored = cloneRunValue(snapshot.state);
+    Object.assign(state, restored);
+    state.optionsMenu = { open: false, selected: "resume", savedAt: snapshot.savedAt || null, dragSlider: null };
+    state.pointer = null;
+    state.hover = null;
+    state.tooltipTargets = [];
+    state.drag = null;
+    if (state.codexPreview) state.codexPreview.dragging = false;
+    unitSeq = Math.max(Number(snapshot.unitSeq) || 1, maxUidInValue(restored) + 1);
+    state.message = state.message || "Run loaded";
+    ensureEnemyPreview();
+    return true;
+  }
+
+  function savedRunRecord() {
+    if (!canUseLocalStorage()) return null;
+    try {
+      const record = JSON.parse(window.localStorage.getItem(ACTIVE_RUN_STORAGE_KEY) || "null");
+      return record && typeof record === "object" ? record : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function shouldRestoreSavedRun() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("continue") === "1" || params.get("restore") === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function writeActiveRunRecord(snapshot = null) {
+    if (!canUseLocalStorage() || !shouldMarkActiveRunRoute()) return false;
+    const now = new Date().toISOString();
+    let startedAt = now;
+    let previousSnapshot = null;
+    try {
+      const previous = JSON.parse(window.localStorage.getItem(ACTIVE_RUN_STORAGE_KEY) || "null");
+      if (previous?.active === true && typeof previous.startedAt === "string") {
+        startedAt = previous.startedAt;
+      }
+      if (previous?.snapshot) previousSnapshot = previous.snapshot;
+    } catch {
+      // Keep a fresh marker if an old marker was malformed.
+    }
+    const runSnapshot = snapshot || previousSnapshot || null;
+    try {
+      window.localStorage.setItem(
+        ACTIVE_RUN_STORAGE_KEY,
+        JSON.stringify({
+          active: true,
+          route: currentGameRoute(),
+          theme: realityBroken() ? "horror" : "cozy",
+          startedAt,
+          updatedAt: now,
+          markerOnly: !runSnapshot,
+          snapshot: runSnapshot,
+          summary: {
+            round: state.round,
+            phase: state.phase,
+            hearts: state.hearts,
+            gold: state.gold,
+            shopLevel: state.shopLevel,
+            savedAt: runSnapshot?.savedAt || now,
+          },
+        }),
+      );
+      return true;
+    } catch {
+      // Storage can fail without affecting the playable run.
+      return false;
+    }
+  }
+
+  function markActiveRunRoute() {
+    saveCurrentRun({ message: false, silent: true });
+  }
+
+  function saveCurrentRun(options = {}) {
+    const snapshot = createRunSnapshot();
+    const saved = writeActiveRunRecord(snapshot);
+    if (saved) {
+      if (state.optionsMenu) state.optionsMenu.savedAt = snapshot.savedAt;
+      if (!options.silent && options.message !== false) state.message = "Run saved";
+      if (!options.silent) playGameSfx("ui-confirm", { volume: 0.54 });
+    } else if (!options.silent) {
+      state.message = "Save unavailable";
+      playGameSfx("invalid", { volume: 0.55 });
+    }
+    return saved;
+  }
+
+  function saveCurrentRunSilently() {
+    return saveCurrentRun({ message: false, silent: true });
+  }
+
+  function updateRunAutosave(dt) {
+    if (!shouldMarkActiveRunRoute()) return;
+    activeRunAutosaveTimer += dt;
+    if (activeRunAutosaveTimer < ACTIVE_RUN_AUTOSAVE_SECONDS) return;
+    activeRunAutosaveTimer = 0;
+    saveCurrentRunSilently();
+  }
+
+  function restoreSavedRunIfRequested() {
+    if (!shouldRestoreSavedRun()) return false;
+    const record = savedRunRecord();
+    if (!record?.snapshot) return false;
+    const restored = restoreRunSnapshot(record.snapshot);
+    if (restored) state.message = "Run loaded";
+    return restored;
+  }
+
+  function clearActiveRunRoute() {
+    if (!canUseLocalStorage()) return;
+    try {
+      window.localStorage.removeItem(ACTIVE_RUN_STORAGE_KEY);
+    } catch {
+      // Returning to the menu should still work if storage is unavailable.
+    }
+  }
+
+  function mainMenuUrl() {
+    return new URL("./", window.location.href).href;
+  }
+
+  function exitToMainMenuWithSave() {
+    saveCurrentRun({ message: false });
+    state.message = "Run saved";
+    state.optionsMenu.open = false;
+    const target = mainMenuUrl();
+    try {
+      if (window.top && window.top !== window) {
+        window.top.location.href = target;
+      } else {
+        window.location.href = target;
+      }
+    } catch {
+      window.location.href = target;
+    }
+  }
   const backgroundImageCache = new Map();
   const RUNTIME_SPRITES = {
     toast_tortoise: {
@@ -5043,8 +5877,8 @@
     caprese_capybara: {
       1: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_mozzarella-pup_idle_SW_00.png",
       2: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_caprese-capybara_idle_SW_00.png",
-      3: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_basil-pond-capybara_idle_SW_00.png",
-      4: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_antipasto-harbour_idle_SW_00.png",
+      3: "assets/sprites/runtime/caprese-capybara-v2/caprese-capybara_basil-pond-capybara_idle_SW_00.png",
+      4: "assets/sprites/runtime/caprese-capybara-v2/caprese-capybara_antipasto-harbour_idle_SW_00.png",
     },
     vinaigrette_viper: {
       1: "assets/sprites/runtime/vinaigrette-viper-v1/vinaigrette-viper_vinaigrette-viper_idle_SW_00.png",
@@ -6146,8 +6980,7 @@
 
   function currentShopkeeperSrc() {
     if (realityBroken()) return REALITY_SHOPKEEPER_SRC;
-    const index = Math.max(0, Math.min(SHOPKEEPER_LEVEL_SRCS.length - 1, state.shopLevel - 1));
-    return SHOPKEEPER_LEVEL_SRCS[index] || SHOPKEEPER_SRC;
+    return SHOPKEEPER_SRC;
   }
 
   function currentShopkeeperStallSrc() {
@@ -6168,6 +7001,22 @@
 
   function currentTeamIntelBgSrc() {
     return realityBroken() ? REALITY_TEAM_INTEL_BG_SRC : TEAM_INTEL_BG_SRC;
+  }
+
+  function currentCombatLedgerPanelBgSrc() {
+    return realityBroken() ? REALITY_COMBAT_LEDGER_PANEL_BG_SRC : COMBAT_LEDGER_PANEL_BG_SRC;
+  }
+
+  function currentCombatLedgerMiniBgSrc() {
+    return realityBroken() ? REALITY_COMBAT_LEDGER_MINI_BG_SRC : COMBAT_LEDGER_MINI_BG_SRC;
+  }
+
+  function currentCombatLedgerParticipantsBgSrc() {
+    return realityBroken() ? REALITY_COMBAT_LEDGER_PARTICIPANTS_BG_SRC : COMBAT_LEDGER_PARTICIPANTS_BG_SRC;
+  }
+
+  function currentCombatLedgerLogBgSrc() {
+    return realityBroken() ? REALITY_COMBAT_LEDGER_LOG_BG_SRC : COMBAT_LEDGER_LOG_BG_SRC;
   }
 
   function currentFoodMenuBgSrc() {
@@ -6488,6 +7337,7 @@
     state.realityBreakTimer = REALITY_BREAK_REVEAL_SECONDS;
     state.message = copy("ui.reality.triggerMessage", "ILLUSION FAILURE - combat layer exposed");
     state.log.unshift(copy("ui.reality.triggerLog", "Illusion failed: future war layer exposed"));
+    playGameSfx("reality-break", { theme: "horror", volume: 1.1 });
   }
 
   function startPostGiraffeHorrorTransition() {
@@ -6985,7 +7835,10 @@
 
   function refreshShop(free = false) {
     const cost = currentRollCost();
-    if (!free && state.gold < cost) return;
+    if (!free && state.gold < cost) {
+      playGameSfx("invalid");
+      return;
+    }
     if (!free) {
       if (state.freeRolls > 0) {
         state.freeRolls -= 1;
@@ -7007,6 +7860,7 @@
       if (state.arenaScout.shopsRemaining <= 0) state.arenaScout = null;
     }
     state.message = free ? currentArena().short : cost === 0 ? `Free ${rollTerm({ lower: true })}` : `${rollTerm()} -${cost} ${currencyTerm({ lower: true })}`;
+    if (!free) playGameSfx("reroll");
   }
 
   function purchaseShopSlot(index) {
@@ -7014,17 +7868,20 @@
     if (index < 0 || index >= shopSlots.length) return false;
     if (isShopSlotUnlocked(index)) {
       state.message = "Slot open";
+      playGameSfx("invalid");
       return false;
     }
     const cost = shopSlotUnlockCost(index);
     if (state.gold < cost) {
       state.message = `Need ${cost} ${currencyTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     state.gold -= cost;
     openShopSlot(index);
     state.message = `Opened slot ${index + 1}`;
     state.log.unshift(`${realityBroken() ? "Opened scan slot" : "Opened shop slot"} ${index + 1}`);
+    playGameSfx("upgrade");
     return true;
   }
 
@@ -7043,8 +7900,9 @@
   }
 
   function startNextRoundShop() {
+    const rewardFreeRolls = Math.max(0, Math.floor(state.freeRolls || 0));
     state.rollsThisRound = 0;
-    state.freeRolls += startingFreeRollsForShopLevel();
+    state.freeRolls = startingFreeRollsForShopLevel() + rewardFreeRolls;
     state.itemDiscountUsed = false;
     if (state.keepArenaNextRound) {
       state.arenaHoldNotice = {
@@ -7068,7 +7926,7 @@
   }
 
   function startingFreeRollsForShopLevel(level = state.shopLevel) {
-    return Math.max(0, Math.floor(level || 0) * ECONOMY.freeRollsPerShopLevel);
+    return Math.max(0, Math.floor(ECONOMY.freeRollsPerShopLevel || 0));
   }
 
   function upgradeShop() {
@@ -7077,10 +7935,12 @@
     if (cost === null) {
       state.nextShopUpgradeDiscountGold = 0;
       state.message = realityBroken() ? "Rig maxed" : "Shop maxed";
+      playGameSfx("invalid");
       return false;
     }
     if (state.gold < cost) {
       state.message = `Need ${currencyTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     state.gold -= cost;
@@ -7097,6 +7957,7 @@
     state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(frozen && shopEntryAt(index)));
     state.message = `Odds up +1 ${rollTerm({ lower: true })}`;
     state.log.unshift(`${upgradeTerm()} ${realityBroken() ? "rig" : "shop"} to level ${state.shopLevel}`);
+    playGameSfx("upgrade");
     return true;
   }
 
@@ -7363,6 +8224,7 @@
     const cost = purchaseCost(entry, shopIndex);
     if (state.gold < cost) {
       state.message = `Need ${currencyTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     state.gold -= cost;
@@ -7382,6 +8244,7 @@
       state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
       mergeExplosion(itemRefSlot(keeper), evolved);
       state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+      playGameSfx("merge");
       resolveItemMerges();
       return true;
     }
@@ -7407,6 +8270,7 @@
     state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
     mergeExplosion(targetArea === "board" ? boardSlots[targetIndex] : benchSlots[targetIndex], evolved);
     state.log.unshift(`${evolved.name} reached ${evolved.tier} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+    playGameSfx("merge");
     resolveItemMerges();
     resolveMerges();
     return true;
@@ -7472,6 +8336,7 @@
     state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
     mergeExplosion(keeper.area === "board" ? boardSlots[keeper.index] : benchSlots[keeper.index], evolved);
     state.log.unshift(`${evolved.name} reached ${tier + 1} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+    playGameSfx("merge");
     resolveItemMerges();
     return true;
   }
@@ -7520,44 +8385,53 @@
     if (state.phase !== "prep") return false;
     if (!isShopSlotUnlocked(shopIndex)) {
       state.message = "Open slot first";
+      playGameSfx("invalid");
       return false;
     }
     const entry = shopEntryAt(shopIndex);
     if (!entry) {
       state.message = "Empty shop";
+      playGameSfx("invalid");
       return false;
     }
     const cost = purchaseCost(entry, shopIndex);
     if (state.gold < cost) {
       state.message = `Need ${currencyTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     if (isItem(entry)) {
       if (isDrink(entry)) {
         if (targetArea !== "bench" && targetArea !== "drinks" && targetArea !== "itemBench") {
           state.message = `Drop ${drinkPluralTerm({ lower: true })} on rails`;
+          playGameSfx("invalid");
           return false;
         }
       } else if (targetArea !== "bench" && targetArea !== "itemBench") {
         state.message = `Store ${toppingPluralTerm({ lower: true })} on bench`;
+        playGameSfx("invalid");
         return false;
       }
       if (targetArea === "itemBench" && !itemBenchSlotAccepts(targetIndex, entry)) {
         state.message = `${itemRailLabel(entry)} slots only`;
+        playGameSfx("invalid");
         return false;
       }
     }
     if (isUnit(entry) && targetArea !== "bench" && targetArea !== "board") {
       state.message = "Drop on grid";
+      playGameSfx("invalid");
       return false;
     }
     if (targetIndex < 0 || targetIndex >= state[targetArea].length) {
       state.message = "Drop on grid";
+      playGameSfx("invalid");
       return false;
     }
     if (state[targetArea][targetIndex]) {
       if (buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex)) return true;
       state.message = "Spot full";
+      playGameSfx("invalid");
       return false;
     }
     state.gold -= cost;
@@ -7565,6 +8439,7 @@
     state[targetArea][targetIndex] = entry;
     clearPurchasedShopSlot(shopIndex);
     state.message = isDrink(entry) && targetArea === "drinks" ? (realityBroken() ? `${displayItemShort(entry)} loaded` : `${entry.short} poured`) : `${entry.short} bought`;
+    playGameSfx(isDrink(entry) && targetArea === "drinks" ? "equip" : "buy");
     if (isUnit(entry)) resolveMerges();
     if (isItem(entry)) resolveItemMerges();
     return true;
@@ -7574,29 +8449,35 @@
     if (state.phase !== "prep") return false;
     if (!isShopSlotUnlocked(shopIndex)) {
       state.message = "Open slot first";
+      playGameSfx("invalid");
       return false;
     }
     const item = shopEntryAt(shopIndex);
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
       state.message = `Pick a ${toppingTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     const cost = purchaseCost(item, shopIndex);
     if (state.gold < cost) {
       state.message = `Need ${currencyTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     if (targetArea !== "bench" && targetArea !== "board") {
       state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
+      playGameSfx("invalid");
       return false;
     }
     if (!isUnit(unit)) {
       state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
+      playGameSfx("invalid");
       return false;
     }
     if (unit.item) {
       state.message = realityBroken() ? "Already armed" : "Already topped";
+      playGameSfx("invalid");
       return false;
     }
     state.gold -= cost;
@@ -7608,6 +8489,7 @@
     state.shopSales[shopIndex] = false;
     state.selected = { area: targetArea, index: targetIndex };
     state.message = realityBroken() ? `${displayUnitShort(unit)} armed` : `${displayUnitShort(unit)} topped`;
+    playGameSfx("equip");
     return true;
   }
 
@@ -7615,6 +8497,7 @@
     const target = selectedEquipmentTargetRef(state.drag);
     if (!target) {
       state.message = "Select animal";
+      playGameSfx("invalid");
       return false;
     }
     return buyShopItemToAnimal(shopIndex, target.area, target.index);
@@ -7634,15 +8517,18 @@
     if (state.phase !== "prep") return false;
     if (!isShopSlotUnlocked(index)) {
       state.message = "Open slot first";
+      playGameSfx("invalid");
       return false;
     }
     const entry = shopEntryAt(index);
     if (!entry) {
       state.message = "Empty shop";
+      playGameSfx("invalid");
       return false;
     }
     state.shopFrozen[index] = !state.shopFrozen[index];
     state.message = state.shopFrozen[index] ? `${entryLabel(entry)} locked` : `${entryLabel(entry)} unlocked`;
+    playGameSfx("freeze");
     return true;
   }
 
@@ -7680,14 +8566,17 @@
     const unit = state[targetArea]?.[targetIndex];
     if (!isTopping(item)) {
       state.message = `Pick a ${toppingTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     if (!isUnit(unit)) {
       state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
+      playGameSfx("invalid");
       return false;
     }
     if (unit.item) {
       state.message = realityBroken() ? "Already armed" : "Already topped";
+      playGameSfx("invalid");
       return false;
     }
     state[sourceArea][itemIndex] = null;
@@ -7695,6 +8584,7 @@
     refreshUnitItemStats(unit);
     state.selected = { area: targetArea, index: targetIndex };
     state.message = realityBroken() ? `${displayUnitShort(unit)} armed` : `${displayUnitShort(unit)} topped`;
+    playGameSfx("equip");
     return true;
   }
 
@@ -7706,6 +8596,7 @@
     const target = selectedEquipmentTargetRef(drag);
     if (!target) {
       state.message = "Select animal";
+      playGameSfx("invalid");
       return false;
     }
     return attachItemFromStorage(sourceArea, itemIndex, target.area, target.index);
@@ -7717,10 +8608,12 @@
     const item = source.unit.item;
     if (!itemStorageAccepts(targetArea, targetIndex, item)) {
       state.message = `${itemRailLabel(item)} slots only`;
+      playGameSfx("invalid");
       return false;
     }
     if (state[targetArea][targetIndex]) {
       state.message = "Bench spot full";
+      playGameSfx("invalid");
       return false;
     }
     source.unit.item = null;
@@ -7728,6 +8621,7 @@
     state[targetArea][targetIndex] = item;
     state.selected = { area: targetArea, index: targetIndex };
     state.message = realityBroken() ? `${displayUnitShort(source.unit)} disarmed` : `${displayUnitShort(source.unit)} untopped`;
+    playGameSfx("drop");
     resolveItemMerges();
     return true;
   }
@@ -7742,14 +8636,17 @@
     if (!source?.unit?.item || state.phase !== "prep") return false;
     if (!isUnit(target)) {
       state.message = realityBroken() ? "Drop on machine" : "Drop on animal";
+      playGameSfx("invalid");
       return false;
     }
     if (target.item) {
       state.message = realityBroken() ? "Already armed" : "Already topped";
+      playGameSfx("invalid");
       return false;
     }
     if (source.area === targetArea && source.index === targetIndex) {
       state.message = "Equipped";
+      playGameSfx("invalid");
       return false;
     }
     const item = source.unit.item;
@@ -7759,6 +8656,7 @@
     refreshUnitItemStats(target);
     state.selected = { area: targetArea, index: targetIndex };
     state.message = realityBroken() ? `${displayUnitShort(target)} armed` : `${target.short} topped`;
+    playGameSfx("equip");
     return true;
   }
 
@@ -7767,20 +8665,24 @@
     const item = state[sourceArea]?.[itemIndex];
     if (!isDrink(item)) {
       state.message = `Pick a ${drinkTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     if (!drinkSlots[drinkIndex]) {
       state.message = `Drop on ${drinkTerm({ lower: true })} rail`;
+      playGameSfx("invalid");
       return false;
     }
     if (state.drinks[drinkIndex]) {
       state.message = `${drinkTerm()} slot full`;
+      playGameSfx("invalid");
       return false;
     }
     state[sourceArea][itemIndex] = null;
     state.drinks[drinkIndex] = item;
     state.selected = { area: "drinks", index: drinkIndex };
     state.message = realityBroken() ? `${displayItemShort(item)} loaded` : `${displayItemShort(item)} poured`;
+    playGameSfx("equip");
     resolveItemMerges();
     return true;
   }
@@ -7795,12 +8697,14 @@
     const spot = firstEmptyItemStorage(ref.unit.item);
     if (!spot) {
       state.message = itemStorageFullMessage(ref.unit.item);
+      playGameSfx("invalid");
       return false;
     }
     state[spot.area][spot.index] = ref.unit.item;
     ref.unit.item = null;
     refreshUnitItemStats(ref.unit);
     state.message = realityBroken() ? `${displayUnitShort(ref.unit)} disarmed` : `${displayUnitShort(ref.unit)} untopped`;
+    playGameSfx("drop");
     resolveItemMerges();
     return true;
   }
@@ -7819,10 +8723,12 @@
     const unit = state[area]?.[index];
     if (!isUnit(unit)) {
       state.message = "Sell animals only";
+      playGameSfx("invalid");
       return false;
     }
     if (unit.item && area !== "bench" && firstEmptyItemStorage(unit.item) === null) {
       state.message = itemStorageFullMessage(unit.item);
+      playGameSfx("invalid");
       return false;
     }
     const value = sellValue(unit);
@@ -7833,6 +8739,7 @@
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
     state.message = `${displayUnitShort(unit)} sold +${value} ${currencyTerm({ lower: true })}`;
     state.log.unshift(`Sold ${displayUnitFormName(unit)} for ${value} ${currencyTerm({ lower: true })}`);
+    playGameSfx("sell");
     return true;
   }
 
@@ -7841,6 +8748,7 @@
     const item = state[area]?.[index];
     if (!isItem(item)) {
       state.message = "Sell items only";
+      playGameSfx("invalid");
       return false;
     }
     const value = itemSellValue(item);
@@ -7849,6 +8757,7 @@
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
     state.message = `${displayItemShort(item)} sold +${value} ${currencyTerm({ lower: true })}`;
     state.log.unshift(`Sold ${displayItemName(item)} for ${value} ${currencyTerm({ lower: true })}`);
+    playGameSfx("sell");
     return true;
   }
 
@@ -7857,6 +8766,7 @@
     const source = selectedEquipmentTargetRef(drag);
     if (!source?.unit?.item) {
       state.message = `No ${toppingTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return false;
     }
     const item = source.unit.item;
@@ -7867,6 +8777,7 @@
     state.gold = Math.min(ECONOMY.maxGold, state.gold + value);
     state.message = `${displayItemShort(item)} sold +${value} ${currencyTerm({ lower: true })}`;
     state.log.unshift(`Sold ${displayItemName(item)} for ${value} ${currencyTerm({ lower: true })}`);
+    playGameSfx("sell");
     return true;
   }
 
@@ -7891,6 +8802,7 @@
   function sellDraggedEntry(drag) {
     if (!canSellDrag(drag)) {
       state.message = "Cannot sell";
+      playGameSfx("invalid");
       return false;
     }
     if (drag.area === "equipment") return sellEquippedItem(drag);
@@ -8016,27 +8928,33 @@
           state.drinks[fromIndex] = null;
           state.selected = null;
           state.message = `${moving.short} moved`;
+          playGameSfx("drop");
           resolveItemMerges();
           return true;
         }
         state.message = `${drinkTerm()} slot full`;
+        playGameSfx("invalid");
         return false;
       }
       if (!isItemStorageArea(toArea)) {
         state.message = isDrink(moving) ? `Drop on ${drinkTerm({ lower: true })} rail` : `${toppingPluralTerm()} stay on bench`;
+        playGameSfx("invalid");
         return false;
       }
       if (fromArea === toArea && fromIndex === toIndex) {
         state.message = `${itemRailLabel(moving)} stored`;
+        playGameSfx("invalid");
         return false;
       }
       if (!itemStorageAccepts(toArea, toIndex, moving)) {
         state.message = `${itemRailLabel(moving)} slots only`;
+        playGameSfx("invalid");
         return false;
       }
       const target = state[toArea][toIndex];
       if (target && !isItem(target)) {
         state.message = "Spot full";
+        playGameSfx("invalid");
         return false;
       }
       if (isItemStorageArea(fromArea) && (!target || itemStorageAccepts(fromArea, fromIndex, target))) {
@@ -8044,6 +8962,7 @@
         state[fromArea][fromIndex] = target;
         state.selected = null;
         state.message = target ? "Bench swapped" : `${itemRailLabel(moving)} stored`;
+        playGameSfx("drop");
         resolveItemMerges();
         return true;
       }
@@ -8051,6 +8970,7 @@
         const spot = firstEmptyItemStorage(target);
         if (!spot) {
           state.message = itemStorageFullMessage(target);
+          playGameSfx("invalid");
           return false;
         }
         state[spot.area][spot.index] = target;
@@ -8059,15 +8979,18 @@
       state[fromArea][fromIndex] = null;
       state.selected = null;
       state.message = `${itemRailLabel(moving)} stored`;
+      playGameSfx("drop");
       resolveItemMerges();
       return true;
     }
     if (toArea !== "bench" && toArea !== "board") {
       state.message = "Drop on board";
+      playGameSfx("invalid");
       return false;
     }
     if (fromArea === toArea && fromIndex === toIndex) {
       state.message = "Set";
+      playGameSfx("invalid");
       return false;
     }
     const target = state[toArea][toIndex];
@@ -8076,6 +8999,7 @@
       state.bench[fromIndex] = target;
       state.selected = null;
       state.message = target ? "Bench swapped" : "Set";
+      playGameSfx("drop");
       resolveMerges();
       return true;
     }
@@ -8088,16 +9012,19 @@
         state[fromArea][fromIndex] = target;
         state.selected = null;
         state.message = "Swapped";
+        playGameSfx("drop");
         resolveMerges();
         return true;
       }
       state.message = "Spot full";
+      playGameSfx("invalid");
       return false;
     }
     state[toArea][toIndex] = moving;
     state[fromArea][fromIndex] = null;
     state.selected = null;
     state.message = "Set";
+    playGameSfx("drop");
     resolveMerges();
     return true;
   }
@@ -8230,8 +9157,8 @@
       targetExtraTier: enemyTargetExtraTier(round, archetype, adaptivePressure),
       tier3Chance: enemyTier3Chance(round, archetype, adaptivePressure),
       tier4Chance: enemyTier4Chance(round, archetype, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.78 + round * 0.034 + latePressure * 0.012 + adaptivePressure * 0.16 + shopPowerStatBonus + (archetype.statBias || 0)),
-      atkMultiplier: Math.max(0.55, 0.78 + round * 0.032 + latePressure * 0.008 + adaptivePressure * 0.12 + shopPowerStatBonus + (archetype.statBias || 0)),
+      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + latePressure * 0.011 + adaptivePressure * 0.145 + shopPowerStatBonus + (archetype.statBias || 0)),
+      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + latePressure * 0.007 + adaptivePressure * 0.11 + shopPowerStatBonus + (archetype.statBias || 0)),
       toppingCount: enemySupportCount(round, count, 3, archetype.itemBias || 0),
       drinkCount: enemySupportCount(round, drinkSlots.length, 4, archetype.drinkBias || 0),
       adaptivePressure,
@@ -8312,17 +9239,17 @@
   }
 
   function enemyTargetExtraTier(round, archetype, adaptivePressure = 0) {
-    return clamp(Math.min(0.62, round * 0.045) + enemyLatePressure(round) * 0.012 + adaptivePressure * 0.34 + enemyShopPowerTierBonus(round) + (archetype.tierBias || 0), 0, 0.98);
+    return clamp(Math.min(0.6, round * 0.044) + enemyLatePressure(round) * 0.011 + adaptivePressure * 0.31 + enemyShopPowerTierBonus(round) + (archetype.tierBias || 0), 0, 0.95);
   }
 
   function enemyTier3Chance(round, archetype, adaptivePressure = 0) {
     if (round < 8 && adaptivePressure < 0.15) return 0;
-    return clamp((round - 7) * 0.014 + adaptivePressure * 0.09 + enemyShopPowerTier3Bonus(round) + (archetype.tier3Bias || 0), 0, 0.26);
+    return clamp((round - 7) * 0.013 + adaptivePressure * 0.08 + enemyShopPowerTier3Bonus(round) + (archetype.tier3Bias || 0), 0, 0.24);
   }
 
   function enemyTier4Chance(round, archetype, adaptivePressure = 0) {
     if (round < 15 && adaptivePressure < 0.24) return 0;
-    return clamp((round - 14) * 0.006 + adaptivePressure * 0.07 + (archetype.tier3Bias || 0) * 0.4, 0, 0.1);
+    return clamp((round - 14) * 0.0055 + adaptivePressure * 0.062 + (archetype.tier3Bias || 0) * 0.38, 0, 0.09);
   }
 
   function enemyTierForPlan(plan) {
@@ -8342,9 +9269,9 @@
     const latePressure = enemyLatePressure(round);
     return {
       common: 100,
-      uncommon: Math.max(0, Math.round(14 + round * 2 + bias * 6)),
-      rare: Math.max(0, Math.round((round - 3) * 2.35 + latePressure * 0.75 + bias * 3.5)),
-      epic: Math.max(0, Math.round((round - 8) * 1.25 + latePressure * 0.85 + bias * 1.6)),
+      uncommon: Math.max(0, Math.round(13 + round * 1.9 + bias * 5.5)),
+      rare: Math.max(0, Math.round((round - 3) * 2.2 + latePressure * 0.68 + bias * 3.25)),
+      epic: Math.max(0, Math.round((round - 8) * 1.15 + latePressure * 0.78 + bias * 1.45)),
     };
   }
 
@@ -8597,11 +9524,13 @@
     if (state.phase !== "prep") return;
     state.lastCombatLedger = null;
     state.postCombatBattle = null;
+    resetCombatLedgerReview();
     const allies = state.board
       .map((unit, index) => (isUnit(unit) ? cloneForBattle(unit, "ally", index) : null))
       .filter(Boolean);
     if (allies.length === 0) {
       state.message = "Place a team";
+      playGameSfx("invalid");
       return;
     }
     clearParticles();
@@ -8640,12 +9569,22 @@
     applyBattleStartTraitEffects(enemies, allies);
     applyBattleStartAbilities(allies, enemies);
     applyBattleStartAbilities(enemies, allies);
+    recordCombatEvent(state.battle, {
+      type: "battleStart",
+      kind: "start",
+      text: "Battle started",
+    });
+    captureCombatLedgerFrame(state.battle, "start");
     normalizeBossBattleSpeed();
     state.phase = "battle";
+    state.freeRolls = 0;
+    state.rollsThisRound = 0;
     state.arenaHoldNotice = null;
     state.selected = null;
     state.drag = null;
     state.message = realityBroken() ? "Simulation malfunction" : "Battle";
+    saveCurrentRunSilently();
+    playGameSfx("battle-start");
   }
 
   function applyDrinkEffects(units, drinks = state.drinks) {
@@ -8930,7 +9869,7 @@
 
   function roundLossDamage(round) {
     if (round < 10) return Math.max(1, Math.ceil(round / 3));
-    return Math.min(4, 3 + Math.floor((round - 10) / 8));
+    return Math.min(4, 3 + Math.floor((round - 10) / 9));
   }
 
   function endBattle(won) {
@@ -8948,7 +9887,18 @@
     }
     const income = calculateRoundIncome(won);
     applyPostBattleAnimalEffects(won);
+    captureCombatLedgerFrame(state.battle, won ? "win" : "loss");
     state.lastCombatLedger = summarizeCombatLedger(state.battle, won, damage);
+    state.combatLedgerReview = {
+      open: false,
+      unitUid: "all",
+      filter: "all",
+      frameIndex: Math.max(0, (state.lastCombatLedger?.frames?.length || 1) - 1),
+      logScrollOffset: 0,
+      focusedEventSeq: null,
+      eventTypeFilters: { damage: true, support: true, ko: true, control: true },
+      bigMomentsOnly: false,
+    };
     state.gold = Math.min(ECONOMY.maxGold, state.gold + income.total);
     state.lastIncome = income;
     const retryFinalBoss = !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
@@ -8979,6 +9929,8 @@
     state.battle = null;
     combatEndExplosion(won);
     if (finalVictory) startFinalVictoryTransition();
+    saveCurrentRunSilently();
+    playGameSfx(won ? "victory" : "defeat");
   }
 
   function createCombatLedger(allies, enemies) {
@@ -9005,6 +9957,10 @@
         enemy: { damageDealt: 0, damageTaken: 0, healingReceived: 0, shieldingReceived: 0, kos: 0 },
       },
       units,
+      events: [],
+      frames: [],
+      nextFrameAt: 0,
+      seq: 0,
     };
   }
 
@@ -9029,6 +9985,129 @@
     return ledger.units[unit.uid];
   }
 
+  function combatLedgerTime(battle) {
+    return Number(Math.max(0, battle?.elapsed || 0).toFixed(2));
+  }
+
+  function combatLedgerUnitLabel(entry) {
+    if (!entry) return "System";
+    return entry.short || entry.name || "Unit";
+  }
+
+  function combatLedgerUnitRef(ledger, unit) {
+    if (!unit) return null;
+    const entry = ensureLedgerUnit(ledger, unit);
+    return entry ? {
+      uid: entry.uid,
+      side: entry.side,
+      name: entry.name,
+      short: entry.short,
+    } : null;
+  }
+
+  function combatLedgerEventText(ledger, event) {
+    if (event.text) return event.text;
+    const source = event.sourceUid != null ? ledger.units[event.sourceUid] : null;
+    const target = event.targetUid != null ? ledger.units[event.targetUid] : null;
+    const sourceName = combatLedgerUnitLabel(source);
+    const targetName = combatLedgerUnitLabel(target);
+    if (event.type === "damage") {
+      const parts = [];
+      if (event.hpDamage > 0) parts.push(`${event.hpDamage} HP`);
+      if (event.shieldDamage > 0) parts.push(`${event.shieldDamage} shield`);
+      const amount = parts.length ? parts.join(" + ") : `${event.amount || 0}`;
+      return `${source ? sourceName : "Environment"} hit ${targetName} for ${amount}${event.kind === "status" ? " over time" : ""}`;
+    }
+    if (event.type === "support") {
+      const supportText = event.kind === "heal" ? "healing" : "shield";
+      return source ? `${sourceName} gave ${targetName} ${event.amount} ${supportText}` : `${targetName} received ${event.amount} ${supportText}`;
+    }
+    if (event.type === "ko") {
+      return `${source ? sourceName : "Environment"} defeated ${targetName}`;
+    }
+    if (event.type === "control") {
+      return `${source ? sourceName : "Effect"} delayed ${targetName} by ${event.amount}s`;
+    }
+    return `${event.kind || event.type || "Event"} ${target ? targetName : ""}`.trim();
+  }
+
+  function recordCombatEvent(battle, event) {
+    const ledger = battle?.ledger;
+    if (!ledger || !event) return null;
+    const entry = {
+      id: ledger.seq++,
+      t: combatLedgerTime(battle),
+      type: event.type || "event",
+      kind: event.kind || event.type || "event",
+      sourceUid: event.source?.uid ?? event.sourceUid ?? null,
+      source: event.source ? combatLedgerUnitRef(ledger, event.source) : event.source || null,
+      targetUid: event.target?.uid ?? event.targetUid ?? null,
+      target: event.target ? combatLedgerUnitRef(ledger, event.target) : event.target || null,
+      amount: event.amount || 0,
+      hpDamage: event.hpDamage || 0,
+      shieldDamage: event.shieldDamage || 0,
+      text: event.text || "",
+    };
+    entry.text = combatLedgerEventText(ledger, entry);
+    ledger.events.push(entry);
+    if (ledger.events.length > COMBAT_LEDGER_MAX_EVENTS) ledger.events.shift();
+    return entry;
+  }
+
+  function combatLedgerStatusList(unit) {
+    return activeStatusEffects(unit).map((effect) => effect.id);
+  }
+
+  function combatLedgerSnapshotUnit(unit) {
+    return {
+      uid: unit.uid,
+      side: unit.side,
+      name: displayUnitFormName(unit),
+      short: displayUnitShort(unit),
+      typeId: unit.typeId,
+      tier: unit.tier,
+      slot: unit.slot,
+      x: Math.round(unit.x),
+      y: Math.round(unit.y),
+      hp: Math.max(0, Math.round(unit.hp || 0)),
+      maxHp: Math.max(1, Math.round(unit.maxHp || 1)),
+      shield: Math.max(0, Math.round(unit.shield || 0)),
+      cooldown: Number(Math.max(0, unit.cooldown || 0).toFixed(2)),
+      dead: Boolean(unit.dead),
+      statuses: combatLedgerStatusList(unit),
+    };
+  }
+
+  function captureCombatLedgerFrame(battle, reason = "tick") {
+    const ledger = battle?.ledger;
+    if (!ledger) return null;
+    const frame = {
+      index: ledger.frames.length,
+      t: combatLedgerTime(battle),
+      reason,
+      allies: (battle.allies || []).map(combatLedgerSnapshotUnit),
+      enemies: (battle.enemies || []).map(combatLedgerSnapshotUnit),
+    };
+    ledger.frames.push(frame);
+    if (ledger.frames.length > COMBAT_LEDGER_MAX_FRAMES) {
+      ledger.frames.shift();
+      ledger.frames.forEach((entry, index) => {
+        entry.index = index;
+      });
+    }
+    ledger.nextFrameAt = Math.max(ledger.nextFrameAt || 0, (battle.elapsed || 0) + COMBAT_LEDGER_FRAME_SECONDS);
+    return frame;
+  }
+
+  function captureDueCombatLedgerFrames(battle) {
+    const ledger = battle?.ledger;
+    if (!ledger) return;
+    if (!ledger.frames.length) captureCombatLedgerFrame(battle, "start");
+    while ((battle.elapsed || 0) >= (ledger.nextFrameAt || 0) && ledger.frames.length < COMBAT_LEDGER_MAX_FRAMES) {
+      captureCombatLedgerFrame(battle, "tick");
+    }
+  }
+
   function recordCombatDamage(battle, source, target, hpDamage, shieldDamage = 0) {
     const ledger = battle?.ledger;
     const impact = Math.max(0, hpDamage || 0) + Math.max(0, shieldDamage || 0);
@@ -9043,6 +10122,16 @@
       if (sourceEntry) sourceEntry.damageDealt += impact;
       ledger.sides[sourceSide].damageDealt += impact;
     }
+    recordCombatEvent(battle, {
+      type: "damage",
+      kind: source ? "damage" : "environment",
+      source,
+      target,
+      amount: impact,
+      hpDamage: Math.max(0, hpDamage || 0),
+      shieldDamage: Math.max(0, shieldDamage || 0),
+    });
+    playGameSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
   }
 
   function recordCombatKo(battle, source, target) {
@@ -9050,15 +10139,33 @@
     if (!ledger || !target) return;
     const targetEntry = ensureLedgerUnit(ledger, target);
     if (targetEntry) targetEntry.defeated = true;
-    if (!source) return;
+    if (!source) {
+      recordCombatEvent(battle, {
+        type: "ko",
+        kind: "ko",
+        source: null,
+        target,
+        amount: 1,
+      });
+      playGameSfx("ko", { volume: 0.9 });
+      return;
+    }
     const sourceSide = source.side || "ally";
     const sourceEntry = ensureLedgerUnit(ledger, source);
     if (sourceEntry) sourceEntry.kos += 1;
     ledger.sides[sourceSide].kos += 1;
+    recordCombatEvent(battle, {
+      type: "ko",
+      kind: "ko",
+      source,
+      target,
+      amount: 1,
+    });
+    playGameSfx("ko", { volume: 0.9 });
   }
 
-  function recordCombatSupport(unit, amount, kind) {
-    const ledger = state.battle?.ledger;
+  function recordCombatSupport(unit, amount, kind, source = null, battle = state.battle) {
+    const ledger = battle?.ledger;
     if (!ledger || !unit || amount <= 0) return;
     const side = unit.side || "ally";
     const entry = ensureLedgerUnit(ledger, unit);
@@ -9069,6 +10176,14 @@
       ledger.sides[side].shieldingReceived += amount;
       if (entry) entry.shieldingReceived += amount;
     }
+    recordCombatEvent(battle, {
+      type: "support",
+      kind,
+      source,
+      target: unit,
+      amount,
+    });
+    playGameSfx(kind === "heal" ? "heal" : "shield", { volume: 0.42 });
   }
 
   function summarizeCombatLedger(battle, won, heartDamage) {
@@ -9088,6 +10203,14 @@
       heartDamage,
       ally: { ...ledger.sides.ally, losses: allyUnits.filter((unit) => unit.defeated).length },
       enemy: { ...ledger.sides.enemy, losses: enemyUnits.filter((unit) => unit.defeated).length },
+      units: Object.values(ledger.units).map((unit) => ({ ...unit })),
+      events: (ledger.events || []).map((event) => ({ ...event })),
+      frames: (ledger.frames || []).map((frame) => ({
+        ...frame,
+        allies: frame.allies.map((unit) => ({ ...unit })),
+        enemies: frame.enemies.map((unit) => ({ ...unit })),
+      })),
+      frameStepSeconds: COMBAT_LEDGER_FRAME_SECONDS,
       mvp: topDamage ? {
         name: topDamage.short || topDamage.name,
         damageDealt: topDamage.damageDealt,
@@ -9198,6 +10321,44 @@
     return rarityId === "common" || (weights[rarityId] || 0) > 0;
   }
 
+  function rewardShopLevel() {
+    return Math.max(1, Math.min(MAX_SHOP_LEVEL, state.shopLevel || 1));
+  }
+
+  function arenaRewardTier(level = rewardShopLevel()) {
+    if (level >= MAX_SHOP_LEVEL) return 3;
+    if (level >= 3) return 2;
+    return 1;
+  }
+
+  function arenaRewardTierText(tier = arenaRewardTier()) {
+    return tier > 1 ? `${tier}-star ` : "";
+  }
+
+  function arenaRewardShopLevelText() {
+    return `${realityBroken() ? "Rig" : "Shop"} level scales rewards.`;
+  }
+
+  function freeRollRewardAmount() {
+    return 1;
+  }
+
+  function scaledGoldRewardAmount(won) {
+    const level = rewardShopLevel();
+    const winAmounts = [0, 20, 26, 40, 52, 72];
+    const lossAmounts = [0, 12, 16, 28, 36, 52];
+    const amounts = won ? winAmounts : lossAmounts;
+    return amounts[level] || amounts[amounts.length - 1];
+  }
+
+  function scaledArenaPurseAmount(won) {
+    const level = rewardShopLevel();
+    const winAmounts = [0, 14, 20, 36, 48, 68];
+    const lossAmounts = [0, 10, 14, 24, 34, 48];
+    const amounts = won ? winAmounts : lossAmounts;
+    return amounts[level] || amounts[amounts.length - 1];
+  }
+
   function pushUniqueReward(choices, reward) {
     if (!reward) return false;
     const key = reward.key || `${reward.type}:${reward.itemId || reward.typeId || reward.title}`;
@@ -9238,15 +10399,17 @@
     const pool = CATALOG.filter((animal) => animal.traits?.includes(traitId) && rewardRarityAvailable(animal.rarity || "common"));
     if (!pool.length) return null;
     const base = pool[randInt(pool.length)];
-    const unit = makeUnit(base.id);
+    const tier = arenaRewardTier();
+    const unit = makeUnit(base.id, tier);
     const label = traitLabel(traitId);
     return {
       type: "copy",
       typeId: base.id,
+      tier,
       traitId,
       title: source === "arena" ? `${themedArena(currentArena()).short}: ${displayUnitShort(unit)}` : `${label}: ${displayUnitShort(unit)}`,
-      body: source === "arena" ? `${arenaTerm()}-favored ${label} copy.` : `Helps push your ${label} tier.`,
-      key: `copy:${source}:${traitId}:${base.id}`,
+      body: source === "arena" ? `${arenaRewardTierText(tier)}${arenaTerm({ lower: true })}-favored ${label} copy. ${arenaRewardShopLevelText()}` : `${arenaRewardTierText(tier)}copy helps push your ${label} tier. ${arenaRewardShopLevelText()}`,
+      key: `copy:${source}:${traitId}:${base.id}:${tier}`,
     };
   }
 
@@ -9255,13 +10418,15 @@
     const pool = CATALOG.filter((animal) => !animal.traits?.some((traitId) => arenaTraits.includes(traitId)) && rewardRarityAvailable(animal.rarity || "common"));
     if (!pool.length) return null;
     const base = pool[randInt(pool.length)];
-    const unit = makeUnit(base.id);
+    const tier = arenaRewardTier();
+    const unit = makeUnit(base.id, tier);
     return {
       type: "copy",
       typeId: base.id,
+      tier,
       title: `Pivot: ${displayUnitShort(unit)}`,
-      body: `Off-${arenaTerm({ lower: true })} copy for changing lanes.`,
-      key: `copy:pivot:${base.id}`,
+      body: `${arenaRewardTierText(tier)}off-${arenaTerm({ lower: true })} copy for changing lanes. ${arenaRewardShopLevelText()}`,
+      key: `copy:pivot:${base.id}:${tier}`,
     };
   }
 
@@ -9273,13 +10438,15 @@
     if (!candidates.length) return null;
     const unit = candidates[0];
     const favorite = FAVORITE_TOPPINGS[unit.typeId];
-    const item = itemInfo(favorite.itemId);
+    const tier = arenaRewardTier();
+    const item = makeItem(favorite.itemId, tier);
     return {
       type: "item",
       itemId: item.id,
-      title: `${displayItemShort(item)} Favorite`,
-      body: `${displayUnitShort(unit)}'s favorite ${toppingTerm({ lower: true })}.`,
-      key: `favorite:${unit.typeId}:${item.id}`,
+      tier,
+      title: `${itemDisplayShort(item)} Favorite`,
+      body: `${displayUnitShort(unit)}'s favorite ${toppingTerm({ lower: true })}. ${arenaRewardShopLevelText()}`,
+      key: `favorite:${unit.typeId}:${item.id}:${tier}`,
     };
   }
 
@@ -9293,13 +10460,16 @@
     const available = uniqueIds
       .map((itemId) => itemInfo(itemId))
       .filter((item) => item?.id && rewardRarityAvailable(item.rarity || "common"));
-    const item = available.length ? available[randInt(available.length)] : shopItem();
+    const tier = arenaRewardTier();
+    const baseItem = available.length ? available[randInt(available.length)] : shopItem();
+    const item = makeItem(baseItem.id, tier);
     return {
       type: "item",
       itemId: item.id,
-      title: `${themedArena(currentArena()).short}: ${displayItemShort(item)}`,
-      body: `${toppingTerm()} fits this ${arenaTerm({ lower: true })}.`,
-      key: `arena-item:${currentArena().id}:${item.id}`,
+      tier,
+      title: `${themedArena(currentArena()).short}: ${itemDisplayShort(item)}`,
+      body: `${arenaRewardTierText(tier)}${toppingTerm({ lower: true })} fits this ${arenaTerm({ lower: true })}. ${arenaRewardShopLevelText()}`,
+      key: `arena-item:${currentArena().id}:${item.id}:${tier}`,
     };
   }
 
@@ -9307,46 +10477,51 @@
     const ownedTypes = [...new Set(allOwnedRefs().map((ref) => ref.unit.typeId))];
     if (!ownedTypes.length) return null;
     const typeId = ownedTypes[randInt(ownedTypes.length)];
-    const unit = makeUnit(typeId);
+    const tier = arenaRewardTier();
+    const unit = makeUnit(typeId, tier);
     return {
       type: "copy",
       typeId,
+      tier,
       title: `${displayUnitShort(unit)} Copy`,
-      body: "Adds a copy of a line you own.",
-      key: `owned-copy:${typeId}`,
+      body: `Adds a ${arenaRewardTierText(tier)}copy of a line you own. ${arenaRewardShopLevelText()}`,
+      key: `owned-copy:${typeId}:${tier}`,
     };
   }
 
   function freeItemReward() {
-    const item = shopItem();
+    const shopRolledItem = shopItem();
+    const tier = Math.max(itemTier(shopRolledItem?.tier), arenaRewardTier());
+    const item = makeItem(shopRolledItem.id, tier);
     return {
       type: "item",
       itemId: item.id,
-      title: `Free ${displayItemShort(item)}`,
-      body: `${rarityInfo(item.rarity).label} ${toppingTerm({ lower: true })}.`,
-      key: `item:${item.id}`,
+      tier,
+      title: `Free ${itemDisplayShort(item)}`,
+      body: `${arenaRewardTierText(tier)}${rarityInfo(item.rarity).label} ${toppingTerm({ lower: true })}. ${arenaRewardShopLevelText()}`,
+      key: `item:${item.id}:${tier}`,
     };
   }
 
   function freeRollReward(won) {
-    const amount = 1;
+    const amount = freeRollRewardAmount();
     return {
       type: "freeRolls",
       amount,
       title: `${amount} Free ${amount === 1 ? rollTerm() : `${rollTerm()}s`}`,
-      body: realityBroken() ? "Scan war stock next wave." : "Scout shops next round.",
-      key: "freeRolls",
+      body: `${realityBroken() ? "Scan war stock next wave." : "Scout shops next round."} ${arenaRewardShopLevelText()}`,
+      key: `freeRolls:${amount}`,
     };
   }
 
   function goldReward(won) {
-    const amount = won ? 20 : 12;
+    const amount = scaledGoldRewardAmount(won);
     return {
       type: "gold",
       amount,
       title: `+${amount} ${currencyTerm()}`,
-      body: `Flexible ${currencyTerm({ lower: true })} for ${upgradeTerm({ lower: true })}s and pivots.`,
-      key: "gold",
+      body: `Flexible ${currencyTerm({ lower: true })} for ${upgradeTerm({ lower: true })}s and pivots. ${arenaRewardShopLevelText()}`,
+      key: `gold:${amount}`,
     };
   }
 
@@ -9356,16 +10531,18 @@
     const traitIds = arenaRewardTraits(arena.id);
     if (!traitIds.length) return null;
     const shopWord = realityBroken() ? "scans" : "shops";
+    const freeRolls = freeRollRewardAmount();
+    const shopsRemaining = rewardShopLevel() >= MAX_SHOP_LEVEL ? 3 : 2;
     return {
       type: "arenaScout",
       arenaId: arena.id,
       arenaShort: displayArena.short,
       traitIds,
-      shopsRemaining: 2,
-      freeRolls: 1,
+      shopsRemaining,
+      freeRolls,
       title: `${arenaTerm()} Scout: ${displayArena.short}`,
-      body: `+1 ${rollTerm({ lower: true })}. Next 2 ${shopWord} favor ${arenaRewardTraitText(traitIds)} units.`,
-      key: `arena-scout:${arena.id}`,
+      body: `+${freeRolls} ${rollTerm({ lower: true })}${freeRolls === 1 ? "" : "s"}. Next ${shopsRemaining} ${shopWord} favor traits. ${arenaRewardShopLevelText()}`,
+      key: `arena-scout:${arena.id}:${freeRolls}:${shopsRemaining}`,
     };
   }
 
@@ -9374,47 +10551,51 @@
     const displayArena = themedArena(arena);
     const traitIds = arenaRewardTraits(arena.id);
     if (!traitIds.length) return null;
+    const tier = arenaRewardTier();
+    const levelBonus = Math.max(0, rewardShopLevel() - 1);
     return {
       type: "arenaPrepBuff",
       arenaId: arena.id,
       arenaShort: displayArena.short,
       traitIds,
-      shieldPct: 0.12,
-      hastePct: 0.1,
-      attackPct: 0.08,
-      duration: 3,
+      shieldPct: 0.12 + levelBonus * 0.03,
+      hastePct: 0.1 + levelBonus * 0.02,
+      attackPct: 0.08 + levelBonus * 0.02,
+      duration: tier >= 3 ? 5 : tier >= 2 ? 4 : 3,
       title: `${arenaTerm()} Prep: ${displayArena.short}`,
-      body: `Next battle: a ${arenaRewardTraitText(traitIds, 2)} unit gets shield, speed, and attack.`,
-      key: `arena-prep:${arena.id}`,
+      body: `Next battle: a ${arenaRewardTraitText(traitIds, 2)} unit gets stronger buffs. ${arenaRewardShopLevelText()}`,
+      key: `arena-prep:${arena.id}:${rewardShopLevel()}`,
     };
   }
 
   function arenaHoldReward() {
     const arena = currentArena();
     const displayArena = themedArena(arena);
+    const freeRolls = freeRollRewardAmount();
     return {
       type: "arenaHold",
       arenaId: arena.id,
       arenaShort: displayArena.short,
-      freeRolls: 1,
+      freeRolls,
       title: `${arenaTerm()} Hold: ${displayArena.short}`,
-      body: `Keep this ${arenaTerm({ lower: true })} for the next battle; +1 ${rollTerm({ lower: true })}.`,
-      key: `arena-hold:${arena.id}`,
+      body: `Keep this ${arenaTerm({ lower: true })}; +${freeRolls} ${rollTerm({ lower: true })}${freeRolls === 1 ? "" : "s"}. ${arenaRewardShopLevelText()}`,
+      key: `arena-hold:${arena.id}:${freeRolls}`,
     };
   }
 
   function arenaPurseReward(won) {
     const arena = currentArena();
     const displayArena = themedArena(arena);
-    const amount = won ? 14 : 10;
+    const amount = scaledArenaPurseAmount(won);
+    const freeRolls = freeRollRewardAmount();
     return {
       type: "arenaPurse",
       arenaId: arena.id,
       amount,
-      freeRolls: 1,
+      freeRolls,
       title: `${arenaTerm()} Purse: ${displayArena.short}`,
-      body: `Immediate payout: +${amount} ${currencyTerm({ lower: true })} and +1 free ${rollTerm({ lower: true })}.`,
-      key: `arena-purse:${arena.id}`,
+      body: `Immediate payout: +${amount} ${currencyTerm({ lower: true })}, +${freeRolls} free ${rollTerm({ lower: true })}${freeRolls === 1 ? "" : "s"}. ${arenaRewardShopLevelText()}`,
+      key: `arena-purse:${arena.id}:${amount}:${freeRolls}`,
     };
   }
 
@@ -9435,12 +10616,12 @@
   function upgradeDiscountReward() {
     const nextCost = nextShopUpgradeCost();
     if (nextCost === null || nextCost <= 0) return null;
-    const amount = Math.min(25, nextCost);
+    const amount = Math.min(20 + rewardShopLevel() * 10, nextCost);
     return {
       type: "upgradeDiscount",
       amount,
       title: `${upgradeTerm()} Coupon`,
-      body: `Next ${realityBroken() ? "rig" : "shop upgrade"} costs ${amount} fewer ${currencyTerm({ lower: true })}.`,
+      body: `Next ${realityBroken() ? "rig" : "shop upgrade"} costs ${amount} fewer ${currencyTerm({ lower: true })}. ${arenaRewardShopLevelText()}`,
       key: `upgrade-discount:${state.shopLevel}:${amount}`,
     };
   }
@@ -9489,9 +10670,15 @@
   }
 
   function applyRewardChoice(index) {
-    if (state.phase !== "result" || !state.rewardChoices?.length) return false;
+    if (state.phase !== "result" || !state.rewardChoices?.length) {
+      playGameSfx("invalid");
+      return false;
+    }
     const reward = state.rewardChoices[index];
-    if (!reward) return false;
+    if (!reward) {
+      playGameSfx("invalid");
+      return false;
+    }
     if (reward.type === "gold") {
       state.gold = Math.min(ECONOMY.maxGold, state.gold + reward.amount);
     } else if (reward.type === "freeRolls") {
@@ -9525,14 +10712,15 @@
     } else if (reward.type === "upgradeDiscount") {
       state.nextShopUpgradeDiscountGold = Math.max(0, (state.nextShopUpgradeDiscountGold || 0) + (reward.amount || 0));
     } else if (reward.type === "item") {
-      if (!moveItemToBench(makeItem(reward.itemId))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
+      if (!moveItemToBench(makeItem(reward.itemId, reward.tier || 1))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
       resolveItemMerges();
     } else if (reward.type === "copy") {
-      if (!moveItemToBench(makeUnit(reward.typeId))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
+      if (!moveItemToBench(makeUnit(reward.typeId, reward.tier || 1))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
       resolveMerges();
     }
     state.message = realityBroken() ? `Salvaged ${reward.title}` : `Claimed ${reward.title}`;
     state.log.unshift(realityBroken() ? `Salvage: ${reward.title}` : `Reward: ${reward.title}`);
+    playGameSfx("reward");
     const clearResultParticlesForRetry = state.round === GIRAFFE_BOSS_ROUND && state.postCombatBattle?.result === "loss";
     const rewardParticles = clearResultParticlesForRetry ? [] : state.particles.slice();
     const startShopReturnTransition = shouldStartShopReturnTransition();
@@ -9543,11 +10731,12 @@
       continuePrep();
       if (rewardParticles.length) state.particles.push(...rewardParticles);
     }
+    saveCurrentRunSilently();
     return true;
   }
 
   function shouldStartShopReturnTransition() {
-    return state.hearts > 0 && Boolean(state.postCombatBattle?.result);
+    return state.hearts > 0 && Boolean(state.postCombatBattle?.result || state.lastIncome?.result || state.lastCombatLedger?.result);
   }
 
   function continuePrep() {
@@ -9560,7 +10749,153 @@
     clearParticles();
     state.rewardChoices = [];
     state.postCombatBattle = null;
+    state.lastCombatLedger = null;
+    resetCombatLedgerReview();
     startNextRoundShop();
+    if (!state.shopReturnStaticTransition) maybeStartStoryMilestone();
+    saveCurrentRunSilently();
+  }
+
+  function storyMilestoneEntries() {
+    return Object.entries(STORY_MILESTONES)
+      .map(([id, milestone]) => ({ id, ...milestone }))
+      .sort((a, b) => (a.round || 0) - (b.round || 0));
+  }
+
+  function eligibleStoryMilestone() {
+    if (state.activeStory || state.phase !== "prep" || state.codexOpen) return null;
+    if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.victoryCutscene) return null;
+    return storyMilestoneEntries().find((milestone) => {
+      if (state.seenStoryMilestones.includes(milestone.id)) return false;
+      if (state.round !== milestone.round) return false;
+      if (milestone.requiresRealityBroken && !realityBroken()) return false;
+      return Array.isArray(milestone.beats) && milestone.beats.length > 0;
+    }) || null;
+  }
+
+  function maybeStartStoryMilestone() {
+    const milestone = eligibleStoryMilestone();
+    if (!milestone) return false;
+    startStoryConversation({
+      id: milestone.id,
+      title: milestone.title,
+      index: 0,
+      beats: milestone.beats,
+    });
+    state.seenStoryMilestones.push(milestone.id);
+    state.message = milestone.title;
+    if (milestone.log) state.log.unshift(milestone.log);
+    return true;
+  }
+
+  function startStoryConversation(story) {
+    state.activeStory = {
+      ...story,
+      skipConfirm: false,
+      transition: {
+        phase: "enter",
+        elapsed: 0,
+        duration: STORY_TRANSITION_SECONDS,
+      },
+    };
+    return state.activeStory;
+  }
+
+  function currentStoryBeat() {
+    const story = state.activeStory;
+    if (!story?.beats?.length) return null;
+    return story.beats[Math.max(0, Math.min(story.index || 0, story.beats.length - 1))] || null;
+  }
+
+  function storyCanGoBack() {
+    return Boolean(state.activeStory && (state.activeStory.index || 0) > 0);
+  }
+
+  function goBackStoryConversation() {
+    const story = state.activeStory;
+    if (!story || !storyCanGoBack()) return false;
+    story.skipConfirm = false;
+    story.index -= 1;
+    return true;
+  }
+
+  function advanceStoryConversation(skip = false) {
+    const story = state.activeStory;
+    if (!story) return false;
+    if (skip || (story.index || 0) >= story.beats.length - 1) {
+      story.skipConfirm = false;
+      startStoryConversationExit();
+      state.message = realityBroken() ? themedArena(currentArena()).short : "Prep";
+      return true;
+    }
+    story.skipConfirm = false;
+    story.index += 1;
+    return true;
+  }
+
+  function startStoryConversationExit() {
+    const story = state.activeStory;
+    if (!story || story.transition?.phase === "exit") return false;
+    story.transition = {
+      phase: "exit",
+      elapsed: 0,
+      duration: STORY_TRANSITION_SECONDS,
+    };
+    return true;
+  }
+
+  function storyTransitionPhase(story = state.activeStory) {
+    return story?.transition?.phase || "stable";
+  }
+
+  function storyTransitionAlpha(story = state.activeStory) {
+    const transition = story?.transition;
+    if (!transition) return 1;
+    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || STORY_TRANSITION_SECONDS));
+    const eased = easeOutCubic(progress);
+    return transition.phase === "exit" ? 1 - eased : eased;
+  }
+
+  function updateStoryConversationTransition(dt) {
+    const story = state.activeStory;
+    const transition = story?.transition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration || STORY_TRANSITION_SECONDS, (transition.elapsed || 0) + dt);
+    if (transition.elapsed < (transition.duration || STORY_TRANSITION_SECONDS)) return;
+    if (transition.phase === "exit") {
+      state.activeStory = null;
+      return;
+    }
+    story.transition = null;
+  }
+
+  function applyStoryHit(hit) {
+    const story = state.activeStory;
+    if (!story) return false;
+    if (storyTransitionPhase(story) === "exit") return false;
+    if (hit?.action === "back") {
+      const changed = goBackStoryConversation();
+      playGameSfx(changed ? "ui-back" : "invalid", { volume: 0.55 });
+      return changed;
+    }
+    if (hit?.action === "skip") {
+      if (!story.skipConfirm) {
+        story.skipConfirm = true;
+        state.message = "Skip this dialogue section?";
+        playGameSfx("invalid", { volume: 0.5 });
+        return true;
+      }
+      const changed = advanceStoryConversation(true);
+      playGameSfx("ui-back", { volume: 0.55 });
+      return changed;
+    }
+    if (hit?.action === "advance") {
+      const changed = advanceStoryConversation(false);
+      playGameSfx("ui-confirm", { volume: 0.55 });
+      return changed;
+    }
+    story.skipConfirm = false;
+    return false;
   }
 
   function continueFromResult() {
@@ -9592,6 +10927,7 @@
     state.selected = null;
     state.drag = null;
     state.message = options.message || (horror ? "Signal stabilizing" : "Market restocking");
+    playGameSfx("transition");
     return true;
   }
 
@@ -9610,6 +10946,7 @@
     state.selected = null;
     state.drag = null;
     state.message = "Rebooting cozy shell";
+    playGameSfx("reboot", { theme: "horror" });
     return true;
   }
 
@@ -9628,6 +10965,7 @@
     state.hover = null;
     state.selected = null;
     state.message = "Final objective secured";
+    playGameSfx("victory", { theme: "horror", volume: 1.05 });
     return true;
   }
 
@@ -9656,7 +10994,18 @@
   }
 
   function rebootFromVictoryCutscene() {
-    startRebootTransition({ fromVictoryCutscene: true });
+    clearActiveRunRoute();
+    state.message = "Returning to menu";
+    const target = mainMenuUrl();
+    try {
+      if (window.top && window.top !== window) {
+        window.top.location.href = target;
+      } else {
+        window.location.href = target;
+      }
+    } catch {
+      window.location.href = target;
+    }
   }
 
   function completeRebootTransitionReset(transition) {
@@ -9698,6 +11047,7 @@
     state.enemyPreview = null;
     state.rewardChoices = [];
     state.lastCombatLedger = null;
+    resetCombatLedgerReview();
     state.freeRolls = startingFreeRollsForShopLevel();
     state.rollsThisRound = 0;
     state.nextShopUpgradeDiscountGold = 0;
@@ -9713,6 +11063,9 @@
     state.rebootTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
+    state.activeStory = null;
+    state.seenStoryMilestones = [];
+    state.optionsMenu = { open: false, selected: "resume", savedAt: null, dragSlider: null };
     clearParticles();
     state.log = [];
     refreshShop(true);
@@ -9801,6 +11154,7 @@
       drinkTossImpact(toss, battle);
       return false;
     });
+    captureDueCombatLedgerFrames(battle);
     if (state.round === GIRAFFE_BOSS_ROUND && battle.elapsed > BATTLE_TIMEOUT_SECONDS) {
       battle.result = "loss";
       endBattle(false);
@@ -9966,8 +11320,8 @@
     if (unit.ability === "heal") {
       const friend = weakestDamaged(allies);
       if (friend) {
-        const healed = healUnit(friend, supportAmount(unit, healAmount(unit)));
-        const shielded = grantShield(friend, supportAmount(unit, Math.round(unit.abilityPower * 0.35)));
+        const healed = healUnit(friend, supportAmount(unit, healAmount(unit)), { source: unit });
+        const shielded = grantShield(friend, supportAmount(unit, Math.round(unit.abilityPower * 0.35)), { source: unit });
         applySupportItem(unit, friend);
         applyExtraAdjacentHeal(unit, friend, healed, allies);
         if (healed > 0 || shielded > 0) emitSupportProjectile(unit, friend, battle, "#55a375");
@@ -9976,7 +11330,7 @@
       }
       const shieldTarget = lowestShieldedAlly(allies);
       if (shieldTarget) {
-        const shielded = grantShield(shieldTarget, supportAmount(unit, noodleFallbackShield(unit)));
+        const shielded = grantShield(shieldTarget, supportAmount(unit, noodleFallbackShield(unit)), { source: unit });
         applySupportItem(unit, shieldTarget);
         if (shielded > 0) emitSupportProjectile(unit, shieldTarget, battle, "#55a375");
         burst({ x: shieldTarget.x, y: shieldTarget.y }, "#55a375");
@@ -9988,8 +11342,8 @@
       const friend = mostStatusedAlly(allies);
       if (friend) {
         cleanseUnit(friend);
-        const healed = healUnit(friend, supportAmount(unit, lemonCleanseHeal(unit)));
-        grantShield(friend, supportAmount(unit, lemonCleanseShield(unit)));
+        const healed = healUnit(friend, supportAmount(unit, lemonCleanseHeal(unit)), { source: unit });
+        grantShield(friend, supportAmount(unit, lemonCleanseShield(unit)), { source: unit });
         friend.haste = {
           remaining: 2.5,
           pct: lemonCleanseHaste(unit),
@@ -10002,8 +11356,8 @@
       }
       const backup = weakestDamaged(allies);
       if (backup) {
-        const healed = healUnit(backup, supportAmount(unit, lemonCleanseHeal(unit)));
-        const shielded = grantShield(backup, supportAmount(unit, lemonCleanseShield(unit)));
+        const healed = healUnit(backup, supportAmount(unit, lemonCleanseHeal(unit)), { source: unit });
+        const shielded = grantShield(backup, supportAmount(unit, lemonCleanseShield(unit)), { source: unit });
         backup.haste = {
           remaining: 2.5,
           pct: lemonCleanseHaste(unit),
@@ -10480,6 +11834,16 @@
     }
     const applied = Number(Math.max(0, amount * (1 - cooldownDelayResistance(target))).toFixed(3));
     target.cooldown += applied;
+    if (applied > 0) {
+      recordCombatEvent(state.battle, {
+        type: "control",
+        kind: "cooldownDelay",
+        source,
+        target,
+        amount: applied,
+      });
+      playGameSfx("control", { volume: 0.38 });
+    }
     return applied;
   }
 
@@ -11061,7 +12425,7 @@
     const adjusted = Math.max(1, Math.round(amount * (1 - reduction)));
     unit.hp = Math.min(unit.maxHp, unit.hp + adjusted);
     const applied = unit.hp - before;
-    if (applied > 0) recordCombatSupport(unit, applied, "heal");
+    if (applied > 0) recordCombatSupport(unit, applied, "heal", options.source || null);
     const overheal = Math.max(0, before + adjusted - unit.maxHp);
     if (overheal > 0 && unit.item?.overhealShieldPct) {
       const shielded = grantShield(unit, Math.max(1, Math.round(overheal * unit.item.overhealShieldPct)), { noShare: true });
@@ -11087,7 +12451,7 @@
     const before = unit.shield || 0;
     unit.shield = Math.min(cap, before + Math.max(1, Math.round(amount * (1 - reduction))));
     const applied = unit.shield - before;
-    if (applied > 0) recordCombatSupport(unit, applied, "shield");
+    if (applied > 0) recordCombatSupport(unit, applied, "shield", options.source || null);
     if (applied > 0 && !options.noShare) shareReceivedSupport(unit, applied, "shield");
     return applied;
   }
@@ -11100,9 +12464,9 @@
       .filter((ally) => ally.uid !== unit.uid && !ally.dead && isAdjacentSlot(unit, ally))
       .forEach((ally) => {
         const applied = kind === "heal"
-          ? healUnit(ally, share, { noShare: true })
+          ? healUnit(ally, share, { noShare: true, source: unit })
           : kind === "shield"
-          ? grantShield(ally, share, { noShare: true })
+          ? grantShield(ally, share, { noShare: true, source: unit })
           : 0;
         if (applied > 0) emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#2b2b25");
       });
@@ -11667,18 +13031,24 @@
   function cycleBattleSpeed() {
     if (bossBattleSpeedRestricted()) {
       setBattleSpeed(currentBattleSpeed() === 1 ? 0.5 : 1);
+      playGameSfx("ui-confirm", { volume: 0.5, rate: currentBattleSpeed() });
       return;
     }
     state.battleSpeedIndex = (state.battleSpeedIndex + 1) % BATTLE_SPEEDS.length;
     if (state.phase !== "battle") state.message = `Speed ${battleSpeedLabel()}`;
+    playGameSfx("ui-confirm", { volume: 0.5, rate: Math.min(1.5, currentBattleSpeed()) });
   }
 
   function update(dt) {
+    syncGameMusic();
+    updateRunAutosave(dt);
     state.idleTime += dt;
     updateRebootTransition(dt);
     updateFinalVictoryTransition(dt);
     updateShopReturnStaticTransition(dt);
     updatePostGiraffeHorrorTransition(dt);
+    updateStoryConversationTransition(dt);
+    if (state.optionsMenu.open) return;
     if (state.phase === "victoryCutscene" && state.victoryCutscene) {
       state.victoryCutscene.elapsed += dt;
     }
@@ -11736,6 +13106,7 @@
     if (transition.elapsed >= transition.duration) {
       state.shopReturnStaticTransition = null;
       if (state.phase === "prep") state.message = themedArena(currentArena()).short;
+      maybeStartStoryMilestone();
     }
   }
 
@@ -11793,10 +13164,12 @@
       drawRealityRevealDistortionOverlay();
       drawMergeOpportunityOverlay();
       if (state.phase === "prep" && !state.codexOpen) drawCodexMenuButton();
+      drawStoryConversationOverlay();
     }
     drawRebootTransitionOverlay();
     drawFinalVictoryTransitionOverlay();
     drawShopReturnStaticTransitionOverlay();
+    drawOptionsMenuOverlay();
     drawTooltip();
   }
 
@@ -12762,8 +14135,7 @@
   }
 
   function cozyShopkeeperSrc() {
-    const index = Math.max(0, Math.min(SHOPKEEPER_LEVEL_SRCS.length - 1, state.shopLevel - 1));
-    return SHOPKEEPER_LEVEL_SRCS[index] || SHOPKEEPER_SRC;
+    return SHOPKEEPER_SRC;
   }
 
   function cozySlotBackdropSrc(area, slotKind = null) {
@@ -13494,6 +14866,239 @@
     return label ? { title: label, body: "" } : null;
   }
 
+  function optionsMenuCanOpen() {
+    if (state.activeStory || state.codexOpen || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition) return false;
+    if (state.phase === "victoryCutscene") return false;
+    return state.phase === "prep" || state.phase === "battle" || state.phase === "result";
+  }
+
+  function openOptionsMenu() {
+    if (!optionsMenuCanOpen()) return false;
+    state.optionsMenu.open = true;
+    state.optionsMenu.selected = "resume";
+    state.optionsMenu.dragSlider = null;
+    state.selected = null;
+    state.drag = null;
+    state.hover = null;
+    state.message = "Options";
+    playGameSfx("ui-confirm", { volume: 0.45 });
+    return true;
+  }
+
+  function closeOptionsMenu() {
+    if (!state.optionsMenu.open) return false;
+    state.optionsMenu.open = false;
+    state.optionsMenu.dragSlider = null;
+    state.message = state.phase === "battle" ? "Battle" : state.phase === "result" ? "Result" : realityBroken() ? themedArena(currentArena()).short : "Prep";
+    playGameSfx("ui-back", { volume: 0.48 });
+    return true;
+  }
+
+  function optionSliderValue(slider) {
+    return slider === "music" ? (gameMusic.volumeSetting ?? savedGameMusicSetting()) : (gameSfx.volumeSetting ?? savedGameSfxSetting());
+  }
+
+  function setOptionSliderValue(slider, value) {
+    const next = clamp(Math.round(value), 0, 10);
+    if (slider === "music") setGameMusicSetting(next);
+    else setGameSfxSetting(next);
+    state.optionsMenu.selected = slider;
+    state.message = `${slider === "music" ? "Music" : "SFX"} ${next}`;
+    return next;
+  }
+
+  function setOptionSliderFromPoint(slider, x) {
+    const rect = slider === "music" ? OPTIONS_MENU.musicTrack : OPTIONS_MENU.sfxTrack;
+    return setOptionSliderValue(slider, ((x - rect.x) / rect.w) * 10);
+  }
+
+  function applyOptionsMenuHit(hit) {
+    if (!state.optionsMenu.open || !hit || hit.area !== "optionsMenu") return false;
+    if (hit.action === "resume" || hit.action === "close") return closeOptionsMenu();
+    if (hit.action === "save") {
+      saveCurrentRun();
+      state.optionsMenu.selected = "save";
+      return true;
+    }
+    if (hit.action === "exit") {
+      state.optionsMenu.selected = "exit";
+      exitToMainMenuWithSave();
+      return true;
+    }
+    if (hit.action === "slider") {
+      state.optionsMenu.dragSlider = hit.slider;
+      setOptionSliderFromPoint(hit.slider, hit.x);
+      playGameSfx("ui-hover", { volume: 0.26 });
+      return true;
+    }
+    return true;
+  }
+
+  function optionsMenuLayout() {
+    const musicValue = optionSliderValue("music");
+    const sfxValue = optionSliderValue("sfx");
+    return {
+      panel: OPTIONS_MENU.panel,
+      close: OPTIONS_MENU.close,
+      buttons: [
+        { id: "resume", label: "Resume", rect: OPTIONS_MENU.resume },
+        { id: "save", label: "Save Run", rect: OPTIONS_MENU.save },
+        { id: "exit", label: "Main Menu", rect: OPTIONS_MENU.exit },
+      ],
+      sliders: [
+        { id: "music", label: "Music", value: musicValue, rect: OPTIONS_MENU.musicTrack },
+        { id: "sfx", label: "SFX", value: sfxValue, rect: OPTIONS_MENU.sfxTrack },
+      ],
+    };
+  }
+
+  function drawOptionsSlider(slider) {
+    const { rect, value, label, id } = slider;
+    const selected = id === state.optionsMenu.selected || id === state.optionsMenu.dragSlider;
+    const trackY = rect.y + rect.h / 2;
+    const knobX = rect.x + (value / 10) * rect.w;
+    const fillColor = id === "music" ? themeColor("accent", "#4a9e68") : themeColor("warning", "#d99043");
+    const railColor = realityBroken() ? "rgba(0, 8, 9, 0.82)" : "rgba(255, 253, 232, 0.86)";
+    const railStroke = selected
+      ? fillColor
+      : realityBroken()
+        ? "rgba(70, 255, 99, 0.46)"
+        : "rgba(22, 57, 45, 0.28)";
+
+    roundedRect(rect.x - 16, rect.y - 28, rect.w + 32, rect.h + 56, 8);
+    ctx.fillStyle = selected
+      ? realityBroken()
+        ? "rgba(70, 255, 99, 0.08)"
+        : "rgba(74, 158, 104, 0.08)"
+      : realityBroken()
+        ? "rgba(255, 255, 255, 0.025)"
+        : "rgba(22, 57, 45, 0.035)";
+    ctx.fill();
+    ctx.lineWidth = selected ? 2 : 1;
+    ctx.strokeStyle = selected ? railStroke : realityBroken() ? "rgba(70, 255, 99, 0.12)" : "rgba(22, 57, 45, 0.1)";
+    ctx.stroke();
+
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    ctx.font = "900 13px Inter, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, rect.x - 8, rect.y - 22);
+    ctx.textAlign = "right";
+    ctx.fillText(`${value}/10`, rect.x + rect.w + 8, rect.y - 22);
+
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 5);
+    ctx.fillStyle = railColor;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = railStroke;
+    ctx.stroke();
+
+    roundedRect(rect.x + 3, rect.y + 3, Math.max(8, knobX - rect.x - 3), rect.h - 6, 4);
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+
+    for (let tick = 0; tick <= 10; tick += 1) {
+      const x = rect.x + (tick / 10) * rect.w;
+      const major = tick === 0 || tick === 5 || tick === 10;
+      ctx.beginPath();
+      ctx.moveTo(x, rect.y + rect.h + (major ? 6 : 8));
+      ctx.lineTo(x, rect.y + rect.h + (major ? 14 : 12));
+      ctx.lineWidth = major ? 2 : 1;
+      ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.42)" : "rgba(22, 57, 45, 0.32)";
+      ctx.stroke();
+    }
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.font = "800 9px Inter, sans-serif";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    ctx.fillText("0", rect.x, rect.y + rect.h + 17);
+    ctx.fillText("5", rect.x + rect.w / 2, rect.y + rect.h + 17);
+    ctx.fillText("10", rect.x + rect.w, rect.y + rect.h + 17);
+
+    ctx.beginPath();
+    ctx.arc(knobX, trackY, 15, 0, Math.PI * 2);
+    ctx.fillStyle = realityBroken() ? "#46ff63" : "#fff7cf";
+    ctx.fill();
+    ctx.lineWidth = selected ? 4 : 3;
+    ctx.strokeStyle = selected ? fillColor : realityBroken() ? "rgba(70, 255, 99, 0.75)" : "rgba(22, 57, 45, 0.45)";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(knobX - 5, trackY, 1.4, 0, Math.PI * 2);
+    ctx.arc(knobX, trackY, 1.4, 0, Math.PI * 2);
+    ctx.arc(knobX + 5, trackY, 1.4, 0, Math.PI * 2);
+    ctx.fillStyle = realityBroken() ? "rgba(0, 8, 9, 0.8)" : "rgba(22, 57, 45, 0.58)";
+    ctx.fill();
+
+    registerTooltip(rect.x - 16, rect.y - 28, rect.w + 32, rect.h + 56, {
+      title: `${label} volume`,
+      body: "Click or drag to adjust.",
+    });
+  }
+
+  function drawOptionsMenuOverlay() {
+    if (!state.optionsMenu.open) return;
+    state.tooltipTargets = [];
+    const layout = optionsMenuLayout();
+    const { panel } = layout;
+    ctx.save();
+    ctx.fillStyle = realityBroken() ? "rgba(0, 7, 8, 0.72)" : "rgba(22, 57, 45, 0.34)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.shadowColor = realityBroken() ? "rgba(70, 255, 99, 0.18)" : "rgba(22, 57, 45, 0.28)";
+    ctx.shadowBlur = 22;
+    ctx.shadowOffsetY = 8;
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    ctx.fillStyle = realityBroken() ? "rgba(5, 16, 18, 0.96)" : "rgba(255, 253, 232, 0.98)";
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.48)" : "rgba(22, 57, 45, 0.24)";
+    ctx.stroke();
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = themeColor("primary", "#16392d");
+    ctx.font = "900 25px Inter, sans-serif";
+    ctx.fillText("Options", panel.x + 30, panel.y + 42);
+    ctx.font = "800 11px Inter, sans-serif";
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    const sub = state.phase === "battle" ? "Battle paused" : state.phase === "result" ? "Run menu" : "Prep menu";
+    ctx.fillText(sub, panel.x + 31, panel.y + 70);
+
+    const close = layout.close;
+    roundedRect(close.x, close.y, close.w, close.h, 6);
+    ctx.fillStyle = state.optionsMenu.selected === "close" ? themeColor("panelActive", "#e7ffd9") : themeColor("panelSoft", "rgba(255, 249, 214, 0.74)");
+    ctx.fill();
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.22)");
+    ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    fitText("X", close.x + 8, close.y + 19, close.w - 16, "900 14px Inter, sans-serif", themeColor("primary", "#16392d"));
+
+    ctx.font = "800 12px Inter, sans-serif";
+    const saveLine = state.optionsMenu.savedAt ? `Saved ${new Date(state.optionsMenu.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Save before leaving the table.";
+    fitText(saveLine, panel.x + 30, panel.y + 100, panel.w - 60, ctx.font, themeColor("muted", "#6a4b35"));
+
+    layout.sliders.forEach(drawOptionsSlider);
+    layout.buttons.forEach((button) => {
+      const selected = state.optionsMenu.selected === button.id;
+      roundedRect(button.rect.x, button.rect.y, button.rect.w, button.rect.h, 7);
+      ctx.fillStyle = selected ? themeColor("accent", "#4a9e68") : themeColor("primary", "#16392d");
+      ctx.fill();
+      ctx.strokeStyle = selected ? themeColor("warning", "#d99043") : "rgba(255,255,255,0.18)";
+      ctx.stroke();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      fitText(button.label, button.rect.x + button.rect.w / 2, button.rect.y + 23, button.rect.w - 20, "900 12px Inter, sans-serif", "#fff7cf");
+      registerTooltip(button.rect.x, button.rect.y, button.rect.w, button.rect.h, {
+        title: button.label,
+        body: button.id === "exit" ? "Saves this run and returns to the main menu." : button.id === "save" ? "Stores this run for Continue Run." : "Closes this menu.",
+      });
+    });
+    ctx.restore();
+  }
+
   function drawPrep() {
     drawShopkeeperStall();
     shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, shopEntryAt(i), "shop", i));
@@ -13511,8 +15116,7 @@
     const keeperFlash = keeperBleed.phase === "flash";
     const stallFlash = stallBleed.phase === "flash";
     const keeper = getUiSprite(keeperFlash ? cozyShopkeeperSrc() : currentShopkeeperSrc());
-    if (realityBroken()) getUiSprite(SHOPKEEPER_STALL_SRC);
-    const stall = getUiSprite(stallFlash ? SHOPKEEPER_STALL_SRC : currentShopkeeperStallSrc());
+    const stall = getUiSprite(currentShopkeeperStallSrc());
     const keeperRect = SHOPKEEPER_DISPLAY.keeper;
     const stallRect = SHOPKEEPER_DISPLAY.stall;
 
@@ -13654,6 +15258,7 @@
     if (battle) drawBattle(battle);
     drawParticles();
     drawResultPanel();
+    if (state.combatLedgerReview?.open) drawExpandedCombatLedger(state.lastCombatLedger);
   }
 
   function drawSlot(x, y, w, h, unit, area, index) {
@@ -15429,6 +17034,35 @@
     return { x: fx - 40, y: y + 246, w: 80, h: 92 };
   }
 
+  function codexPreviewRect() {
+    const x = CODEX_LIST.x + CODEX_LIST.w + 34;
+    const y = CODEX_LIST.y - 34;
+    return { x: x + 15, y: y + 18, w: 116, h: 138 };
+  }
+
+  function resetCodexPreviewView() {
+    state.codexPreview = {
+      ...(state.codexPreview || {}),
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      dragging: false,
+      startX: 0,
+      startY: 0,
+      startPanX: 0,
+      startPanY: 0,
+    };
+  }
+
+  function clampCodexPreviewPan() {
+    const view = state.codexPreview || (state.codexPreview = {});
+    view.zoom = 1;
+    view.panX = 0;
+    view.panY = 0;
+    view.dragging = false;
+    return view;
+  }
+
   function fitCodexText(text, x, y, maxWidth, font, color, minPx = 6.5) {
     if (!realityBroken()) {
       fitText(text, x, y, maxWidth, font, color);
@@ -15659,6 +17293,46 @@
     ctx.fillText("No matches", x + 24, y + 48);
   }
 
+  function drawCodexAnimalPreview(animal, unit, selectedMeal, x, y) {
+    const rect = codexPreviewRect();
+    const view = clampCodexPreviewPan();
+    const zoom = view.zoom || 1;
+    const hovered = state.pointer && pointInRect(state.pointer.x, state.pointer.y, rect);
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 10);
+    ctx.fillStyle = hovered
+      ? themeColor("panelHover", "rgba(255, 249, 214, 0.9)")
+      : themeColor("panelSoft", "rgba(255, 253, 232, 0.72)");
+    ctx.fill();
+    ctx.strokeStyle = hovered ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
+    ctx.lineWidth = hovered ? 2 : 1;
+    ctx.stroke();
+
+    ctx.save();
+    roundedRect(rect.x + 3, rect.y + 3, rect.w - 6, rect.h - 6, 8);
+    ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    const centerX = rect.x + rect.w / 2 + (view.panX || 0);
+    const centerY = rect.y + rect.h / 2 + (view.panY || 0);
+    if (selectedMeal) {
+      const mealImage = getDefeatStillSprite(animal);
+      if (mealImage && mealImage.complete && mealImage.naturalWidth > 0) {
+        ctx.globalAlpha = 0.94;
+        const size = 94 * zoom;
+        ctx.drawImage(mealImage, Math.round(centerX - size / 2), Math.round(centerY - size / 2), size, size);
+      }
+    } else {
+      drawFoodAnimal(unit, centerX, centerY + 4 * zoom, 42 * zoom, true);
+    }
+    ctx.restore();
+    ctx.imageSmoothingEnabled = true;
+    ctx.lineWidth = 1;
+
+    registerTooltip(rect.x, rect.y, rect.w, rect.h, {
+      title: realityBroken() ? "War manifest preview" : "Beastiary preview",
+      body: "Select another form or entry to update the preview.",
+    });
+  }
+
   function drawCodexAnimalDetails(animal) {
     const x = CODEX_LIST.x + CODEX_LIST.w + 34;
     const y = CODEX_LIST.y - 34;
@@ -15669,21 +17343,8 @@
     const form = selectedMeal ? { name: realityBroken() ? "Wreck" : "Meal", short: realityBroken() ? "Wreck" : "Meal" } : animal.forms?.[selectedTier - 1] || { name: animal.name, short: animal.short };
     drawCodexInnerPanel(x, y, w, CODEX_LIST.h + 52);
 
-    if (selectedMeal) {
-      const mealImage = getDefeatStillSprite(animal);
-      if (mealImage && mealImage.complete && mealImage.naturalWidth > 0) {
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.92;
-        const size = 96;
-        ctx.drawImage(mealImage, Math.round(x + 58 - size / 2), Math.round(y + 82 - size / 2), size, size);
-        ctx.restore();
-        ctx.imageSmoothingEnabled = true;
-      }
-    } else {
-      drawFoodAnimal(unit, x + 58, y + 82, 42, true);
-      drawUpgradeStars(selectedTier, x + 58, y + 136, 9, "center");
-    }
+    drawCodexAnimalPreview(animal, unit, selectedMeal, x, y);
+    if (!selectedMeal) drawUpgradeStars(selectedTier, x + 73, y + 148, 9, "center");
     drawCodexAttackParticlePreview(animal, x + w - 42, y + 82, 34);
 
     const headerReserve = 82;
@@ -18378,6 +20039,7 @@
       ctx.fillText(copy("ui.result.noLedger", "No combat details captured."), x, y + 20);
       return;
     }
+    drawCombatLedgerDetailsButton(combatLedgerDetailsButtonRect(x, y, maxWidth), Boolean(state.combatLedgerReview?.open));
     const rows = [
       [`Damage`, `You ${ledger.ally.damageDealt} / Foe ${ledger.enemy.damageDealt}`, "info_damage", "Damage dealt by each side."],
       [`Support`, `Heal ${ledger.ally.healingReceived} / Shield ${ledger.ally.shieldingReceived}`, "info_heal", "Healing and shielding received by your team."],
@@ -18406,6 +20068,946 @@
     ctx.font = "900 11px Inter, sans-serif";
     fitText(mvp, x + 52, y + 78, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
     fitText(protectedLine, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
+  }
+
+  function combatLedgerDetailsButtonRect(x = 720, y = 188, maxWidth = 268) {
+    return { x: x + maxWidth - 74, y: y - 15, w: 74, h: 22 };
+  }
+
+  function drawCombatLedgerDetailsButton(rect, open) {
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 6);
+    ctx.fillStyle = open
+      ? themeColor("panelActive", realityBroken() ? "rgba(19, 45, 31, 0.94)" : "#e7ffd9")
+      : themeColor("panelSoft", realityBroken() ? "rgba(7, 18, 20, 0.84)" : "rgba(255, 253, 232, 0.78)");
+    ctx.fill();
+    ctx.strokeStyle = open ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.22)");
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    drawUiAtlasIcon("info_time", rect.x + 12, rect.y + rect.h / 2, 13, { tooltip: null });
+    fitText("Details", rect.x + 23, rect.y + 14, rect.w - 28, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
+    registerTooltip(rect.x, rect.y, rect.w, rect.h, {
+      title: "Combat details",
+      body: "Open the detailed combat ledger.",
+    });
+  }
+
+  function combatLedgerReviewUnits(ledger) {
+    return [
+      { uid: "all", side: "all", short: "All", name: "All participants" },
+      ...((ledger?.units || []).slice().sort((a, b) => {
+        const sideDelta = (a.side === "ally" ? 0 : 1) - (b.side === "ally" ? 0 : 1);
+        return sideDelta || String(a.short || a.name).localeCompare(String(b.short || b.name));
+      })),
+    ];
+  }
+
+  function currentCombatLedgerFrameIndex(ledger) {
+    const frames = ledger?.frames || [];
+    if (!frames.length) return -1;
+    if (!Number.isInteger(state.combatLedgerReview.frameIndex) || state.combatLedgerReview.frameIndex < 0) {
+      state.combatLedgerReview.frameIndex = frames.length - 1;
+    }
+    state.combatLedgerReview.frameIndex = clamp(state.combatLedgerReview.frameIndex, 0, frames.length - 1);
+    return state.combatLedgerReview.frameIndex;
+  }
+
+  function resetCombatLedgerReview() {
+    state.combatLedgerReview = {
+      open: false,
+      unitUid: "all",
+      filter: "all",
+      frameIndex: -1,
+      logScrollOffset: 0,
+      focusedEventSeq: null,
+      eventTypeFilters: { damage: true, support: true, ko: true, control: true },
+      bigMomentsOnly: false,
+    };
+  }
+
+  function combatLedgerFilteredEvents(ledger) {
+    const selectedUid = state.combatLedgerReview.unitUid || "all";
+    const filter = combatLedgerEffectiveFilterId();
+    return (ledger?.events || []).filter((event) => {
+      if (!combatLedgerEventTypeEnabled(event)) return false;
+      if (state.combatLedgerReview.bigMomentsOnly && !combatLedgerImportantEvent(event, ledger)) return false;
+      if (selectedUid === "all") return true;
+      if (filter === "output") return event.sourceUid === selectedUid;
+      if (filter === "input") return event.targetUid === selectedUid;
+      return event.sourceUid === selectedUid || event.targetUid === selectedUid;
+    });
+  }
+
+  function combatLedgerImportantEvent(event, ledger) {
+    if (!event) return false;
+    if (event.type === "ko" || event.type === "control") return true;
+    if (event.type === "damage") {
+      const amount = (event.hpDamage || 0) + (event.shieldDamage || 0) + (event.amount || 0);
+      const target = event.targetUid != null ? (Array.isArray(ledger?.units) ? ledger.units.find((unit) => unit.uid === event.targetUid) : ledger?.units?.[event.targetUid]) : null;
+      const scale = Math.max(18, Math.round((target?.damageTaken || target?.maxHp || 60) * 0.18));
+      return amount >= scale;
+    }
+    if (event.type === "support") return (event.amount || 0) >= 20;
+    return event.type === "battleStart";
+  }
+
+  function defaultCombatLedgerEventTypeFilters() {
+    return { damage: true, support: true, ko: true, control: true };
+  }
+
+  function combatLedgerEventTypeId(event) {
+    if (event?.type === "damage") return "damage";
+    if (event?.type === "support") return "support";
+    if (event?.type === "ko") return "ko";
+    return "control";
+  }
+
+  function combatLedgerEventTypeFilters() {
+    const filters = state.combatLedgerReview.eventTypeFilters || defaultCombatLedgerEventTypeFilters();
+    const normalized = defaultCombatLedgerEventTypeFilters();
+    COMBAT_LEDGER_EVENT_TYPE_FILTERS.forEach((filter) => {
+      normalized[filter.id] = filters[filter.id] !== false;
+    });
+    if (!Object.values(normalized).some(Boolean)) return defaultCombatLedgerEventTypeFilters();
+    state.combatLedgerReview.eventTypeFilters = normalized;
+    return normalized;
+  }
+
+  function combatLedgerEventTypeEnabled(event) {
+    return combatLedgerEventTypeFilters()[combatLedgerEventTypeId(event)] !== false;
+  }
+
+  function toggleCombatLedgerEventTypeFilter(typeId) {
+    const filters = { ...combatLedgerEventTypeFilters() };
+    if (!(typeId in filters)) return;
+    filters[typeId] = !filters[typeId];
+    state.combatLedgerReview.eventTypeFilters = Object.values(filters).some(Boolean) ? filters : defaultCombatLedgerEventTypeFilters();
+    state.combatLedgerReview.logScrollOffset = 0;
+    state.combatLedgerReview.focusedEventSeq = null;
+  }
+
+  function toggleCombatLedgerBigMoments() {
+    state.combatLedgerReview.bigMomentsOnly = !state.combatLedgerReview.bigMomentsOnly;
+    state.combatLedgerReview.logScrollOffset = 0;
+    state.combatLedgerReview.focusedEventSeq = null;
+  }
+
+  function combatLedgerEventKey(event) {
+    return event?.id ?? event?.seq ?? null;
+  }
+
+  function combatLedgerDirectionalFiltersEnabled() {
+    return (state.combatLedgerReview.unitUid || "all") !== "all";
+  }
+
+  function combatLedgerEffectiveFilterId() {
+    if (!combatLedgerDirectionalFiltersEnabled() && state.combatLedgerReview.filter !== "all") return "all";
+    return state.combatLedgerReview.filter || "all";
+  }
+
+  function combatLedgerLogVisibleRows(rect) {
+    const layout = combatLedgerTimelineLayout(rect);
+    return Math.max(1, Math.floor((layout.rowBottom - layout.rowStartY) / layout.rowH));
+  }
+
+  function combatLedgerTimelineLayout(rect) {
+    const detail = { x: rect.x + 10, y: rect.y + rect.h - 62, w: rect.w - 20, h: 52 };
+    const chipsY = rect.y + 31;
+    let chipX = rect.x + 12;
+    const keyChip = { rect: { x: chipX, y: chipsY, w: 40, h: 19 } };
+    chipX += keyChip.rect.w + 4;
+    const typeChips = COMBAT_LEDGER_EVENT_TYPE_FILTERS.map((filter) => {
+      const w = filter.id === "ko" ? 34 : filter.id === "damage" ? 42 : filter.id === "support" ? 48 : 48;
+      const chip = { filter, rect: { x: chipX, y: chipsY, w, h: 19 } };
+      chipX += w + 4;
+      return chip;
+    });
+    return {
+      keyChip,
+      typeChips,
+      detail,
+      rowStartY: rect.y + 59,
+      rowBottom: detail.y - 6,
+      rowH: 23,
+    };
+  }
+
+  function currentCombatLedgerLogScrollOffset(events, visibleRows) {
+    const maxOffset = Math.max(0, (events?.length || 0) - visibleRows);
+    const raw = Number.isFinite(state.combatLedgerReview.logScrollOffset) ? state.combatLedgerReview.logScrollOffset : 0;
+    state.combatLedgerReview.logScrollOffset = clamp(Math.round(raw), 0, maxOffset);
+    return state.combatLedgerReview.logScrollOffset;
+  }
+
+  function setCombatLedgerLogScrollOffset(offset) {
+    const ledger = state.lastCombatLedger;
+    if (!ledger) return;
+    const rect = combatLedgerReviewRects(ledger).log;
+    const events = combatLedgerFilteredEvents(ledger);
+    const visibleRows = combatLedgerLogVisibleRows(rect);
+    const maxOffset = Math.max(0, events.length - visibleRows);
+    state.combatLedgerReview.logScrollOffset = clamp(Math.round(offset || 0), 0, maxOffset);
+  }
+
+  function scrollCombatLedgerLog(deltaRows) {
+    setCombatLedgerLogScrollOffset((state.combatLedgerReview.logScrollOffset || 0) + deltaRows);
+  }
+
+  function combatLedgerVisibleLogRows(ledger, rect) {
+    const layout = combatLedgerTimelineLayout(rect);
+    const events = combatLedgerFilteredEvents(ledger);
+    const visibleRows = combatLedgerLogVisibleRows(rect);
+    const scrollOffset = currentCombatLedgerLogScrollOffset(events, visibleRows);
+    const end = Math.max(0, events.length - scrollOffset);
+    const start = Math.max(0, end - visibleRows);
+    const visible = events.slice(start, end);
+    return {
+      events,
+      visible,
+      start,
+      end,
+      visibleRows,
+      scrollOffset,
+      rows: visible.map((event, index) => ({
+        event,
+        index: start + index,
+        rect: { x: rect.x + 8, y: layout.rowStartY - 13 + index * layout.rowH, w: rect.w - 22, h: 21 },
+      })),
+      layout,
+    };
+  }
+
+  function combatLedgerFrameIndexForEvent(ledger, event) {
+    const frames = ledger?.frames || [];
+    if (!frames.length || !event) return -1;
+    let bestIndex = 0;
+    let bestDelta = Infinity;
+    frames.forEach((frame, index) => {
+      const delta = Math.abs((frame.t || 0) - (event.t || 0));
+      if (delta < bestDelta) {
+        bestDelta = delta;
+        bestIndex = index;
+      }
+    });
+    return bestIndex;
+  }
+
+  function setCombatLedgerLogOffsetForEvent(ledger, event) {
+    const rect = combatLedgerReviewRects(ledger).log;
+    const events = combatLedgerFilteredEvents(ledger);
+    const index = events.findIndex((entry) => combatLedgerEventKey(entry) === combatLedgerEventKey(event));
+    if (index < 0) return;
+    const visibleRows = combatLedgerLogVisibleRows(rect);
+    if (events.length <= visibleRows) {
+      setCombatLedgerLogScrollOffset(0);
+      return;
+    }
+    const end = clamp(index + Math.ceil(visibleRows / 2), visibleRows, events.length);
+    setCombatLedgerLogScrollOffset(events.length - end);
+  }
+
+  function focusCombatLedgerEvent(ledger, event, options = {}) {
+    if (!event) return;
+    state.combatLedgerReview.focusedEventSeq = combatLedgerEventKey(event);
+    if (options.centerLog) setCombatLedgerLogOffsetForEvent(ledger, event);
+  }
+
+  function nearestCombatLedgerEventForFrame(ledger) {
+    const frames = ledger?.frames || [];
+    const frame = frames[currentCombatLedgerFrameIndex(ledger)];
+    const events = combatLedgerFilteredEvents(ledger);
+    if (!frame || !events.length) return null;
+    let best = events[0];
+    let bestDelta = Infinity;
+    events.forEach((event) => {
+      const delta = Math.abs((event.t || 0) - (frame.t || 0));
+      if (delta < bestDelta) {
+        best = event;
+        bestDelta = delta;
+      }
+    });
+    return best;
+  }
+
+  function syncCombatLedgerFocusedEventToFrame(ledger) {
+    const event = nearestCombatLedgerEventForFrame(ledger);
+    if (event) focusCombatLedgerEvent(ledger, event, { centerLog: true });
+    else state.combatLedgerReview.focusedEventSeq = null;
+  }
+
+  function combatLedgerReviewRects(ledger) {
+    const panel = COMBAT_LEDGER_REVIEW_PANEL;
+    const units = combatLedgerReviewUnits(ledger);
+    const leftX = panel.x + 18;
+    const leftW = 322;
+    const logX = panel.x + 348;
+    const logW = panel.x + panel.w - 18 - logX;
+    const participantsPanel = { x: panel.x + 10, y: panel.y + 330, w: leftW + 16, h: 180 };
+    return {
+      panel,
+      close: { x: panel.x + panel.w - 44, y: panel.y + 12, w: 26, h: 26 },
+      prev: { x: panel.x + 18, y: panel.y + 42, w: 28, h: 24 },
+      next: { x: panel.x + 52, y: panel.y + 42, w: 28, h: 24 },
+      track: { x: panel.x + 94, y: panel.y + 50, w: 246, h: 8 },
+      mini: { x: leftX, y: panel.y + 82, w: leftW, h: 248 },
+      participantsPanel,
+      units: units.map((unit, index) => {
+        const col = index < 10 ? 0 : 1;
+        const row = index % 10;
+        return {
+          unit,
+          rect: { x: participantsPanel.x + 8 + col * 158, y: participantsPanel.y + 40 + row * 14, w: 150, h: 13 },
+        };
+      }),
+      filters: COMBAT_LEDGER_REVIEW_FILTERS.map((filter, index) => ({
+        filter,
+        rect: { x: logX + index * 76, y: panel.y + 42, w: 70, h: 24 },
+      })),
+      log: { x: logX, y: panel.y + 82, w: logW, h: 428 },
+    };
+  }
+
+  function drawExpandedCombatLedger(ledger) {
+    if (!ledger) return;
+    const rects = combatLedgerReviewRects(ledger);
+    const panel = rects.panel;
+    const horror = realityBroken();
+    const primary = themeColor("primary", "#16392d");
+    const muted = themeColor("muted", "#6a4b35");
+    const panelFill = horror ? "rgba(4, 12, 14, 0.9)" : "rgba(255, 253, 232, 0.9)";
+    const panelStroke = horror ? "rgba(70, 255, 99, 0.28)" : "rgba(22, 57, 45, 0.24)";
+    const panelBg = getUiSprite(currentCombatLedgerPanelBgSrc());
+
+    ctx.save();
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    if (panelBg && panelBg.complete && panelBg.naturalWidth > 0) {
+      ctx.save();
+      ctx.clip();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(panelBg, panel.x, panel.y, panel.w, panel.h);
+      if (!horror) {
+        ctx.fillStyle = "rgba(255, 253, 232, 0.1)";
+        ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = panelFill;
+      ctx.fill();
+    }
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    ctx.strokeStyle = panelStroke;
+    ctx.lineWidth = horror ? 1 : 1.5;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+
+    ctx.fillStyle = primary;
+    ctx.font = "900 15px Inter, sans-serif";
+    ctx.fillText("Detailed combat ledger", panel.x + 18, panel.y + 24);
+    ctx.fillStyle = muted;
+    ctx.font = "800 10px Inter, sans-serif";
+    const events = ledger.events || [];
+    const frames = ledger.frames || [];
+    ctx.textAlign = "right";
+    ctx.fillText(`${events.length} events / ${frames.length} ticks`, rects.close.x - 12, panel.y + 24);
+    ctx.textAlign = "left";
+    roundedRect(rects.close.x, rects.close.y, rects.close.w, rects.close.h, 6);
+    ctx.fillStyle = themeColor("panelSoft", horror ? "rgba(7, 18, 20, 0.82)" : "rgba(255, 253, 232, 0.7)");
+    ctx.fill();
+    ctx.strokeStyle = themeColor("borderDim", horror ? "rgba(70, 255, 99, 0.24)" : "rgba(22, 57, 45, 0.18)");
+    ctx.lineWidth = horror ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.fillStyle = primary;
+    ctx.font = "900 14px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("X", rects.close.x + rects.close.w / 2, rects.close.y + rects.close.h / 2 + 1);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    registerTooltip(rects.close.x, rects.close.y, rects.close.w, rects.close.h, {
+      title: "Close details",
+      body: "Return to the compact combat ledger.",
+    });
+
+    drawCombatLedgerFrameControls(ledger, rects);
+    drawCombatLedgerMiniFrame(ledger, rects.mini);
+    drawCombatLedgerParticipantTabs(ledger, rects);
+    drawCombatLedgerEventLog(ledger, rects.log);
+    ctx.restore();
+  }
+
+  function drawCombatLedgerFrameControls(ledger, rects) {
+    const frames = ledger.frames || [];
+    const index = currentCombatLedgerFrameIndex(ledger);
+    const frame = frames[index] || null;
+    const primary = themeColor("primary", "#16392d");
+    const muted = themeColor("muted", "#6a4b35");
+    const horror = realityBroken();
+
+    [rects.prev, rects.next].forEach((button, buttonIndex) => {
+      roundedRect(button.x, button.y, button.w, button.h, 6);
+      ctx.fillStyle = themeColor("panelActive", horror ? "rgba(19, 45, 31, 0.9)" : "#e7ffd9");
+      ctx.fill();
+      ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.22)");
+      ctx.lineWidth = horror ? 0.75 : 1;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.fillStyle = primary;
+      ctx.font = "900 14px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(buttonIndex === 0 ? "<" : ">", button.x + button.w / 2, button.y + button.h / 2 + 1);
+      registerTooltip(button.x, button.y, button.w, button.h, {
+        title: buttonIndex === 0 ? "Previous tick" : "Next tick",
+        body: "Step through captured combat snapshots.",
+      });
+    });
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+
+    const track = { x: rects.track.x, y: rects.track.y - 2, w: rects.track.w, h: rects.track.h + 5 };
+    roundedRect(track.x, track.y, track.w, track.h, 6);
+    ctx.fillStyle = horror ? "rgba(0, 7, 8, 0.56)" : "rgba(255, 253, 232, 0.72)";
+    ctx.fill();
+    ctx.strokeStyle = horror ? "rgba(70, 255, 99, 0.28)" : "rgba(22, 57, 45, 0.18)";
+    ctx.lineWidth = horror ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    const firstT = frames[0]?.t || 0;
+    const lastT = frames[frames.length - 1]?.t ?? firstT;
+    const duration = Math.max(0.01, lastT - firstT);
+    const pct = frames.length > 1 ? index / (frames.length - 1) : 1;
+    roundedRect(track.x + 2, track.y + 2, Math.max(6, (track.w - 4) * pct), track.h - 4, 5);
+    ctx.fillStyle = horror ? "rgba(70, 255, 99, 0.56)" : "rgba(74, 158, 104, 0.46)";
+    ctx.fill();
+    const importantEvents = (ledger.events || []).filter((event) => combatLedgerImportantEvent(event, ledger));
+    const markerLimit = 42;
+    const markerStep = Math.max(1, Math.ceil(importantEvents.length / markerLimit));
+    importantEvents.forEach((event, markerIndex) => {
+      if (markerIndex % markerStep !== 0) return;
+      const markerPct = clamp01(((event.t || 0) - firstT) / duration);
+      const markerX = track.x + 4 + (track.w - 8) * markerPct;
+      ctx.fillStyle = event.type === "ko" ? themeColor("warning", "#f7d15b") : event.type === "damage" ? themeColor("danger", "#d9573c") : event.type === "support" ? themeColor("accent", "#4a9e68") : themeColor("primary", "#16392d");
+      ctx.beginPath();
+      ctx.arc(markerX, track.y + track.h / 2, event.type === "ko" ? 2.6 : 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    const knobX = track.x + track.w * pct;
+    ctx.beginPath();
+    ctx.arc(knobX, track.y + track.h / 2, 6, 0, Math.PI * 2);
+    ctx.fillStyle = horror ? "#e7ffe0" : primary;
+    ctx.fill();
+    ctx.strokeStyle = horror ? "rgba(70, 255, 99, 0.72)" : "rgba(255, 253, 232, 0.9)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    registerTooltip(rects.track.x - 4, rects.track.y - 8, rects.track.w + 8, rects.track.h + 16, {
+      title: "Tick scrubber",
+      body: "Jump to a captured combat moment.",
+    });
+
+    ctx.fillStyle = muted;
+    ctx.font = "900 10px Inter, sans-serif";
+    ctx.fillText(frame ? `t=${frame.t.toFixed(2)}s  ${index + 1}/${frames.length}` : "No ticks", rects.track.x, rects.track.y + 27);
+  }
+
+  function drawCombatLedgerRosterPanelBg(rect) {
+    const horror = realityBroken();
+    const image = horror ? null : getUiSprite(currentCombatLedgerParticipantsBgSrc());
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 7);
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.save();
+      ctx.clip();
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h);
+      ctx.restore();
+      ctx.fillStyle = "rgba(255, 253, 232, 0.08)";
+      ctx.fillRect(rect.x + 8, rect.y + 34, rect.w - 16, rect.h - 44);
+      return;
+    }
+    ctx.fillStyle = horror ? "rgba(0, 8, 9, 0.48)" : "rgba(255, 248, 221, 0.66)";
+    ctx.fill();
+    roundedRect(rect.x + 5, rect.y + 5, rect.w - 10, rect.h - 10, 5);
+    ctx.fillStyle = horror ? "rgba(4, 18, 16, 0.34)" : "rgba(255, 253, 232, 0.38)";
+    ctx.fill();
+    ctx.strokeStyle = horror ? "rgba(70, 255, 99, 0.24)" : "rgba(138, 82, 35, 0.2)";
+    ctx.lineWidth = horror ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    if (!horror) {
+      ctx.fillStyle = "rgba(217, 144, 67, 0.08)";
+      for (let y = rect.y + 48; y < rect.y + rect.h - 10; y += 18) {
+        roundedRect(rect.x + 12, y, rect.w - 24, 10, 4);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawCombatLedgerSubpanelBg(rect, src, fallbackFill, radius = 7) {
+    const image = getUiSprite(src);
+    roundedRect(rect.x, rect.y, rect.w, rect.h, radius);
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.save();
+      ctx.clip();
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h);
+      ctx.fillStyle = realityBroken() ? "rgba(0, 6, 8, 0.16)" : "rgba(255, 253, 232, 0.08)";
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = fallbackFill;
+      ctx.fill();
+    }
+  }
+
+  function combatLedgerFocusedEvent(ledger) {
+    const key = state.combatLedgerReview.focusedEventSeq;
+    if (key == null) return null;
+    return (ledger?.events || []).find((event) => combatLedgerEventKey(event) === key) || null;
+  }
+
+  function combatLedgerFrameUnits(frame) {
+    return [...(frame?.allies || []), ...(frame?.enemies || [])];
+  }
+
+  function combatLedgerReplayUnitEntries(ledger, rect) {
+    const frames = ledger?.frames || [];
+    const frame = frames[currentCombatLedgerFrameIndex(ledger)];
+    if (!frame) return [];
+    const mapX = (x) => rect.x + ((x - BATTLE_FIELD.x) / BATTLE_FIELD.w) * rect.w;
+    const mapY = (y) => rect.y + ((y - BATTLE_FIELD.y) / BATTLE_FIELD.h) * rect.h;
+    return combatLedgerFrameUnits(frame).map((unit) => ({
+      unit,
+      x: mapX(unit.x),
+      y: mapY(unit.y),
+      r: 11 + Math.min(4, unit.tier || 1) * 2,
+    }));
+  }
+
+  function drawCombatLedgerFocusedEventConnector(ledger, rect) {
+    const event = combatLedgerFocusedEvent(ledger);
+    if (!event || event.sourceUid == null || event.targetUid == null) return;
+    const entries = combatLedgerReplayUnitEntries(ledger, rect);
+    const source = entries.find((entry) => entry.unit.uid === event.sourceUid);
+    const target = entries.find((entry) => entry.unit.uid === event.targetUid);
+    if (!target) return;
+    ctx.save();
+    ctx.strokeStyle = event.type === "damage" ? themeColor("danger", "#d9573c") : event.type === "support" ? themeColor("accent", "#4a9e68") : themeColor("warning", "#f7d15b");
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = realityBroken() ? 0.9 : 0.82;
+    if (source && source !== target) {
+      const angle = Math.atan2(target.y - source.y, target.x - source.x);
+      const startX = source.x + Math.cos(angle) * (source.r + 5);
+      const startY = source.y + Math.sin(angle) * (source.r + 5);
+      const endX = target.x - Math.cos(angle) * (target.r + 7);
+      const endY = target.y - Math.sin(angle) * (target.r + 7);
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - Math.cos(angle - 0.55) * 9, endY - Math.sin(angle - 0.55) * 9);
+      ctx.lineTo(endX - Math.cos(angle + 0.55) * 9, endY - Math.sin(angle + 0.55) * 9);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.r + 10 + 2 * Math.sin((state.lastTime || 0) / 180), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawCombatLedgerMiniFrame(ledger, rect) {
+    const frames = ledger.frames || [];
+    const frame = frames[currentCombatLedgerFrameIndex(ledger)];
+    drawCombatLedgerSubpanelBg(rect, currentCombatLedgerMiniBgSrc(), realityBroken() ? "rgba(1, 6, 7, 0.54)" : "rgba(255, 249, 224, 0.36)");
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
+    ctx.lineWidth = realityBroken() ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    if (!frame) return;
+
+    const mapX = (x) => rect.x + ((x - BATTLE_FIELD.x) / BATTLE_FIELD.w) * rect.w;
+    const mapY = (y) => rect.y + ((y - BATTLE_FIELD.y) / BATTLE_FIELD.h) * rect.h;
+    ctx.save();
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 7);
+    ctx.clip();
+    const midX = rect.x + rect.w / 2;
+    ctx.fillStyle = realityBroken() ? "rgba(70, 255, 99, 0.055)" : "rgba(74, 158, 104, 0.08)";
+    ctx.fillRect(rect.x + 4, rect.y + 5, rect.w / 2 - 8, rect.h - 10);
+    ctx.fillStyle = realityBroken() ? "rgba(217, 87, 60, 0.06)" : "rgba(217, 87, 60, 0.07)";
+    ctx.fillRect(midX + 4, rect.y + 5, rect.w / 2 - 8, rect.h - 10);
+    ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.18)" : "rgba(22, 57, 45, 0.14)";
+    ctx.beginPath();
+    ctx.moveTo(midX, rect.y + 15);
+    ctx.lineTo(midX, rect.y + rect.h - 15);
+    ctx.stroke();
+    ctx.fillStyle = realityBroken() ? "rgba(169, 246, 173, 0.62)" : "rgba(54, 86, 71, 0.52)";
+    ctx.font = "900 8px Inter, sans-serif";
+    ctx.fillText("ALLY", rect.x + 12, rect.y + 18);
+    ctx.textAlign = "right";
+    ctx.fillText("ENEMY", rect.x + rect.w - 12, rect.y + 18);
+    ctx.textAlign = "left";
+    ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.12)" : "rgba(22, 57, 45, 0.08)";
+    for (let i = 0; i < boardSlots.length; i += 1) {
+      ["ally", "enemy"].forEach((side) => {
+        const pos = battleSlotPosition(side, i);
+        const x = mapX(pos.x);
+        const y = mapY(pos.y);
+        roundedRect(x - 13, y - 13, 26, 26, 4);
+        ctx.stroke();
+      });
+    }
+    drawCombatLedgerFocusedEventConnector(ledger, rect);
+    combatLedgerReplayUnitEntries(ledger, rect).forEach(({ unit, x, y }) => drawCombatLedgerReplayUnit(unit, x, y));
+    ctx.restore();
+  }
+
+  function drawCombatLedgerReplayUnit(unit, x, y) {
+    const selected = state.combatLedgerReview.unitUid === unit.uid;
+    const selectedUid = state.combatLedgerReview.unitUid || "all";
+    const focusedEvent = combatLedgerFocusedEvent(state.lastCombatLedger);
+    const eventRelated = focusedEvent && (focusedEvent.sourceUid === unit.uid || focusedEvent.targetUid === unit.uid);
+    const r = 11 + Math.min(4, unit.tier || 1) * 2;
+    ctx.save();
+    let alpha = unit.dead ? 0.48 : 1;
+    if (selectedUid !== "all" && unit.uid !== selectedUid && !eventRelated) alpha *= 0.38;
+    if (focusedEvent && !eventRelated && !selected) alpha *= 0.58;
+    ctx.globalAlpha = alpha;
+    if (selected || eventRelated) {
+      ctx.beginPath();
+      ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+      ctx.fillStyle = eventRelated && !selected ? (realityBroken() ? "rgba(255, 209, 91, 0.14)" : "rgba(247, 209, 91, 0.18)") : (realityBroken() ? "rgba(70, 255, 99, 0.22)" : "rgba(74, 158, 104, 0.18)");
+      ctx.fill();
+      ctx.strokeStyle = eventRelated && !selected ? themeColor("warning", "#f7d15b") : themeColor("accent", "#4a9e68");
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    drawFoodAnimal(unit, x, y - 2, r, unit.side === "ally", { preserveBase: true });
+    if (unit.dead) {
+      ctx.strokeStyle = "#d9573c";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - r, y - r);
+      ctx.lineTo(x + r, y + r);
+      ctx.moveTo(x + r, y - r);
+      ctx.lineTo(x - r, y + r);
+      ctx.stroke();
+    }
+    if (unit.shield > 0 || unit.hp < unit.maxHp) {
+      const hpPct = clamp01(unit.hp / Math.max(1, unit.maxHp));
+      roundedRect(x - 15, y + r + 4, 30, 4, 2);
+      ctx.fillStyle = "rgba(255, 249, 224, 0.86)";
+      ctx.fill();
+      roundedRect(x - 15, y + r + 4, 30 * hpPct, 4, 2);
+      ctx.fillStyle = hpPct > 0.45 ? "#4a9e68" : "#d9573c";
+      ctx.fill();
+      if (unit.shield > 0) {
+        ctx.fillStyle = "#5aa6d6";
+        ctx.fillRect(x - 15, y + r + 9, clamp(30 * unit.shield / Math.max(1, unit.maxHp * 0.5), 3, 30), 3);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawCombatLedgerParticipantTabs(ledger, rects) {
+    drawCombatLedgerRosterPanelBg(rects.participantsPanel);
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    ctx.font = "900 10px Inter, sans-serif";
+    ctx.fillText("Participants", rects.participantsPanel.x + 12, rects.participantsPanel.y + 20);
+    drawCombatLedgerParticipantStats(ledger, rects);
+    rects.units.forEach(({ unit, rect }) => {
+      const active = state.combatLedgerReview.unitUid === unit.uid;
+      roundedRect(rect.x, rect.y, rect.w, rect.h, 5);
+      ctx.fillStyle = active
+        ? themeColor("panelActive", realityBroken() ? "rgba(19, 45, 31, 0.92)" : "#e7ffd9")
+        : themeColor("panelSoft", realityBroken() ? "rgba(7, 18, 20, 0.78)" : "rgba(255, 253, 232, 0.58)");
+      ctx.fill();
+      ctx.strokeStyle = active ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.14)");
+      ctx.lineWidth = realityBroken() ? 0.75 : 1;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      const iconId = unit.uid === "all" ? "info_time" : unit.side === "enemy" ? "info_damage" : "info_shield";
+      drawUiAtlasIcon(iconId, rect.x + 9, rect.y + rect.h / 2, 10, { tooltip: null });
+      ctx.fillStyle = unit.side === "enemy" ? themeColor("danger", "#9b3028") : themeColor("primary", "#16392d");
+      ctx.font = "900 9px Inter, sans-serif";
+      fitText(unit.uid === "all" ? "All participants" : `${unit.side === "enemy" ? "Enemy" : "Ally"} ${unit.short || unit.name}`, rect.x + 18, rect.y + 9.5, rect.w - 24, "900 9px Inter, sans-serif", ctx.fillStyle);
+      registerTooltip(rect.x, rect.y, rect.w, rect.h, {
+        title: unit.uid === "all" ? "All participants" : unit.name,
+        body: unit.uid === "all" ? "Show every recorded combat interaction." : "Show events this participant caused or received.",
+      });
+    });
+
+    rects.filters.forEach(({ filter, rect }) => {
+      const disabled = filter.id !== "all" && !combatLedgerDirectionalFiltersEnabled();
+      const active = combatLedgerEffectiveFilterId() === filter.id;
+      roundedRect(rect.x, rect.y, rect.w, rect.h, 6);
+      ctx.fillStyle = active
+        ? themeColor("panelActive", realityBroken() ? "rgba(19, 45, 31, 0.92)" : "#e7ffd9")
+        : disabled
+          ? themeColor("panelSoft", realityBroken() ? "rgba(7, 18, 20, 0.38)" : "rgba(255, 253, 232, 0.34)")
+          : themeColor("panelSoft", realityBroken() ? "rgba(7, 18, 20, 0.78)" : "rgba(255, 253, 232, 0.62)");
+      ctx.fill();
+      ctx.strokeStyle = active ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.18)");
+      ctx.lineWidth = realityBroken() ? 0.75 : 1;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = disabled ? 0.52 : 1;
+      ctx.fillStyle = themeColor("primary", "#16392d");
+      ctx.font = "900 10px Inter, sans-serif";
+      const iconId = filter.id === "output" ? "info_damage" : filter.id === "input" ? "info_shield" : "info_time";
+      const labelWidth = measureTextWidth(filter.label, ctx.font);
+      const totalWidth = 13 + 4 + labelWidth;
+      let cursor = rect.x + rect.w / 2 - totalWidth / 2;
+      drawUiAtlasIcon(iconId, cursor + 6.5, rect.y + rect.h / 2, 13, { tooltip: null });
+      cursor += 17;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(filter.label, cursor, rect.y + rect.h / 2 + 1);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.globalAlpha = 1;
+      registerTooltip(rect.x, rect.y, rect.w, rect.h, {
+        title: `${filter.label} log`,
+        body: disabled ? "Choose one participant to focus on events they caused or received." : filter.id === "all" ? "Show every event involving the selected participant." : filter.id === "output" ? "Show events caused by the selected participant." : "Show events received by the selected participant.",
+      });
+    });
+  }
+
+  function drawCombatLedgerParticipantStats(ledger, rects) {
+    const selectedUid = state.combatLedgerReview.unitUid || "all";
+    let text = "";
+    if (selectedUid === "all") {
+      text = `Ally dmg ${ledger?.ally?.damageDealt || 0} / Enemy dmg ${ledger?.enemy?.damageDealt || 0}`;
+    } else {
+      const unit = (ledger?.units || []).find((entry) => entry.uid === selectedUid);
+      if (unit) {
+        const support = (unit.healingReceived || 0) + (unit.shieldingReceived || 0);
+        text = `Dealt ${unit.damageDealt || 0} / Taken ${unit.damageTaken || 0} / Support ${support} / KOs ${unit.kos || 0}`;
+      }
+    }
+    if (!text) return;
+    const statRect = { x: rects.participantsPanel.x + 10, y: rects.participantsPanel.y + 25, w: rects.participantsPanel.w - 20, h: 16 };
+    roundedRect(statRect.x, statRect.y, statRect.w, statRect.h, 5);
+    ctx.fillStyle = realityBroken() ? "rgba(0, 8, 9, 0.28)" : "rgba(255, 253, 232, 0.46)";
+    ctx.fill();
+    fitText(text, statRect.x + 8, statRect.y + 11, statRect.w - 16, "800 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+  }
+
+  function combatLedgerEventIconId(event) {
+    if (event.type === "damage") return "info_damage";
+    if (event.type === "support") return event.kind === "heal" ? "info_heal" : "info_shield";
+    if (event.type === "ko") return "info_ko";
+    if (event.type === "control") return "info_time";
+    if (event.type === "battleStart") return "action_battle";
+    return "info_time";
+  }
+
+  function combatLedgerEventUnitLabel(ledger, uid) {
+    if (uid == null) return "System";
+    const unit = (ledger?.units || []).find?.((entry) => entry.uid === uid) || ledger?.units?.[uid] || null;
+    return unit?.short || unit?.name || "Unit";
+  }
+
+  function combatLedgerEventRowLabel(ledger, event) {
+    if (!event) return "";
+    const source = combatLedgerEventUnitLabel(ledger, event.sourceUid);
+    const target = combatLedgerEventUnitLabel(ledger, event.targetUid);
+    const amount = Number.isFinite(event.amount) && event.amount > 0 ? Math.round(event.amount) : 0;
+    if (event.type === "damage") return `${source} -> ${target}  -${amount || "?"} HP`;
+    if (event.type === "support") {
+      const verb = event.kind === "heal" ? "healed" : "shielded";
+      return `${source} ${verb} ${target}${amount ? ` +${amount}` : ""}`;
+    }
+    if (event.type === "ko") return `${target} KO by ${source}`;
+    if (event.type === "control") return `${source} controlled ${target}`;
+    if (event.type === "battleStart") return "Battle started";
+    return event.text || `${source} -> ${target}`;
+  }
+
+  function combatLedgerCauseChain(ledger, event) {
+    if (!event) return [];
+    const key = combatLedgerEventKey(event);
+    const participants = new Set([event.sourceUid, event.targetUid].filter((uid) => uid != null));
+    return (ledger?.events || [])
+      .filter((candidate) => {
+        const candidateKey = combatLedgerEventKey(candidate);
+        if (candidate === event || candidateKey === key) return false;
+        if ((candidate.t || 0) > (event.t || 0)) return false;
+        if ((event.t || 0) - (candidate.t || 0) > 3.25) return false;
+        return participants.has(candidate.sourceUid) || participants.has(candidate.targetUid);
+      })
+      .slice(-3);
+  }
+
+  function drawCombatLedgerEventTypeChips(layout) {
+    const keyActive = Boolean(state.combatLedgerReview.bigMomentsOnly);
+    roundedRect(layout.keyChip.rect.x, layout.keyChip.rect.y, layout.keyChip.rect.w, layout.keyChip.rect.h, 6);
+    ctx.fillStyle = keyActive
+      ? themeColor("panelActive", realityBroken() ? "rgba(19, 45, 31, 0.88)" : "#e7ffd9")
+      : themeColor("panelSoft", realityBroken() ? "rgba(7, 18, 20, 0.56)" : "rgba(255, 253, 232, 0.48)");
+    ctx.fill();
+    ctx.strokeStyle = keyActive ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
+    ctx.lineWidth = realityBroken() ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    fitText("Key", layout.keyChip.rect.x + 8, layout.keyChip.rect.y + 12.5, layout.keyChip.rect.w - 12, "900 9px Inter, sans-serif", themeColor("primary", "#16392d"));
+    registerTooltip(layout.keyChip.rect.x, layout.keyChip.rect.y, layout.keyChip.rect.w, layout.keyChip.rect.h, {
+      title: "Key moments",
+      body: keyActive ? "Showing only major hits, support, control, and KOs." : "Show only the most important combat moments.",
+    });
+
+    const filters = combatLedgerEventTypeFilters();
+    layout.typeChips.forEach(({ filter, rect }) => {
+      const active = filters[filter.id] !== false;
+      roundedRect(rect.x, rect.y, rect.w, rect.h, 6);
+      ctx.fillStyle = active
+        ? themeColor("panelActive", realityBroken() ? "rgba(19, 45, 31, 0.88)" : "#e7ffd9")
+        : themeColor("panelSoft", realityBroken() ? "rgba(7, 18, 20, 0.42)" : "rgba(255, 253, 232, 0.36)");
+      ctx.fill();
+      ctx.strokeStyle = active ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
+      ctx.lineWidth = realityBroken() ? 0.75 : 1;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = active ? 1 : 0.55;
+      drawUiAtlasIcon(filter.icon, rect.x + 10, rect.y + rect.h / 2, 12, { tooltip: null });
+      const label = filter.id === "support" ? "Sup" : filter.id === "control" ? "Ctrl" : filter.label;
+      fitText(label, rect.x + 20, rect.y + 12.5, rect.w - 23, "900 9px Inter, sans-serif", themeColor("primary", "#16392d"));
+      ctx.globalAlpha = 1;
+      registerTooltip(rect.x, rect.y, rect.w, rect.h, {
+        title: `${filter.label} events`,
+        body: active ? "Click to hide this event type from the timeline." : "Click to show this event type in the timeline.",
+      });
+    });
+  }
+
+  function drawCombatLedgerEventDetail(ledger, rect) {
+    const event = combatLedgerFocusedEvent(ledger);
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 7);
+    ctx.fillStyle = realityBroken() ? "rgba(0, 6, 8, 0.46)" : "rgba(255, 253, 232, 0.62)";
+    ctx.fill();
+    ctx.strokeStyle = event ? themeColor("accent", "#4a9e68") : themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
+    ctx.lineWidth = realityBroken() ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    if (!event) {
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
+      ctx.font = "800 9px Inter, sans-serif";
+      fitText("Select an event to inspect the replay moment.", rect.x + 10, rect.y + 25, rect.w - 20, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+      return;
+    }
+    const source = combatLedgerEventUnitLabel(ledger, event.sourceUid);
+    const target = combatLedgerEventUnitLabel(ledger, event.targetUid);
+    drawUiAtlasIcon(combatLedgerEventIconId(event), rect.x + 13, rect.y + 21, 16, { tooltip: null });
+    ctx.fillStyle = themeColor("primary", "#16392d");
+    ctx.font = "900 10px Inter, sans-serif";
+    fitText(`${event.t.toFixed(2)}s  ${source} -> ${target}`, rect.x + 28, rect.y + 17, rect.w - 36, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    ctx.font = "800 9px Inter, sans-serif";
+    fitText(event.text, rect.x + 28, rect.y + 31, rect.w - 36, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+    const chain = combatLedgerCauseChain(ledger, event);
+    const chainText = chain.length ? `Lead-up: ${chain.map((entry) => `${entry.t.toFixed(1)}s ${entry.type}`).join(" / ")}` : "Lead-up: first major moment for this source/target";
+    fitText(chainText, rect.x + 28, rect.y + 45, rect.w - 36, "800 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+  }
+
+  function drawCombatLedgerEventLog(ledger, rect) {
+    const rows = combatLedgerVisibleLogRows(ledger, rect);
+    const events = rows.events;
+    drawCombatLedgerSubpanelBg(rect, currentCombatLedgerLogBgSrc(), realityBroken() ? "rgba(0, 6, 8, 0.42)" : "rgba(255, 249, 224, 0.3)");
+    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.16)");
+    ctx.lineWidth = realityBroken() ? 0.75 : 1;
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.fillStyle = themeColor("primary", "#16392d");
+    ctx.font = "900 12px Inter, sans-serif";
+    ctx.fillText("Combat timeline", rect.x + 12, rect.y + 20);
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    ctx.font = "800 9px Inter, sans-serif";
+    const rangeLabel = events.length > rows.visibleRows ? `${rows.start + 1}-${rows.end} / ${events.length}` : `${events.length} matching`;
+    ctx.textAlign = "right";
+    ctx.fillText(rangeLabel, rect.x + rect.w - 16, rect.y + 20);
+    ctx.textAlign = "left";
+    drawCombatLedgerEventTypeChips(rows.layout);
+
+    if (!rows.visible.length) {
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
+      ctx.font = "800 11px Inter, sans-serif";
+      ctx.fillText("No matching events.", rect.x + 12, rows.layout.rowStartY);
+      drawCombatLedgerEventDetail(ledger, rows.layout.detail);
+      return;
+    }
+    if (events.length > rows.visibleRows) {
+      const track = { x: rect.x + rect.w - 10, y: rows.layout.rowStartY - 12, w: 4, h: rows.layout.rowBottom - rows.layout.rowStartY + 16 };
+      roundedRect(track.x, track.y, track.w, track.h, 2);
+      ctx.fillStyle = realityBroken() ? "rgba(70, 255, 99, 0.12)" : "rgba(22, 57, 45, 0.1)";
+      ctx.fill();
+      const maxOffset = Math.max(1, events.length - rows.visibleRows);
+      const thumbH = clamp(track.h * (rows.visibleRows / events.length), 26, track.h);
+      const thumbPct = 1 - rows.scrollOffset / maxOffset;
+      const thumbY = track.y + (track.h - thumbH) * thumbPct;
+      roundedRect(track.x - 1, thumbY, track.w + 2, thumbH, 3);
+      ctx.fillStyle = themeColor("accent", "#4a9e68");
+      ctx.fill();
+      registerTooltip(track.x - 5, track.y, track.w + 10, track.h, {
+        title: "Scrollable log",
+        body: "Use the mouse wheel over the interaction log to review older or newer entries.",
+      });
+    }
+    rows.rows.forEach(({ event, rect: rowRect }, index) => {
+      const y = rows.layout.rowStartY + index * rows.layout.rowH;
+      const currentTick = Math.floor((event.t || 0) / COMBAT_LEDGER_FRAME_SECONDS);
+      const previous = rows.rows[index - 1]?.event;
+      const previousTick = previous ? Math.floor((previous.t || 0) / COMBAT_LEDGER_FRAME_SECONDS) : null;
+      if (index % 2 === 0) {
+        roundedRect(rowRect.x + 1, rowRect.y + 1, rowRect.w - 12, rowRect.h - 2, 4);
+        ctx.fillStyle = realityBroken() ? "rgba(70, 255, 99, 0.035)" : "rgba(255, 253, 232, 0.22)";
+        ctx.fill();
+      }
+      if (index === 0 || currentTick !== previousTick) {
+        ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.11)" : "rgba(22, 57, 45, 0.09)";
+        ctx.beginPath();
+        ctx.moveTo(rowRect.x + 2, rowRect.y - 2);
+        ctx.lineTo(rowRect.x + rowRect.w - 10, rowRect.y - 2);
+        ctx.stroke();
+        ctx.fillStyle = themeColor("muted", "#6a4b35");
+        ctx.font = "800 7px Inter, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(`${currentTick}s`, rowRect.x + rowRect.w - 8, rowRect.y + 6);
+        ctx.textAlign = "left";
+      }
+      const color = event.type === "damage"
+        ? themeColor("danger", "#9b3028")
+        : event.type === "support"
+          ? themeColor("accent", "#4a9e68")
+          : event.type === "ko"
+            ? themeColor("warning", "#a94b2b")
+            : themeColor("primary", "#16392d");
+      if (state.combatLedgerReview.focusedEventSeq === combatLedgerEventKey(event)) {
+        roundedRect(rowRect.x, rowRect.y, rowRect.w, rowRect.h, 5);
+        ctx.fillStyle = realityBroken() ? "rgba(70, 255, 99, 0.16)" : "rgba(74, 158, 104, 0.14)";
+        ctx.fill();
+        ctx.strokeStyle = themeColor("accent", "#4a9e68");
+        ctx.lineWidth = realityBroken() ? 0.75 : 1;
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+      drawUiAtlasIcon(combatLedgerEventIconId(event), rect.x + 15, y - 4, 14, {
+        tooltip: {
+          title: event.type === "battleStart" ? "Battle start" : event.type === "ko" ? "Knockout" : event.type === "control" ? "Control" : event.type === "support" ? "Support" : "Damage",
+          body: `${event.text} Click the row to jump the replay to this moment.`,
+        },
+      });
+      ctx.fillStyle = color;
+      ctx.font = "900 9px Inter, sans-serif";
+      ctx.fillText(`${event.t.toFixed(2)}s`, rect.x + 28, y);
+      fitText(combatLedgerEventRowLabel(ledger, event), rect.x + 70, y, rect.w - 112, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
+      registerTooltip(rowRect.x, rowRect.y, rowRect.w, rowRect.h, {
+        title: `${event.t.toFixed(2)}s`,
+        body: `${event.text || combatLedgerEventRowLabel(ledger, event)} Click to jump the replay tick to this event.`,
+      });
+    });
+    drawCombatLedgerEventDetail(ledger, rows.layout.detail);
   }
 
   function rewardIconId(reward) {
@@ -18926,7 +21528,7 @@
   function battleUnitByUid(battle, uid) {
     if (!battle || uid == null) return null;
     const unitCount = (battle.allies?.length || 0) + (battle.enemies?.length || 0);
-    if (!battle.unitLookup || battle.unitLookupSize !== unitCount) {
+    if (!(battle.unitLookup instanceof Map) || battle.unitLookupSize !== unitCount) {
       const lookup = new Map();
       (battle.allies || []).forEach((unit) => lookup.set(unit.uid, unit));
       (battle.enemies || []).forEach((unit) => lookup.set(unit.uid, unit));
@@ -19523,8 +22125,325 @@
     });
   }
 
+  function storySpeakerIsTabs(speaker) {
+    const label = String(speaker || "").toLowerCase();
+    return label === "tabs" || label === "t.a.b.s.";
+  }
+
+  function storyUsesHorrorTabs(story = state.activeStory) {
+    return realityBroken() || story?.id === "level10" || story?.id === "level15";
+  }
+
+  function storySpeakerPortraitSrc(speaker, story = state.activeStory) {
+    if (!storySpeakerIsTabs(speaker)) return PLAYER_STORY_PORTRAIT_SRC;
+    return storyUsesHorrorTabs(story) ? HORROR_TABS_STORY_PORTRAIT_SRC : TABS_STORY_PORTRAIT_SRC;
+  }
+
+  function storyDialogueLayout() {
+    const stage = {
+      x: 0,
+      y: 0,
+      w: W,
+      h: H,
+    };
+    const panel = {
+      x: 155,
+      y: 463,
+      w: 713,
+      h: 158,
+    };
+    return {
+      stage,
+      panel,
+      player: {
+        x: -145,
+        y: 134,
+        w: 448,
+        h: 672,
+      },
+      tabs: {
+        x: 839,
+        y: 426,
+        w: 216,
+        h: 324,
+      },
+      label: {
+        x: panel.x + 24,
+        y: panel.y - 16,
+        w: 138,
+        h: 37,
+      },
+      progress: {
+        x: panel.x + panel.w - 67,
+        y: panel.y + 25,
+        w: 46,
+        h: 21,
+      },
+      text: {
+        x: panel.x + 24,
+        y: panel.y + 66,
+        w: panel.w - 85,
+      },
+      button: {
+        x: panel.x + panel.w - 136,
+        y: panel.y + panel.h - 48,
+        w: 112,
+        h: 32,
+      },
+      backButton: {
+        x: panel.x + panel.w - 386,
+        y: panel.y + panel.h - 48,
+        w: 112,
+        h: 32,
+      },
+      skipButton: {
+        x: panel.x + panel.w - 261,
+        y: panel.y + panel.h - 48,
+        w: 112,
+        h: 32,
+      },
+    };
+  }
+
+  function drawStoryStandee(src, rect, active, fallbackLabel) {
+    const image = getUiSprite(src);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.filter = `${active ? "saturate(1.04) brightness(1.03)" : "saturate(1) brightness(1)"} drop-shadow(0 12px 14px rgba(37, 51, 30, 0.3))`;
+    const breath = active ? (1 - Math.cos(state.idleTime * (Math.PI * 2) / 2.8)) * 0.5 : 0;
+    const bob = active ? -1.8 * breath : 0;
+    const scaleX = active ? 1 + 0.006 * breath : 1;
+    const scaleY = active ? 1 + 0.012 * breath : 1;
+    ctx.translate(rect.x + rect.w * 0.5, rect.y + rect.h);
+    ctx.scale(scaleX, scaleY);
+    const drawX = -rect.w * 0.5;
+    const drawY = -rect.h + bob;
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.drawImage(image, drawX, drawY, rect.w, rect.h);
+    } else {
+      ctx.filter = "none";
+      roundedRect(drawX + rect.w * 0.24, drawY + rect.h * 0.16, rect.w * 0.52, rect.h * 0.36, 8);
+      ctx.fillStyle = "rgba(255, 248, 221, 0.9)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(49, 66, 38, 0.72)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#16392d";
+      ctx.font = "900 30px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(fallbackLabel, 0, drawY + rect.h * 0.34);
+    }
+    ctx.restore();
+  }
+
+  function storyAdvanceButtonRect() {
+    return storyDialogueLayout().button;
+  }
+
+  function storyBackButtonRect() {
+    return storyDialogueLayout().backButton;
+  }
+
+  function storySkipButtonRect() {
+    return storyDialogueLayout().skipButton;
+  }
+
+  function drawStoryProgressDots(story, x, y, horror = false) {
+    const total = story.beats?.length || 0;
+    const active = story.index || 0;
+    const visible = Math.min(total, 12);
+    const gap = 11;
+    for (let i = 0; i < visible; i++) {
+      const sourceIndex = total <= visible ? i : Math.round((i / Math.max(1, visible - 1)) * (total - 1));
+      ctx.beginPath();
+      ctx.arc(x + i * gap, y, sourceIndex <= active ? 3.4 : 2.3, 0, Math.PI * 2);
+      ctx.fillStyle = horror
+        ? sourceIndex <= active ? "rgba(92, 255, 111, 0.86)" : "rgba(92, 255, 111, 0.22)"
+        : sourceIndex <= active ? "rgba(255, 241, 176, 0.92)" : "rgba(255, 241, 176, 0.28)";
+      ctx.fill();
+    }
+  }
+
+  function drawStoryConversationOverlay() {
+    const story = state.activeStory;
+    const beat = currentStoryBeat();
+    if (!story || !beat) return;
+    const speakerLabel = String(beat.speaker || "SYSTEM");
+    const speakerKey = speakerLabel.toLowerCase();
+    const tabsSpeaker = storySpeakerIsTabs(speakerLabel);
+    const playerSpeaker = speakerKey === "you";
+    const hostile = beat.speaker === "T.A.B.S." || beat.tone === "malignant" || beat.tone === "glitch";
+    const horror = realityBroken();
+    const layout = storyDialogueLayout();
+    const { panel, button, backButton, skipButton } = layout;
+    const playerActive = playerSpeaker;
+    const tabsActive = tabsSpeaker;
+    const tabsPortraitSrc = storySpeakerPortraitSrc("Tabs", story);
+    const transitionAlpha = storyTransitionAlpha(story);
+    if (transitionAlpha <= 0) return;
+    const transitionPhase = storyTransitionPhase(story);
+    const transitionOffsetY = transitionPhase === "exit"
+      ? (1 - transitionAlpha) * -8
+      : (1 - transitionAlpha) * 12;
+
+    ctx.save();
+    ctx.globalAlpha *= transitionAlpha;
+    ctx.fillStyle = horror ? "rgba(0, 0, 0, 0.34)" : hostile ? "rgba(0, 0, 0, 0.2)" : "rgba(12, 31, 23, 0.12)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha *= transitionAlpha;
+    ctx.translate(0, transitionOffsetY);
+
+    drawStoryStandee(PLAYER_STORY_PORTRAIT_SRC, layout.player, playerActive, "Y");
+    drawStoryStandee(tabsPortraitSrc, layout.tabs, tabsActive, "T");
+
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    ctx.save();
+    ctx.clip();
+    const paper = getUiSprite(horror ? STORY_DIALOGUE_WAR_BG_SRC : STORY_DIALOGUE_PAPER_BG_SRC);
+    ctx.fillStyle = horror ? "#071214" : "#fff7d7";
+    ctx.fill();
+    if (paper && paper.complete && paper.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(paper, panel.x, panel.y, panel.w, panel.h);
+    }
+    const gloss = ctx.createLinearGradient(0, panel.y, 0, panel.y + panel.h);
+    if (horror) {
+      gloss.addColorStop(0, "rgba(92, 255, 111, 0.08)");
+      gloss.addColorStop(0.52, "rgba(0, 0, 0, 0)");
+      gloss.addColorStop(1, "rgba(0, 0, 0, 0.22)");
+    } else {
+      gloss.addColorStop(0, "rgba(255, 255, 255, 0.2)");
+      gloss.addColorStop(1, "rgba(255, 247, 215, 0.08)");
+    }
+    ctx.fillStyle = gloss;
+    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+    ctx.restore();
+
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.46)" : "#6f7546";
+    ctx.lineWidth = horror ? 1.5 : 3;
+    ctx.stroke();
+    roundedRect(panel.x + 4, panel.y + 4, panel.w - 8, panel.h - 8, 6);
+    ctx.strokeStyle = horror ? "rgba(20, 218, 231, 0.16)" : "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = horror ? 1 : 3;
+    ctx.stroke();
+
+    ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.38)" : "rgba(111, 117, 70, 0.72)";
+    ctx.lineWidth = horror ? 1.5 : 3;
+    ctx.beginPath();
+    ctx.moveTo(panel.x + 12, panel.y + panel.h - 32);
+    ctx.lineTo(panel.x + 12, panel.y + panel.h - 12);
+    ctx.lineTo(panel.x + 32, panel.y + panel.h - 12);
+    ctx.moveTo(panel.x + panel.w - 12, panel.y + 32);
+    ctx.lineTo(panel.x + panel.w - 12, panel.y + 12);
+    ctx.lineTo(panel.x + panel.w - 32, panel.y + 12);
+    ctx.stroke();
+
+    roundedRect(layout.label.x, layout.label.y, layout.label.w, layout.label.h, 8);
+    ctx.fillStyle = horror
+      ? playerSpeaker ? "rgba(81, 12, 22, 0.94)" : "rgba(8, 25, 20, 0.94)"
+      : playerSpeaker ? "#8d2434" : "#314226";
+    ctx.fill();
+    ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.58)" : "#fff9d6";
+    ctx.lineWidth = horror ? 1.5 : 3;
+    ctx.stroke();
+    ctx.fillStyle = horror ? "#9effaa" : "#fff8d7";
+    ctx.font = "900 17px Inter, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    fitText(speakerLabel, layout.label.x + 24, layout.label.y + layout.label.h / 2 + 1, layout.label.w - 44, "900 17px Inter, sans-serif", ctx.fillStyle);
+
+    roundedRect(layout.progress.x, layout.progress.y, layout.progress.w, layout.progress.h, 8);
+    ctx.fillStyle = horror ? "rgba(4, 15, 14, 0.86)" : "rgba(255, 251, 234, 0.72)";
+    ctx.fill();
+    ctx.strokeStyle = horror ? "rgba(20, 218, 231, 0.26)" : "rgba(111, 117, 70, 0.34)";
+    ctx.lineWidth = horror ? 1 : 2;
+    ctx.stroke();
+    ctx.fillStyle = horror ? "rgba(158, 255, 170, 0.82)" : "rgba(49, 66, 38, 0.82)";
+    ctx.font = "900 12px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${(story.index || 0) + 1} / ${story.beats?.length || 1}`, layout.progress.x + layout.progress.w / 2, layout.progress.y + layout.progress.h / 2 + 1);
+
+    const textX = layout.text.x;
+    const textW = layout.text.w;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = horror ? (hostile ? "#ff9aa4" : "#d7ffe0") : hostile ? "#243f2f" : "#1b2617";
+    ctx.font = "900 17px Inter, sans-serif";
+    const lines = wrappedTextLines(beat.text, textW).slice(0, 4);
+    lines.forEach((line, index) => ctx.fillText(line, textX, layout.text.y + index * 23));
+
+    drawStoryProgressDots(story, textX, panel.y + panel.h - 22, horror);
+
+    if (story.skipConfirm) {
+      const confirmW = Math.min(340, panel.w - 56);
+      const confirmH = 40;
+      const confirmX = panel.x + panel.w - confirmW - 26;
+      const confirmY = panel.y - 50;
+      roundedRect(confirmX, confirmY, confirmW, confirmH, 8);
+      ctx.fillStyle = horror ? "rgba(5, 14, 15, 0.94)" : "rgba(255, 251, 234, 0.9)";
+      ctx.fill();
+      ctx.strokeStyle = horror ? "rgba(255, 102, 115, 0.52)" : "rgba(141, 36, 52, 0.42)";
+      ctx.lineWidth = horror ? 1.5 : 2;
+      ctx.stroke();
+      ctx.fillStyle = horror ? "#ff9aa4" : "#8d2434";
+      ctx.font = "900 11px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Skip this dialogue section?", confirmX + confirmW / 2, confirmY + 15);
+      ctx.fillText("Click Skip again to confirm.", confirmX + confirmW / 2, confirmY + 28);
+    }
+
+    const drawStoryButton = (rect, label, options = {}) => {
+      const enabled = options.enabled !== false;
+      roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
+      ctx.fillStyle = horror
+        ? options.primary ? "rgba(15, 54, 34, 0.94)" : options.confirming ? "rgba(95, 16, 28, 0.94)" : "rgba(4, 15, 14, 0.88)"
+        : options.primary ? "#16392d" : options.confirming ? "#8d2434" : "rgba(255, 251, 234, 0.86)";
+      ctx.fill();
+      ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.32)" : "rgba(111, 117, 70, 0.22)";
+      ctx.lineWidth = horror ? 1 : 0;
+      if (horror) ctx.stroke();
+      ctx.fillStyle = horror ? (options.confirming ? "#ffb0b8" : "#d7ffe0") : options.primary || options.confirming ? "#fff9df" : "#16392d";
+      ctx.globalAlpha = enabled ? 1 : 0.42;
+      ctx.font = "900 13px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      fitText(label, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1, rect.w - 18, "900 13px Inter, sans-serif", ctx.fillStyle, "center");
+      ctx.globalAlpha = 1;
+    };
+
+    drawStoryButton(backButton, "Back", { enabled: storyCanGoBack() });
+    drawStoryButton(skipButton, story.skipConfirm ? "Confirm Skip" : "Skip", { confirming: story.skipConfirm });
+    const done = (story.index || 0) >= (story.beats?.length || 1) - 1;
+    drawStoryButton(button, done ? "Close" : "Next", { primary: true });
+    ctx.restore();
+  }
+
   function pointInRect(x, y, rect) {
     return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+  }
+
+  function hitTestOptionsMenu(pos) {
+    const layout = optionsMenuLayout();
+    if (pointInRect(pos.x, pos.y, layout.close)) return { area: "optionsMenu", action: "close" };
+    for (const button of layout.buttons) {
+      if (pointInRect(pos.x, pos.y, button.rect)) return { area: "optionsMenu", action: button.id };
+    }
+    for (const slider of layout.sliders) {
+      const hitRect = { x: slider.rect.x - 16, y: slider.rect.y - 28, w: slider.rect.w + 32, h: slider.rect.h + 56 };
+      if (pointInRect(pos.x, pos.y, hitRect)) {
+        return { area: "optionsMenu", action: "slider", slider: slider.id, x: pos.x };
+      }
+    }
+    return pointInRect(pos.x, pos.y, layout.panel)
+      ? { area: "optionsMenu", action: "panel" }
+      : { area: "optionsMenu", action: "outside" };
   }
 
   function shopFreezeRect(x, y, w, h) {
@@ -19540,6 +22459,13 @@
   }
 
   function hitTest(pos) {
+    if (state.optionsMenu.open) return hitTestOptionsMenu(pos);
+    if (state.activeStory) {
+      if (pointInRect(pos.x, pos.y, storyBackButtonRect())) return { area: "story", action: "back" };
+      if (pointInRect(pos.x, pos.y, storySkipButtonRect())) return { area: "story", action: "skip" };
+      if (pointInRect(pos.x, pos.y, storyAdvanceButtonRect())) return { area: "story", action: "advance" };
+      return { area: "story", action: "panel" };
+    }
     if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
@@ -19611,6 +22537,14 @@
     if (state.phase === "result" && state.hearts <= 0 && pointInRect(pos.x, pos.y, buttons.next)) {
       return { area: "button", index: "next" };
     }
+    if (state.phase === "result" && state.lastCombatLedger) {
+      const detailsHit = hitTestCombatLedgerDetailsButton(pos);
+      if (detailsHit) return detailsHit;
+      if (state.combatLedgerReview?.open) {
+        const ledgerHit = hitTestCombatLedgerReview(pos, state.lastCombatLedger);
+        if (ledgerHit) return ledgerHit;
+      }
+    }
     if (state.phase === "result" && state.rewardChoices?.length) {
       for (let i = 0; i < state.rewardChoices.length; i++) {
         if (pointInRect(pos.x, pos.y, buttons[`reward${i}`])) return { area: "button", index: `reward${i}` };
@@ -19619,10 +22553,121 @@
     return null;
   }
 
+  function hitTestCombatLedgerDetailsButton(pos) {
+    const rect = combatLedgerDetailsButtonRect();
+    if (!pointInRect(pos.x, pos.y, rect)) return null;
+    return { area: "combatLedger", action: "openDetails" };
+  }
+
+  function hitTestCombatLedgerReview(pos, ledger) {
+    const rects = combatLedgerReviewRects(ledger);
+    if (!pointInRect(pos.x, pos.y, rects.panel)) return null;
+    if (pointInRect(pos.x, pos.y, rects.close)) return { area: "combatLedger", action: "closeDetails" };
+    if (pointInRect(pos.x, pos.y, rects.prev)) return { area: "combatLedger", action: "prevFrame" };
+    if (pointInRect(pos.x, pos.y, rects.next)) return { area: "combatLedger", action: "nextFrame" };
+    if (pointInRect(pos.x, pos.y, { x: rects.track.x - 4, y: rects.track.y - 8, w: rects.track.w + 8, h: rects.track.h + 16 })) {
+      return { area: "combatLedger", action: "scrubFrame", pct: clamp01((pos.x - rects.track.x) / rects.track.w) };
+    }
+    if (pointInRect(pos.x, pos.y, rects.mini)) {
+      const entries = combatLedgerReplayUnitEntries(ledger, rects.mini);
+      for (const entry of entries) {
+        const dist = Math.hypot(pos.x - entry.x, pos.y - entry.y);
+        if (dist <= entry.r + 9) return { area: "combatLedger", action: "selectUnit", uid: entry.unit.uid };
+      }
+    }
+    if (pointInRect(pos.x, pos.y, rects.log)) {
+      const layout = combatLedgerTimelineLayout(rects.log);
+      if (pointInRect(pos.x, pos.y, layout.keyChip.rect)) return { area: "combatLedger", action: "toggleBigMoments" };
+      for (const chip of layout.typeChips) {
+        if (pointInRect(pos.x, pos.y, chip.rect)) return { area: "combatLedger", action: "toggleEventType", typeId: chip.filter.id };
+      }
+      const rows = combatLedgerVisibleLogRows(ledger, rects.log);
+      for (const row of rows.rows) {
+        if (pointInRect(pos.x, pos.y, row.rect)) return { area: "combatLedger", action: "selectEvent", event: row.event };
+      }
+    }
+    for (const entry of rects.units) {
+      if (pointInRect(pos.x, pos.y, entry.rect)) return { area: "combatLedger", action: "selectUnit", uid: entry.unit.uid };
+    }
+    for (const entry of rects.filters) {
+      if (entry.filter.id !== "all" && !combatLedgerDirectionalFiltersEnabled()) continue;
+      if (pointInRect(pos.x, pos.y, entry.rect)) return { area: "combatLedger", action: "setFilter", filter: entry.filter.id };
+    }
+    return { area: "combatLedger", action: "panel" };
+  }
+
+  function applyCombatLedgerReviewHit(hit) {
+    const ledger = state.lastCombatLedger;
+    const frames = ledger?.frames || [];
+    if (!ledger) return;
+    if (hit.action === "openDetails") {
+      state.combatLedgerReview.open = true;
+      return;
+    }
+    if (hit.action === "closeDetails") {
+      state.combatLedgerReview.open = false;
+      return;
+    }
+    if (hit.action === "prevFrame") {
+      state.combatLedgerReview.frameIndex = Math.max(0, currentCombatLedgerFrameIndex(ledger) - 1);
+      syncCombatLedgerFocusedEventToFrame(ledger);
+      return;
+    }
+    if (hit.action === "nextFrame") {
+      state.combatLedgerReview.frameIndex = Math.min(frames.length - 1, currentCombatLedgerFrameIndex(ledger) + 1);
+      syncCombatLedgerFocusedEventToFrame(ledger);
+      return;
+    }
+    if (hit.action === "scrubFrame" && frames.length) {
+      state.combatLedgerReview.frameIndex = Math.round(clamp01(hit.pct || 0) * (frames.length - 1));
+      syncCombatLedgerFocusedEventToFrame(ledger);
+      return;
+    }
+    if (hit.action === "selectEvent") {
+      const frameIndex = combatLedgerFrameIndexForEvent(ledger, hit.event);
+      if (frameIndex >= 0) state.combatLedgerReview.frameIndex = frameIndex;
+      focusCombatLedgerEvent(ledger, hit.event, { centerLog: true });
+      return;
+    }
+    if (hit.action === "toggleEventType") {
+      toggleCombatLedgerEventTypeFilter(hit.typeId);
+      syncCombatLedgerFocusedEventToFrame(ledger);
+      return;
+    }
+    if (hit.action === "toggleBigMoments") {
+      toggleCombatLedgerBigMoments();
+      syncCombatLedgerFocusedEventToFrame(ledger);
+      return;
+    }
+    if (hit.action === "selectUnit") {
+      state.combatLedgerReview.unitUid = hit.uid || "all";
+      if (state.combatLedgerReview.unitUid === "all") state.combatLedgerReview.filter = "all";
+      state.combatLedgerReview.logScrollOffset = 0;
+      state.combatLedgerReview.focusedEventSeq = null;
+      return;
+    }
+    if (hit.action === "setFilter") {
+      state.combatLedgerReview.filter = hit.filter || "all";
+      state.combatLedgerReview.logScrollOffset = 0;
+      state.combatLedgerReview.focusedEventSeq = null;
+    }
+  }
+
   function onPointerDown(event) {
     const pos = canvasPoint(event);
     state.pointer = pos;
     const hit = hitTest(pos);
+    if (state.optionsMenu.open) {
+      applyOptionsMenuHit(hit);
+      event.preventDefault();
+      return;
+    }
+    if (state.activeStory) {
+      applyStoryHit(hit);
+      state.selected = null;
+      event.preventDefault();
+      return;
+    }
     if (!hit) {
       state.selected = null;
       return;
@@ -19643,14 +22688,23 @@
       if (hit.index === "detach") detachSelectedItem();
       return;
     }
+    if (hit.area === "combatLedger") {
+      playGameSfx("ui-confirm", { volume: 0.45 });
+      applyCombatLedgerReviewHit(hit);
+      state.selected = null;
+      event.preventDefault();
+      return;
+    }
     if (hit.area === "codexButton") {
       state.codexOpen = true;
       state.codexSelectedId = state.codexSelectedId || CATALOG[0]?.id || null;
       state.codexSelectedToppingId = state.codexSelectedToppingId || codexToppings()[0]?.id || null;
       state.codexSelectedDrinkId = state.codexSelectedDrinkId || codexDrinks()[0]?.id || null;
       syncCodexSelectionToVisibleEntry();
+      resetCodexPreviewView();
       state.selected = null;
       state.message = copy("ui.panels.foodMenu", "Food menu");
+      playGameSfx("ui-confirm", { volume: 0.55 });
       event.preventDefault();
       return;
     }
@@ -19664,13 +22718,17 @@
         state.codexSelectedToppingId = state.codexSelectedToppingId || codexToppings()[0]?.id || null;
         state.codexSelectedDrinkId = state.codexSelectedDrinkId || codexDrinks()[0]?.id || null;
         syncCodexSelectionToVisibleEntry();
+        resetCodexPreviewView();
         state.message = copy(["ui", "panels", tab.id], tab.label);
+        playGameSfx("ui-confirm", { volume: 0.45 });
       }
       event.preventDefault();
       return;
     }
     if (hit.area === "codexFilter") {
       setCodexFilter(hit.key, hit.value);
+      resetCodexPreviewView();
+      playGameSfx("ui-confirm", { volume: 0.38 });
       event.preventDefault();
       return;
     }
@@ -19686,7 +22744,9 @@
         state.codexSelectedId = entry?.id || state.codexSelectedId;
         state.codexSelectedFormTier = 1;
       }
+      resetCodexPreviewView();
       state.message = entry ? (state.codexTab === "food" ? displayCatalogShort(entry) : itemDisplayShort(entry)) : copy("ui.panels.foodMenu", "Food menu");
+      playGameSfx("ui-hover", { volume: 0.42 });
       event.preventDefault();
       return;
     }
@@ -19696,25 +22756,32 @@
       if (hit.index >= maxTier) {
         state.codexSelectedFormTier = 0;
         state.message = realityBroken() ? "Wreck" : "Meal";
+        resetCodexPreviewView();
         event.preventDefault();
         return;
       }
       state.codexSelectedFormTier = Math.max(1, Math.min(maxTier, hit.index + 1));
       const form = animal.forms?.[state.codexSelectedFormTier - 1];
+      resetCodexPreviewView();
       state.message = animal ? displayCatalogForm(animal, state.codexSelectedFormTier, "short") : copy("ui.panels.foodMenu", "Food menu");
+      playGameSfx("ui-confirm", { volume: 0.42 });
       event.preventDefault();
       return;
     }
     if (hit.area === "codexItemForm") {
       const entry = currentCodexEntry();
       state.codexSelectedItemTier = Math.max(1, Math.min(MAX_ITEM_TIER, hit.index + 1));
+      resetCodexPreviewView();
       state.message = `${entry ? itemDisplayShort(entry) : "Item"} Lv ${state.codexSelectedItemTier}`;
+      playGameSfx("ui-confirm", { volume: 0.42 });
       event.preventDefault();
       return;
     }
     if (hit.area === "codexClose") {
       state.codexOpen = false;
+      if (state.codexPreview) state.codexPreview.dragging = false;
       state.message = "Prep";
+      playGameSfx("ui-back", { volume: 0.5 });
       event.preventDefault();
       return;
     }
@@ -19758,6 +22825,17 @@
   function onPointerMove(event) {
     const pos = canvasPoint(event);
     state.pointer = pos;
+    if (state.optionsMenu.open) {
+      if (state.optionsMenu.dragSlider) setOptionSliderFromPoint(state.optionsMenu.dragSlider, pos.x);
+      state.hover = null;
+      event.preventDefault();
+      return;
+    }
+    if (state.activeStory) {
+      state.hover = null;
+      event.preventDefault();
+      return;
+    }
     const hit = hitTest(pos);
     if (state.drag) {
       updateDrag(pos, hit);
@@ -19768,6 +22846,11 @@
   }
 
   function onPointerUp(event) {
+    if (state.optionsMenu.open) {
+      state.optionsMenu.dragSlider = null;
+      event.preventDefault();
+      return;
+    }
     if (!state.drag) return;
     const pos = canvasPoint(event);
     state.pointer = pos;
@@ -19780,6 +22863,10 @@
 
   function onPointerCancel(event) {
     state.pointer = null;
+    if (state.optionsMenu.open) {
+      state.optionsMenu.dragSlider = null;
+      return;
+    }
     if (!state.drag) return;
     state.drag = null;
     state.message = "Cancelled";
@@ -19789,6 +22876,24 @@
   function onPointerLeave() {
     state.pointer = null;
     state.hover = null;
+    if (state.optionsMenu.open) state.optionsMenu.dragSlider = null;
+  }
+
+  function onWheel(event) {
+    if (state.optionsMenu.open) {
+      event.preventDefault();
+      return;
+    }
+    if (state.activeStory) {
+      event.preventDefault();
+      return;
+    }
+    if (!(state.phase === "result" && state.lastCombatLedger && state.combatLedgerReview?.open)) return;
+    const pos = canvasPoint(event);
+    const rects = combatLedgerReviewRects(state.lastCombatLedger);
+    if (!pointInRect(pos.x, pos.y, rects.log)) return;
+    scrollCombatLedgerLog(event.deltaY < 0 ? 3 : -3);
+    event.preventDefault();
   }
 
   function startShopDrag(index, pos) {
@@ -19796,21 +22901,25 @@
     const equipmentTarget = selectedEquipmentTargetRef();
     if (!isShopSlotUnlocked(index)) {
       state.message = "Open slot first";
+      playGameSfx("invalid");
       return;
     }
     if (!unit) {
       state.message = "Empty shop";
+      playGameSfx("invalid");
       return;
     }
     const cost = purchaseCost(unit, index);
     if (state.gold < cost) {
       state.selected = { area: "shop", index };
       state.message = `Need ${currencyTerm({ lower: true })}`;
+      playGameSfx("invalid");
       return;
     }
     if (isItem(unit) && !hasShopItemTarget(unit)) {
       state.selected = { area: "shop", index };
       state.message = "No item target";
+      playGameSfx("invalid");
       return;
     }
     if (!(isTopping(unit) && equipmentTarget)) state.selected = null;
@@ -19828,6 +22937,7 @@
       valid: false,
     };
     state.message = isDrink(unit) ? `Drag to ${drinkTerm({ lower: true })} rail` : isItem(unit) ? (realityBroken() ? "Drag to machine" : "Drag to animal") : "Drag to grid";
+    playGameSfx("pickup", { volume: 0.72 });
   }
 
   function startUnitDrag(area, index, pos) {
@@ -19849,12 +22959,14 @@
       valid: false,
     };
     state.message = isDrink(unit) ? `Drag to ${drinkTerm({ lower: true })} rail` : isItem(unit) ? (realityBroken() ? "Arm a machine" : "Top an animal") : area === "bench" ? "Drag to board" : "Drag to slot";
+    playGameSfx("pickup", { volume: 0.72 });
   }
 
   function startEquipmentDrag(pos) {
     const source = selectedEquipmentTargetRef();
     if (!source?.unit?.item) {
       state.message = `Drop ${toppingTerm({ lower: true })} here`;
+      playGameSfx("invalid");
       return;
     }
     state.drag = {
@@ -19871,6 +22983,7 @@
       valid: false,
     };
     state.message = `Drag ${toppingTerm({ lower: true })} out`;
+    playGameSfx("pickup", { volume: 0.72 });
   }
 
   function updateDrag(pos, hit) {
@@ -19958,6 +23071,54 @@
 
   function onKeyDown(event) {
     const key = event.key.toLowerCase();
+    if (state.optionsMenu.open) {
+      if (event.key === "Escape") {
+        closeOptionsMenu();
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        const order = ["resume", "save", "exit", "music", "sfx"];
+        const current = Math.max(0, order.indexOf(state.optionsMenu.selected));
+        const delta = event.key === "ArrowUp" ? -1 : 1;
+        state.optionsMenu.selected = order[(current + delta + order.length) % order.length];
+        playGameSfx("ui-hover", { volume: 0.24 });
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        const slider = state.optionsMenu.selected === "sfx" ? "sfx" : state.optionsMenu.selected === "music" ? "music" : null;
+        if (slider) {
+          setOptionSliderValue(slider, optionSliderValue(slider) + (event.key === "ArrowRight" ? 1 : -1));
+          playGameSfx("ui-hover", { volume: 0.22 });
+        }
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        const selected = state.optionsMenu.selected || "resume";
+        if (selected === "resume") closeOptionsMenu();
+        else if (selected === "save") saveCurrentRun();
+        else if (selected === "exit") exitToMainMenuWithSave();
+        event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      return;
+    }
+    if (state.activeStory) {
+      if (event.key === "ArrowLeft" || event.key === "Backspace") {
+        applyStoryHit({ area: "story", action: "back" });
+        event.preventDefault();
+      } else if (event.key === "Escape") {
+        applyStoryHit({ area: "story", action: "skip" });
+        event.preventDefault();
+      } else if (event.key === "Enter" || event.key === " ") {
+        applyStoryHit({ area: "story", action: "advance" });
+        event.preventDefault();
+      }
+      return;
+    }
     if (state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phase === "victoryCutscene") {
       if (event.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) canvas.requestFullscreen?.();
@@ -19975,7 +23136,17 @@
     if (event.key === "Escape") {
       if (state.codexOpen) {
         state.codexOpen = false;
+        if (state.codexPreview) state.codexPreview.dragging = false;
         state.message = "Prep";
+        event.preventDefault();
+        return;
+      }
+      if (state.phase === "result" && state.combatLedgerReview?.open) {
+        state.combatLedgerReview.open = false;
+        event.preventDefault();
+        return;
+      }
+      if (openOptionsMenu()) {
         event.preventDefault();
         return;
       }
@@ -19997,6 +23168,25 @@
     }
     if (key === "s" && state.phase === "battle") {
       cycleBattleSpeed();
+    }
+    if (state.phase === "result" && state.lastCombatLedger && state.combatLedgerReview?.open && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+      const delta = event.key === "ArrowLeft" ? -1 : 1;
+      const frames = state.lastCombatLedger.frames || [];
+      state.combatLedgerReview.frameIndex = clamp(currentCombatLedgerFrameIndex(state.lastCombatLedger) + delta, 0, Math.max(0, frames.length - 1));
+      syncCombatLedgerFocusedEventToFrame(state.lastCombatLedger);
+      event.preventDefault();
+      return;
+    }
+    if (state.phase === "result" && state.lastCombatLedger && state.combatLedgerReview?.open && ["PageUp", "PageDown", "Home", "End"].includes(event.key)) {
+      const rect = combatLedgerReviewRects(state.lastCombatLedger).log;
+      const events = combatLedgerFilteredEvents(state.lastCombatLedger);
+      const visibleRows = combatLedgerLogVisibleRows(rect);
+      if (event.key === "PageUp") scrollCombatLedgerLog(visibleRows);
+      if (event.key === "PageDown") scrollCombatLedgerLog(-visibleRows);
+      if (event.key === "Home") setCombatLedgerLogScrollOffset(Math.max(0, events.length - visibleRows));
+      if (event.key === "End") setCombatLedgerLogScrollOffset(0);
+      event.preventDefault();
+      return;
     }
     if (key === "h") {
       cycleRealityThemeOverride();
@@ -20056,6 +23246,7 @@
           })),
         }
       : null;
+    const musicTrack = currentGameMusicTrack();
     return JSON.stringify({
       coordinateSystem: "origin top-left; x increases right; y increases down",
       phase: state.phase,
@@ -20063,6 +23254,49 @@
       gold: state.gold,
       hearts: state.hearts,
       message: state.message,
+      music: {
+        scene: gameMusicSceneKey(),
+        trackId: musicTrack?.id || null,
+        label: musicTrack?.label || null,
+        src: musicTrack?.src || null,
+        armed: gameMusic.armed,
+        blocked: gameMusic.blocked,
+        volume: Number(gameMusicVolume().toFixed(3)),
+        setting: optionSliderValue("music"),
+      },
+      sfx: {
+        setting: optionSliderValue("sfx"),
+        volume: Number(gameSfxVolume().toFixed(3)),
+        armed: gameSfx.armed,
+      },
+      optionsMenu: {
+        open: Boolean(state.optionsMenu.open),
+        selected: state.optionsMenu.selected,
+        savedAt: state.optionsMenu.savedAt,
+        music: optionSliderValue("music"),
+        sfx: optionSliderValue("sfx"),
+      },
+      story: state.activeStory ? {
+        active: true,
+        id: state.activeStory.id,
+        title: state.activeStory.title,
+        index: state.activeStory.index || 0,
+        total: state.activeStory.beats?.length || 0,
+        skipConfirm: Boolean(state.activeStory.skipConfirm),
+        transition: state.activeStory.transition ? {
+          phase: state.activeStory.transition.phase,
+          elapsed: Number((state.activeStory.transition.elapsed || 0).toFixed(3)),
+          duration: Number((state.activeStory.transition.duration || STORY_TRANSITION_SECONDS).toFixed(3)),
+          alpha: Number(storyTransitionAlpha(state.activeStory).toFixed(3)),
+        } : null,
+        beat: currentStoryBeat(),
+        portraitSrc: storySpeakerPortraitSrc(currentStoryBeat()?.speaker, state.activeStory),
+        tabsPortraitSrc: storySpeakerPortraitSrc("Tabs", state.activeStory),
+        seen: [...state.seenStoryMilestones],
+      } : {
+        active: false,
+        seen: [...state.seenStoryMilestones],
+      },
       reality: {
         broken: realityBroken(),
         copyTheme: currentCopyThemeId(),
@@ -20137,6 +23371,12 @@
         backgroundSrc: realityBroken() ? themedArena(currentArena()).backgroundSrc : (currentArena()?.backgroundSrc || BACKGROUND_SRC),
         fallbackBackgroundSrc: REALITY_BACKGROUND_SRC,
         battleFieldSrc: currentBattleFieldBgSrc(),
+        combatLedgerPanelSrc: currentCombatLedgerPanelBgSrc(),
+        combatLedgerInternalSrcs: {
+          mini: currentCombatLedgerMiniBgSrc(),
+          participants: currentCombatLedgerParticipantsBgSrc(),
+          log: currentCombatLedgerLogBgSrc(),
+        },
         shopSlotSrc: currentShopSlotBgSrc(),
         shopLockSrc: currentShopLockClothBgSrc(),
         teamIntelSrc: currentTeamIntelBgSrc(),
@@ -20246,6 +23486,22 @@
       },
       lastIncome: state.lastIncome,
       lastCombatLedger: state.lastCombatLedger,
+      expandedCombatLedger: state.lastCombatLedger ? {
+        enabled: true,
+        open: Boolean(state.combatLedgerReview.open),
+        selectedUnitUid: state.combatLedgerReview.unitUid,
+        filter: state.combatLedgerReview.filter,
+        effectiveFilter: combatLedgerEffectiveFilterId(),
+        frameIndex: currentCombatLedgerFrameIndex(state.lastCombatLedger),
+        frameCount: state.lastCombatLedger.frames?.length || 0,
+        eventCount: state.lastCombatLedger.events?.length || 0,
+        visibleEventCount: combatLedgerFilteredEvents(state.lastCombatLedger).length,
+        logScrollOffset: state.combatLedgerReview.logScrollOffset || 0,
+        focusedEventSeq: state.combatLedgerReview.focusedEventSeq || null,
+        eventTypeFilters: combatLedgerEventTypeFilters(),
+        bigMomentsOnly: Boolean(state.combatLedgerReview.bigMomentsOnly),
+        frameStepSeconds: COMBAT_LEDGER_FRAME_SECONDS,
+      } : { enabled: false },
       shopFrozen: [...state.shopFrozen],
       shopSales: [...state.shopSales],
       shopUnlocked: [...state.shopUnlocked],
@@ -20289,6 +23545,12 @@
         selectedAnimal: state.codexTab === "food" && currentCodexEntry()
           ? unitText(codexUnitFor(currentCodexEntry(), codexMealSelected() ? 1 : codexSelectedFormTier(currentCodexEntry())))
           : null,
+        preview: {
+          zoom: state.codexPreview?.zoom || 1,
+          panX: state.codexPreview?.panX || 0,
+          panY: state.codexPreview?.panY || 0,
+          dragging: Boolean(state.codexPreview?.dragging),
+        },
         selectedItemTier: state.codexSelectedItemTier,
         selectedItem: state.codexTab === "toppings" || state.codexTab === "drinks"
           ? currentCodexEntry()
@@ -20644,6 +23906,8 @@
       idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC,
       message: "Hope Returns",
     };
+    state.activeStory = null;
+    state.seenStoryMilestones = Object.keys(STORY_MILESTONES);
     state.message = "Hope returns";
     clearParticles();
     return true;
@@ -20699,6 +23963,8 @@
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
+    state.activeStory = null;
+    state.seenStoryMilestones = Object.keys(STORY_MILESTONES);
     clearParticles();
 
     state.board[0] = makeUnit("toast_tortoise", 2);
@@ -20764,6 +24030,8 @@
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
+    state.activeStory = null;
+    state.seenStoryMilestones = [];
     clearParticles();
 
     state.board[0] = makeUnit("toast_tortoise", 2);
@@ -20787,8 +24055,75 @@
     return true;
   }
 
+  function applyOpeningTutorialShopRoute() {
+    state.phase = "prep";
+    state.round = 1;
+    state.gold = 10;
+    state.hearts = 10;
+    state.shopLevel = 1;
+    state.message = "Tutorial shop ready";
+    state.shopFrozen = Array(shopSlots.length).fill(false);
+    state.shopSales = Array(shopSlots.length).fill(false);
+    state.shopUnlocked = initialShopUnlocked();
+    state.bench = Array(8).fill(null);
+    state.itemBench = Array(itemBenchSlots.length).fill(null);
+    state.board = Array(boardSlots.length).fill(null);
+    state.drinks = Array(drinkSlots.length).fill(null);
+    state.selected = null;
+    state.codexOpen = false;
+    state.hover = null;
+    state.pointer = null;
+    state.drag = null;
+    state.battle = null;
+    state.postCombatBattle = null;
+    state.arenaId = "dim_sum_kitchen";
+    state.keepArenaNextRound = false;
+    state.arenaHoldNotice = null;
+    state.arenaScout = null;
+    state.arenaPrepBuff = null;
+    state.enemyPreview = null;
+    state.rewardChoices = [];
+    state.lastCombatLedger = null;
+    state.freeRolls = startingFreeRollsForShopLevel(1);
+    state.rollsThisRound = 0;
+    state.nextShopUpgradeDiscountGold = 0;
+    state.winStreak = 0;
+    state.lossStreak = 0;
+    state.lastIncome = null;
+    state.itemDiscountUsed = false;
+    state.battleSpeedIndex = 0;
+    state.realityOverride = false;
+    state.realityBroken = false;
+    state.realityBreakTimer = 0;
+    state.rebootTransition = null;
+    state.postGiraffeHorrorTransition = null;
+    state.shopReturnStaticTransition = null;
+    state.finalVictoryTransition = null;
+    state.victoryCutscene = null;
+    state.activeStory = null;
+    state.seenStoryMilestones = [];
+    clearParticles();
+
+    state.board[0] = makeUnit("toast_tortoise", 1);
+    state.board[4] = makeUnit("taco_tiger", 1);
+    state.bench[0] = makeItem("bacon_strips", 1);
+    state.itemBench[0] = makeItem("berry_fizz", 1);
+    state.drinks[0] = makeItem("berry_fizz", 1);
+    state.shop = Array(shopSlots.length).fill(null);
+    state.shop[0] = makeUnit("sushi_seal", 1);
+    state.shop[1] = makeUnit("noodle_newt", 1);
+    state.shop[2] = makeUnit("berry_bat", 1);
+    state.shop[3] = makeItem("bacon_strips", 1);
+    state.log = ["Review route: opening tutorial shop"];
+    ensureEnemyPreview();
+    return true;
+  }
+
   function applyInitialRouteScreen() {
     const screen = routeParam("screen") || routeParam("scene");
+    if (screen === "opening-tutorial-shop" || screen === "tutorial-shop" || screen === "shop-tutorial") {
+      return applyOpeningTutorialShopRoute();
+    }
     if (screen === "level-10" || screen === "level10" || screen === "wave-10" || screen === "wave10" || screen === "giraffe-boss") {
       return applyLevel10Route();
     }
@@ -20964,6 +24299,16 @@
     setArena,
     arenaInfo,
     arenas: ARENAS,
+    currentGameMusicTrack,
+    gameMusicSceneKey,
+    armGameMusic,
+    playGameSfx,
+    openOptionsMenu,
+    closeOptionsMenu,
+    saveCurrentRun,
+    restoreSavedRunIfRequested,
+    setGameMusicSetting,
+    setGameSfxSetting,
     sellSelectedUnit,
     sellSelectedItem,
     sellValue,
@@ -20987,17 +24332,36 @@
     collectLanguageAuditText,
   };
 
+  canvas.addEventListener("pointerdown", armGameSfx);
+  canvas.addEventListener("pointerdown", armGameMusic);
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerup", onPointerUp);
   canvas.addEventListener("pointercancel", onPointerCancel);
   canvas.addEventListener("pointerleave", onPointerLeave);
+  canvas.addEventListener("wheel", onWheel, { passive: false });
+  window.addEventListener("keydown", armGameSfx);
+  window.addEventListener("keydown", armGameMusic);
   window.addEventListener("keydown", onKeyDown);
+  document.addEventListener("visibilitychange", pauseGameMusicForHiddenTab);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) saveCurrentRunSilently();
+  });
+  window.addEventListener("pagehide", saveCurrentRunSilently);
 
   refreshShop(true);
-  applySmokeScenario();
-  applyInitialRouteScreen();
+  const restoredSavedRun = restoreSavedRunIfRequested();
+  if (!restoredSavedRun) {
+    applySmokeScenario();
+    applyInitialRouteScreen();
+  }
+  markActiveRunRoute();
   getUiSprite(COZY_AWNING_TRANSITION_SRC);
+  getUiSprite(PLAYER_STORY_PORTRAIT_SRC);
+  getUiSprite(TABS_STORY_PORTRAIT_SRC);
+  getUiSprite(HORROR_TABS_STORY_PORTRAIT_SRC);
+  getUiSprite(STORY_DIALOGUE_PAPER_BG_SRC);
+  getUiSprite(STORY_DIALOGUE_WAR_BG_SRC);
   ensureEnemyPreview();
   draw();
   requestAnimationFrame(gameLoop);

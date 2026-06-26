@@ -125,6 +125,8 @@ Toast Tortoise V3 is the active horror-mode slice:
 
 The V3 prompt pushed the tortoise into a pure robotic siege-machine identity: no food, toast, bread, butter, or organic turtle body. It keeps the old warm orange/olive/cream palette only as metallic panels and neon-lit hardware. The sheet contains four clear evolution stages, one static futuristic munition/discharge particle with no motion cues, and one disabled mechanical wreck. The transparent source alpha scan found exactly six groups with 49-65px clear gutters; grouped-mask slicing was used to prevent neighboring cell bleed.
 
+The active defeat still is the no-food mechanical wreck at `runtime/defeat-stills/toast-tortoise-war-machine-defeat-v4.png`.
+
 ### Sushi Seal Horror Evolution V1
 
 Sushi Seal V1 is retained for history, but horror mode now uses the purer robot V2 redo:
@@ -484,6 +486,7 @@ The Fresh/Salad animal lines follow the same four-form chroma-key-to-transparent
 - Avocado Axolotl: `source/avocado-axolotl-evolution-v1-chromakey.png`, `transparent/avocado-axolotl-evolution-v1-transparent.png`, `runtime/avocado-axolotl-v1/`
 - Herb Hare: `source/herb-hare-evolution-v1-chromakey.png`, `transparent/herb-hare-evolution-v1-transparent.png`, `runtime/herb-hare-v1/`
 - Caprese Capybara: `source/caprese-capybara-evolution-v1-chromakey.png`, `transparent/caprese-capybara-evolution-v1-transparent.png`, `runtime/caprese-capybara-v1/`
+- Caprese Capybara V2 targeted tier 3-4 replacement: `source/caprese-capybara-basil-harbour-v2-chromakey.png`, `transparent/caprese-capybara-basil-harbour-v2-transparent.png`, `runtime/caprese-capybara-v2/`
 - Vinaigrette Viper: `source/vinaigrette-viper-evolution-v1-chromakey.png`, `transparent/vinaigrette-viper-evolution-v1-transparent.png`, `runtime/vinaigrette-viper-v1/`
 
 These are static `source-reference-pass` idle sprites generated with built-in image generation, converted to alpha with `remove_chroma_key.py`, then sliced in grouped mode into transparent `192x192` runtime PNGs. They are not production-ready animation packages.

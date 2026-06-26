@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Food Animals - Opening VN Prototype</title>
+    <link rel="preload" as="image" href="assets/backgrounds/picnic-arena-background-v1-2048x1280.webp" />
+    <link rel="preload" as="image" href="assets/backgrounds/arena-dim-sum-kitchen-v1.webp" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/awakening-greenhouse-lab-bg-v1.webp" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/presentation-briefing-room-bg-v1.webp" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/display-corkboard-bg-v2.webp" />
+    <link rel="preload" as="image" href="assets/player/runtime/player-tutorial-dialogue-cutout-v6.png" />
+    <link rel="preload" as="image" href="assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png" />
+    <link rel="preload" as="image" href="assets/sprites/runtime/toast-tortoise/toast-tortoise_toastlet_idle_SW_00.png" />
+    <link rel="preload" as="image" href="assets/sprites/runtime/taco-tiger/taco-tiger_taco-cub_idle_SW_00.png" />
+    <link rel="preload" as="image" href="assets/sprites/runtime/sushi-seal/sushi-seal_maki-pup_idle_SW_00.png" />
+    <link rel="preload" as="image" href="assets/sprites/runtime/noodle-newt/noodle-newt_noodle-newt_idle_SW_00.png" />
+    <link rel="preload" as="image" href="assets/sprites/runtime/berry-bat/berry-bat_berry-bat_idle_SW_00.png" />
+    <link rel="preload" as="image" href="assets/items/runtime/bacon_strips-sticker-v1-lv1.webp" />
+    <link rel="preload" as="image" href="assets/items/runtime/berry_fizz-v1.webp" />
+    <link rel="preload" as="image" href="assets/ui/runtime/conversation-paper-bg-v1.webp" />
+    <link rel="preload" as="image" href="assets/ui/runtime/tutorial-cryo-awakening-diagram-transparent-v2.png" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/green-ark-renewal-doc-v2.png?v=position-1" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/living-recipe-editing-doc-v2.png?v=position-1" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/yield-comparison-doc-v2.png?v=position-1" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/food-web-diagnostics-doc-v2.png?v=position-1" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/stability-pressure-doc-v2.png?v=position-1" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/broken-pattern-vats-doc-v2.png?v=position-1" />
+    <link rel="preload" as="image" href="assets/opening-vn/runtime/tutorial-paddock-placement-doc-v2.png?v=position-1" />
+    <link rel="stylesheet" href="opening-vn.css?v=dialogue-skip-confirm-1" />
+  </head>
+  <body>
+    <main class="vn-shell" aria-label="Food Animals opening visual novel prototype">
+      <section class="vn-stage" aria-live="polite">
+        <div class="scene-transition-curtain" aria-hidden="true"></div>
+
+        <aside class="player-standee" aria-label="You">
+          <img class="player-portrait" alt="The newly awakened player" src="assets/player/runtime/player-tutorial-dialogue-cutout-v6.png" />
+        </aside>
+
+        <section class="paddock-preview" aria-label="Opening briefing document" hidden>
+          <img alt="" src="assets/ui/runtime/tutorial-cryo-awakening-diagram-transparent-v2.png" />
+        </section>
+
+        <section class="tutorial-shop" aria-label="Actual frozen tutorial shop screen" hidden>
+          <iframe class="actual-shop-frame" title="Actual Food Animals shop tutorial route" src="game.html?screen=opening-tutorial-shop&embed=opening-vn"></iframe>
+          <div class="actual-shop-highlights" aria-hidden="true">
+            <span class="actual-highlight hud" data-highlight="hud"></span>
+            <span class="actual-highlight shop" data-highlight="shop"></span>
+            <span class="actual-highlight locked-slot" data-highlight="locked-slot"></span>
+            <span class="actual-highlight stall" data-highlight="stall"></span>
+            <span class="actual-highlight freeze" data-highlight="freeze"></span>
+            <span class="actual-highlight storage" data-highlight="storage"></span>
+            <span class="actual-highlight board" data-highlight="board"></span>
+            <span class="actual-highlight traits" data-highlight="traits"></span>
+            <span class="actual-highlight upgrade" data-highlight="upgrade"></span>
+            <span class="actual-highlight reroll" data-highlight="reroll"></span>
+            <span class="actual-highlight battle" data-highlight="battle"></span>
+          </div>
+        </section>
+
+        <aside class="tabs-counter" aria-label="Tabs">
+          <img class="tabs-portrait" alt="Tabs the cat shopkeeper" src="assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png" />
+        </aside>
+
+        <section class="dialogue-panel">
+          <div class="speaker-label"></div>
+          <p class="dialogue-text"></p>
+          <output class="beat-progress"></output>
+          <output class="skip-confirm" role="status" hidden>Skip this dialogue section? Click Skip again to confirm.</output>
+          <div class="dialogue-actions">
+            <button class="vn-button secondary" type="button" data-action="back" disabled>Back</button>
+            <button class="vn-button secondary" type="button" data-action="skip">Skip</button>
+            <button class="vn-button primary" type="button" data-action="next">Continue</button>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="opening-vn.js?v=dialogue-skip-confirm-1-auto-reveal-1"></script>
+  </body>
+</html>

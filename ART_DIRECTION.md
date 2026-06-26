@@ -4,7 +4,7 @@
 
 Food animals should read as high-resolution pixel art stickers: chunky, collectible, tactile, and immediately readable at board-game scale. Think premium indie pixel rendering with clean silhouettes, controlled palettes, and a playful sticker-sheet finish.
 
-Current status: `source-reference-pass`. The in-game sprites now use image-generated transparent idle poses from coherent v3 four-form sheets for every food-animal line, backed by procedural placeholders if an asset fails to load. V3 sheets were generated one line at a time so each animal preserves the same face, pose family, palette, and silhouette through all four forms.
+Current status: `expanded-source-reference-pass`. The in-game roster now uses image-generated transparent idle poses for 43 food-animal lines, with matching horror/future-war override packages for the same runtime roster. The original five starter lines established the coherent four-form sheet workflow; later lines follow the same broad contract but may use newer versioned packages where a readability, alpha, facing, or horror-identity pass replaced the first accepted sheet. Procedural placeholders remain as loading/fallback art only.
 
 ## Image-Generated Reference
 
@@ -30,7 +30,7 @@ Current v1 background:
 assets/backgrounds/picnic-arena-background-v1-2048x1280.webp
 ```
 
-Status: `source-reference-pass`.
+Status: `expanded-source-reference-pass`.
 
 What works:
 
@@ -46,14 +46,32 @@ What works:
 What to tighten in the next pass:
 
 - Make the art more sprite-sheet-ready and less illustration-poster-like.
-- Use a flatter removable background or transparent asset pipeline.
 - Keep every unit closer to a compact `192x192` gameplay read.
 - Reduce painterly microtexture where it fights pixel-grid clarity.
 - Produce individual source boards or cutout-ready sprites per unit.
 - Generate future sprite sources on flat `#ff00ff` when green food ingredients are present, then remove the key locally.
 - Keep future backgrounds clear under the shop, board, bench, and top-bar text.
+- Preserve same-footprint evolution where readability matters more than size growth, especially for horror/war-machine forms.
+- Keep detached particles, defeat stills, and runtime forms separated by large gutters before slicing.
 
-## V1 Runtime Sprite Lines
+## Current Runtime Scope
+
+The current playable game has:
+
+- 43 food-animal catalog lines in `game.js`.
+- Cozy runtime sprite mappings for every catalog line under `RUNTIME_SPRITES`.
+- Horror/future-war runtime override mappings for every catalog line under `REALITY_RUNTIME_SPRITES`.
+- Cozy and horror attack-particle mappings, defeat-still mappings, status-effect sprite sets, and item/drink art mappings.
+- Static source-reference idle sprites, not production animation sets.
+
+Wave-specific special cases:
+
+- Wave 10: Banana Split Giraffe / Holograph Projector Giraffe boss route.
+- Wave 20: Neural Overmind final boss with brainstem-wire minions, dedicated particles, defeat stills, terminal defeat handling, and victory cutscene route.
+
+Do not treat any active food-animal package as `production-ready` animation art until it has bespoke cleaned combat idle, attack, hit, defeat, and signature-ability frames.
+
+## Starter Runtime Sprite Lines
 
 - Toast Tortoise: Toastlet > Butterback > Clubshell > Banquet Shell
 - Sushi Seal: Maki Pup > Nigiri Seal > Dragon Roll > Omakase Seal
@@ -61,7 +79,7 @@ What to tighten in the next pass:
 - Berry Bat: Berry Bat > Bramble Bat > Elderberry Bat > Royal Berry Bat
 - Noodle Newt: Noodle Newt > Ramen Newt > Hotpot Newt > Cauldron Newt
 
-Each line has a v3 chroma-key source sheet in `assets/sprites/source/`, a v3 transparent source sheet in `assets/sprites/transparent/`, four `192x192` transparent runtime PNGs, a horizontal preview sheet, and a sprite manifest under `assets/sprites/runtime/<line-id>-v3/`.
+Each starter line has a versioned chroma-key source sheet in `assets/sprites/source/`, a transparent source sheet in `assets/sprites/transparent/`, four `192x192` transparent runtime PNGs, a horizontal preview sheet, and a sprite manifest under `assets/sprites/runtime/<line-id>-v*/`. Later art passes may point the active game to higher-version packages than the examples in this document.
 
 ## Sprite Style
 
@@ -115,6 +133,13 @@ Rules for generated evolution sheets:
 4. Export `192x192` transparent gameplay frames and JSON metadata only after keyframes are approved.
 
 Do not label sprite packages `production-ready` until every required animation has bespoke cleaned frames, not duplicated or pose-expanded filler.
+
+## Documentation Pointers
+
+- Use `assets/sprites/README.md` for the authoritative package-by-package sprite pipeline and active-version history.
+- Use `assets/items/README.md` for topping/drink art, horror weapons, and horror fuel-source replacements.
+- Use `assets/ui/README.md` for active UI atlas, HUD, shop, manifest, combat-ledger, and reality-break panel assets.
+- Use `assets/backgrounds/README.md` and `HORROR_ARENA_MAPPING.md` for arena and cutscene background mappings.
 
 ## V1 Image Prompt
 
