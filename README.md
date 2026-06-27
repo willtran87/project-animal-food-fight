@@ -140,6 +140,19 @@ Check literal runtime asset/script/style references after asset cleanup or refac
 npm run check:assets
 ```
 
+Check static content/data contracts and deterministic runtime helper behavior:
+
+```powershell
+npm run check:data
+npm run check:logic
+```
+
+Generate a non-failing report of tracked assets that are not referenced by scanned source/docs:
+
+```powershell
+npm run report:unused-assets
+```
+
 Run the full local safety suite:
 
 ```powershell

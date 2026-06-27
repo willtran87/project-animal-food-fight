@@ -5,8 +5,11 @@
     "serve": "python -m http.server 8173",
     "check:syntax": "node tools/check_syntax.mjs",
     "check:assets": "node tools/check_asset_references.mjs",
+    "check:data": "node tools/check_data_integrity.mjs",
+    "check:logic": "node tools/check_runtime_logic.mjs",
+    "report:unused-assets": "node tools/report_unused_assets.mjs",
     "check:tutorial": "node tools/check_opening_tutorial_anchor.mjs",
     "check:visual": "node tools/check_game_routes_highres.mjs",
-    "check": "npm run check:syntax && npm run check:assets && npm run check:visual && npm run check:tutorial"
+    "check": "npm run check:syntax && npm run check:assets && npm run check:data && npm run check:logic && npm run check:visual && npm run check:tutorial"
   }
 }
