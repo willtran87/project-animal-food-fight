@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Harvest Friends - Start Menu</title>
     <base href="../" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f7d4a'/%3E%3Ccircle cx='32' cy='34' r='18' fill='%23fff4cb'/%3E%3Cpath d='M22 31h20v8H22z' fill='%23d9573c'/%3E%3Cpath d='M32 13c8 0 12 5 12 5-9 0-12 5-12 5s-3-5-12-5c0 0 4-5 12-5z' fill='%239bd36a'/%3E%3C/svg%3E" />
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="preload" as="image" href="assets/start-menu/cozy-picnic-start-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/run-mode-selector-cozy-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/run-mode-selector-horror-bg-v1.png" />
     <link rel="preload" as="image" href="assets/start-menu/harvest-friends-title-v2.png" />
     <link rel="preload" as="image" href="assets/start-menu/harvest-friends-mascot-cluster-v1.png" />
-    <link rel="stylesheet" href="styles/start-menu.css?v=field-guide-panzoom-1-campaign-flow-1-root-frame-2-no-lr-mask-1-hidden-action-1-final-reboot-static-2-menu-theme-options-1-postgame-horror-lock-1-horror-spec-mascot-hide-1-run-mode-select-1" />
+    <link rel="stylesheet" href="styles/start-menu.css?v=field-guide-panzoom-1-campaign-flow-1-root-frame-2-no-lr-mask-1-hidden-action-1-final-reboot-static-2-menu-theme-options-1-postgame-horror-lock-1-horror-spec-mascot-hide-1-run-mode-select-6-menu-enter-motion-2" />
   </head>
   <body>
     <main class="start-menu" aria-label="Harvest Friends start menu">
@@ -64,11 +66,11 @@
         <section class="run-mode-panel" aria-label="Choose run mode" hidden>
           <button class="run-mode-choice is-selected" type="button" data-run-mode="story">
             <span class="run-mode-title">Story Mode</span>
-            <span class="run-mode-copy">Opening, reveals, and final battle</span>
+            <span class="run-mode-copy">Opening, reveals, and final gate</span>
           </button>
           <button class="run-mode-choice" type="button" data-run-mode="infinite">
             <span class="run-mode-title">Infinite Mode</span>
-            <span class="run-mode-copy">Random scaling battles, no story</span>
+            <span class="run-mode-copy">Endless pressure tests, no story</span>
           </button>
         </section>
 
@@ -107,6 +109,9 @@
             <label for="sfx-volume">SFX</label>
             <input id="sfx-volume" type="range" min="0" max="10" value="8" />
           </div>
+          <button class="purge-game-data" type="button" data-action="purgeGameData">
+            Purge Game Data
+          </button>
         </aside>
       </section>
 
@@ -164,6 +169,7 @@
       </section>
     </main>
     <div class="menu-reboot-static-overlay" aria-hidden="true" hidden></div>
-    <script src="src/start-menu.js?v=field-guide-click-swipe-1-campaign-flow-1-root-frame-2-continue-run-1-auto-reveal-1-final-reboot-static-2-menu-theme-options-1-pages-assets-1-cozy-default-1-postgame-horror-lock-1-run-mode-select-1"></script>
+    <div class="menu-load-transition-overlay" aria-hidden="true" hidden></div>
+    <script src="src/app-scripts.js?v=script-loader-level10-plates-1" data-entry="start-menu"></script>
   </body>
 </html>

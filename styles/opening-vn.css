@@ -41,6 +41,7 @@ button {
   position: relative;
   width: min(100%, 1600px, calc((100vh - clamp(24px, 4vw, 48px)) * 1.6));
   aspect-ratio: 16 / 10;
+  container-type: inline-size;
   overflow: hidden;
   border: 3px solid #203b2d;
   border-radius: 8px;
@@ -110,10 +111,10 @@ button {
 
 .player-standee {
   position: absolute;
-  left: clamp(-184px, -10vw, -116px);
-  bottom: clamp(-210px, -14vw, -150px);
+  left: -7.25%;
+  bottom: -15%;
   z-index: 2;
-  width: clamp(400px, 44vw, 560px);
+  width: 35%;
   display: grid;
   justify-items: center;
   pointer-events: none;
@@ -151,22 +152,22 @@ button {
 
 .paddock-preview {
   position: absolute;
-  left: 22.5%;
-  top: 0.8%;
+  left: 20.25%;
+  top: 12.4%;
   z-index: 1;
   display: block;
-  width: min(67%, 856px);
+  width: 62%;
   aspect-ratio: 1586 / 992;
   border: 0;
   border-radius: 0;
-  --board-pad-y: clamp(18px, 2vw, 30px);
-  --board-pad-x: clamp(24px, 3vw, 44px);
+  --board-pad-y: 3%;
+  --board-pad-x: 3.9%;
   padding: var(--board-pad-y) var(--board-pad-x);
   overflow: visible;
   background: url("../assets/opening-vn/runtime/display-corkboard-bg-v2.webp") center / 100% 100% no-repeat;
   box-shadow: none;
   filter: none;
-  --document-offset-y: clamp(4px, 0.7vw, 10px);
+  --document-offset-y: 1.4%;
   --document-scale: 1;
   contain: layout paint;
 }
@@ -209,7 +210,7 @@ button {
 }
 
 .paddock-preview[data-board="livingRecipe"] {
-  --document-offset-y: clamp(1px, 0.3vw, 5px);
+  --document-offset-y: 0.45%;
   --document-scale: 1.1;
 }
 
@@ -515,6 +516,7 @@ button {
 }
 
 .vn-stage[data-phase="tutorial"] {
+  /* The embedded shop canvas is flush in its iframe; do not offset the tutorial wrapper. */
   background:
     linear-gradient(180deg, rgba(255, 246, 206, 0.08), rgba(35, 39, 28, 0.18)),
     #162d24;
@@ -597,6 +599,7 @@ button {
 }
 
 .tutorial-shop {
+  --actual-shop-zoom: 1;
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -618,9 +621,14 @@ button {
 
 .actual-shop-frame {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  left: 50%;
+  top: 50%;
+  width: calc(100% * var(--actual-shop-zoom));
+  height: calc(100% * var(--actual-shop-zoom));
+  transform: translate(-50%, -50%);
+}
+
+.actual-shop-frame {
   border: 0;
   background: #e9f6ed;
   pointer-events: none;
@@ -646,80 +654,80 @@ button {
 }
 
 .actual-highlight.hud {
-  left: 1%;
-  top: 0.7%;
-  width: 36.7%;
-  height: 11%;
+  left: 0.2%;
+  top: 0.2%;
+  width: 37.8%;
+  height: 9.4%;
 }
 
 .actual-highlight.shop {
-  left: 2.1%;
-  top: 11.5%;
-  width: 33.8%;
-  height: 24.1%;
+  left: 0.2%;
+  top: 9.3%;
+  width: 35.4%;
+  height: 27.5%;
 }
 
 .actual-highlight.locked-slot {
-  left: 35.5%;
-  top: 11.5%;
-  width: 7.8%;
-  height: 24.1%;
+  left: 35.8%;
+  top: 9.3%;
+  width: 9.4%;
+  height: 27.5%;
 }
 
 .actual-highlight.stall {
-  left: 70.2%;
-  top: 10.8%;
-  width: 25.4%;
-  height: 28.4%;
+  left: 71.8%;
+  top: 10.6%;
+  width: 26.5%;
+  height: 30%;
 }
 
 .actual-highlight.freeze {
-  left: 7.55%;
-  top: 12.2%;
-  width: 2.3%;
-  height: 4.2%;
+  left: 5.3%;
+  top: 8.6%;
+  width: 2.6%;
+  height: 4.6%;
 }
 
 .actual-highlight.storage {
-  left: 12.45%;
+  left: 0.9%;
   top: 37.8%;
-  width: 7.35%;
-  height: 34.1%;
+  width: 17.4%;
+  height: 37.8%;
 }
 
 .actual-highlight.board {
-  left: 34.3%;
-  top: 37.8%;
-  width: 22%;
-  height: 35.3%;
+  left: 34.5%;
+  top: 38.7%;
+  width: 24.5%;
+  height: 38.5%;
 }
 
 .actual-highlight.traits {
-  left: 65.1%;
-  top: 37.9%;
-  width: 32%;
-  height: 37.4%;
+  left: 67.3%;
+  top: 39.8%;
+  width: 32.5%;
+  height: 36.5%;
 }
 
 .actual-highlight.upgrade {
-  left: 62.9%;
-  top: 1.9%;
-  width: 10.3%;
-  height: 8.2%;
+  left: 65.7%;
+  top: 0.4%;
+  width: 10.9%;
+  height: 7.8%;
 }
 
 .actual-highlight.reroll {
-  left: 75.1%;
-  top: 1.9%;
-  width: 10.3%;
-  height: 8.2%;
+  left: 78.9%;
+  top: 0.4%;
+  width: 10.9%;
+  height: 7.8%;
 }
 
 .actual-highlight.battle {
-  left: 87.25%;
-  top: 1.9%;
-  width: 10.2%;
-  height: 8.2%;
+  left: 92.1%;
+  top: 0.4%;
+  width: 7.6%;
+  height: 7.8%;
 }
 
 .vn-stage[data-tutorial-step="shop-intro"] .tutorial-shop {
@@ -802,10 +810,10 @@ button {
 
 .tabs-counter {
   position: absolute;
-  right: clamp(-42px, -2.2vw, -18px);
-  bottom: clamp(-140px, -9.4vw, -94px);
+  right: -1.15%;
+  bottom: -9.4%;
   z-index: 2;
-  width: clamp(188px, 20.5vw, 270px);
+  width: 16.875%;
   display: grid;
   justify-items: center;
   pointer-events: none;
@@ -847,13 +855,14 @@ button {
   position: absolute;
   left: 15%;
   right: 15%;
-  bottom: 4%;
+  bottom: 2.5%;
   z-index: 5;
-  min-height: 214px;
-  padding: 48px 30px 22px;
+  height: 19.8%;
+  min-height: 0;
+  padding: 4.4cqh 1.75cqw 2cqh;
   display: grid;
   grid-template-rows: 1fr auto;
-  gap: 18px;
+  gap: 1.4cqh;
   border-color: var(--panel-edge);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 247, 215, 0.08)),
@@ -886,16 +895,6 @@ button {
   top: 10px;
   border-right: 3px solid rgba(111, 117, 70, 0.72);
   border-top: 3px solid rgba(111, 117, 70, 0.72);
-}
-
-@media (min-width: 761px) {
-  .dialogue-panel {
-    bottom: 2.5%;
-    height: 198px;
-    min-height: 0;
-    padding: 44px 28px 20px;
-    gap: 14px;
-  }
 }
 
 .speaker-label {
@@ -1100,34 +1099,9 @@ button {
     aspect-ratio: 16 / 10;
   }
 
-  .player-standee {
-    left: -16%;
-    bottom: -24%;
-    width: 45%;
-  }
-
-  .tabs-counter {
-    right: -4%;
-    bottom: -18%;
-    width: 21%;
-  }
-
   .tabs-portrait {
     width: 100%;
     height: auto;
-  }
-
-  .paddock-preview {
-    left: 42%;
-    top: 1%;
-    width: min(36%, 250px);
-    --board-pad-y: clamp(4px, 1.4vw, 8px);
-    --board-pad-x: clamp(6px, 2vw, 12px);
-  }
-
-  .paddock-preview img {
-    max-width: calc(94% - var(--board-pad-x) - var(--board-pad-x));
-    max-height: calc(82% - var(--board-pad-y) - var(--board-pad-y));
   }
 
   .tutorial-map {
@@ -1172,15 +1146,6 @@ button {
     width: 42px;
     height: 58px;
     font-size: 0.45rem;
-  }
-
-  .dialogue-panel {
-    left: 14%;
-    right: 14%;
-    bottom: 5%;
-    min-height: 0;
-    padding: 24px 12px 8px;
-    gap: 6px;
   }
 
   .speaker-label {

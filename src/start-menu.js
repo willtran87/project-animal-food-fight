@@ -1,4 +1,4 @@
-const MENU_THEME_ALIASES = {
+const MENU_THEME_ALIASES = window.FoodAnimalsThemeAssets?.MENU_THEME_ALIASES || {
   cozy: "cozy",
   picnic: "cozy",
   harvest: "cozy",
@@ -10,7 +10,10 @@ const MENU_THEME_ALIASES = {
 };
 
 const MENU_REBOOT_STATIC_STORAGE_KEY = "harvest-friends:menu-reboot-static:v1";
+const MENU_RETURN_REVEAL_STORAGE_KEY = "harvest-friends:menu-return-reveal:v1";
 const HORROR_MENU_UNLOCK_STORAGE_KEY = "harvest-friends:horror-menu-unlocked:v1";
+const HORROR_REVEALED_STORAGE_KEY = "harvest-friends:horror-revealed:v1";
+const GAME_COMPLETED_STORAGE_KEY = "harvest-friends:game-completed:v1";
 const DEFAULT_MENU_THEME = "cozy";
 
 const state = {
@@ -19,6 +22,7 @@ const state = {
   selectedIndex: 0,
   lastAction: "none",
   optionsOpen: false,
+  purgeConfirm: false,
   runModeOpen: false,
   selectedRunMode: "story",
   fieldGuideOpen: false,
@@ -50,14 +54,16 @@ const state = {
     musicBlocked: false,
   },
   rebootStaticReveal: false,
+  menuLoadReveal: false,
+  menuLoadRevealKind: "load",
   activeLobs: 0,
   lobSpawnCount: 0,
   lobExplosionCount: 0,
   lastLobSize: 0,
 };
 
-const SETTINGS_STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
-const ACTIVE_RUN_STORAGE_KEY = "harvest-friends:active-run:v1";
+const SETTINGS_STORAGE_KEY = window.FoodAnimalsAudioSettings?.STORAGE_KEY || "harvest-friends:start-menu-settings:v1";
+const ACTIVE_RUN_STORAGE_KEY = window.FoodAnimalsRunStorage?.STORAGE_KEY || "harvest-friends:active-run:v1";
 const DEFAULT_MUSIC_TRACK = "market";
 const DEFAULT_HORROR_MUSIC_TRACK = "horror-market";
 const MENU_MUSIC_MAX_VOLUME = 0.85;
@@ -301,6 +307,7 @@ const themeButtons = Array.from(document.querySelectorAll("[data-menu-theme-opti
 const musicSlider = document.querySelector("#music-volume");
 const musicTrackSelect = document.querySelector("#music-track");
 const sfxSlider = document.querySelector("#sfx-volume");
+const purgeGameDataButton = document.querySelector('[data-action="purgeGameData"]');
 const fieldGuide = document.querySelector(".field-guide");
 const fieldGuidePageArt = document.querySelector(".field-guide-page-art");
 const fieldGuideViewport = document.querySelector(".field-guide-page-viewport");
@@ -310,9 +317,11 @@ const fieldGuideCount = document.querySelector(".field-guide-page-count");
 const fieldGuideButtons = Array.from(document.querySelectorAll("[data-guide-action]"));
 const fieldGuideActionLabel = document.querySelector('[data-action="fieldGuide"] .button-label');
 const continueRunAction = document.querySelector('[data-action="continue"]');
+const optionsAction = document.querySelector('[data-action="options"]');
 const startTransition = document.querySelector(".start-transition");
 const campaignFrame = document.querySelector(".campaign-frame");
 const rebootStaticOverlay = document.querySelector(".menu-reboot-static-overlay");
+const menuLoadTransitionOverlay = document.querySelector(".menu-load-transition-overlay");
 const menuMusic = new Audio(getSelectedMusicTrack().src);
 const menuSfx = {
   armed: false,
@@ -329,6 +338,7 @@ let startTableTimer = null;
 let startRunTimer = null;
 let fieldGuideCloseTimer = null;
 let rebootStaticTimer = null;
+let menuLoadRevealTimer = null;
 let fieldGuideImageLoadToken = 0;
 let campaignFrameLoadToken = 0;
 const activeLobs = [];
@@ -338,7 +348,7 @@ menuMusic.loop = true;
 menuMusic.preload = "auto";
 
 function render() {
-  const horrorMenuUnlocked = coerceLockedMenuState();
+  coerceLockedMenuState();
   state.activeRun = getActiveRun();
   document.body.dataset.startMenuTheme = state.theme;
   startMenu.dataset.theme = state.theme;
@@ -361,20 +371,28 @@ function render() {
     button.classList.toggle("is-selected", active);
     button.tabIndex = active ? 0 : -1;
   });
-  if (themeOptionRow) themeOptionRow.hidden = !horrorMenuUnlocked;
+  if (themeOptionRow) themeOptionRow.hidden = false;
   themeButtons.forEach((button) => {
-    const active = normalizeMenuTheme(button.dataset.menuThemeOption) === state.theme;
-    const isLockedHorror = normalizeMenuTheme(button.dataset.menuThemeOption) === "horror" && !horrorMenuUnlocked;
-    button.hidden = isLockedHorror;
-    button.disabled = isLockedHorror;
+    const theme = normalizeMenuTheme(button.dataset.menuThemeOption);
+    const available = isMenuThemeAvailable(theme);
+    const active = theme === state.theme;
+    button.hidden = !available;
+    button.disabled = !available;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-checked", String(active));
+    button.setAttribute("aria-disabled", String(!available));
     button.tabIndex = active ? 0 : -1;
   });
   if (rebootStaticOverlay) {
     rebootStaticOverlay.hidden = !state.rebootStaticReveal;
     rebootStaticOverlay.classList.toggle("is-active", state.rebootStaticReveal);
   }
+  if (menuLoadTransitionOverlay) {
+    menuLoadTransitionOverlay.hidden = !state.menuLoadReveal;
+    menuLoadTransitionOverlay.dataset.kind = state.menuLoadRevealKind;
+    menuLoadTransitionOverlay.classList.toggle("is-active", state.menuLoadReveal);
+  }
+  renderPurgeGameDataButton();
   const fieldGuideVisible = state.fieldGuideOpen || state.fieldGuideClosing;
   fieldGuide.hidden = !fieldGuideVisible;
   fieldGuide.dataset.theme = state.theme;
@@ -397,7 +415,7 @@ function render() {
     button.disabled = state.startingGame || state.runModeOpen;
   });
   musicSlider.value = String(state.settings.music);
-  renderMusicTrackOptions(horrorMenuUnlocked);
+  renderMusicTrackOptions();
   musicTrackSelect.value = getSelectedMusicTrack().id;
   sfxSlider.value = String(state.settings.sfx);
   updateMenuMusicVolume();
@@ -408,6 +426,7 @@ function chooseAction(action) {
   if (state.startingGame) return;
 
   state.lastAction = action;
+  if (action !== "options") state.purgeConfirm = false;
   playMenuSfx(action === "start" || action === "continue" ? "transition" : "ui-confirm");
 
   if (action === "start") {
@@ -427,6 +446,7 @@ function chooseAction(action) {
     clearFieldGuideCloseTimer();
     state.phase = "options";
     state.optionsOpen = !state.optionsOpen;
+    if (!state.optionsOpen) state.purgeConfirm = false;
     state.runModeOpen = false;
     state.fieldGuideOpen = false;
     state.fieldGuideClosing = false;
@@ -447,6 +467,7 @@ function openRunModeSelect() {
   clearFieldGuideCloseTimer();
   state.phase = "runMode";
   state.optionsOpen = false;
+  state.purgeConfirm = false;
   state.runModeOpen = true;
   state.fieldGuideOpen = false;
   state.fieldGuideClosing = false;
@@ -465,12 +486,42 @@ function closeRunModeSelect() {
   return true;
 }
 
+function closeOptionsPanel() {
+  if (!state.optionsOpen) return false;
+  state.optionsOpen = false;
+  state.purgeConfirm = false;
+  state.phase = "menu";
+  render();
+  visibleMenuActions()[state.selectedIndex]?.focus({ preventScroll: true });
+  return true;
+}
+
 function chooseRunMode(mode) {
   const normalized = mode === "infinite" ? "infinite" : "story";
   state.selectedRunMode = normalized;
   state.runModeOpen = false;
   clearActiveRun();
   beginStartTransition(normalized === "infinite" ? "infinite" : "story");
+}
+
+function handleRunModeOutsidePointerDown(event) {
+  if (!state.runModeOpen || state.startingGame) return;
+  if (runModePanel?.contains(event.target)) return;
+  if (closeRunModeSelect()) {
+    playMenuSfx("ui-back", { volume: 0.65 });
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
+function handleOptionsOutsidePointerDown(event) {
+  if (!state.optionsOpen || state.startingGame) return;
+  if (optionsPanel?.contains(event.target) || optionsAction?.contains(event.target)) return;
+  if (closeOptionsPanel()) {
+    playMenuSfx("ui-back", { volume: 0.65 });
+    event.preventDefault();
+    event.stopPropagation();
+  }
 }
 
 function selectIndex(index) {
@@ -527,6 +578,20 @@ fieldGuideButtons.forEach((button) => {
       playMenuSfx("ui-confirm", { volume: 0.7 });
     }
   });
+});
+
+purgeGameDataButton?.addEventListener("click", () => {
+  ensureMenuMusicPlaying();
+  state.lastAction = "purgeGameData";
+  if (!state.purgeConfirm) {
+    state.purgeConfirm = true;
+    playMenuSfx("invalid", { volume: 0.48 });
+    render();
+    return;
+  }
+  const purged = purgeGameData();
+  playMenuSfx(purged ? "ui-confirm" : "invalid", { volume: 0.7 });
+  render();
 });
 
 fieldGuide?.addEventListener("pointerdown", (event) => {
@@ -592,6 +657,7 @@ fieldGuidePageArt?.addEventListener("wheel", (event) => {
 }, { passive: false });
 
 musicSlider.addEventListener("input", () => {
+  state.purgeConfirm = false;
   state.settings.music = Number(musicSlider.value);
   saveSettings();
   updateMenuMusicVolume();
@@ -599,6 +665,7 @@ musicSlider.addEventListener("input", () => {
 });
 
 musicTrackSelect.addEventListener("change", () => {
+  state.purgeConfirm = false;
   setMusicTrack(musicTrackSelect.value);
   playMenuSfx("ui-confirm", { volume: 0.65 });
 });
@@ -611,7 +678,7 @@ themeButtons.forEach((button) => {
   button.addEventListener("keydown", (event) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const themes = isHorrorMenuUnlocked() ? ["cozy", "horror"] : ["cozy"];
+    const themes = availableMenuThemes();
     const currentIndex = Math.max(0, themes.indexOf(state.theme));
     const nextIndex =
       event.key === "Home" ? 0 :
@@ -626,6 +693,7 @@ themeButtons.forEach((button) => {
 });
 
 sfxSlider.addEventListener("input", () => {
+  state.purgeConfirm = false;
   state.settings.sfx = Number(sfxSlider.value);
   saveSettings();
   playMenuSfx("ui-hover", { force: true, volume: 0.65 });
@@ -696,6 +764,18 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
+  if (state.optionsOpen && optionsPanel?.contains(event.target)) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      state.optionsOpen = false;
+      state.purgeConfirm = false;
+      state.phase = "menu";
+      playMenuSfx("ui-back");
+      render();
+    }
+    return;
+  }
+
   if (event.key === "ArrowDown" || event.key === "s" || event.key === "S") {
     event.preventDefault();
     selectIndex(state.selectedIndex + 1);
@@ -709,6 +789,7 @@ window.addEventListener("keydown", (event) => {
     chooseAction(visibleMenuActions()[state.selectedIndex]?.dataset.action);
   } else if (event.key === "Escape" && state.optionsOpen) {
     state.optionsOpen = false;
+    state.purgeConfirm = false;
     state.phase = "menu";
     playMenuSfx("ui-back");
     render();
@@ -717,10 +798,12 @@ window.addEventListener("keydown", (event) => {
 
 window.addEventListener("pointerdown", armMenuSfx, { capture: true });
 window.addEventListener("pointerdown", () => ensureMenuMusicPlaying(), { capture: true });
+window.addEventListener("pointerdown", handleRunModeOutsidePointerDown, { capture: true });
+window.addEventListener("pointerdown", handleOptionsOutsidePointerDown, { capture: true });
 window.addEventListener("pointerdown", handleLobPointerDown);
 window.addEventListener("keydown", armMenuSfx, { capture: true });
 window.addEventListener("storage", (event) => {
-  if (event.key !== ACTIVE_RUN_STORAGE_KEY) return;
+  if (![ACTIVE_RUN_STORAGE_KEY, GAME_COMPLETED_STORAGE_KEY, HORROR_MENU_UNLOCK_STORAGE_KEY, HORROR_REVEALED_STORAGE_KEY].includes(event.key)) return;
   state.activeRun = getActiveRun();
   render();
 });
@@ -754,11 +837,18 @@ window.render_game_to_text = () =>
       updatedAt: state.activeRun.updatedAt || null,
     } : { available: false, storageKey: ACTIVE_RUN_STORAGE_KEY },
     optionsOpen: state.optionsOpen,
+    purgeConfirm: state.purgeConfirm,
+    purgeButtonLabel: purgeGameDataButton?.textContent?.trim() || null,
     runModeOpen: state.runModeOpen,
     selectedRunMode: state.selectedRunMode,
     fieldGuideClosing: state.fieldGuideClosing,
     fieldGuideCloseMs: FIELD_GUIDE_CLOSE_MS,
     startingGame: state.startingGame,
+    menuLoadReveal: {
+      active: state.menuLoadReveal,
+      kind: state.menuLoadRevealKind,
+    },
+    rebootStaticReveal: state.rebootStaticReveal,
     startTransitionPhase: state.startTransitionPhase,
     startTransitionMs: START_TRANSITION_MS,
     startTransitionTiming: {
@@ -771,8 +861,25 @@ window.render_game_to_text = () =>
     themeRoute: `${START_MENU_TEST_URL}?theme=${state.theme}`,
     themeScope: "start-menu-only-look-field-guide-specifications",
     horrorMenuUnlocked: isHorrorMenuUnlocked(),
+    gameCompleted: (() => {
+      try {
+        return window.localStorage.getItem(GAME_COMPLETED_STORAGE_KEY) === "1";
+      } catch {
+        return false;
+      }
+    })(),
+    gameCompletedKey: GAME_COMPLETED_STORAGE_KEY,
+    horrorRevealed: (() => {
+      try {
+        return window.localStorage.getItem(HORROR_REVEALED_STORAGE_KEY) === "1";
+      } catch {
+        return false;
+      }
+    })(),
+    horrorRevealedKey: HORROR_REVEALED_STORAGE_KEY,
     themeOptionsVisible: Boolean(themeOptionRow && !themeOptionRow.hidden),
-    themeToggleApi: isHorrorMenuUnlocked() ? "window.setStartMenuTheme('horror'|'cozy')" : null,
+    availableThemes: availableMenuThemes(),
+    themeToggleApi: isHorrorMenuUnlocked() ? "window.setStartMenuTheme('horror'|'cozy')" : "locked-to-cozy",
     horrorAsset: HORROR_START_BG_SRC,
     horrorTitleScreen:
       state.theme === "horror"
@@ -881,105 +988,78 @@ function horrorFieldGuideSrc(slug, plate) {
 }
 
 function currentFieldGuidePages() {
-  return state.theme === "horror" ? SPECIFICATIONS_PAGES : FIELD_GUIDE_PAGES;
+  return window.FoodAnimalsFieldGuideRuntime.pagesForTheme(state.theme, FIELD_GUIDE_PAGES, SPECIFICATIONS_PAGES);
 }
 
 function fieldGuideDisplayName() {
-  return state.theme === "horror" ? "Specifications" : "Field Guide";
+  return window.FoodAnimalsFieldGuideRuntime.displayName(state.theme);
 }
 
 function currentFieldGuidePage() {
-  const pages = currentFieldGuidePages();
-  return pages[state.fieldGuideIndex] || pages[0];
+  return window.FoodAnimalsFieldGuideRuntime.currentPage(
+    state.theme,
+    state.fieldGuideIndex,
+    FIELD_GUIDE_PAGES,
+    SPECIFICATIONS_PAGES,
+  );
 }
 
 function resetFieldGuideView() {
-  state.fieldGuideView = {
-    ...(state.fieldGuideView || {}),
-    zoom: 1,
-    panX: 0,
-    panY: 0,
-    dragging: false,
-    startX: 0,
-    startY: 0,
-    startPanX: 0,
-    startPanY: 0,
-  };
+  state.fieldGuideView = window.FoodAnimalsFieldGuideRuntime.resetView(state.fieldGuideView);
   applyFieldGuideView();
+}
+
+function fieldGuideRuntimeConfig() {
+  return {
+    zoomMin: FIELD_GUIDE_ZOOM_MIN,
+    zoomMax: FIELD_GUIDE_ZOOM_MAX,
+    zoomStep: FIELD_GUIDE_ZOOM_STEP,
+    tapMaxPx: FIELD_GUIDE_TAP_MAX_PX,
+    swipeMinPx: FIELD_GUIDE_SWIPE_MIN_PX,
+    swipeAxisBias: FIELD_GUIDE_SWIPE_AXIS_BIAS,
+  };
 }
 
 function clampFieldGuideView() {
   const view = state.fieldGuideView || (state.fieldGuideView = {});
-  view.zoom = Math.max(FIELD_GUIDE_ZOOM_MIN, Math.min(FIELD_GUIDE_ZOOM_MAX, view.zoom || 1));
-  const rect = fieldGuidePageArt?.getBoundingClientRect();
-  const maxPanX = rect ? Math.max(0, (rect.width * view.zoom - rect.width) / 2) : 0;
-  const maxPanY = rect ? Math.max(0, (rect.height * view.zoom - rect.height) / 2) : 0;
-  view.panX = Math.max(-maxPanX, Math.min(maxPanX, view.panX || 0));
-  view.panY = Math.max(-maxPanY, Math.min(maxPanY, view.panY || 0));
-  if (view.zoom <= FIELD_GUIDE_ZOOM_MIN) {
-    view.zoom = FIELD_GUIDE_ZOOM_MIN;
-    view.panX = 0;
-    view.panY = 0;
-  }
-  return view;
+  return window.FoodAnimalsFieldGuideRuntime.clampView(
+    view,
+    fieldGuidePageArt?.getBoundingClientRect(),
+    fieldGuideRuntimeConfig(),
+  );
 }
 
 function applyFieldGuideView() {
   if (!fieldGuideViewport || !fieldGuidePageArt) return;
   const view = clampFieldGuideView();
-  fieldGuideViewport.style.setProperty("--field-guide-zoom", String(view.zoom));
-  fieldGuideViewport.style.setProperty("--field-guide-pan-x", `${view.panX}px`);
-  fieldGuideViewport.style.setProperty("--field-guide-pan-y", `${view.panY}px`);
-  fieldGuidePageArt.classList.toggle("is-dragging", Boolean(view.dragging));
-  fieldGuidePageArt.dataset.zoom = String(Math.round(view.zoom * 100));
+  window.FoodAnimalsFieldGuideRuntime.applyView(fieldGuideViewport, fieldGuidePageArt, view);
 }
 
 function zoomFieldGuideView(deltaY, clientX, clientY) {
   if (!state.fieldGuideOpen || !fieldGuidePageArt) return false;
   const rect = fieldGuidePageArt.getBoundingClientRect();
-  if (
-    clientX < rect.left ||
-    clientX > rect.right ||
-    clientY < rect.top ||
-    clientY > rect.bottom
-  ) {
-    return false;
-  }
   const view = state.fieldGuideView || (state.fieldGuideView = {});
-  const previousZoom = Math.max(FIELD_GUIDE_ZOOM_MIN, Math.min(FIELD_GUIDE_ZOOM_MAX, view.zoom || 1));
-  const nextZoom = Math.max(
-    FIELD_GUIDE_ZOOM_MIN,
-    Math.min(FIELD_GUIDE_ZOOM_MAX, previousZoom * (deltaY < 0 ? FIELD_GUIDE_ZOOM_STEP : 1 / FIELD_GUIDE_ZOOM_STEP)),
+  const result = window.FoodAnimalsFieldGuideRuntime.zoomView(
+    view,
+    rect,
+    deltaY,
+    clientX,
+    clientY,
+    fieldGuideRuntimeConfig(),
   );
-  if (nextZoom === previousZoom) return true;
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-  const localX = clientX - centerX - (view.panX || 0);
-  const localY = clientY - centerY - (view.panY || 0);
-  const ratio = nextZoom / previousZoom;
-  view.zoom = nextZoom;
-  view.panX = (view.panX || 0) - localX * (ratio - 1);
-  view.panY = (view.panY || 0) - localY * (ratio - 1);
+  if (!result.changed) return false;
   applyFieldGuideView();
   return true;
 }
 
 function fieldGuidePageTurnFromPointer(event, view) {
-  if (!state.fieldGuideOpen || state.fieldGuideClosing || event?.type !== "pointerup") return 0;
-  const startX = Number.isFinite(view.startX) ? view.startX : event.clientX;
-  const startY = Number.isFinite(view.startY) ? view.startY : event.clientY;
-  const dx = event.clientX - startX;
-  const dy = event.clientY - startY;
-  const absX = Math.abs(dx);
-  const absY = Math.abs(dy);
-  const canSwipePage = (view.zoom || FIELD_GUIDE_ZOOM_MIN) <= FIELD_GUIDE_ZOOM_MIN + 0.01;
-  if (canSwipePage && absX >= FIELD_GUIDE_SWIPE_MIN_PX && absX >= absY * FIELD_GUIDE_SWIPE_AXIS_BIAS) {
-    return dx < 0 ? 1 : -1;
-  }
-  if (Math.hypot(dx, dy) > FIELD_GUIDE_TAP_MAX_PX) return 0;
-  const rect = fieldGuidePageArt?.getBoundingClientRect();
-  if (!rect) return 1;
-  return event.clientX < rect.left + rect.width / 2 ? -1 : 1;
+  return window.FoodAnimalsFieldGuideRuntime.pageTurnFromPointer(
+    event,
+    view,
+    fieldGuidePageArt?.getBoundingClientRect(),
+    { open: state.fieldGuideOpen, closing: state.fieldGuideClosing },
+    fieldGuideRuntimeConfig(),
+  );
 }
 
 function renderFieldGuide() {
@@ -1029,86 +1109,11 @@ function renderFieldGuideControlIcons() {
 }
 
 function resolveFieldGuideImageSrc(page) {
-  if (!page.chromaKey) return Promise.resolve(page.src);
-  if (chromaKeyImageCache.has(page.src)) return chromaKeyImageCache.get(page.src);
-
-  const keyedImagePromise = new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const context = canvas.getContext("2d", { willReadFrequently: true });
-      if (!context) {
-        resolve(page.src);
-        return;
-      }
-
-      context.drawImage(img, 0, 0);
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      const keyColor = [data[0], data[1], data[2]];
-      const keyedPixels = connectedChromaKeyPixels(data, canvas.width, canvas.height, keyColor);
-      for (let index = 0; index < keyedPixels.length; index += 1) {
-        if (keyedPixels[index]) data[index * 4 + 3] = 0;
-      }
-      context.putImageData(imageData, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => resolve(page.src);
-    img.src = page.src;
-  });
-
-  chromaKeyImageCache.set(page.src, keyedImagePromise);
-  return keyedImagePromise;
+  return window.FoodAnimalsFieldGuideRuntime.resolveImageSrc(page, chromaKeyImageCache);
 }
 
 function connectedChromaKeyPixels(data, width, height, keyColor) {
-  const tolerance = 22;
-  const visited = new Uint8Array(width * height);
-  const queue = new Int32Array(width * height);
-  let readIndex = 0;
-  let writeIndex = 0;
-
-  const matchesKey = (pixelIndex) => {
-    const dataIndex = pixelIndex * 4;
-    return (
-      data[dataIndex + 3] > 0 &&
-      Math.abs(data[dataIndex] - keyColor[0]) <= tolerance &&
-      Math.abs(data[dataIndex + 1] - keyColor[1]) <= tolerance &&
-      Math.abs(data[dataIndex + 2] - keyColor[2]) <= tolerance
-    );
-  };
-
-  const enqueue = (pixelIndex) => {
-    if (visited[pixelIndex] || !matchesKey(pixelIndex)) return;
-    visited[pixelIndex] = 1;
-    queue[writeIndex] = pixelIndex;
-    writeIndex += 1;
-  };
-
-  for (let x = 0; x < width; x += 1) {
-    enqueue(x);
-    enqueue((height - 1) * width + x);
-  }
-  for (let y = 0; y < height; y += 1) {
-    enqueue(y * width);
-    enqueue(y * width + width - 1);
-  }
-
-  while (readIndex < writeIndex) {
-    const pixelIndex = queue[readIndex];
-    readIndex += 1;
-    const x = pixelIndex % width;
-    const y = Math.floor(pixelIndex / width);
-
-    if (x > 0) enqueue(pixelIndex - 1);
-    if (x + 1 < width) enqueue(pixelIndex + 1);
-    if (y > 0) enqueue(pixelIndex - width);
-    if (y + 1 < height) enqueue(pixelIndex + width);
-  }
-
-  return visited;
+  return window.FoodAnimalsFieldGuideRuntime.connectedChromaKeyPixels(data, width, height, keyColor);
 }
 
 function beginStartTransition(mode = "start") {
@@ -1165,15 +1170,36 @@ function clearRebootStaticTimer() {
   }
 }
 
+function clearMenuLoadRevealTimer() {
+  if (menuLoadRevealTimer !== null) {
+    window.clearTimeout(menuLoadRevealTimer);
+    menuLoadRevealTimer = null;
+  }
+}
+
 function beginMenuRebootStaticReveal() {
   if (!rebootStaticOverlay || !consumeMenuRebootStaticReveal()) return;
   clearRebootStaticTimer();
+  consumeMenuReturnReveal();
   state.rebootStaticReveal = true;
   rebootStaticTimer = window.setTimeout(() => {
     rebootStaticTimer = null;
     state.rebootStaticReveal = false;
     render();
   }, 1500);
+}
+
+function beginMenuLoadReveal() {
+  if (!menuLoadTransitionOverlay || state.rebootStaticReveal) return;
+  clearMenuLoadRevealTimer();
+  state.menuLoadRevealKind = consumeMenuReturnReveal() ? "return" : "load";
+  state.menuLoadReveal = true;
+  const duration = state.menuLoadRevealKind === "return" ? 1100 : 900;
+  menuLoadRevealTimer = window.setTimeout(() => {
+    menuLoadRevealTimer = null;
+    state.menuLoadReveal = false;
+    render();
+  }, duration);
 }
 
 function fieldGuideCloseDuration() {
@@ -1192,6 +1218,7 @@ window.addEventListener("pagehide", () => {
   clearStartTransitionTimers();
   clearFieldGuideCloseTimer();
   clearRebootStaticTimer();
+  clearMenuLoadRevealTimer();
 });
 
 function navigateToRunNow() {
@@ -1255,17 +1282,20 @@ function preloadFieldGuideNeighbors() {
 }
 
 function maxActiveFoodLobs(width = window.innerWidth) {
-  return width < 720 ? FOOD_LOB_MAX_ACTIVE.mobile : FOOD_LOB_MAX_ACTIVE.desktop;
+  return window.FoodAnimalsFoodLobRuntime.maxActive(width, FOOD_LOB_MAX_ACTIVE);
 }
 
 function normalizeMenuTheme(value) {
-  const key = String(value || "").trim().toLowerCase();
-  return MENU_THEME_ALIASES[key] || DEFAULT_MENU_THEME;
+  return window.FoodAnimalsThemeAssets.normalizeMenuTheme(value, DEFAULT_MENU_THEME);
 }
 
 function isHorrorMenuUnlocked() {
   try {
-    return window.localStorage.getItem(HORROR_MENU_UNLOCK_STORAGE_KEY) === "1";
+    return (
+      window.localStorage.getItem(HORROR_REVEALED_STORAGE_KEY) === "1" ||
+      window.localStorage.getItem(HORROR_MENU_UNLOCK_STORAGE_KEY) === "1" ||
+      window.localStorage.getItem(GAME_COMPLETED_STORAGE_KEY) === "1"
+    );
   } catch {
     return false;
   }
@@ -1276,25 +1306,55 @@ function allowedMenuTheme(theme) {
   return normalized === "horror" && !isHorrorMenuUnlocked() ? "cozy" : normalized;
 }
 
+function isMenuThemeAvailable(theme) {
+  const normalized = normalizeMenuTheme(theme);
+  return normalized === "cozy" || isHorrorMenuUnlocked();
+}
+
+function availableMenuThemes() {
+  return ["cozy", "horror"].filter(isMenuThemeAvailable);
+}
+
 function isHorrorMusicTrack(trackId) {
   return String(trackId || "").startsWith("horror-");
+}
+
+function musicTrackTheme(trackId) {
+  return isHorrorMusicTrack(trackId) ? "horror" : "cozy";
+}
+
+function isMusicTrackAllowedForTheme(trackId, theme = state.theme) {
+  return musicTrackTheme(trackId) === normalizeMenuTheme(theme);
+}
+
+function coerceMusicTrackToTheme(theme = state.theme) {
+  const normalizedTheme = normalizeMenuTheme(theme);
+  const selectedTrack = getMusicTrack(state.settings.musicTrack);
+  if (isMusicTrackAllowedForTheme(selectedTrack.id, normalizedTheme)) return false;
+  state.settings.musicTrack = defaultMusicTrackForTheme(normalizedTheme);
+  return true;
 }
 
 function coerceLockedMenuState() {
   const horrorMenuUnlocked = isHorrorMenuUnlocked();
   state.theme = horrorMenuUnlocked ? normalizeMenuTheme(state.theme) : "cozy";
-  if (!horrorMenuUnlocked && isHorrorMusicTrack(state.settings.musicTrack)) {
-    state.settings.musicTrack = DEFAULT_MUSIC_TRACK;
-  }
+  coerceMusicTrackToTheme(state.theme);
   return horrorMenuUnlocked;
 }
 
-function renderMusicTrackOptions(horrorMenuUnlocked = isHorrorMenuUnlocked()) {
+function renderMusicTrackOptions() {
   Array.from(musicTrackSelect.options).forEach((option) => {
-    const lockedHorrorTrack = isHorrorMusicTrack(option.value) && !horrorMenuUnlocked;
-    option.hidden = lockedHorrorTrack;
-    option.disabled = lockedHorrorTrack;
+    const mismatchedTheme = !isMusicTrackAllowedForTheme(option.value, state.theme);
+    option.hidden = mismatchedTheme;
+    option.disabled = mismatchedTheme;
   });
+}
+
+function renderPurgeGameDataButton() {
+  if (!purgeGameDataButton) return;
+  purgeGameDataButton.textContent = state.purgeConfirm ? "Confirm Purge Game Data" : "Purge Game Data";
+  purgeGameDataButton.classList.toggle("is-confirming", state.purgeConfirm);
+  purgeGameDataButton.setAttribute("aria-pressed", String(state.purgeConfirm));
 }
 
 function hasExplicitMenuThemeParam() {
@@ -1328,7 +1388,10 @@ function startTargetUrl(mode = "start") {
   const targetBase = mode === "infinite" ? GAME_TARGET_BASE_URL : START_TARGET_BASE_URL;
   const url = appUrl(targetBase);
   url.searchParams.set("from", "start-menu");
-  if (mode === "infinite") url.searchParams.set("mode", "infinite");
+  if (mode === "infinite") {
+    url.searchParams.set("mode", "infinite");
+    url.searchParams.set("reality", state.theme === "horror" ? "horror" : "cozy");
+  }
   return url.href;
 }
 
@@ -1346,45 +1409,44 @@ function normalizeSelectedIndex() {
 }
 
 function activeRunTargetUrl(run) {
-  const fallback = appUrl(GAME_TARGET_BASE_URL);
-  fallback.searchParams.set("from", "start-menu");
-  fallback.searchParams.set("continue", "1");
-  if (!run || typeof run.route !== "string") return fallback.href;
-  try {
-    const url = new URL(run.route, document.baseURI || window.location.href);
-    url.searchParams.set("from", "start-menu");
-    url.searchParams.set("continue", "1");
-    const target = appUrl(GAME_TARGET_BASE_URL);
-    target.search = url.search;
-    target.hash = url.hash;
-    return target.href;
-  } catch {
-    return fallback.href;
-  }
+  return window.FoodAnimalsRunStorage.targetUrl(run, {
+    appUrl,
+    baseURI: document.baseURI || window.location.href,
+    gameTarget: GAME_TARGET_BASE_URL,
+  });
 }
 
 function getActiveRun() {
-  if (!canUseLocalStorage()) return null;
-  try {
-    const raw = window.localStorage.getItem(ACTIVE_RUN_STORAGE_KEY);
-    if (!raw) return null;
-    const run = JSON.parse(raw);
-    if (!run || run.active !== true || typeof run.route !== "string") return null;
-    if (!run.snapshot || typeof run.snapshot !== "object") return null;
-    return run;
-  } catch {
-    return null;
-  }
+  return window.FoodAnimalsRunStorage.activeRecord(ACTIVE_RUN_STORAGE_KEY);
 }
 
 function clearActiveRun() {
-  if (!canUseLocalStorage()) return;
+  window.FoodAnimalsRunStorage.clear(ACTIVE_RUN_STORAGE_KEY);
+  state.activeRun = null;
+}
+
+function purgeGameData() {
+  let purged = false;
   try {
     window.localStorage.removeItem(ACTIVE_RUN_STORAGE_KEY);
-    state.activeRun = null;
+    window.localStorage.removeItem(GAME_COMPLETED_STORAGE_KEY);
+    window.localStorage.removeItem(HORROR_MENU_UNLOCK_STORAGE_KEY);
+    window.localStorage.removeItem(HORROR_REVEALED_STORAGE_KEY);
+    purged = true;
   } catch {
-    // Storage can be unavailable; fresh starts still work.
+    purged = false;
   }
+  try {
+    window.sessionStorage.removeItem(MENU_REBOOT_STATIC_STORAGE_KEY);
+  } catch {
+    // Purging saved progression should still work when session storage is blocked.
+  }
+  state.activeRun = null;
+  state.purgeConfirm = false;
+  coerceLockedMenuState();
+  setMusicTrack(getSelectedMusicTrack().id);
+  saveSettings();
+  return purged;
 }
 
 function openCampaignTarget(url, screen = "opening") {
@@ -1424,14 +1486,14 @@ function clearActiveFoodLobs() {
 
 function setStartMenuTheme(theme) {
   const nextTheme = allowedMenuTheme(theme);
-  if (state.theme === nextTheme) {
+  if (nextTheme === state.theme) {
     render();
     return state.theme;
   }
-
   state.theme = nextTheme;
   state.fieldGuideIndex = Math.min(state.fieldGuideIndex, currentFieldGuidePages().length - 1);
   resetFieldGuideView();
+  coerceMusicTrackToTheme(state.theme);
   if (state.theme === "horror") {
     clearActiveFoodLobs();
   } else {
@@ -1475,63 +1537,31 @@ function spawnFoodLob(options = {}) {
   nextLobFromLeft = !fromLeft;
   const mobileScale = bounds.width < 600 ? 0.86 : 1;
   const size = Math.round(randomBetween(90, 138) * mobileScale);
-  const offscreenPad = size * 1.65;
-  const startX = fromLeft ? -offscreenPad : bounds.width + offscreenPad * 0.55;
-  const endX = fromLeft ? bounds.width + offscreenPad * 0.55 : -offscreenPad;
   const menuRect = document.querySelector(".primary-menu")?.getBoundingClientRect();
   const menuBottom = menuRect ? clamp(menuRect.bottom - bounds.top, 0, bounds.height) : bounds.height * 0.34;
-  const desiredPathTop = Math.max(
-    bounds.height * 0.42,
-    Math.min(menuBottom + size * 0.15, bounds.height * 0.6),
-  );
-  const minY = Math.min(Math.max(size * 0.7, desiredPathTop), bounds.height - size * 1.05);
-  const maxY = Math.max(minY + 1, Math.min(bounds.height - size * 0.8, bounds.height * 0.88));
-  const arcCeiling = Math.max(size * 0.35, bounds.height * 0.12);
-  let selectedPath = null;
-
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const candidateStartY = randomBetween(minY, maxY);
-    const candidateEndY = randomBetween(minY, maxY);
-    const desiredArcHeight = randomBetween(bounds.height * 0.18, bounds.height * 0.34);
-    const candidateArcHeight = Math.max(
-      24,
-      Math.min(desiredArcHeight, Math.min(candidateStartY, candidateEndY) - arcCeiling),
-    );
-    const candidateMidY = (candidateStartY + candidateEndY) / 2 - candidateArcHeight * 0.7;
-    const nearest = activeLobs.reduce((distance, lob) => {
-      const lobY = Number.isFinite(lob.currentY) ? lob.currentY : (lob.startY + lob.endY) / 2;
-      return Math.min(distance, Math.abs(lobY - candidateMidY));
-    }, Number.POSITIVE_INFINITY);
-    const score = nearest + randomBetween(0, 18);
-
-    if (!selectedPath || score > selectedPath.score) {
-      selectedPath = {
-        startY: candidateStartY,
-        endY: candidateEndY,
-        arcHeight: candidateArcHeight,
-        score,
-      };
-    }
-  }
-
-  const { startY, endY, arcHeight } = selectedPath;
-  const drift = randomBetween(-28, 28);
-  const spinDirection = fromLeft ? 1 : -1;
-  const spin = spinDirection * Math.round(randomBetween(FOOD_LOB_SPIN_DEGREES.min, FOOD_LOB_SPIN_DEGREES.max));
-  const duration = randomBetween(FOOD_LOB_MOVEMENT_DURATION.min, FOOD_LOB_MOVEMENT_DURATION.max);
+  const path = window.FoodAnimalsFoodLobRuntime.planPath({
+    activeLobs,
+    bounds,
+    durationRange: FOOD_LOB_MOVEMENT_DURATION,
+    fromLeft,
+    menuBottom,
+    randomBetween,
+    size,
+    spinDegrees: FOOD_LOB_SPIN_DEGREES,
+  });
   const img = document.createElement("img");
   const src = FOOD_LOB_PARTICLES[Math.floor(Math.random() * FOOD_LOB_PARTICLES.length)];
   const lob = {
     el: img,
     age: 0,
-    duration,
-    startX,
-    endX,
-    startY,
-    endY,
-    arcHeight,
-    drift,
-    spin,
+    duration: path.duration,
+    startX: path.startX,
+    endX: path.endX,
+    startY: path.startY,
+    endY: path.endY,
+    arcHeight: path.arcHeight,
+    drift: path.drift,
+    spin: path.spin,
     size,
     src,
   };
@@ -1570,14 +1600,7 @@ function clampSetting(value, min, max, fallback) {
 }
 
 function canUseLocalStorage() {
-  try {
-    const key = `${SETTINGS_STORAGE_KEY}:probe`;
-    window.localStorage.setItem(key, "1");
-    window.localStorage.removeItem(key);
-    return true;
-  } catch {
-    return false;
-  }
+  return window.FoodAnimalsAudioSettings.canUseLocalStorage(SETTINGS_STORAGE_KEY);
 }
 
 function canUseSessionStorage() {
@@ -1602,12 +1625,21 @@ function consumeMenuRebootStaticReveal() {
   }
 }
 
+function consumeMenuReturnReveal() {
+  if (!canUseSessionStorage()) return false;
+  try {
+    const active = window.sessionStorage.getItem(MENU_RETURN_REVEAL_STORAGE_KEY) === "1";
+    window.sessionStorage.removeItem(MENU_RETURN_REVEAL_STORAGE_KEY);
+    return active;
+  } catch {
+    return false;
+  }
+}
+
 function loadSettings() {
   try {
-    const rawSettings = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (!rawSettings) return false;
-
-    const savedSettings = JSON.parse(rawSettings);
+    const savedSettings = window.FoodAnimalsAudioSettings.read(SETTINGS_STORAGE_KEY);
+    if (!Object.keys(savedSettings).length) return false;
     state.settings.music = clampSetting(savedSettings.music, 0, 10, state.settings.music);
     state.settings.sfx = clampSetting(savedSettings.sfx, 0, 10, state.settings.sfx);
     state.settings.musicTrack = getMusicTrack(savedSettings.musicTrack).id;
@@ -1627,20 +1659,13 @@ function loadSettings() {
 }
 
 function saveSettings() {
-  try {
-    window.localStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        music: state.settings.music,
-        musicTrack: getSelectedMusicTrack().id,
-        sfx: state.settings.sfx,
-        motion: state.settings.motion,
-        menuTheme: state.theme,
-      }),
-    );
-  } catch {
-    // Browsers can deny storage in private modes; the menu should still work.
-  }
+  window.FoodAnimalsAudioSettings.patch({
+    music: state.settings.music,
+    musicTrack: getSelectedMusicTrack().id,
+    sfx: state.settings.sfx,
+    motion: state.settings.motion,
+    menuTheme: state.theme,
+  }, SETTINGS_STORAGE_KEY);
 }
 
 function menuSfxVolume() {
@@ -1653,32 +1678,17 @@ function menuSfxSrc(id) {
 }
 
 function menuSfxPoolFor(src) {
-  if (!src) return [];
-  if (!menuSfx.pools.has(src)) {
-    menuSfx.pools.set(src, Array.from({ length: 3 }, () => {
-      const audio = new Audio(src);
-      audio.preload = "auto";
-      return audio;
-    }));
-  }
-  return menuSfx.pools.get(src);
+  return window.FoodAnimalsAudioRuntime.poolFor(menuSfx, src, 3);
 }
 
 function playMenuSfx(id, options = {}) {
-  if (!menuSfx.armed && !options.force) return;
-  const volume = menuSfxVolume() * (options.volume ?? 1);
-  if (volume <= 0) return;
-  const src = menuSfxSrc(id);
-  const pool = menuSfxPoolFor(src);
-  if (!pool.length) return;
-  const index = menuSfx.next.get(src) || 0;
-  menuSfx.next.set(src, (index + 1) % pool.length);
-  const audio = pool[index];
-  audio.pause();
-  audio.currentTime = 0;
-  audio.volume = clamp01(volume);
-  audio.playbackRate = Math.max(0.5, Math.min(1.7, options.rate || 1));
-  audio.play().catch(() => {});
+  window.FoodAnimalsAudioRuntime.playSfx(menuSfx, {
+    src: menuSfxSrc(id),
+    force: options.force,
+    volume: menuSfxVolume() * (options.volume ?? 1),
+    rate: options.rate,
+    poolSize: 3,
+  });
 }
 
 function armMenuSfx() {
@@ -1694,15 +1704,17 @@ function defaultMusicTrackForTheme(theme) {
 }
 
 function getSelectedMusicTrack() {
-  const track = getMusicTrack(state.settings.musicTrack || DEFAULT_MUSIC_TRACK);
-  return !isHorrorMenuUnlocked() && isHorrorMusicTrack(track.id) ? getMusicTrack(DEFAULT_MUSIC_TRACK) : track;
+  const track = getMusicTrack(state.settings.musicTrack || defaultMusicTrackForTheme(state.theme));
+  return isMusicTrackAllowedForTheme(track.id, state.theme)
+    ? track
+    : getMusicTrack(defaultMusicTrackForTheme(state.theme));
 }
 
 function setMusicTrack(trackId) {
   const requestedTrack = getMusicTrack(trackId);
-  const track = !isHorrorMenuUnlocked() && isHorrorMusicTrack(requestedTrack.id)
-    ? getMusicTrack(DEFAULT_MUSIC_TRACK)
-    : requestedTrack;
+  const track = isMusicTrackAllowedForTheme(requestedTrack.id, state.theme)
+    ? requestedTrack
+    : getMusicTrack(defaultMusicTrackForTheme(state.theme));
   const wasPlaying = !menuMusic.paused || Boolean(menuMusicPlayPromise);
   state.settings.musicTrack = track.id;
   saveSettings();
@@ -1751,32 +1763,8 @@ function ensureMenuMusicPlaying() {
     });
 }
 
-function smoothstep(value) {
-  const t = clamp01(value);
-  return t * t * (3 - 2 * t);
-}
-
-function lerp(start, end, t) {
-  return start + (end - start) * t;
-}
-
 function applyLobFrame(lob, t) {
-  const eased = smoothstep(t);
-  const x = lerp(lob.startX, lob.endX, t) + Math.sin(Math.PI * t) * lob.drift;
-  const baseY = lerp(lob.startY, lob.endY, t);
-  const y = baseY - Math.sin(Math.PI * t) * lob.arcHeight;
-  const rotation = lob.spin * eased;
-  const scale = 0.9 + Math.sin(Math.PI * t) * 0.16;
-  const fadeIn = smoothstep(t / 0.08);
-  const fadeOut = 1 - smoothstep((t - 0.92) / 0.08);
-  const opacity = Math.min(fadeIn, fadeOut);
-
-  lob.currentX = x;
-  lob.currentY = y;
-  lob.el.style.opacity = opacity.toFixed(3);
-  lob.el.style.transform =
-    `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) ` +
-    `rotate(${rotation.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
+  window.FoodAnimalsFoodLobRuntime.applyFrame(lob, t);
 }
 
 function removeLobAt(index) {
@@ -1787,23 +1775,10 @@ function removeLobAt(index) {
 }
 
 function handleLobPointerDown(event) {
-  if (state.fieldGuideOpen || !lobLayer || event.target.closest("button, input, label")) return;
+  if (state.fieldGuideOpen || state.runModeOpen || !lobLayer || event.target.closest("button, input, label")) return;
 
-  for (let index = activeLobs.length - 1; index >= 0; index -= 1) {
-    const lob = activeLobs[index];
-    const rect = lob.el.getBoundingClientRect();
-    const opacity = Number(lob.el.style.opacity || 1);
-    const inside =
-      event.clientX >= rect.left &&
-      event.clientX <= rect.right &&
-      event.clientY >= rect.top &&
-      event.clientY <= rect.bottom;
-
-    if (inside && opacity > 0.08) {
-      explodeLobAt(index);
-      break;
-    }
-  }
+  const index = window.FoodAnimalsFoodLobRuntime.hitIndex(activeLobs, event);
+  if (index >= 0) explodeLobAt(index);
 }
 
 function explodeLobAt(index) {
@@ -1900,5 +1875,6 @@ window.explodeFirstFoodLob = () => explodeLobAt(activeLobs.length - 1);
 window.setStartMenuTheme = setStartMenuTheme;
 
 beginMenuRebootStaticReveal();
+beginMenuLoadReveal();
 render();
 scheduleNextFoodLob(FOOD_LOB_SPAWN_DELAY.initial);

@@ -399,7 +399,7 @@ const BOARD_DOCUMENT_DELAY_MS = 320;
 const DOCUMENT_SWAP_DELAY_MS = 170;
 const BOARD_REVEAL_MS = 520;
 const BOARD_DISMISS_MS = 380;
-const SETTINGS_STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
+const SETTINGS_STORAGE_KEY = window.FoodAnimalsAudioSettings?.STORAGE_KEY || "harvest-friends:start-menu-settings:v1";
 const VN_SFX_TRACKS = {
   next: "assets/audio/sfx/cozy-ui-confirm.wav",
   back: "assets/audio/sfx/cozy-ui-back.wav",
@@ -609,41 +609,21 @@ function clamp01(value) {
 }
 
 function savedSfxVolume() {
-  try {
-    const settings = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) || "{}");
-    const value = Number(settings.sfx);
-    return Number.isFinite(value) ? clamp01(value / 10) : 0.8;
-  } catch (_err) {
-    return 0.8;
-  }
+  return window.FoodAnimalsAudioSettings.sfxVolume(0.8, SETTINGS_STORAGE_KEY);
 }
 
 function vnSfxPoolFor(src) {
-  if (!src) return [];
-  if (!vnSfx.pools.has(src)) {
-    vnSfx.pools.set(src, Array.from({ length: 3 }, () => {
-      const audio = new Audio(src);
-      audio.preload = "auto";
-      return audio;
-    }));
-  }
-  return vnSfx.pools.get(src);
+  return window.FoodAnimalsAudioRuntime.poolFor(vnSfx, src, 3);
 }
 
 function playVnSfx(id, options = {}) {
-  if (!vnSfx.armed && !options.force) return;
-  const src = VN_SFX_TRACKS[id];
-  const pool = vnSfxPoolFor(src);
-  if (!pool.length) return;
-  const volume = savedSfxVolume() * (options.volume ?? 1);
-  if (volume <= 0) return;
-  const index = vnSfx.next.get(src) || 0;
-  vnSfx.next.set(src, (index + 1) % pool.length);
-  const audio = pool[index];
-  audio.pause();
-  audio.currentTime = 0;
-  audio.volume = clamp01(volume);
-  audio.play().catch(() => {});
+  window.FoodAnimalsAudioRuntime.playSfx(vnSfx, {
+    src: VN_SFX_TRACKS[id],
+    force: options.force,
+    volume: savedSfxVolume() * (options.volume ?? 1),
+    rate: options.rate,
+    poolSize: 3,
+  });
 }
 
 function armVnSfx() {

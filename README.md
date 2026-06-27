@@ -77,11 +77,29 @@ http://127.0.0.1:8173/local-test-pages/game.html
 ## Code Map
 
 - `src/game.js`
-  - Data: copy themes, unit catalog, traits, arenas, economy, items, sprite maps, and horror override maps.
+  - Data: economy, UI constants, gameplay tuning, and runtime state setup.
   - State: prep, battle, result, reboot/static transitions, final victory transition, victory cutscene, codex, drag/drop, rewards, and combat ledger review state.
   - Systems: shop generation, purchase/merge/equipment, arena rewards, enemy plan generation, combat simulation, item/drink effects, particles, reality theme switching, and route setup.
   - Rendering: canvas UI, prep board, shop, codex/War Manifest, battle field, particles, status glyphs, result panel, expanded combat ledger, reality distortion, and cutscene layers.
   - Test hooks: `window.render_game_to_text()`, `window.advanceTime(ms)`, and `window.__foodAnimals`.
+- `src/presentation-data.js`
+  - Static presentation data for music/SFX ids, story/cutscene art, victory crawl text, UI texture paths, major panel rectangles, battle field layout, and icon atlas cells.
+- `src/copy-data.js`
+  - Static cozy/horror copy-theme overrides for UI labels, trait/family/role naming, arena text, unit names, and item names.
+- `src/story-data.js`
+  - Static in-game story milestone and final-conversation data consumed by `src/game.js`.
+- `src/trait-arena-data.js`
+  - Static trait definitions, arena modifiers, horror arena colors, favorite topping links, and favorite combo copy.
+- `src/unit-data.js`
+  - Static unit catalog, cozy/horror unit sprite maps, and cozy/horror defeat still maps.
+- `src/item-data.js`
+  - Static item/drink/topping catalog, item tier rules, shop item chances, item/drink asset maps, and attack/drink throwable particle maps.
+- `src/economy-enemy-data.js`
+  - Static economy, unit tier scaling, merge rewards, battle speed options, enemy archetype, shop-power, and final-boss tuning.
+- `src/rarity-shop-data.js`
+  - Static rarity palettes, horror rarity overrides, and shop-level rarity weights/upgrade costs.
+- `src/status-effect-data.js`
+  - Static status-effect styles plus cozy/horror status-effect sprite maps.
 - `src/start-menu.js`
   - DOM menu navigation, persisted audio settings, music-track selection, animated food lobs, click explosions, and `render_game_to_text()`.
 - `src/opening-vn.js`
@@ -92,9 +110,45 @@ http://127.0.0.1:8173/local-test-pages/game.html
 Syntax-check the JavaScript entry points:
 
 ```powershell
+npm run check:syntax
+```
+
+Or run the entry checks directly:
+
+```powershell
 node --check src/game.js
+node --check src/presentation-data.js
+node --check src/unit-data.js
+node --check src/item-data.js
+node --check src/economy-enemy-data.js
+node --check src/rarity-shop-data.js
+node --check src/status-effect-data.js
 node --check src/start-menu.js
 node --check src/opening-vn.js
+```
+
+Check the opening tutorial iframe anchor after layout/refactor work:
+
+```powershell
+node tools/check_opening_tutorial_anchor.mjs
+```
+
+Check the core entry routes at high resolution after script wiring, layout, or route changes:
+
+```powershell
+node tools/check_game_routes_highres.mjs
+```
+
+Check literal runtime asset/script/style references after asset cleanup or refactors:
+
+```powershell
+npm run check:assets
+```
+
+Run the full local safety suite:
+
+```powershell
+npm run check
 ```
 
 Common browser smoke targets:

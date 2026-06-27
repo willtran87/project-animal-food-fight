@@ -1,0 +1,165 @@
+import fs from "node:fs";
+import path from "node:path";
+import { assertNear, baseUrl, ensureServer, loadPlaywright, repoRoot } from "./visual-check-helpers.mjs";
+
+const outputDir = path.join(repoRoot, "output", "opening-tutorial-anchor-check");
+
+async function enterTutorial(page, label, viewport) {
+  await page.setViewportSize(viewport);
+  await page.goto(`${baseUrl}/local-test-pages/opening-vn.html?anchor-check=${label}-${Date.now()}`, {
+    waitUntil: "load",
+  });
+  await page.waitForTimeout(300);
+  await page.getByRole("button", { name: "Skip" }).click();
+  await page.getByRole("button", { name: "Confirm Skip" }).click();
+  await page.waitForTimeout(700);
+}
+
+async function collectMetrics(page) {
+  return page.evaluate(() => {
+    const localRectFor = (selector, root = document) => {
+      const el = root.querySelector(selector);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+        width: Math.round(r.width),
+        height: Math.round(r.height),
+        top: Math.round(r.top),
+        bottom: Math.round(r.bottom),
+        left: Math.round(r.left),
+        right: Math.round(r.right),
+      };
+    };
+    const transformFor = (selector) => {
+      const el = document.querySelector(selector);
+      return el ? getComputedStyle(el).transform : null;
+    };
+    const stage = document.querySelector(".vn-stage")?.getBoundingClientRect();
+    const shop = document.querySelector(".tutorial-shop")?.getBoundingClientRect();
+    const dialogue = document.querySelector(".dialogue-panel")?.getBoundingClientRect();
+    const iframe = document.querySelector(".actual-shop-frame");
+    const frameDoc = iframe?.contentDocument;
+    const frameWin = iframe?.contentWindow;
+    const canvas = frameDoc?.querySelector("#game");
+    const canvasStyle = canvas ? getComputedStyle(canvas) : null;
+
+    return {
+      viewport: { width: innerWidth, height: innerHeight },
+      pageScroll: {
+        x: scrollX,
+        y: scrollY,
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      },
+      phase: document.querySelector(".vn-stage")?.dataset.phase,
+      tutorialStep: document.querySelector(".vn-stage")?.dataset.tutorialStep,
+      stage: localRectFor(".vn-stage"),
+      tutorialShop: localRectFor(".tutorial-shop"),
+      iframe: localRectFor(".actual-shop-frame"),
+      dialogue: localRectFor(".dialogue-panel"),
+      relative: stage && shop && dialogue
+        ? {
+            shopTop: Math.round(shop.top - stage.top),
+            shopBottomGap: Math.round(stage.bottom - shop.bottom),
+            dialogueBottomGap: Math.round(stage.bottom - dialogue.bottom),
+          }
+        : null,
+      transforms: {
+        tutorialShop: transformFor(".tutorial-shop"),
+        dialogue: transformFor(".dialogue-panel"),
+        player: transformFor(".player-standee"),
+        tabs: transformFor(".tabs-counter"),
+      },
+      iframeDoc: frameDoc
+        ? {
+            embed: frameDoc.documentElement.dataset.embed || null,
+            viewport: { width: frameWin.innerWidth, height: frameWin.innerHeight },
+            body: localRectFor("body", frameDoc),
+            shell: localRectFor("#game-shell", frameDoc),
+            canvas: localRectFor("#game", frameDoc),
+            canvasStyle: canvasStyle
+              ? {
+                  width: canvasStyle.width,
+                  height: canvasStyle.height,
+                  border: canvasStyle.borderTopWidth,
+                  boxShadow: canvasStyle.boxShadow,
+                }
+              : null,
+          }
+        : null,
+    };
+  });
+}
+
+function assertAnchored(label, metrics, { strictTop }) {
+  if (metrics.phase !== "tutorial") throw new Error(`${label}: expected tutorial phase, got ${metrics.phase}`);
+  if (metrics.tutorialStep !== "shop-intro") throw new Error(`${label}: expected shop-intro, got ${metrics.tutorialStep}`);
+  if (!metrics.stage || !metrics.tutorialShop || !metrics.iframe || !metrics.dialogue) {
+    throw new Error(`${label}: missing stage, shop, iframe, or dialogue metrics`);
+  }
+  for (const [name, transform] of Object.entries(metrics.transforms)) {
+    if (transform !== "none") throw new Error(`${label}: ${name} has transform ${transform}`);
+  }
+  if (strictTop) {
+    assertNear(metrics.relative.shopTop, 3, 5, `${label}: tutorial shop top relative to stage`);
+    assertNear(metrics.relative.shopBottomGap, 3, 5, `${label}: tutorial shop bottom relative to stage`);
+  }
+  if (metrics.pageScroll.scrollWidth > metrics.pageScroll.clientWidth + 1) {
+    throw new Error(`${label}: page has horizontal overflow`);
+  }
+  if (metrics.iframeDoc?.embed !== "opening-vn") {
+    throw new Error(`${label}: embedded game did not enter opening-vn mode`);
+  }
+  assertNear(metrics.iframeDoc.shell.top, 0, 1, `${label}: embedded shell top`);
+  assertNear(metrics.iframeDoc.canvas.top, 0, 1, `${label}: embedded canvas top`);
+  if (metrics.iframeDoc.canvasStyle.border !== "0px") {
+    throw new Error(`${label}: embedded canvas border should be 0px`);
+  }
+}
+
+async function main() {
+  fs.mkdirSync(outputDir, { recursive: true });
+  const server = await ensureServer("/local-test-pages/opening-vn.html");
+  const { chromium } = loadPlaywright();
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ deviceScaleFactor: 1 });
+  const failures = [];
+  const results = {};
+  const cases = [
+    ["high-2560x1600", { width: 2560, height: 1600 }, true],
+    ["desktop-1366x768", { width: 1366, height: 768 }, true],
+    ["mobile-390x844", { width: 390, height: 844 }, false],
+  ];
+
+  try {
+    for (const [label, viewport, strictTop] of cases) {
+      await enterTutorial(page, label, viewport);
+      const metrics = await collectMetrics(page);
+      results[label] = metrics;
+      await page.screenshot({ path: path.join(outputDir, `${label}.png`), fullPage: false });
+      try {
+        assertAnchored(label, metrics, { strictTop });
+      } catch (err) {
+        failures.push(err.message);
+      }
+    }
+  } finally {
+    await browser.close();
+    if (server) server.kill();
+  }
+
+  fs.writeFileSync(path.join(outputDir, "metrics.json"), JSON.stringify(results, null, 2));
+  if (failures.length) {
+    console.error(`Opening tutorial anchor check failed:\n- ${failures.join("\n- ")}`);
+    console.error(`Artifacts: ${outputDir}`);
+    process.exit(1);
+  }
+  console.log(`Opening tutorial anchor check passed. Artifacts: ${outputDir}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

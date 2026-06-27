@@ -4,24 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Harvest Friends - Start Menu</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f7d4a'/%3E%3Ccircle cx='32' cy='34' r='18' fill='%23fff4cb'/%3E%3Cpath d='M22 31h20v8H22z' fill='%23d9573c'/%3E%3Cpath d='M32 13c8 0 12 5 12 5-9 0-12 5-12 5s-3-5-12-5c0 0 4-5 12-5z' fill='%239bd36a'/%3E%3C/svg%3E" />
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="preload" as="image" href="assets/start-menu/cozy-picnic-start-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/run-mode-selector-cozy-bg-v1.png" />
+    <link rel="preload" as="image" href="assets/start-menu/run-mode-selector-horror-bg-v1.png" />
     <link rel="preload" as="image" href="assets/start-menu/harvest-friends-title-v2.png" />
     <link rel="preload" as="image" href="assets/start-menu/harvest-friends-mascot-cluster-v1.png" />
-    <link rel="stylesheet" href="styles/start-menu.css?v=field-guide-panzoom-1-campaign-flow-1-root-frame-2-no-lr-mask-1-hidden-action-1-final-reboot-static-2-menu-theme-options-1-postgame-horror-lock-1-horror-spec-mascot-hide-1-run-mode-select-1" />
+    <link rel="stylesheet" href="styles/start-menu.css?v=field-guide-panzoom-1-campaign-flow-1-root-frame-2-no-lr-mask-1-hidden-action-1-final-reboot-static-2-menu-theme-options-1-postgame-horror-lock-1-horror-spec-mascot-hide-1-run-mode-select-6-menu-enter-motion-2" />
     <style>
       body[data-campaign-screen="opening"][data-campaign-frame-ready="true"] .start-menu,
       body[data-campaign-screen="game"][data-campaign-frame-ready="true"] .start-menu {
+        z-index: 45;
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
-        transform: scale(1.012);
-        filter: blur(2px);
+        transform: scale(1.018);
+        filter: blur(2.5px);
         transition:
-          opacity 620ms ease,
-          transform 720ms cubic-bezier(0.16, 0.84, 0.28, 1),
-          filter 620ms ease,
-          visibility 0s linear 720ms;
+          opacity 880ms cubic-bezier(0.2, 0.72, 0.22, 1),
+          transform 960ms cubic-bezier(0.16, 0.84, 0.28, 1),
+          filter 880ms ease,
+          visibility 0s linear 980ms;
       }
 
       .campaign-frame {
@@ -36,8 +39,8 @@
         visibility: hidden;
         pointer-events: none;
         transition:
-          opacity 720ms cubic-bezier(0.16, 0.84, 0.28, 1),
-          visibility 0s linear 720ms;
+          opacity 920ms cubic-bezier(0.16, 0.84, 0.28, 1),
+          visibility 0s linear 920ms;
       }
 
       .campaign-frame[hidden] {
@@ -53,32 +56,164 @@
         opacity: 1;
         pointer-events: auto;
         transition:
-          opacity 720ms cubic-bezier(0.16, 0.84, 0.28, 1),
+          opacity 920ms 120ms cubic-bezier(0.16, 0.84, 0.28, 1),
           visibility 0s;
       }
 
       body[data-campaign-shell="root"] .start-transition.is-entering-run {
-        animation: none;
         opacity: 1;
         transform: scale(1);
         filter: none;
+        animation: root-table-handoff-wait 1200ms ease-in-out both;
       }
 
       body[data-campaign-shell="root"] .start-transition.is-entering-run::before {
         opacity: 1;
-        animation: none;
+        animation: root-table-warmth-wait 1200ms ease-in-out both;
       }
 
       body[data-campaign-shell="root"] .start-transition.is-entering-run::after {
         opacity: 0.72;
         transform: scale(1);
-        animation: table-glow-rise 1100ms ease-out both;
+        animation: root-table-bloom-wait 1200ms ease-in-out both;
       }
 
       body[data-campaign-shell="root"] .start-transition.is-entering-run .start-transition-card {
-        animation: none;
         opacity: 1;
         transform: translateY(0) scale(1);
+        animation: root-table-message-wait 1200ms ease-in-out both;
+      }
+
+      body[data-campaign-shell="root"][data-campaign-frame-ready="true"] .start-transition.is-entering-run {
+        animation: root-table-handoff-exit 920ms cubic-bezier(0.28, 0, 0.18, 1) both;
+      }
+
+      body[data-campaign-shell="root"][data-campaign-frame-ready="true"] .start-transition.is-entering-run::before {
+        animation: root-table-warmth-exit 920ms ease-in both;
+      }
+
+      body[data-campaign-shell="root"][data-campaign-frame-ready="true"] .start-transition.is-entering-run::after {
+        animation: root-table-bloom-exit 920ms ease-in both;
+      }
+
+      body[data-campaign-shell="root"][data-campaign-frame-ready="true"] .start-transition.is-entering-run .start-transition-card {
+        animation: root-table-message-exit 760ms cubic-bezier(0.28, 0, 0.18, 1) both;
+      }
+
+      @keyframes root-table-handoff-wait {
+        0%,
+        100% {
+          opacity: 1;
+          filter: saturate(1) brightness(1);
+          transform: scale(1);
+        }
+
+        50% {
+          opacity: 1;
+          filter: saturate(1.03) brightness(1.035);
+          transform: scale(1.004);
+        }
+      }
+
+      @keyframes root-table-warmth-wait {
+        0%,
+        100% {
+          opacity: 1;
+        }
+
+        50% {
+          opacity: 0.86;
+        }
+      }
+
+      @keyframes root-table-bloom-wait {
+        0%,
+        100% {
+          opacity: 0.62;
+          transform: scale(1.05);
+        }
+
+        50% {
+          opacity: 0.82;
+          transform: scale(1.2);
+        }
+      }
+
+      @keyframes root-table-message-wait {
+        0%,
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+
+        50% {
+          opacity: 0.96;
+          transform: translateY(-2px) scale(1.004);
+        }
+      }
+
+      @keyframes root-table-handoff-exit {
+        0% {
+          opacity: 1;
+          filter: saturate(1.02) brightness(1.04);
+          transform: scale(1);
+        }
+
+        48% {
+          opacity: 0.86;
+          filter: saturate(1.08) brightness(1.16);
+          transform: scale(1.018);
+        }
+
+        100% {
+          opacity: 0;
+          filter: saturate(0.9) brightness(1.32) blur(2px);
+          transform: scale(1.045);
+        }
+      }
+
+      @keyframes root-table-warmth-exit {
+        0% {
+          opacity: 1;
+        }
+
+        100% {
+          opacity: 0.1;
+        }
+      }
+
+      @keyframes root-table-bloom-exit {
+        0% {
+          opacity: 0.76;
+          transform: scale(1.1);
+        }
+
+        65% {
+          opacity: 0.72;
+          transform: scale(1.9);
+        }
+
+        100% {
+          opacity: 0;
+          transform: scale(2.8);
+        }
+      }
+
+      @keyframes root-table-message-exit {
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+
+        44% {
+          opacity: 0.78;
+          transform: translateY(-5px) scale(1.012);
+        }
+
+        100% {
+          opacity: 0;
+          transform: translateY(-22px) scale(0.97);
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -88,6 +223,13 @@
           transition: none;
           transform: none;
           filter: none;
+        }
+
+        body[data-campaign-shell="root"] .start-transition.is-entering-run,
+        body[data-campaign-shell="root"] .start-transition.is-entering-run::before,
+        body[data-campaign-shell="root"] .start-transition.is-entering-run::after,
+        body[data-campaign-shell="root"] .start-transition.is-entering-run .start-transition-card {
+          animation: none;
         }
       }
     </style>
@@ -145,11 +287,11 @@
         <section class="run-mode-panel" aria-label="Choose run mode" hidden>
           <button class="run-mode-choice is-selected" type="button" data-run-mode="story">
             <span class="run-mode-title">Story Mode</span>
-            <span class="run-mode-copy">Opening, reveals, and final battle</span>
+            <span class="run-mode-copy">Opening, reveals, and final gate</span>
           </button>
           <button class="run-mode-choice" type="button" data-run-mode="infinite">
             <span class="run-mode-title">Infinite Mode</span>
-            <span class="run-mode-copy">Random scaling battles, no story</span>
+            <span class="run-mode-copy">Endless pressure tests, no story</span>
           </button>
         </section>
 
@@ -188,6 +330,9 @@
             <label for="sfx-volume">SFX</label>
             <input id="sfx-volume" type="range" min="0" max="10" value="8" />
           </div>
+          <button class="purge-game-data" type="button" data-action="purgeGameData">
+            Purge Game Data
+          </button>
         </aside>
       </section>
 
@@ -246,6 +391,7 @@
     </main>
     <iframe class="campaign-frame" title="Harvest Friends campaign" hidden></iframe>
     <div class="menu-reboot-static-overlay" aria-hidden="true" hidden></div>
-    <script src="src/start-menu.js?v=field-guide-click-swipe-1-campaign-flow-1-root-frame-2-continue-run-1-auto-reveal-1-final-reboot-static-2-menu-theme-options-1-pages-assets-1-cozy-default-1-postgame-horror-lock-1-run-mode-select-1"></script>
+    <div class="menu-load-transition-overlay" aria-hidden="true" hidden></div>
+    <script src="src/app-scripts.js?v=script-loader-level10-plates-1" data-entry="start-menu"></script>
   </body>
 </html>

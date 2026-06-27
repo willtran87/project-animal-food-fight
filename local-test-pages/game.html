@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Animal Auto-Battler</title>
     <base href="../" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f7d4a'/%3E%3Ccircle cx='32' cy='34' r='18' fill='%23fff4cb'/%3E%3Cpath d='M22 31h20v8H22z' fill='%23d9573c'/%3E%3Cpath d='M32 13c8 0 12 5 12 5-9 0-12 5-12 5s-3-5-12-5c0 0 4-5 12-5z' fill='%239bd36a'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="styles/game.css?v=1600x1000-screens-1" />
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
+    <script>
+      if (new URLSearchParams(window.location.search).get("embed") === "opening-vn") {
+        document.documentElement.dataset.embed = "opening-vn";
+      }
+    </script>
+    <link rel="stylesheet" href="styles/game.css?v=1600x1000-screens-1-opening-vn-embed-1" />
   </head>
   <body>
     <main id="game-shell" aria-label="Food Animal Auto-Battler">
       <canvas id="game" width="1600" height="1000"></canvas>
     </main>
-    <script src="src/game.js?v=transition-pass-1-pre-final-1-horror-tabs-lower-1-final-reboot-static-1-reveal-meter-language-1-postgame-horror-lock-1-1600x1000-screens-1-infinite-mode-1"></script>
+    <script src="src/app-scripts.js?v=script-loader-level10-plates-1" data-entry="game"></script>
   </body>
 </html>

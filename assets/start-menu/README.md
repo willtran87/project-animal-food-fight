@@ -6,6 +6,8 @@ This folder contains art for the standalone Harvest Friends start-menu prototype
 
 - `cozy-picnic-start-bg-v1.png` - active full-screen cozy picnic menu background.
 - `horror-start-bg-v1.png` - active full-screen horror/future-war menu background used by `start-menu.html?theme=horror`.
+- `run-mode-selector-cozy-bg-v1.png` - generated opaque cozy wood Story Mode / Infinite Mode selector backing with a baked-in thin border.
+- `run-mode-selector-horror-bg-v1.png` - generated opaque horror metal Story Mode / Infinite Mode selector backing with a baked-in thin border.
 - `horror-field-guide-bg-v1.png` - generated horror Field Guide/specification screen backdrop with wartorn spec sheets around a dark open center.
 - `horror-field-guide-desk-bg-v1.png` - generated future-war desk background used by the horror Field Guide/specification shell.
 - `harvest-friends-title-v2.png` - active title logo.

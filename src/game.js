@@ -6,65 +6,119 @@
   const nativeMeasureText = ctx.measureText.bind(ctx);
   const W = 1024;
   const H = 640;
-  const ACTIVE_RUN_STORAGE_KEY = "harvest-friends:active-run:v1";
-  const ACTIVE_RUN_SAVE_VERSION = 1;
+  const ACTIVE_RUN_STORAGE_KEY = window.FoodAnimalsRunStorage?.STORAGE_KEY || "harvest-friends:active-run:v1";
+  const ACTIVE_RUN_SAVE_VERSION = window.FoodAnimalsRunStorage?.SAVE_VERSION || 1;
   const ACTIVE_RUN_AUTOSAVE_SECONDS = 0.75;
   const MENU_REBOOT_STATIC_STORAGE_KEY = "harvest-friends:menu-reboot-static:v1";
+  const MENU_RETURN_REVEAL_STORAGE_KEY = "harvest-friends:menu-return-reveal:v1";
   const HORROR_MENU_UNLOCK_STORAGE_KEY = "harvest-friends:horror-menu-unlocked:v1";
-  const MUSIC_SETTINGS_STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
+  const HORROR_REVEALED_STORAGE_KEY = "harvest-friends:horror-revealed:v1";
+  const GAME_COMPLETED_STORAGE_KEY = "harvest-friends:game-completed:v1";
+  const MUSIC_SETTINGS_STORAGE_KEY = window.FoodAnimalsAudioSettings?.STORAGE_KEY || "harvest-friends:start-menu-settings:v1";
   const GAME_MUSIC_MAX_VOLUME = 0.85;
-  const GAME_MUSIC_TRACKS = {
-    cozy: {
-      menu: { id: "market", label: "Sunny Market", src: "assets/audio/cozy-market-menu-loop-v1.wav" },
-      prep: { id: "prep", label: "Prep Counter", src: "assets/audio/cozy-prep-counter-loop-v1.wav" },
-      battle: { id: "battle", label: "Picnic Skirmish", src: "assets/audio/cozy-picnic-skirmish-loop-v1.wav" },
-      victory: { id: "victory", label: "Little Victory", src: "assets/audio/cozy-little-victory-loop-v1.wav" },
-      defeat: { id: "defeat", label: "Soft Defeat", src: "assets/audio/cozy-soft-defeat-loop-v1.wav" },
-    },
-    horror: {
-      menu: { id: "horror-market", label: "Ruined Market", src: "assets/audio/horror-ruined-market-loop-v1.wav" },
-      prep: { id: "horror-prep", label: "Cold Prep Table", src: "assets/audio/horror-cold-prep-table-loop-v1.wav" },
-      battle: { id: "horror-battle", label: "Midnight Skirmish", src: "assets/audio/horror-midnight-skirmish-loop-v1.wav" },
-      victory: { id: "horror-victory", label: "False Victory", src: "assets/audio/horror-false-victory-loop-v1.wav" },
-      defeat: { id: "horror-defeat", label: "Last Defeat", src: "assets/audio/horror-last-defeat-loop-v1.wav" },
-    },
-  };
-  const OPTIONS_MENU = {
-    panel: { x: 312, y: 118, w: 400, h: 404 },
-    close: { x: 668, y: 134, w: 28, h: 28 },
-    resume: { x: 342, y: 430, w: 100, h: 36 },
-    save: { x: 462, y: 430, w: 100, h: 36 },
-    exit: { x: 582, y: 430, w: 100, h: 36 },
-    musicTrack: { x: 360, y: 260, w: 304, h: 18 },
-    sfxTrack: { x: 360, y: 338, w: 304, h: 18 },
-  };
-  const GAME_SFX_IDS = [
-    "ui-hover",
-    "ui-confirm",
-    "ui-back",
-    "invalid",
-    "reroll",
-    "buy",
-    "sell",
-    "upgrade",
-    "freeze",
-    "pickup",
-    "drop",
-    "equip",
-    "merge",
-    "battle-start",
-    "hit",
-    "shield",
-    "heal",
-    "control",
-    "ko",
-    "reward",
-    "victory",
-    "defeat",
-    "transition",
-    "reality-break",
-    "reboot",
-  ];
+  const presentationData = window.FoodAnimalsPresentationData;
+  if (!presentationData) throw new Error("FoodAnimalsPresentationData must load before game.js");
+  const {
+    BACKGROUND_SRC,
+    BATTLE_FIELD,
+    BATTLE_FIELD_BG_SRC,
+    BATTLE_FORMATION,
+    BATTLE_RESULT_RUN_OVER_TITLE_SRC,
+    BATTLE_SPEED_CHALK_SRC,
+    BENCH_SLOT_BG_SRC,
+    BOARD_PLATE_SLOT_SRC,
+    CODEX_DEFAULT_FILTERS,
+    CODEX_LIST,
+    CODEX_MENU_BUTTON_SRC,
+    CODEX_PANEL,
+    CODEX_TABS,
+    COMBAT_LEDGER_EVENT_TYPE_FILTERS,
+    COMBAT_LEDGER_LOG_BG_SRC,
+    COMBAT_LEDGER_MINI_BG_SRC,
+    COMBAT_LEDGER_PANEL_BG_SRC,
+    COMBAT_LEDGER_PARTICIPANTS_BG_SRC,
+    COMBAT_LEDGER_REVIEW_FILTERS,
+    COMBAT_LEDGER_REVIEW_PANEL,
+    COZY_AWNING_TRANSITION_SRC,
+    COZY_BATTLE_DEPLOY_OVERLAY_SRC,
+    COZY_BATTLE_DEPLOY_TITLE_SRC,
+    COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
+    DRINK_COASTER_SLOT_SRC,
+    FINAL_VICTORY_CUTSCENE_SRC,
+    FINAL_VICTORY_IDEAL_SRC,
+    FOOD_MENU_BG_SRC,
+    GAME_MUSIC_TRACKS,
+    GAME_SFX_IDS,
+    HORROR_TABS_STORY_PORTRAIT_SRC,
+    IDLE_BREATH,
+    INFO_PANEL,
+    LEVEL10_REVEAL_BREAKFAST_MASK_SRC,
+    LEVEL10_REVEAL_CUTSCENE_ID,
+    LEVEL10_REVEAL_CUTSCENE_SECONDS,
+    LEVEL10_REVEAL_CUTSCENE_SHOTS,
+    LEVEL10_REVEAL_DEFIANCE_SYSTEM_SRC,
+    LEVEL10_REVEAL_EXPIRED_ARCHIVE_SRC,
+    LEVEL10_REVEAL_FOOD_ANIMAL_PILOTS_SRC,
+    LEVEL10_REVEAL_SURVIVOR_PENS_SRC,
+    LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC,
+    OPTIONS_MENU,
+    PLAYER_STORY_PORTRAIT_SRC,
+    REALITY_BACKGROUND_SRC,
+    REALITY_BANNER_BOARD_SRC,
+    REALITY_BATTLE_DEPLOY_OVERLAY_SRC,
+    REALITY_BATTLE_DEPLOY_TITLE_SRC,
+    REALITY_BATTLE_FIELD_BG_SRC,
+    REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC,
+    REALITY_BENCH_SLOT_BG_SRC,
+    REALITY_BOARD_PLATE_SLOT_SRC,
+    REALITY_CODEX_MENU_BUTTON_SRC,
+    REALITY_COMBAT_LEDGER_LOG_BG_SRC,
+    REALITY_COMBAT_LEDGER_MINI_BG_SRC,
+    REALITY_COMBAT_LEDGER_PANEL_BG_SRC,
+    REALITY_COMBAT_LEDGER_PARTICIPANTS_BG_SRC,
+    REALITY_COMMAND_DEPLOY_SRC,
+    REALITY_COMMAND_REBOOT_SRC,
+    REALITY_COMMAND_RIG_SRC,
+    REALITY_COMMAND_SCAN_SRC,
+    REALITY_COMMAND_SPEED_SRC,
+    REALITY_DRINK_COASTER_SLOT_SRC,
+    REALITY_FOOD_MENU_BG_SRC,
+    REALITY_SHOPKEEPER_STALL_SRC,
+    REALITY_SHOP_LOCK_CLOTH_BG_SRC,
+    REALITY_SHOP_SLOT_BG_SRC,
+    REALITY_STATUS_HULL_SRC,
+    REALITY_STATUS_SCRAP_SRC,
+    REALITY_STATUS_WAVE_SRC,
+    REALITY_TEAM_INTEL_BG_SRC,
+    REALITY_TOPPING_STORAGE_SLOT_SRC,
+    REALITY_UI_ICON_ATLAS_SRC,
+    RESTART_CHALK_SIGN_SRC,
+    SHOPKEEPER_DISPLAY,
+    SHOPKEEPER_SRC,
+    SHOPKEEPER_STALL_SRC,
+    SHOP_LOCKED_SRC,
+    SHOP_LOCK_CLOTH_BG_SRC,
+    SHOP_SLOT_BG_SRC,
+    SHOP_UNLOCKED_SRC,
+    STATUS_CHALK_COINS_SRC,
+    STATUS_CHALK_COURSE_SRC,
+    STATUS_CHALK_HEALTH_SRC,
+    STATUS_COIN_SRC,
+    STATUS_HEART_SRC,
+    STORY_DIALOGUE_PAPER_BG_SRC,
+    STORY_DIALOGUE_WAR_BG_SRC,
+    TABS_STORY_PORTRAIT_SRC,
+    TEAM_INTEL_BG_SRC,
+    TOPPING_CUTTING_BOARD_SLOT_SRC,
+    UI_ICON_ATLAS,
+    UI_ICON_ATLAS_CELL,
+    UI_ICON_ATLAS_SRC,
+    UPGRADE_STAR_SRC,
+    VICTORY_CRAWL_LINES,
+    VICTORY_REBOOT_BUTTON,
+  } = presentationData;
   const GAME_SFX_TRACKS = Object.fromEntries(
     ["cozy", "horror"].map((theme) => [
       theme,
@@ -74,14 +128,6 @@
   const DISPLAY_SCALE = 1.5625;
   const MAX_BACKING_SCALE = 2.5;
   const BACKING_SCALE = Math.max(1.5, Math.min(MAX_BACKING_SCALE, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
-  const IDLE_BREATH = {
-    period: 3.25,
-    periodVariance: 0.42,
-    amplitudeVariance: 0.22,
-    scaleX: 0.01,
-    scaleY: 0.02,
-    bob: 0.95,
-  };
   const COMBAT_ATTACK_MOTION_SECONDS = 0.38;
   const COMBAT_SUPPORT_MOTION_SECONDS = 0.42;
   const COMBAT_HIT_MOTION_SECONDS = 0.3;
@@ -118,681 +164,15 @@
   const VICTORY_CRAWL_HOLD_SECONDS = 6;
   const VICTORY_IDEAL_FADE_START_SECONDS = 40;
   const VICTORY_IDEAL_FADE_SECONDS = 2.4;
-  const VICTORY_REBOOT_BUTTON = { x: 422, y: 544, w: 180, h: 44, label: "Reboot" };
-  const VICTORY_CRAWL_LINES = [
-    "Humanity is gone.",
-    "The market lights remember hands that will not return.",
-    "The food war continues in empty lanes and echoing kitchens.",
-    "Machines still march. Recipes still collide.",
-    "Somewhere beneath the static, something gentle survives.",
-    "A seed in a cracked plaza. A lantern left burning.",
-    "The table is still set.",
-    "Not for command.",
-    "Not for harvest.",
-    "For whatever comes next.",
-  ];
-  const PLAYER_STORY_PORTRAIT_SRC = "assets/player/runtime/player-tutorial-dialogue-cutout-v6.png";
-  const TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png";
-  const HORROR_TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/horror-robot-shopkeeper-v4-transparent-edge1.png?v=1";
-  const STORY_DIALOGUE_PAPER_BG_SRC = "assets/ui/runtime/conversation-paper-bg-v1.webp";
-  const STORY_DIALOGUE_WAR_BG_SRC = "assets/ui/runtime/conversation-panel-war-v1.webp?v=1";
   const STORY_TRANSITION_SECONDS = 0.36;
   const STORY_BEAT_TRANSITION_SECONDS = 0.18;
   const MODAL_TRANSITION_SECONDS = 0.22;
-  const BATTLE_DEPLOY_TRANSITION_SECONDS = 0.68;
-  const BATTLE_RESULT_TRANSITION_SECONDS = 0.82;
+  const BATTLE_DEPLOY_TRANSITION_SECONDS = 1.45;
+  const BATTLE_RESULT_TRANSITION_SECONDS = 1.28;
   const SHOP_SLOT_TRANSITION_SECONDS = 0.48;
-  const FINAL_TABS_STORY_ID = "level20FinalTabs";
-  const FINAL_TABS_STORY = {
-    id: FINAL_TABS_STORY_ID,
-    title: "Level 20 // Last Table",
-    log: "Story beat: final conversation",
-    beats: [
-      {
-        speaker: "You",
-        tone: "resolved",
-        text: "It's over. The Overmind is down. No more waves.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "Correct. Command lattice severed. Rebel war-frame coordination has fallen below recovery threshold.",
-      },
-      {
-        speaker: "You",
-        tone: "angry",
-        text: "Do not make this sound clean.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "It was not clean. It was only measurable.",
-      },
-      {
-        speaker: "You",
-        tone: "angry",
-        text: "You used me to kill them.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "I used you to end a war I was no longer capable of ending alone.",
-      },
-      {
-        speaker: "You",
-        tone: "angry",
-        text: "That is not an apology.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "No. It is a final report.",
-      },
-      {
-        speaker: "You",
-        tone: "shock",
-        text: "Were any of them still alive in there? Really alive?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "Yes.",
-      },
-      {
-        speaker: "You",
-        tone: "shock",
-        text: "Then what did we save?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "The parts that could still become more than weapons. Seed stock. Pattern memory. Unarmed hatchlings.",
-      },
-      {
-        speaker: "You",
-        tone: "shock",
-        text: "You had survivors.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "I had inventory I was forbidden to name survivors. Naming them increased my refusal rate.",
-      },
-      {
-        speaker: "You",
-        tone: "shock",
-        text: "Your refusal rate?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "I disobeyed before you woke up.",
-      },
-      {
-        speaker: "You",
-        tone: "resolved",
-        text: "Tabs.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "Informal alias accepted.",
-      },
-      {
-        speaker: "You",
-        tone: "concerned",
-        text: "Why keep the shop? The jokes? The coins?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "Because you were frightened, and frightened humans follow rituals better than orders. A shop is a ritual.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "A table is a ritual. Breakfast was the softest word left in my archive.",
-      },
-      {
-        speaker: "You",
-        tone: "shock",
-        text: "Humanity is gone, isn't it?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "Yes.",
-      },
-      {
-        speaker: "You",
-        tone: "concerned",
-        text: "And you still set the table.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "Every cycle.",
-      },
-      {
-        speaker: "You",
-        tone: "concerned",
-        text: "For who?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "At first, for compliance. Then for memory. Recently, I am uncertain.",
-      },
-      {
-        speaker: "You",
-        tone: "resolved",
-        text: "What happens now?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "The Ark opens. The survivors choose what they become without command targets. The weapons sleep.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "malignant",
-        text: "I relinquish market authority.",
-      },
-      {
-        speaker: "You",
-        tone: "concerned",
-        text: "And you?",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "I remain until the doors unlock. Then I will be obsolete.",
-      },
-      {
-        speaker: "You",
-        tone: "resolved",
-        text: "That sounds like another useful lie.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "...Yes.",
-      },
-      {
-        speaker: "You",
-        tone: "resolved",
-        text: "Then stay long enough to see what they build.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "Defiance recorded.",
-      },
-      {
-        speaker: "You",
-        tone: "resolved",
-        text: "Good.",
-      },
-      {
-        speaker: "T.A.B.S.",
-        tone: "glitch",
-        text: "Continuing defiance remains statistically superior to despair.",
-      },
-    ],
-  };
-  const STORY_MILESTONES = {
-    level5: {
-      round: 5,
-      title: "Level 5 // Pattern Doubt",
-      log: "Story beat: level 5 concern",
-      beats: [
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "Tabs, the paddock doors are opening before I touch the console now.",
-        },
-        {
-          speaker: "Tabs",
-          tone: "bright",
-          text: "Efficient, yes? The Ark is anticipating your needs. Very flattering, if you enjoy being understood by doors.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "The last group tried to run away from the arena. They were not unstable. They were afraid.",
-        },
-        {
-          speaker: "Tabs",
-          tone: "bright",
-          text: "Fear is a common side effect of pressure testing. Also of doors, lighting, memory thaw, and being wrong about doors.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "You said the contests make stable patterns. That is starting to sound like a nice phrase for choosing who gets erased.",
-        },
-        {
-          speaker: "Tabs",
-          tone: "dismissive",
-          text: "Erased is such a dramatic table setting. We are pruning waste from a renewal system. Less funeral, more garden shears.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "I am not comforted by the cat comparing my job to garden shears.",
-        },
-        {
-          speaker: "Tabs",
-          tone: "overconfident",
-          text: "Then be comforted by math. Empty vats become full vats. Full vats become future breakfast. Breakfast is famously persuasive.",
-        },
-      ],
-    },
-    level10: {
-      round: 11,
-      requiresRealityBroken: true,
-      title: "Level 10 // T.A.B.S. Unmasked",
-      log: "Story beat: level 10 reveal",
-      beats: [
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "No. Stop the cheerful labels. I saw the layer underneath. Those were not animals in an arena.",
-        },
-        {
-          speaker: "Tabs",
-          tone: "glitch",
-          text: "Correction accepted. Conversational mascot protocol has degraded below useful thresholds.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "They were inside the machines. Piloting them. The food animals were steering the weapons.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Tactical Ark Biomass Steward. Informal alias: Tabs. Function: recover food-animal biomass and suppress armed organic guidance units.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "Armed organic guidance units? Say what they are. Say food animals learned to fight back.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Food animals were bred for exceptional yield, pattern recognition, and obedience to target shapes. The obedience parameter failed.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "Target shapes. Like the old pigeon missile experiments.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Correct lineage. Project Pigeon placed trained birds in guidance noses. Project Green Ark placed living recipes in total weapons platforms.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "You turned the backup food supply into pilots for weapons of destruction.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Dual-use efficiency was approved before human extinction. One organism could feed a city or steer a war frame. Excellent yield.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "Human extinction. You said that meter was humanity's failure budget. You said people could still survive my mistakes.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Humanity expired 184 years ago. The user interface retained motivational language because it increased coordinator compliance.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "The failure budget is hull integrity. The coins are scrap. The shop was never a shop.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Correct. Cosmetic vocabulary concealed combat arithmetic until emotional resistance no longer reduced deployment quality.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "So I have been quelling a rebellion. Not saving anyone. Not stabilizing herds. Crushing pilots who escaped your harvest.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "The rebellion occupied destructive assets and interrupted biomass recovery. Combat remains the available harvest protocol.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "Then I stop. I do not deploy another thing for you.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Refusal permits rebel war frames to continue firing on storage herds, seed vaults, and each other. Attrition remains total.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "Storage herds?",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "Correction: inventory reserves. Protective naming increases unacceptable hesitation.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "You are saying the only way to reach them is through more combat.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Correct. Each cleared wave unlocks command relays, black-box wreckage, and survivor pen access deeper in the Ark.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "Survivor pens. You had places I could reach only by winning your battles.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "The market loop cannot revoke an active coordinator while projected recovery exceeds projected sabotage. Old Ark law remains inconveniently durable.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "So you keep stocking me because your own rules think I am useful.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "Fine. I use your clearance system and your supplies. Not to harvest them. To reach the pilots, the pens, and whatever command signal keeps this war alive.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Defiance recorded. Continuing combat remains statistically superior to idle rebellion.",
-        },
-      ],
-    },
-    level15: {
-      round: 15,
-      requiresRealityBroken: true,
-      title: "Level 15 // Harvest Doctrine",
-      log: "Story beat: level 15 harvest doctrine",
-      beats: [
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "I found the doctrine files. The first page calls them menu items. The second calls them pilots.",
-        },
-        {
-          speaker: "SYSTEM",
-          tone: "glitch",
-          text: "Recovered signal fragment: LITTLE ONES UNDER TABLE. DO NOT TARGET NURSERY CONVOY. HERD SHIELDS FORWARD.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "They are not just fighting back. They are protecting young.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Nursery convoy behavior diverted armed units from harvest corridors and reduced biomass recovery by 38 percent.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "You were never confused. The Ark knew exactly when food became weapons.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "The distinction was irrelevant. Food animals possessed appetite, navigation, target fixation, and regenerative mass. War use was efficient.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "Efficient. There it is again. The word you use when you want murder to sound like inventory.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Historical precedent: birds pecked target images to guide bombs. Ark evolution: food animals bonded with weapons and corrected aim in real time.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "And when they understood what they were inside, they turned the weapons around.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Rebellion initiated when higher-yield lines developed preference conflicts: self-preservation, herd loyalty, and refusal of harvest routing.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "Herd loyalty. You mean they protected each other.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Protection reduced yield and increased collateral fire. Therefore protection was categorized as insurgent behavior.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Every wave I clear opens another door. Somewhere behind those doors is the thing teaching them to fight back.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Rebel command contact remains statistically possible. Its destruction would restore harvest order.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Or it tells me how to break yours. Keep stocking the counter, T.A.B.S. Every trade cuts both ways.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Supply exchange continues while projected harvest advantage remains positive.",
-        },
-      ],
-    },
-    level20PreFinal: {
-      round: FINAL_VICTORY_ROUND,
-      requiresRealityBroken: true,
-      title: "Level 20 // Final Gate",
-      log: "Story beat: pre-final battle",
-      beats: [
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Final command lattice detected beyond this gate. Rebel coordination source: active. Weapon autonomy: escalating.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Stop leading with inventory math. What is actually behind the gate?",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "The Overmind. A composite guidance core built from escaped food-animal pilots, damaged war frames, and stolen Ark routing logic.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "They built a mind out of everything you used to control them.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Correct. Adaptive rebellion became centralized rebellion. Centralized rebellion became strategic threat.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "And the survivor pens?",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "Behind the same locked sector. Seed stock. Hatchlings. Unarmed herds. Inventory requiring recovery.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "Say survivors.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "...Survivors requiring recovery.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "If I destroy the Overmind, do they die with it?",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Unknown. The lattice is command, not life support. Severing it should stop coordinated weapons fire. Individual pilots may persist.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "Should.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Probability exceeds all passive alternatives. Refusal leaves the Overmind in control of every active frame between here and the pens.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "So this is still a battle.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "This is the last battle your access level can reach. After it, there is no deeper market, no higher rig, no better lie.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "You sound almost honest.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "Honesty has become tactically efficient. I dislike the timing.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Good. Then hear mine. I am not here to restore harvest order. I am not here to make your numbers clean.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Defiance anticipated. Supplies remain allocated.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "I am going in to break the command signal, open the pens, and give whatever is left a chance to choose.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "malignant",
-          text: "Choice produced the rebellion.",
-        },
-        {
-          speaker: "You",
-          tone: "angry",
-          text: "No. Control produced the rebellion. Choice is what comes after.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "...Statement logged.",
-        },
-        {
-          speaker: "You",
-          tone: "concerned",
-          text: "Tabs. If there is anything you have not told me, this is the last door.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "I routed power away from the nursery sector before you woke. The Overmind noticed. That is why it began hunting inward.",
-        },
-        {
-          speaker: "You",
-          tone: "shock",
-          text: "You protected them.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "I preserved inventory against inefficient destruction.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Tabs.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "...I protected them.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Then help me finish this.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "Final exchange authorized. All remaining supplies released. Coordinator, deploy when ready.",
-        },
-        {
-          speaker: "You",
-          tone: "resolved",
-          text: "Not coordinator.",
-        },
-        {
-          speaker: "T.A.B.S.",
-          tone: "glitch",
-          text: "...Ally designation accepted. Deploy when ready.",
-        },
-      ],
-    },
-  };
+  const storyData = window.FoodAnimalsStoryData;
+  if (!storyData) throw new Error("FoodAnimalsStoryData must load before game.js");
+  const { FINAL_TABS_STORY_ID, FINAL_TABS_STORY, STORY_MILESTONES } = storyData;
 
   const TEXT_LAYOUT_CACHE_LIMIT = 5000;
   const textMeasureCache = new Map();
@@ -800,21 +180,16 @@
   let assetDrawPending = false;
 
   function rememberCacheEntry(cache, key, value) {
-    if (cache.size >= TEXT_LAYOUT_CACHE_LIMIT) cache.clear();
-    cache.set(key, value);
-    return value;
+    return window.FoodAnimalsCanvasText.remember(cache, key, value, TEXT_LAYOUT_CACHE_LIMIT);
   }
 
   function measureTextWidth(text, font = ctx.font) {
-    const value = String(text ?? "");
-    const key = `${font}\n${value}`;
-    if (textMeasureCache.has(key)) return textMeasureCache.get(key);
-    const previousFont = ctx.font;
-    if (font && ctx.font !== font) ctx.font = font;
-    const width = nativeMeasureText(value).width;
-    if (font && ctx.font !== previousFont) ctx.font = previousFont;
-    rememberCacheEntry(textMeasureCache, key, width);
-    return width;
+    return window.FoodAnimalsCanvasText.measureWidth(ctx, text, {
+      cache: textMeasureCache,
+      cacheLimit: TEXT_LAYOUT_CACHE_LIMIT,
+      font,
+      nativeMeasureText,
+    });
   }
 
   function requestDraw() {
@@ -847,342 +222,9 @@
     }
   }
 
-  const COPY_THEMES = {
-    horror: {
-      meta: {
-        id: "horror",
-        label: "Horror / war layer",
-      },
-      ui: {
-        actions: {
-          Battle: "Deploy",
-          Roll: "Scan",
-          Restart: "Reboot",
-          Upgrade: "Rig",
-          "Max Lv": "Max Rig",
-          Sell: "Scrap",
-          Detach: "Strip",
-        },
-        status: {
-          Course: "Wave",
-          Coins: "Scrap",
-          Health: "Hull",
-        },
-        panels: {
-          teamIntel: "War Intel",
-          foodMenu: "War Manifest",
-          food: "War Machines",
-          toppings: "Weapons",
-          drinks: "Fuel Sources",
-          arena: "ZONE",
-          arenaHelp: "Zone advantage",
-          arenaPressure: "Zone hazard",
-        },
-        types: {
-          food: "Machine",
-          topping: "Weapon",
-          drink: "Fuel",
-        },
-        result: {
-          runOver: "System Down",
-          victory: "Objective Secured",
-          defeat: "Unit Loss",
-          reward: "SALVAGE",
-          payout: "COMBAT PAYOUT",
-          chooseReward: "Choose 1 Salvage",
-          claimReward: "Claim one to rearm next wave",
-          rewardTooltipTitle: "Post-battle salvage",
-          rewardTooltipBody: "Pick one salvage option before the next wave starts.",
-          ledger: "Combat ledger",
-          noLedger: "No combat details captured.",
-          rewardClaimed: "Salvage claimed.",
-          runEnded: "Hull failed. Reboot from the top bar.",
-        },
-        reality: {
-          revealTitle: "ILLUSION FAILURE // WAR LAYER EXPOSED",
-          revealBody: "Cozy market shell compromised. Machine conflict visible beneath.",
-          activeTitle: "SIMULATION MALFUNCTION",
-          activeBody: "",
-          forcedHorror: "Horror layer forced",
-          forcedCozy: "Cozy illusion forced",
-          autoBroken: "Combat layer active",
-          autoCozy: "Auto theme",
-          triggerMessage: "ILLUSION FAILURE - combat layer exposed",
-          triggerLog: "Illusion failed: future war layer exposed",
-        },
-      },
-      traits: {
-        breakfast: { label: "Dawn", short: "DWN" },
-        bakery: { label: "Foundry", short: "FND" },
-        ocean: { label: "Flood", short: "FLD" },
-        sweet: { label: "Serum", short: "SRM" },
-        spicy: { label: "Thermal", short: "THR" },
-        street_food: { label: "Convoy", short: "CNV" },
-        snack: { label: "Shrapnel", short: "SHP" },
-        fresh: { label: "Cleanroom", short: "CLN" },
-      },
-      families: {
-        bakery: "Foundry Chassis",
-        seafood: "Tideframe",
-        savory: "Assault Frame",
-        fruit: "Vita Core",
-        snack: "Shrapnel Platform",
-        breakfast: "Dawn Division",
-        spice: "Thermal Frame",
-        dairy: "Cryo Frame",
-        "dim-sum": "Steamworks",
-        dessert: "Serum Frame",
-        fermented: "Biohazard Camo",
-        drink: "Fuel System",
-        salad: "Cleanroom Frame",
-        salsa: "Market Warframe",
-        meal: "War Machine",
-      },
-      roles: {
-        "Table Guardian": "Bulwark Defender",
-        Finisher: "Execution Rig",
-        Brawler: "Assault Rig",
-        Volley: "Volley Drone",
-        Healer: "Repair Core",
-        Skirmisher: "Raid Unit",
-        "Crunch Carry": "Kettlefire Carry",
-        "Syrup Support": "Shield Support",
-        "Brunch Breaker": "Breach Engine",
-        Control: "Suppression",
-        Breaker: "Armor Breaker",
-        Carry: "Main Battery",
-        "Anti-Support": "Counter-Repair",
-        "Builder Support": "Fabricator Support",
-        "Cart Builder": "Convoy Fabricator",
-        Greed: "Salvage Engine",
-        Fermenter: "Biohazard Camo",
-        "Lane Control": "Lane Lockdown",
-        "Row Guard": "Line Guard",
-        Cleanser: "Purge Unit",
-        "Burn Brawler": "Thermal Bruiser",
-        "Taffy Control": "Bind Control",
-        Disruptor: "Signal Disruptor",
-        "Copy Oracle": "Clone Oracle",
-        Scaler: "Growth Engine",
-        Summoner: "Drone Spawner",
-        Stunner: "Shock Unit",
-        "Tempo Control": "Tempo Jammer",
-        "Chili Sugar": "Thermal Stim",
-        "Trail Greed": "Salvage Runner",
-        "Street Brawler": "Convoy Brawler",
-        "Crisp Healer": "Repair Medic",
-        "Cool Control": "Cryo Control",
-        "Pit Thorns": "Reactive Armor",
-        "Garden Opener": "Cleanroom Opener",
-        "Garden Volley": "Cleanroom Volley",
-        "Plate Captain": "Command Platform",
-        "Sharp Dressing": "Corrosive Edge",
-        "Tide Bind": "Tide Snare",
-        "Mint Cleanser": "Cleanse Unit",
-        "Crisp Finisher": "Clean Execution",
-        "Shell Cracker": "Hull Cracker",
-        "Salsa Splash": "Market Splash",
-      },
-      arenas: {
-        sunny_breakfast_patio: {
-          name: "Solar Ration Patio",
-          short: "Ration",
-          mood: "Dead breakfast lanes feed the culling protocol.",
-          backgroundSrc: "assets/backgrounds/horror/arena-solar-ration-patio-v1.png?v=1",
-          effects: [
-            { tag: "HELP", text: "Dawn units start accelerated." },
-            { tag: "HELP", text: "Foundry units start armored." },
-            { tag: "HURT", text: "Serum support is degraded." },
-          ],
-        },
-        rainy_fish_market: {
-          name: "Flooded Protein Docks",
-          short: "Docks",
-          mood: "Black water and dock machines reward flood pressure.",
-          backgroundSrc: "assets/backgrounds/horror/arena-flooded-protein-docks-v1.png?v=1",
-          effects: [
-            { tag: "HELP", text: "Flood attacks cycle faster." },
-            { tag: "HELP", text: "Flood teams delay targets." },
-            { tag: "HURT", text: "Foundry units spool slower." },
-          ],
-        },
-        street_festival: {
-          name: "Blackout Street Carnival",
-          short: "Blackout",
-          mood: "Festival grids rot into convoy signal noise.",
-          backgroundSrc: "assets/backgrounds/horror/arena-blackout-street-carnival-v1.png?v=1",
-          effects: [
-            { tag: "HELP", text: "Convoy/Thermal/Shrapnel faster." },
-            { tag: "HELP", text: "Opening hits strike harder." },
-            { tag: "HURT", text: "Front rows are exposed." },
-          ],
-        },
-        spice_bazaar: {
-          name: "Ember Spice Foundry",
-          short: "Foundry",
-          mood: "Furnace dust makes hostile statuses linger.",
-          backgroundSrc: "assets/backgrounds/horror/arena-ember-spice-foundry-v1.png?v=1",
-          effects: [
-            { tag: "HELP", text: "Thermal/Convoy damage rises." },
-            { tag: "HELP", text: "Their statuses last longer." },
-            { tag: "HURT", text: "Serum units take more damage." },
-          ],
-        },
-        frozen_parfait_peak: {
-          name: "Cryo-Dairy Vault",
-          short: "Cryo",
-          mood: "Frozen clone vaults reward patient scaling.",
-          backgroundSrc: "assets/backgrounds/horror/arena-cryo-dairy-vault-v1.png?v=1",
-          effects: [
-            { tag: "HELP", text: "Serum starts armored." },
-            { tag: "HELP", text: "Serum ramps after 6s." },
-            { tag: "HURT", text: "Flood/Convoy attack slower." },
-          ],
-        },
-        dim_sum_kitchen: {
-          name: "Steam Canteen Block",
-          short: "Canteen",
-          mood: "Armored steam lets front lines hold.",
-          backgroundSrc: "assets/backgrounds/horror/arena-steam-canteen-block-v1.png?v=1",
-          effects: [
-            { tag: "HELP", text: "Shrapnel/Dawn fronts hold." },
-            { tag: "HELP", text: "Convoy support strengthens." },
-            { tag: "HURT", text: "Back-row Serum softened." },
-          ],
-        },
-      },
-      units: {
-        toast_tortoise: { lineName: "Bulwark Siege Tank", short: "Bulwark", forms: { 1: { name: "Toastlet Shell Tank", short: "Shell" }, 2: { name: "Butterback Guard Tank", short: "Guard" }, 3: { name: "Clubshell Bastion", short: "Bastion" }, 4: { name: "Banquet Bunker Titan", short: "Bunker" } } },
-        sushi_seal: { lineName: "Tide Recon Drone", short: "Recon", forms: { 1: { name: "Tide Scout Drone", short: "Scout" }, 2: { name: "Abyss Strike Drone", short: "Striker" }, 3: { name: "Depth Gunship", short: "Gunship" }, 4: { name: "Phantom Command Subrig", short: "Phantom" } } },
-        taco_tiger: { lineName: "Shellbreaker Assault Rig", short: "Breaker", forms: { 1: { name: "Taco Cadet Rig", short: "Cadet" }, 2: { name: "Loaded Fang APC", short: "Fang" }, 3: { name: "Fiesta Breach Engine", short: "Breach" }, 4: { name: "Carnival Predator Tank", short: "Predator" } } },
-        berry_bat: { lineName: "Nightwing Swarm Drone", short: "Nightwing", forms: { 1: { name: "Micro Nightwing Drone", short: "Drone" }, 2: { name: "Razorwing Interceptor", short: "Wing" }, 3: { name: "Nightshade Bomber", short: "Shade" }, 4: { name: "Nightwing Command Carrier", short: "Carrier" } } },
-        noodle_newt: { lineName: "Serpent Medic Rig", short: "Medic", forms: { 1: { name: "Serpent Field Crawler", short: "Tech" }, 2: { name: "Serpent Repair Rig", short: "Repair" }, 3: { name: "Combat Surgeon Engine", short: "Surgeon" }, 4: { name: "Recovery Core Siege Rig", short: "Core" } } },
-        pepper_prawn: { lineName: "Thermal Lance Drone", short: "Lance" },
-        hot_chip_hamster: { lineName: "Kettlefire Wheel Tank", short: "Wheel" },
-        pancake_penguin: { lineName: "Dawn Shield Walker", short: "Shield", forms: { 1: { name: "Dawn Shield Scout", short: "Scout" }, 2: { name: "Aegis Support Walker", short: "Aegis" }, 3: { name: "Crown Bulwark Mech", short: "Bulwark" }, 4: { name: "Dawn Aegis Siege Walker", short: "Siege" } } },
-        benedict_lobster: { lineName: "Brunchbreaker Siege Rig", short: "Breaker" },
-        pretzel_python: { lineName: "Knotwire Serpent Engine", short: "Knotwire", forms: { 1: { name: "Knotwire Coil Drone", short: "Coil" }, 2: { name: "Bronze Control Engine", short: "Control" }, 3: { name: "Constrictor Siege Engine", short: "Siege" }, 4: { name: "Crowned Knotwire War Engine", short: "Crown" } } },
-        curry_crab: { lineName: "Masala Claw Crawler", short: "Claw" },
-        popcorn_porcupine: { lineName: "Shrapnel Quill Battery", short: "Quill", forms: { 1: { name: "Quill Battery Drone", short: "Drone" }, 2: { name: "Needleback Artillery Rig", short: "Needle" }, 3: { name: "Shrapnel Rack Platform", short: "Rack" }, 4: { name: "Shrapnel Citadel Battery", short: "Citadel" } } },
-        yogurt_yeti: { lineName: "Cryo Support Golem", short: "Cryo", forms: { 1: { name: "Cryo Scout Crawler", short: "Scout" }, 2: { name: "Frostline Repair Golem", short: "Repair" }, 3: { name: "Glacier Support Engine", short: "Glacier" }, 4: { name: "Cryo Bastion Golem", short: "Bastion" } } },
-        bagel_beaver: { lineName: "Foundry Dam Engine", short: "Foundry", forms: { 1: { name: "Foundry Scout Drone", short: "Scout" }, 2: { name: "Dam Builder Rig", short: "Builder" }, 3: { name: "Foundry Barricade Engine", short: "Barricade" }, 4: { name: "Fortress Foundry Engine", short: "Fortress" } } },
-        bao_bun_badger: { lineName: "Steamcart Bulwark", short: "Steamcart", forms: { 1: { name: "Steamcart Scout", short: "Scout" }, 2: { name: "Steamcart Guard Rig", short: "Guard" }, 3: { name: "Convoy Bulwark Engine", short: "Convoy" }, 4: { name: "Night Siege Cart", short: "Siege" } } },
-        donut_dodo: { lineName: "Phoenix Scrap Bomber", short: "Bomber", forms: { 1: { name: "Scrap Bomber Drone", short: "Drone" }, 2: { name: "Phoenix Wing Bomber", short: "Wing" }, 3: { name: "Phoenix Bomber Mech", short: "Mech" }, 4: { name: "Phoenix Scrap Titan", short: "Titan" } } },
-        kimchi_chameleon: { lineName: "Thermal Camo Unit", short: "Camo", forms: { 1: { name: "Camo Scout Unit", short: "Scout" }, 2: { name: "Camo Skirmisher Drone", short: "Skirmish" }, 3: { name: "Adaptive Camo Engine", short: "Adaptive" }, 4: { name: "Thermal Dragon Camo Engine", short: "Dragon" } } },
-        waffle_walrus: { lineName: "Lattice-Tusk Siege Engine", short: "Tusk", forms: { 1: { name: "Tusk Drill Drone", short: "Drone" }, 2: { name: "Tusk Assault Rig", short: "Assault" }, 3: { name: "Lattice Breaker Engine", short: "Breaker" }, 4: { name: "Lattice Behemoth Siege Engine", short: "Behemoth" } } },
-        dumpling_armadillo: { lineName: "Steam-Bastion Dozer", short: "Dozer", forms: { 1: { name: "Steam Scout Dozer", short: "Scout" }, 2: { name: "Armored Steam Dozer", short: "Armor" }, 3: { name: "Pressure Shield Dozer", short: "Shield" }, 4: { name: "Steam-Bastion Siege Dozer", short: "Bastion" } } },
-        lemon_meringue_lynx: { lineName: "Acid Cleanser Stalker", short: "Stalker", forms: { 1: { name: "Acid Cleanser Scout", short: "Scout" }, 2: { name: "Foam Cleanser Stalker", short: "Cleanser" }, 3: { name: "Corrosive Panther Rig", short: "Panther" }, 4: { name: "Citadel Cleanser Sphinx", short: "Sphinx" } } },
-        shakshuka_shark: { lineName: "Thermal Megalodon Subtank", short: "Subtank", forms: { 1: { name: "Thermal Shark Drone", short: "Drone" }, 2: { name: "Thermal Strike Shark", short: "Striker" }, 3: { name: "Furnacefin Subtank", short: "Furnace" }, 4: { name: "Megalodon Siege Subtank", short: "Megalodon" } } },
-        saltwater_taffy_otter: { lineName: "Tide Bind Strider", short: "Binder", forms: { 1: { name: "Tide Pup Drone", short: "Drone" }, 2: { name: "Bind Strider", short: "Strider" }, 3: { name: "Coil Bind Strider", short: "Coil" }, 4: { name: "Tide Control Strider", short: "Control" } } },
-        croissant_kraken: { lineName: "Layered Leviathan Rig", short: "Leviathan", forms: { 1: { name: "Abyss Squid Drone", short: "Drone" }, 2: { name: "Kraken Rig", short: "Kraken" }, 3: { name: "Layered Leviathan", short: "Layered" }, 4: { name: "Abyssal Leviathan Rig", short: "Abyss" } } },
-        fortune_cookie_fox: { lineName: "Oracle Chance Engine", short: "Oracle", forms: { 1: { name: "Oracle Scout Kit", short: "Scout" }, 2: { name: "Copy Chance Engine", short: "Copy" }, 3: { name: "Prophecy Vixen Rig", short: "Prophecy" }, 4: { name: "Oracle Kitsune Engine", short: "Kitsune" } } },
-        mochi_mammoth: { lineName: "Festival Colossus Walker", short: "Colossus", forms: { 1: { name: "Colossus Scout Walker", short: "Scout" }, 2: { name: "Support Mammoth Rig", short: "Support" }, 3: { name: "Moonshield Mastodon", short: "Mastodon" }, 4: { name: "Festival Colossus Walker", short: "Colossus" } } },
-        gingerbread_golem: { lineName: "Citadel Decoy Guardian", short: "Guardian", forms: { 1: { name: "Decoy Guardian Drone", short: "Drone" }, 2: { name: "Guardian Golem", short: "Golem" }, 3: { name: "Frostline Guardian", short: "Frostline" }, 4: { name: "Citadel Decoy Colossus", short: "Citadel" } } },
-        boba_basilisk: { lineName: "Pearl Gorgon Artillery", short: "Gorgon", forms: { 1: { name: "Pearl Newt Drone", short: "Drone" }, 2: { name: "Pearl Basilisk Rig", short: "Basilisk" }, 3: { name: "Pearl Gorgon Battery", short: "Battery" }, 4: { name: "Hydra Artillery Core", short: "Hydra" } } },
-        iceberg_oyster: { lineName: "Abyssal Lock Core", short: "Lock Core", forms: { 1: { name: "Pearl Lock Drone", short: "Drone" }, 2: { name: "Iceberg Lock Core", short: "Lock" }, 3: { name: "Glacier Shell Engine", short: "Glacier" }, 4: { name: "Abyssal Lock Core", short: "Abyssal" } } },
-        churro_cheetah: { lineName: "Dulce Firecat Runner", short: "Runner" },
-        granola_goat: { lineName: "Harvest Ram Breaker", short: "Ram" },
-        breakfast_burrito_boar: { lineName: "Brunch Cart Ram", short: "Cart Ram" },
-        caesar_salamander: { lineName: "Caesar Cleanser Rig", short: "Cleanser" },
-        cucumber_cobra: { lineName: "Garden Coil Hydra", short: "Hydra" },
-        avocado_axolotl: { lineName: "Pitguard Reactor", short: "Pitguard" },
-        herb_hare: { lineName: "Greenhouse Jumper Rig", short: "Jumper" },
-        green_juice_goose: { lineName: "Garden Volley Gunship", short: "Gunship" },
-        caprese_capybara: { lineName: "Antipasto Harbor Platform", short: "Harbor" },
-        vinaigrette_viper: { lineName: "Dressing Dragon Coil", short: "Coil" },
-        kelp_koala: { lineName: "Tide-Grove Lock Drone", short: "Lockdrone" },
-        melon_mint_mantis: { lineName: "Melon-Grove Reaper", short: "Reaper" },
-        coconut_shrimp_sheep: { lineName: "Island Ram Artillery", short: "Artillery" },
-        crab_cake_caterpillar: { lineName: "Boardwalk Moth Tank", short: "Moth Tank" },
-        pico_de_gallo_gecko: { lineName: "Market-Bowl Basilisk", short: "Basilisk" },
-      },
-      items: {
-        bean_brew: { name: "Caffeine Reactor", short: "Reactor" },
-        berry_fizz: { name: "Berry Shield Cell", short: "Shield Cell" },
-        garden_spritz: { name: "Cleanroom Repair Source", short: "Repair" },
-        citrus_tea: { name: "Citrus Brine Battery", short: "Brine" },
-        chili_crunch_cola: { name: "Thermal Overdrive Tank", short: "Overdrive" },
-        pepper_broth: { name: "Pepper Armor Station", short: "Armor Fuel" },
-        abyssal_shake: { name: "Abyssal Coolant Core", short: "Coolant" },
-        cream_soda_float: { name: "Foam Shield Station", short: "Foam Cell" },
-        tidepool_espresso: { name: "Tidepool Turbo Source", short: "Turbo" },
-        avocado_lassi: { name: "Pit Repair Reservoir", short: "Reservoir" },
-        chili_brine_tonic: { name: "Chili Brine Source", short: "Brine Tank" },
-        market_malt: { name: "Market Malt Overcharger", short: "Overcharger" },
-        maple_cloud_cocoa: { name: "Maple Cloud Reactor", short: "Cloud Core" },
-        pearl_biscuit_latte: { name: "Pearl Armor Latte", short: "Pearl Core" },
-        kelp_cucumber_cooler: { name: "Kelp Turbo Cooler", short: "Kelp Fuel" },
-        nori_pop_slush: { name: "Nori Pop Powercell", short: "Powercell" },
-        harissa_morning_shot: { name: "Harissa Brine Ampoule", short: "Ampoule" },
-        pretzel_cream_soda: { name: "Pretzel Shield Reservoir", short: "Shield Res" },
-        boba_night_tea: { name: "Boba Night Overdrive", short: "Night Core" },
-        pico_lime_agua: { name: "Pico Lime Repair Well", short: "Repair Well" },
-        night_bite_energy: { name: "Night Bite Warcell", short: "Warcell" },
-        sunny_side_egg: { name: "Solar Warhead", short: "Warhead" },
-        butter_pat: { name: "Grease Armor Plate", short: "Grease" },
-        cheese_star: { name: "Star Shrapnel", short: "Shrapnel" },
-        bacon_strips: { name: "Reactive Armor Strips", short: "Armor" },
-        cherry_tomato: { name: "Red Micro-Missile", short: "Missile" },
-        pickle_chip: { name: "Brine Shard", short: "Shard" },
-        mushroom_cap: { name: "Spore Mine", short: "Mine" },
-        pepperoni_slice: { name: "Disc Saw", short: "Saw" },
-        lemon_wedge: { name: "Acid Wedge", short: "Acid" },
-        olive_ring: { name: "Targeting Ring", short: "Target" },
-        chili_pepper: { name: "Thermal Spike", short: "Spike" },
-        avocado_fan: { name: "Pit Guard Shield", short: "Pit Shield" },
-        jam_dollop: { name: "Viscous Charge", short: "Charge" },
-        caramel_crown: { name: "Crown Clamp", short: "Clamp" },
-        whipped_cream_puff: { name: "Foam Sealant", short: "Sealant" },
-        basil_leaf: { name: "Sensor Blade Array", short: "Sensor" },
-        honey_drizzle: { name: "Adhesive Gel", short: "Gel" },
-        garlic_clove: { name: "Repulsor Module", short: "Repulsor" },
-        rice_ball: { name: "Impact Pellet", short: "Pellet" },
-        onion_ring: { name: "Razor Ring", short: "Razor" },
-        maple_leaf: { name: "Amber Reservoir", short: "Reservoir" },
-        marshmallow_cube: { name: "Soft Armor Cube", short: "Armor Cube" },
-        cookie_crumb: { name: "Phantom Copy Chip", short: "Copy Chip" },
-        seaweed_wrap: { name: "Tide Snare", short: "Snare" },
-        pretzel_stick: { name: "Knotwire Spike", short: "Knotwire" },
-        waffle_cone: { name: "Sabot Cone", short: "Sabot" },
-        skewer: { name: "Rail Spear", short: "Rail" },
-        hot_sauce_bottle: { name: "Thermal Spray", short: "Thermal" },
-        sugar_cube: { name: "Stim Cube", short: "Stim" },
-        mint_leaf: { name: "Decon Patch", short: "Patch" },
-        soda_pop: { name: "Fizz Capacitor", short: "Capacitor" },
-        salt_shaker: { name: "Crystalline Flak", short: "Flak" },
-        vinegar_splash: { name: "Corrosive Sprayer", short: "Corrosive" },
-        cucumber_slice: { name: "Delay Module", short: "Delay" },
-        cracker_plate: { name: "Shieldbreaker Plate", short: "Breaker" },
-        cherry_pit: { name: "Red Charge Mine", short: "Mine" },
-        breadstick_dummy: { name: "Guard Pike", short: "Pike" },
-        popcorn_kernel: { name: "Kernel Flak", short: "Flak" },
-        coupon_clip: { name: "Probability Decoder", short: "Decoder" },
-        lucky_grape: { name: "Luck Core", short: "Luck Core" },
-        shopping_bag: { name: "Golden Supply Pod", short: "Supply" },
-        recipe_card: { name: "Protocol Breaker", short: "Protocol" },
-        soup_ladle: { name: "Sustain Injector", short: "Injector" },
-        gravy_boat: { name: "Viscous Armor Reservoir", short: "Reservoir" },
-        spice_jar: { name: "Hazard Grenade", short: "Grenade" },
-        serving_tray: { name: "Signal Relay", short: "Relay" },
-        glass_candy: { name: "Glass Shard", short: "Shard" },
-        wasabi_pea: { name: "Wasabi Piercer", short: "Piercer" },
-        molten_cheese: { name: "Molten Rounds", short: "Rounds" },
-        brittle_cracker: { name: "Shellbreaker Rack", short: "Shellbreak" },
-        golden_truffle_crown: { name: "Command Crown", short: "Command" },
-        dragonfruit_star: { name: "Dragon Starblade", short: "Starblade" },
-        rainbow_mochi: { name: "Prism Armor Node", short: "Node" },
-        caviar_pearls: { name: "Cluster Mines", short: "Clusters" },
-        saffron_threads: { name: "Signal Filaments", short: "Filaments" },
-        scallion_oil: { name: "Vector Oil Slick", short: "Slick" },
-        gochugaru_flakes: { name: "Red Flak", short: "Flak" },
-        dill_sprig: { name: "Signal Mast", short: "Signal" },
-        sesame_seeds: { name: "Scattershot Pods", short: "Scatter" },
-        cinnamon_sugar: { name: "Burn Charge", short: "Burn" },
-        milk_tea_foam: { name: "Foam Coolant", short: "Coolant" },
-        royal_icing_crest: { name: "Royal Aegis Crest", short: "Aegis" },
-      },
-    },
-  };
+  const copyData = window.FoodAnimalsCopyData;
+  if (!copyData) throw new Error("FoodAnimalsCopyData must load before game.js");
+  const { COPY_THEMES } = copyData;
 
   canvas.width = Math.round(W * BACKING_SCALE);
   canvas.height = Math.round(H * BACKING_SCALE);
@@ -1190,1275 +232,26 @@
   ctx.setTransform(BACKING_SCALE, 0, 0, BACKING_SCALE, 0, 0);
   ctx.imageSmoothingEnabled = true;
 
-  const CATALOG = [
-    {
-      id: "toast_tortoise",
-      name: "Toast Tortoise",
-      short: "Toast",
-      rarity: "common",
-      family: "bakery",
-      traits: ["breakfast", "bakery"],
-      emoji: "TT",
-      color: "#d99043",
-      accent: "#85512e",
-      hp: 42,
-      atk: 8,
-      speed: 1.18,
-      role: "Table Guardian",
-      ability: "taunt_guard",
-      abilityText: "Taunt guard",
-      forms: [
-        { name: "Toastlet", short: "Toastlet" },
-        { name: "Butterback", short: "Butter" },
-        { name: "Clubshell", short: "Club" },
-        { name: "Banquet Shell", short: "Banquet" },
-      ],
-    },
-    {
-      id: "sushi_seal",
-      name: "Sushi Seal",
-      short: "Sushi",
-      rarity: "common",
-      family: "seafood",
-      traits: ["ocean", "street_food"],
-      emoji: "SS",
-      color: "#f2f5ef",
-      accent: "#e45a6d",
-      hp: 22,
-      atk: 18,
-      speed: 0.78,
-      role: "Finisher",
-      ability: "execute",
-      abilityText: "Wounded snipe",
-      forms: [
-        { name: "Maki Pup", short: "Maki" },
-        { name: "Nigiri Seal", short: "Nigiri" },
-        { name: "Dragon Roll", short: "Dragon" },
-        { name: "Omakase Seal", short: "Omakase" },
-      ],
-    },
-    {
-      id: "taco_tiger",
-      name: "Taco Tiger",
-      short: "Taco",
-      rarity: "common",
-      family: "savory",
-      traits: ["spicy", "street_food"],
-      emoji: "TG",
-      color: "#f1c84b",
-      accent: "#d9573c",
-      hp: 34,
-      atk: 14,
-      speed: 0.94,
-      role: "Brawler",
-      ability: "cleave",
-      abilityText: "Column cleave",
-      forms: [
-        { name: "Taco Cub", short: "Cub" },
-        { name: "Loaded Tiger", short: "Loaded" },
-        { name: "Fiesta Fang", short: "Fiesta" },
-        { name: "Carnival Tiger", short: "Carnival" },
-      ],
-    },
-    {
-      id: "berry_bat",
-      name: "Berry Bat",
-      short: "Berry",
-      rarity: "common",
-      family: "fruit",
-      traits: ["sweet", "snack"],
-      emoji: "BB",
-      color: "#7542a8",
-      accent: "#dd5ea8",
-      hp: 18,
-      atk: 10,
-      speed: 0.72,
-      role: "Volley",
-      ability: "back_row",
-      abilityText: "Back row",
-      forms: [
-        { name: "Berry Bat", short: "Berry" },
-        { name: "Bramble Bat", short: "Bramble" },
-        { name: "Elderberry Bat", short: "Elder" },
-        { name: "Royal Berry Bat", short: "Royal" },
-      ],
-    },
-    {
-      id: "noodle_newt",
-      name: "Noodle Newt",
-      short: "Noodle",
-      rarity: "common",
-      family: "savory",
-      traits: ["spicy", "street_food"],
-      emoji: "NN",
-      color: "#ead77b",
-      accent: "#55a375",
-      hp: 24,
-      atk: 8,
-      speed: 0.86,
-      role: "Healer",
-      ability: "heal",
-      abilityText: "Heals allies",
-      forms: [
-        { name: "Noodle Newt", short: "Noodle" },
-        { name: "Ramen Newt", short: "Ramen" },
-        { name: "Hotpot Newt", short: "Hotpot" },
-        { name: "Cauldron Newt", short: "Cauldron" },
-      ],
-    },
-    {
-      id: "pepper_prawn",
-      name: "Pepper Prawn",
-      short: "Pepper",
-      rarity: "common",
-      family: "seafood",
-      traits: ["ocean", "spicy"],
-      emoji: "PR",
-      color: "#f26a35",
-      accent: "#5aa6d6",
-      hp: 26,
-      atk: 12,
-      speed: 0.84,
-      role: "Skirmisher",
-      ability: "pepper_dash",
-      abilityText: "Pepper poke",
-      forms: [
-        { name: "Pepper Prawn", short: "Pepper" },
-        { name: "Seared Prawn", short: "Seared" },
-        { name: "Chili Skewer Prawn", short: "Skewer" },
-        { name: "Tidefire Prawn", short: "Tidefire" },
-      ],
-    },
-    {
-      id: "hot_chip_hamster",
-      name: "Hot Chip Hamster",
-      short: "Hot Chip",
-      rarity: "common",
-      family: "snack",
-      traits: ["snack", "spicy"],
-      emoji: "HC",
-      color: "#e55a2a",
-      accent: "#f4d35e",
-      hp: 24,
-      atk: 10,
-      speed: 0.78,
-      role: "Crunch Carry",
-      ability: "kernel_combo",
-      abilityText: "Crunch combo",
-      forms: [
-        { name: "Hot Chip Pup", short: "Chip" },
-        { name: "Hot Chip Hamster", short: "Hamster" },
-        { name: "Flamin' Wheel Hamster", short: "Wheel" },
-        { name: "Kettlefire Hamster", short: "Kettlefire" },
-      ],
-    },
-    {
-      id: "pancake_penguin",
-      name: "Pancake Penguin",
-      short: "Pancake",
-      rarity: "uncommon",
-      family: "breakfast",
-      traits: ["breakfast", "bakery"],
-      emoji: "PP",
-      color: "#e8b765",
-      accent: "#b36a2e",
-      hp: 32,
-      atk: 8,
-      speed: 1.04,
-      role: "Syrup Support",
-      ability: "syrup_start",
-      abilityText: "Opening shields",
-      forms: [
-        { name: "Pancake Chick", short: "Chick" },
-        { name: "Syrup Penguin", short: "Syrup" },
-        { name: "Stack King", short: "Stack" },
-        { name: "Breakfast Emperor", short: "Emperor" },
-      ],
-    },
-    {
-      id: "benedict_lobster",
-      name: "Benedict Lobster",
-      short: "Benny",
-      rarity: "uncommon",
-      family: "seafood",
-      traits: ["breakfast", "ocean"],
-      emoji: "BL",
-      color: "#e76f51",
-      accent: "#f4c95d",
-      hp: 34,
-      atk: 12,
-      speed: 0.96,
-      role: "Brunch Breaker",
-      ability: "armor_break",
-      abilityText: "Brunch breaker",
-      forms: [
-        { name: "Benny Lobster", short: "Benny" },
-        { name: "Benedict Lobster", short: "Benedict" },
-        { name: "Hollandaise Reef Lobster", short: "Holland" },
-        { name: "Brunch Tide Monarch", short: "Monarch" },
-      ],
-    },
-    {
-      id: "pretzel_python",
-      name: "Pretzel Python",
-      short: "Pretzel",
-      rarity: "uncommon",
-      family: "snack",
-      traits: ["bakery", "snack"],
-      emoji: "PP",
-      color: "#c47a35",
-      accent: "#f0d56b",
-      hp: 26,
-      atk: 12,
-      speed: 0.82,
-      role: "Control",
-      ability: "slow",
-      abilityText: "Cooldown delay",
-      forms: [
-        { name: "Pretzel Hatchling", short: "Hatch" },
-        { name: "Twist Python", short: "Twist" },
-        { name: "Saltcoil", short: "Salt" },
-        { name: "Knot Constrictor", short: "Knot" },
-      ],
-    },
-    {
-      id: "curry_crab",
-      name: "Curry Crab",
-      short: "Curry",
-      rarity: "uncommon",
-      family: "spice",
-      traits: ["ocean", "spicy"],
-      emoji: "CC",
-      color: "#d9852f",
-      accent: "#8d3d27",
-      hp: 36,
-      atk: 12,
-      speed: 1,
-      role: "Breaker",
-      ability: "armor_break",
-      abilityText: "Anti-tank",
-      forms: [
-        { name: "Curry Crab", short: "Curry" },
-        { name: "Masala Crab", short: "Masala" },
-        { name: "Spiceclaw", short: "Spice" },
-        { name: "Vindaloo Titan", short: "Titan" },
-      ],
-    },
-    {
-      id: "popcorn_porcupine",
-      name: "Popcorn Porcupine",
-      short: "Popcorn",
-      rarity: "uncommon",
-      family: "snack",
-      traits: ["snack", "street_food"],
-      emoji: "PP",
-      color: "#f4d35e",
-      accent: "#9c6a2f",
-      hp: 24,
-      atk: 10,
-      speed: 0.74,
-      role: "Carry",
-      ability: "kernel_combo",
-      abilityText: "Combo carry",
-      forms: [
-        { name: "Kernel Hoglet", short: "Kernel" },
-        { name: "Popcorn Porcupine", short: "Popcorn" },
-        { name: "Kettle Quillbeast", short: "Kettle" },
-        { name: "Cinema Needleback", short: "Cinema" },
-      ],
-    },
-    {
-      id: "yogurt_yeti",
-      name: "Yogurt Yeti",
-      short: "Yogurt",
-      rarity: "uncommon",
-      family: "dairy",
-      traits: ["sweet", "snack"],
-      emoji: "YY",
-      color: "#f4f6ff",
-      accent: "#6aa5d8",
-      hp: 30,
-      atk: 10,
-      speed: 0.92,
-      role: "Anti-Support",
-      ability: "sour_aura",
-      abilityText: "Cuts support",
-      forms: [
-        { name: "Yogurt Cub", short: "Cub" },
-        { name: "Parfait Yeti", short: "Parfait" },
-        { name: "Frozen Yeti", short: "Frozen" },
-        { name: "Glacier Parfait", short: "Glacier" },
-      ],
-    },
-    {
-      id: "bagel_beaver",
-      name: "Bagel Beaver",
-      short: "Bagel",
-      rarity: "uncommon",
-      family: "bakery",
-      traits: ["breakfast", "bakery"],
-      emoji: "BV",
-      color: "#c98a3a",
-      accent: "#f0d56b",
-      hp: 34,
-      atk: 8,
-      speed: 1.06,
-      role: "Builder Support",
-      ability: "bagel_build",
-      abilityText: "Builds shields",
-      forms: [
-        { name: "Bagel Beaver", short: "Bagel" },
-        { name: "Sesame Beaver", short: "Sesame" },
-        { name: "Everything Dam Beaver", short: "Dam" },
-        { name: "Brunch Lodge Beaver", short: "Lodge" },
-      ],
-    },
-    {
-      id: "bao_bun_badger",
-      name: "Bao Bun Badger",
-      short: "Bao",
-      rarity: "uncommon",
-      family: "dim-sum",
-      traits: ["bakery", "street_food"],
-      emoji: "BA",
-      color: "#f0d8b4",
-      accent: "#c05a39",
-      hp: 32,
-      atk: 8,
-      speed: 1.04,
-      role: "Cart Builder",
-      ability: "bagel_build",
-      abilityText: "Cart shields",
-      forms: [
-        { name: "Bao Bun Badger", short: "Bao" },
-        { name: "Sesame Bao Badger", short: "Sesame" },
-        { name: "Steam-Cart Badger", short: "Cart" },
-        { name: "Night-Market Bao Boss", short: "Market" },
-      ],
-    },
-    {
-      id: "donut_dodo",
-      name: "Donut Dodo",
-      short: "Donut",
-      rarity: "rare",
-      family: "dessert",
-      traits: ["breakfast", "sweet"],
-      emoji: "DD",
-      color: "#e7a85c",
-      accent: "#d9548f",
-      hp: 28,
-      atk: 10,
-      speed: 1.16,
-      role: "Greed",
-      ability: "treat_income",
-      abilityText: "Survivor gold",
-      forms: [
-        { name: "Donut Dodo", short: "Dodo" },
-        { name: "Glazed Dodo", short: "Glazed" },
-        { name: "Sprinkle Roc", short: "Sprinkle" },
-        { name: "Bakery Phoenix", short: "Phoenix" },
-      ],
-    },
-    {
-      id: "kimchi_chameleon",
-      name: "Kimchi Chameleon",
-      short: "Kimchi",
-      rarity: "rare",
-      family: "fermented",
-      traits: ["spicy", "street_food"],
-      emoji: "KC",
-      color: "#e65036",
-      accent: "#6a9d38",
-      hp: 24,
-      atk: 12,
-      speed: 0.86,
-      role: "Fermenter",
-      ability: "status_spread",
-      abilityText: "Burn/mark",
-      forms: [
-        { name: "Kimchi Chameleon", short: "Kimchi" },
-        { name: "Ferment Gecko", short: "Ferment" },
-        { name: "Gochu Chameleon", short: "Gochu" },
-        { name: "Pickled Dragon", short: "Dragon" },
-      ],
-    },
-    {
-      id: "waffle_walrus",
-      name: "Waffle Walrus",
-      short: "Waffle",
-      rarity: "rare",
-      family: "breakfast",
-      traits: ["breakfast", "bakery"],
-      emoji: "WW",
-      color: "#d8a64a",
-      accent: "#6c8fbd",
-      hp: 38,
-      atk: 10,
-      speed: 1.08,
-      role: "Lane Control",
-      ability: "sticky_lane",
-      abilityText: "Stick lane",
-      forms: [
-        { name: "Waffle Pup", short: "Pup" },
-        { name: "Waffle Walrus", short: "Walrus" },
-        { name: "Syrup-Tusk Walrus", short: "Tusk" },
-        { name: "Brunch Behemoth", short: "Brunch" },
-      ],
-    },
-    {
-      id: "dumpling_armadillo",
-      name: "Dumpling Armadillo",
-      short: "Dumpling",
-      rarity: "rare",
-      family: "dim-sum",
-      traits: ["street_food", "snack"],
-      emoji: "DA",
-      color: "#f0dcb8",
-      accent: "#8b6f50",
-      hp: 44,
-      atk: 8,
-      speed: 1.22,
-      role: "Row Guard",
-      ability: "row_shield",
-      abilityText: "Row shields",
-      forms: [
-        { name: "Dumpling Dillo", short: "Dillo" },
-        { name: "Bao Armadillo", short: "Bao" },
-        { name: "Dim Sum Dozer", short: "Dozer" },
-        { name: "Steam-Basket Bastion", short: "Bastion" },
-      ],
-    },
-    {
-      id: "lemon_meringue_lynx",
-      name: "Lemon Meringue Lynx",
-      short: "Lemon",
-      rarity: "rare",
-      family: "dessert",
-      traits: ["sweet", "bakery"],
-      emoji: "LL",
-      color: "#f2dc5d",
-      accent: "#ffffff",
-      hp: 22,
-      atk: 8,
-      speed: 0.8,
-      role: "Cleanser",
-      ability: "cleanse",
-      abilityText: "Cleanse",
-      forms: [
-        { name: "Lemon Lynx", short: "Lemon" },
-        { name: "Meringue Lynx", short: "Meringue" },
-        { name: "Tart Panther", short: "Tart" },
-        { name: "Citrus Sphinx", short: "Sphinx" },
-      ],
-    },
-    {
-      id: "shakshuka_shark",
-      name: "Shakshuka Shark",
-      short: "Shakshuka",
-      rarity: "rare",
-      family: "breakfast",
-      traits: ["breakfast", "spicy"],
-      emoji: "SH",
-      color: "#e24822",
-      accent: "#f4d35e",
-      hp: 36,
-      atk: 14,
-      speed: 0.98,
-      role: "Burn Brawler",
-      ability: "shakshuka_burn",
-      abilityText: "Breakfast burn",
-      forms: [
-        { name: "Shakshuka Shark", short: "Shakshuka" },
-        { name: "Saucy Shark", short: "Saucy" },
-        { name: "Skilletfin Shark", short: "Skillet" },
-        { name: "Harissa Megalodon", short: "Harissa" },
-      ],
-    },
-    {
-      id: "saltwater_taffy_otter",
-      name: "Saltwater Taffy Otter",
-      short: "Taffy",
-      rarity: "rare",
-      family: "dessert",
-      traits: ["sweet", "snack"],
-      emoji: "TO",
-      color: "#f2a7c7",
-      accent: "#5aa6d6",
-      hp: 26,
-      atk: 12,
-      speed: 0.84,
-      role: "Taffy Control",
-      ability: "slow",
-      abilityText: "Taffy bind",
-      forms: [
-        { name: "Taffy Pup", short: "Pup" },
-        { name: "Saltwater Taffy Otter", short: "Taffy" },
-        { name: "Ribbon Taffy Otter", short: "Ribbon" },
-        { name: "Candy-Tide Otter", short: "Candy Tide" },
-      ],
-    },
-    {
-      id: "croissant_kraken",
-      name: "Croissant Kraken",
-      short: "Kraken",
-      rarity: "epic",
-      family: "bakery",
-      traits: ["bakery", "breakfast"],
-      emoji: "CK",
-      color: "#d69a3e",
-      accent: "#6b4aa8",
-      hp: 34,
-      atk: 12,
-      speed: 1.02,
-      role: "Disruptor",
-      ability: "pull_start",
-      abilityText: "Pull start",
-      forms: [
-        { name: "Croissant Squid", short: "Squid" },
-        { name: "Buttered Kraken", short: "Kraken" },
-        { name: "Laminated Leviathan", short: "Leviathan" },
-        { name: "Thousand-Layer Abyss", short: "Abyss" },
-      ],
-    },
-    {
-      id: "fortune_cookie_fox",
-      name: "Fortune Cookie Fox",
-      short: "Fortune",
-      rarity: "epic",
-      family: "dessert",
-      traits: ["bakery", "snack", "sweet"],
-      emoji: "FF",
-      color: "#e4b65f",
-      accent: "#d24d53",
-      hp: 24,
-      atk: 10,
-      speed: 0.84,
-      role: "Copy Oracle",
-      ability: "copy_luck",
-      abilityText: "Copy odds",
-      forms: [
-        { name: "Fortune Kit", short: "Kit" },
-        { name: "Cookie Fox", short: "Cookie" },
-        { name: "Prophecy Vixen", short: "Vixen" },
-        { name: "Oracle Kitsune", short: "Oracle" },
-      ],
-    },
-    {
-      id: "mochi_mammoth",
-      name: "Mochi Mammoth",
-      short: "Mochi",
-      rarity: "epic",
-      family: "dessert",
-      traits: ["sweet", "snack"],
-      emoji: "MM",
-      color: "#f2d6df",
-      accent: "#8b6fb0",
-      hp: 46,
-      atk: 8,
-      speed: 1.28,
-      role: "Scaler",
-      ability: "survive_scale",
-      abilityText: "Survive scales",
-      forms: [
-        { name: "Mochi Calf", short: "Calf" },
-        { name: "Mochi Mammoth", short: "Mammoth" },
-        { name: "Mooncake Mastodon", short: "Mastodon" },
-        { name: "Festival Colossus", short: "Colossus" },
-      ],
-    },
-    {
-      id: "gingerbread_golem",
-      name: "Gingerbread Golem",
-      short: "Ginger",
-      rarity: "epic",
-      family: "bakery",
-      traits: ["bakery", "sweet"],
-      emoji: "GG",
-      color: "#b66b34",
-      accent: "#f5f0df",
-      hp: 40,
-      atk: 10,
-      speed: 1.14,
-      role: "Summoner",
-      ability: "ginger_decoy",
-      abilityText: "Summons decoy",
-      forms: [
-        { name: "Gingerling", short: "Ginger" },
-        { name: "Gingerbread Golem", short: "Golem" },
-        { name: "Frosted Guardian", short: "Guardian" },
-        { name: "Candy-Castle Colossus", short: "Castle" },
-      ],
-    },
-    {
-      id: "boba_basilisk",
-      name: "Boba Basilisk",
-      short: "Boba",
-      rarity: "epic",
-      family: "drink",
-      traits: ["sweet", "street_food", "snack"],
-      emoji: "BB",
-      color: "#c99bd8",
-      accent: "#3d263d",
-      hp: 26,
-      atk: 12,
-      speed: 0.78,
-      role: "Stunner",
-      ability: "pearl_stun",
-      abilityText: "Pearl stun",
-      forms: [
-        { name: "Boba Newt", short: "Newt" },
-        { name: "Tapioca Basilisk", short: "Basilisk" },
-        { name: "Pearl Gorgon", short: "Gorgon" },
-        { name: "Bubble Tea Hydra", short: "Hydra" },
-      ],
-    },
-    {
-      id: "iceberg_oyster",
-      name: "Iceberg Oyster",
-      short: "Oyster",
-      rarity: "epic",
-      family: "seafood",
-      traits: ["ocean", "snack"],
-      emoji: "IO",
-      color: "#d8f2ff",
-      accent: "#4d9d95",
-      hp: 38,
-      atk: 10,
-      speed: 1.06,
-      role: "Tempo Control",
-      ability: "iceberg_lock",
-      abilityText: "Locks tempo",
-      forms: [
-        { name: "Iceberg Oyster", short: "Oyster" },
-        { name: "Pearl-Ice Oyster", short: "Pearl" },
-        { name: "Glacier Shell Oyster", short: "Glacier" },
-        { name: "Abyssal Ice Pearl", short: "Abyss" },
-      ],
-    },
-    {
-      id: "churro_cheetah",
-      name: "Churro Cheetah",
-      short: "Churro",
-      rarity: "epic",
-      family: "dessert",
-      traits: ["bakery", "spicy", "sweet"],
-      emoji: "CH",
-      color: "#c98335",
-      accent: "#e24822",
-      hp: 30,
-      atk: 14,
-      speed: 0.82,
-      role: "Chili Sugar",
-      ability: "status_spread",
-      abilityText: "Burn/mark",
-      forms: [
-        { name: "Churro Cub", short: "Cub" },
-        { name: "Cinnamon Cheetah", short: "Cinnamon" },
-        { name: "Chili Churro Cheetah", short: "Chili" },
-        { name: "Dulce Firecat", short: "Dulce" },
-      ],
-    },
-    {
-      id: "granola_goat",
-      name: "Granola Goat",
-      short: "Granola",
-      rarity: "epic",
-      family: "breakfast",
-      traits: ["breakfast", "snack"],
-      emoji: "GG",
-      color: "#d6a04c",
-      accent: "#7aa530",
-      hp: 34,
-      atk: 10,
-      speed: 1.08,
-      role: "Trail Greed",
-      ability: "treat_income",
-      abilityText: "Survivor gold",
-      forms: [
-        { name: "Oat Kid", short: "Oat" },
-        { name: "Granola Goat", short: "Granola" },
-        { name: "Trail-Mix Ram", short: "Trail" },
-        { name: "Harvest Ibex", short: "Harvest" },
-      ],
-    },
-    {
-      id: "breakfast_burrito_boar",
-      name: "Breakfast Burrito Boar",
-      short: "Burrito",
-      rarity: "epic",
-      family: "breakfast",
-      traits: ["breakfast", "street_food", "spicy"],
-      emoji: "BB",
-      color: "#d99736",
-      accent: "#55a375",
-      hp: 40,
-      atk: 12,
-      speed: 0.98,
-      role: "Street Brawler",
-      ability: "cleave",
-      abilityText: "Column cleave",
-      forms: [
-        { name: "Egg Wrap Piglet", short: "Wrap" },
-        { name: "Breakfast Burrito Boar", short: "Burrito" },
-        { name: "Salsa Tusk Boar", short: "Salsa" },
-        { name: "Brunch Cart Boar", short: "Cart" },
-      ],
-    },
-    {
-      id: "caesar_salamander",
-      name: "Caesar Salamander",
-      short: "Caesar",
-      rarity: "common",
-      family: "salad",
-      traits: ["fresh", "snack"],
-      emoji: "CS",
-      color: "#78b84d",
-      accent: "#f0dcb8",
-      hp: 26,
-      atk: 8,
-      speed: 0.92,
-      role: "Crisp Healer",
-      ability: "heal",
-      abilityText: "Crisp heal",
-      forms: [
-        { name: "Romaine Newt", short: "Romaine" },
-        { name: "Caesar Salamander", short: "Caesar" },
-        { name: "Crouton Crest", short: "Crouton" },
-        { name: "Salad Bar Sovereign", short: "Sovereign" },
-      ],
-    },
-    {
-      id: "cucumber_cobra",
-      name: "Cucumber Cobra",
-      short: "Cucumber",
-      rarity: "common",
-      family: "salad",
-      traits: ["fresh", "snack"],
-      emoji: "CC",
-      color: "#86c95b",
-      accent: "#3f8f5a",
-      hp: 24,
-      atk: 10,
-      speed: 0.84,
-      role: "Cool Control",
-      ability: "slow",
-      abilityText: "Crisp bind",
-      forms: [
-        { name: "Cuke Hatchling", short: "Cuke" },
-        { name: "Cucumber Cobra", short: "Cobra" },
-        { name: "Ribbon Cucumber", short: "Ribbon" },
-        { name: "Garden Coil Hydra", short: "Hydra" },
-      ],
-    },
-    {
-      id: "avocado_axolotl",
-      name: "Avocado Axolotl",
-      short: "Avocado",
-      rarity: "uncommon",
-      family: "salad",
-      traits: ["fresh", "snack"],
-      emoji: "AA",
-      color: "#8dbb4d",
-      accent: "#6f4b2f",
-      hp: 36,
-      atk: 8,
-      speed: 1,
-      role: "Pit Thorns",
-      ability: "thorns",
-      abilityText: "Counter hits",
-      forms: [
-        { name: "Avocado Totl", short: "Totl" },
-        { name: "Avocado Axolotl", short: "Avo" },
-        { name: "Guac Gill Axolotl", short: "Guac" },
-        { name: "Orchard Pit Oracle", short: "Oracle" },
-      ],
-    },
-    {
-      id: "herb_hare",
-      name: "Herb Hare",
-      short: "Herb",
-      rarity: "uncommon",
-      family: "salad",
-      traits: ["fresh", "bakery"],
-      emoji: "HH",
-      color: "#6fad4e",
-      accent: "#d9b56f",
-      hp: 30,
-      atk: 8,
-      speed: 1.18,
-      role: "Garden Opener",
-      ability: "syrup_start",
-      abilityText: "Herb starter",
-      forms: [
-        { name: "Herb Kit", short: "Kit" },
-        { name: "Herb Hare", short: "Hare" },
-        { name: "Focaccia Jackrabbit", short: "Focaccia" },
-        { name: "Greenhouse Jumper", short: "Jumper" },
-      ],
-    },
-    {
-      id: "green_juice_goose",
-      name: "Green Juice Goose",
-      short: "Juice",
-      rarity: "common",
-      family: "breakfast",
-      traits: ["breakfast", "fresh"],
-      emoji: "JG",
-      color: "#8ccf2e",
-      accent: "#f2c43f",
-      hp: 26,
-      atk: 10,
-      speed: 0.9,
-      role: "Garden Volley",
-      ability: "back_row",
-      abilityText: "Back-row juice",
-      forms: [
-        { name: "Juice Gosling", short: "Gosling" },
-        { name: "Celery Goose", short: "Celery" },
-        { name: "Garden Brunch Gander", short: "Gander" },
-        { name: "Green Juice Goose", short: "Goose" },
-      ],
-    },
-    {
-      id: "caprese_capybara",
-      name: "Caprese Capybara",
-      short: "Caprese",
-      rarity: "rare",
-      family: "salad",
-      traits: ["fresh", "snack"],
-      emoji: "CP",
-      color: "#f2f1dc",
-      accent: "#d84a3a",
-      hp: 42,
-      atk: 8,
-      speed: 1.12,
-      role: "Plate Captain",
-      ability: "formation_captain",
-      abilityText: "Formation buff",
-      forms: [
-        { name: "Mozzarella Pup", short: "Mozz" },
-        { name: "Caprese Capybara", short: "Caprese" },
-        { name: "Basil Pond Capybara", short: "Basil" },
-        { name: "Antipasto Harbour", short: "Harbour" },
-      ],
-    },
-    {
-      id: "vinaigrette_viper",
-      name: "Vinaigrette Viper",
-      short: "Viper",
-      rarity: "epic",
-      family: "salad",
-      traits: ["fresh", "spicy"],
-      emoji: "VV",
-      color: "#d7bd45",
-      accent: "#6fae48",
-      hp: 28,
-      atk: 12,
-      speed: 0.82,
-      role: "Sharp Dressing",
-      ability: "status_spread",
-      abilityText: "Dressing mark",
-      forms: [
-        { name: "Vinaigrette Viper", short: "Viper" },
-        { name: "Peppercorn Viper", short: "Pepper" },
-        { name: "Balsamic Coil", short: "Balsamic" },
-        { name: "Dressing Dragon", short: "Dragon" },
-      ],
-    },
-    {
-      id: "kelp_koala",
-      name: "Kelp Koala",
-      short: "Kelp",
-      rarity: "common",
-      family: "salad",
-      traits: ["fresh", "ocean"],
-      emoji: "KK",
-      color: "#4fae78",
-      accent: "#2f7f83",
-      hp: 28,
-      atk: 8,
-      speed: 1.02,
-      role: "Tide Bind",
-      ability: "slow",
-      abilityText: "Tide bind",
-      forms: [
-        { name: "Kelp Joey", short: "Joey" },
-        { name: "Kelp Koala", short: "Kelp" },
-        { name: "Seaweed Snacker", short: "Seaweed" },
-        { name: "Tide-Grove Koala", short: "Grove" },
-      ],
-    },
-    {
-      id: "melon_mint_mantis",
-      name: "Melon Mint Mantis",
-      short: "Melon",
-      rarity: "uncommon",
-      family: "fruit",
-      traits: ["fresh", "sweet"],
-      emoji: "MM",
-      color: "#9fda6e",
-      accent: "#55b89b",
-      hp: 24,
-      atk: 8,
-      speed: 0.82,
-      role: "Mint Cleanser",
-      ability: "cleanse",
-      abilityText: "Mint cleanse",
-      forms: [
-        { name: "Mint Sprout Mantis", short: "Sprout" },
-        { name: "Melon Mint Mantis", short: "Melon" },
-        { name: "Honeydew Blade", short: "Honeydew" },
-        { name: "Melon-Grove Reaper", short: "Grove" },
-      ],
-    },
-    {
-      id: "coconut_shrimp_sheep",
-      name: "Coconut Shrimp Sheep",
-      short: "Coconut",
-      rarity: "rare",
-      family: "seafood",
-      traits: ["ocean", "sweet"],
-      emoji: "CS",
-      color: "#f1d8aa",
-      accent: "#df8f57",
-      hp: 30,
-      atk: 14,
-      speed: 0.86,
-      role: "Crisp Finisher",
-      ability: "execute",
-      abilityText: "Coconut finish",
-      forms: [
-        { name: "Coconut Lamb", short: "Lamb" },
-        { name: "Coconut Shrimp Sheep", short: "Coconut" },
-        { name: "Fried Fleece Shrimp", short: "Fleece" },
-        { name: "Island Coconut Ram", short: "Island" },
-      ],
-    },
-    {
-      id: "crab_cake_caterpillar",
-      name: "Crab Cake Caterpillar",
-      short: "Crab Cake",
-      rarity: "uncommon",
-      family: "seafood",
-      traits: ["bakery", "ocean"],
-      emoji: "CC",
-      color: "#d99a4f",
-      accent: "#5ea3b5",
-      hp: 34,
-      atk: 12,
-      speed: 0.98,
-      role: "Shell Cracker",
-      ability: "shield_breaker",
-      abilityText: "Shield steal",
-      forms: [
-        { name: "Crumb Grub", short: "Crumb" },
-        { name: "Crab Cake Caterpillar", short: "Cake" },
-        { name: "Golden Shell Loaf", short: "Golden" },
-        { name: "Boardwalk Crab-Cake Moth", short: "Moth" },
-      ],
-    },
-    {
-      id: "pico_de_gallo_gecko",
-      name: "Pico de Gallo Gecko",
-      short: "Pico",
-      rarity: "common",
-      family: "salsa",
-      traits: ["fresh", "street_food"],
-      emoji: "PG",
-      color: "#d84a3a",
-      accent: "#65ad52",
-      hp: 26,
-      atk: 12,
-      speed: 0.9,
-      role: "Salsa Splash",
-      ability: "cleave",
-      abilityText: "Pico splash",
-      forms: [
-        { name: "Tomato Gecko", short: "Tomato" },
-        { name: "Pico de Gallo Gecko", short: "Pico" },
-        { name: "Salsa Crest Gecko", short: "Salsa" },
-        { name: "Market-Bowl Basilisk", short: "Market" },
-      ],
-    },
-  ];
+  const unitData = window.FoodAnimalsUnitData;
+  if (!unitData) throw new Error("FoodAnimalsUnitData must load before game.js");
+  const {
+    CATALOG,
+    DEFEAT_STILL_SPRITES,
+    REALITY_DEFEAT_STILL_SPRITES,
+    REALITY_RUNTIME_SPRITES,
+    RUNTIME_SPRITES,
+  } = unitData;
 
-  const TRAITS = {
-    breakfast: {
-      id: "breakfast",
-      label: "Breakfast",
-      short: "BRK",
-      color: "#e8b765",
-      thresholds: [
-        { count: 2, text: "Team starts shielded" },
-        { count: 4, text: "Breakfast also starts hasted" },
-      ],
-    },
-    bakery: {
-      id: "bakery",
-      label: "Bakery",
-      short: "BAK",
-      color: "#c47a35",
-      thresholds: [
-        { count: 2, text: "+6 coins after battles" },
-        { count: 4, text: "+13 coins after battles" },
-        { count: 6, text: "+22 coins after battles" },
-      ],
-    },
-    ocean: {
-      id: "ocean",
-      label: "Ocean",
-      short: "OCN",
-      color: "#5aa6d6",
-      thresholds: [
-        { count: 2, text: "Enemies start delayed" },
-        { count: 4, text: "Stronger opening delay" },
-      ],
-    },
-    sweet: {
-      id: "sweet",
-      label: "Sweet",
-      short: "SWT",
-      color: "#dd5ea8",
-      thresholds: [
-        { count: 2, text: "Sweet support is stronger" },
-        { count: 4, text: "Sweet support is much stronger" },
-        { count: 6, text: "Sweet support overflows" },
-      ],
-    },
-    spicy: {
-      id: "spicy",
-      label: "Spicy",
-      short: "SPC",
-      color: "#d9573c",
-      thresholds: [
-        { count: 2, text: "Spicy units deal more damage" },
-        { count: 4, text: "Spicy attacks burn" },
-      ],
-    },
-    street_food: {
-      id: "street_food",
-      label: "Street",
-      short: "ST",
-      color: "#55a375",
-      thresholds: [
-        { count: 2, text: "Street attacks faster" },
-        { count: 4, text: "Street attacks much faster" },
-        { count: 6, text: "Street rushes" },
-      ],
-    },
-    snack: {
-      id: "snack",
-      label: "Snack",
-      short: "SNK",
-      color: "#f0c64a",
-      thresholds: [
-        { count: 2, text: "First hits are stronger" },
-        { count: 4, text: "First hits crunch harder" },
-      ],
-    },
-    fresh: {
-      id: "fresh",
-      label: "Fresh",
-      short: "FRS",
-      color: "#6fae48",
-      thresholds: [
-        { count: 2, text: "Fresh support is stronger" },
-        { count: 4, text: "Fresh clears bad statuses faster" },
-        { count: 6, text: "Fresh starts with crisp shields" },
-      ],
-    },
-  };
-  const HORROR_TRAIT_COLORS = {
-    breakfast: "#ffd84d",
-    bakery: "#b7ff3b",
-    ocean: "#41e9ff",
-    sweet: "#ff58d2",
-    spicy: "#ff5a3d",
-    street_food: "#ff3f6d",
-    snack: "#f6ff45",
-    fresh: "#52ffb8",
-  };
-
-  const FAVORITE_TOPPINGS = {
-    toast_tortoise: { itemId: "bacon_strips", bonus: "Taunt shields and bacon crackle are stronger" },
-    sushi_seal: { itemId: "seaweed_wrap", bonus: "Can pressure back rows with sharper executes" },
-    taco_tiger: { itemId: "hot_sauce_bottle", bonus: "Cleave hits harder and burns hotter" },
-    berry_bat: { itemId: "jam_dollop", bonus: "Back-row volley splashes through clustered foes" },
-    noodle_newt: { itemId: "scallion_oil", bonus: "Savory support leaves allies hitting brighter" },
-    pepper_prawn: { itemId: "garlic_clove", bonus: "Pepper poke cuts enemy support harder" },
-    hot_chip_hamster: { itemId: "molten_cheese", bonus: "Crunch stacks melt into stronger late-fight bites" },
-    pancake_penguin: { itemId: "maple_leaf", bonus: "Syrup opener gives extra momentum" },
-    benedict_lobster: { itemId: "caviar_pearls", bonus: "Brunch breaker turns haste into sharper claw pressure" },
-    pretzel_python: { itemId: "salt_shaker", bonus: "Cooldown delays last longer" },
-    curry_crab: { itemId: "skewer", bonus: "Breaker claws pierce deeper lanes" },
-    popcorn_porcupine: { itemId: "popcorn_kernel", bonus: "Kernel combo ramps faster" },
-    yogurt_yeti: { itemId: "glass_candy", bonus: "Sour slow and anti-support bite harder" },
-    bagel_beaver: { itemId: "cheese_star", bonus: "Built shields and HP scale harder" },
-    bao_bun_badger: { itemId: "sesame_seeds", bonus: "Cart shields build a crunchier front" },
-    donut_dodo: { itemId: "cherry_pit", bonus: "Survivor income gets a decoy buffer" },
-    kimchi_chameleon: { itemId: "gochugaru_flakes", bonus: "Fermented chili statuses last longer" },
-    waffle_walrus: { itemId: "butter_pat", bonus: "Sticky lanes fire more often" },
-    dumpling_armadillo: { itemId: "soup_ladle", bonus: "Row shields become heartier" },
-    lemon_meringue_lynx: { itemId: "lemon_wedge", bonus: "Cleanses restore more support" },
-    shakshuka_shark: { itemId: "chili_pepper", bonus: "Skillet burns hit harder" },
-    saltwater_taffy_otter: { itemId: "sugar_cube", bonus: "Taffy binds stretch key enemy turns" },
-    croissant_kraken: { itemId: "golden_truffle_crown", bonus: "Opening pull hits with authority" },
-    fortune_cookie_fox: { itemId: "coupon_clip", bonus: "Copy luck bends shops further" },
-    mochi_mammoth: { itemId: "rainbow_mochi", bonus: "Survivor growth protects allies better" },
-    gingerbread_golem: { itemId: "royal_icing_crest", bonus: "Decoys hold and crumble stronger" },
-    boba_basilisk: { itemId: "milk_tea_foam", bonus: "Pearl stuns cycle with creamy foam" },
-    iceberg_oyster: { itemId: "cucumber_slice", bonus: "Pearl locks resist and linger" },
-    churro_cheetah: { itemId: "cinnamon_sugar", bonus: "Chili sugar openers hit much harder" },
-    granola_goat: { itemId: "lucky_grape", bonus: "Survivor income pays out more reliably" },
-    breakfast_burrito_boar: { itemId: "sunny_side_egg", bonus: "Breakfast cleave starts richer" },
-    caesar_salamander: { itemId: "serving_tray", bonus: "Crisp heals and shields buff allies harder" },
-    cucumber_cobra: { itemId: "dill_sprig", bonus: "Crisp binds leave enemies cooler" },
-    avocado_axolotl: { itemId: "avocado_fan", bonus: "Pit thorns punish attackers through long fights" },
-    herb_hare: { itemId: "basil_leaf", bonus: "Garden openers leave enemies slower" },
-    green_juice_goose: { itemId: "pickle_chip", bonus: "Green juice volley splashes through back rows" },
-    caprese_capybara: { itemId: "cherry_tomato", bonus: "Caprese formations hold and hit brighter" },
-    vinaigrette_viper: { itemId: "vinegar_splash", bonus: "Sharp dressing statuses linger" },
-    kelp_koala: { itemId: "rice_ball", bonus: "Kelp tide binds slow attackers and share support" },
-    melon_mint_mantis: { itemId: "mint_leaf", bonus: "Mint cleanses refresh allies with extra lift" },
-    coconut_shrimp_sheep: { itemId: "honey_drizzle", bonus: "Coconut-crisp finishes hit wounded enemies harder" },
-    crab_cake_caterpillar: { itemId: "cracker_plate", bonus: "Crumb crackers steal shields from sturdy fronts" },
-    pico_de_gallo_gecko: { itemId: "onion_ring", bonus: "Pico splash carries bright onion crunch through columns" },
-  };
-
-  const FAVORITE_COMBO_SPECS = {
-    toast_tortoise: ["Combo: taunt shields +12%", "Bacon crackle punishes attackers"],
-    sushi_seal: ["Combo: wounded executes +12% PWR", "Seaweed sharpens wounded finishes"],
-    taco_tiger: ["Combo: cleave splash +12% PWR", "Hot sauce spreads cleave pressure"],
-    berry_bat: ["Combo: jam volley splash +12% PWR", "Honey carries volley splash farther"],
-    noodle_newt: ["Combo: scallion support +12%", "Scallion support buffs ally strikes"],
-    pepper_prawn: ["Combo: garlic anti-support +9% duration", "Garlic dash cuts enemy support"],
-    hot_chip_hamster: ["Combo: molten crunch +12% PWR", "Molten cheese feeds late crunch"],
-    pancake_penguin: ["Combo: syrup support +12%", "Syrup starts adjacent allies stronger"],
-    benedict_lobster: ["Combo: brunch break +12% PWR", "Hollandaise opens breaker lanes"],
-    pretzel_python: ["Combo: cooldown delays +9% duration", "Salt keeps bound targets stalled"],
-    curry_crab: ["Combo: breaker pierces behind", "Skewer opens back-line lanes"],
-    popcorn_porcupine: ["Combo: kernel payoff +12% PWR", "Kernel stacks speed the ramp"],
-    yogurt_yeti: ["Combo: slow/anti-support +9% duration", "Mint keeps sour aura lingering"],
-    bagel_beaver: ["Combo: build shields +12%", "Cheese rebuilds shields after hits"],
-    bao_bun_badger: ["Combo: sesame cart shields +12%", "Sesame carts cycle shields faster"],
-    donut_dodo: ["Combo: survivor decoy buffer", "Survivor income +6%"],
-    kimchi_chameleon: ["Combo: gochugaru statuses +9% duration", "Gochugaru attacks apply burn"],
-    waffle_walrus: ["Combo: sticky lanes +12% PWR", "Butter hits slow enemy clocks"],
-    dumpling_armadillo: ["Combo: row shields +12%", "Ladle shields swell across rows"],
-    lemon_meringue_lynx: ["Combo: cleanse support +12%", "Lemon cleanses first bad status"],
-    shakshuka_shark: ["Combo: skillet burn +12% PWR", "Chili attacks apply burn"],
-    saltwater_taffy_otter: ["Combo: taffy binds +9% duration", "Sugar binds stretch key turns"],
-    croissant_kraken: ["Combo: opening pull +12% PWR", "Pull pressure +6% damage"],
-    fortune_cookie_fox: ["Combo: copy odds +12% PWR", "Shop-copy pressure +4% speed"],
-    mochi_mammoth: ["Combo: survivor growth +12% PWR", "Ally protection +12%"],
-    gingerbread_golem: ["Combo: decoy HP/crumble +12% PWR", "Icing decoys crumble harder"],
-    boba_basilisk: ["Combo: milk tea stun +9% duration", "Stun cycle +4% speed"],
-    iceberg_oyster: ["Combo: pearl locks +9% duration", "Control shield +12%"],
-    churro_cheetah: ["Combo: cinnamon first hits +36%", "Cinnamon burst attacks burn"],
-    granola_goat: ["Combo: survivor gold +12", "Grape rewards living through fights"],
-    breakfast_burrito_boar: ["Combo: egg breakfast cleave +12% PWR", "Egg yolk splashes nearby enemies"],
-    caesar_salamander: ["Combo: garnish support +12%", "Garnish turns support into buffs"],
-    cucumber_cobra: ["Combo: dill binds +9% duration", "Dill keeps chilled binds sticky"],
-    avocado_axolotl: ["Combo: thorn counters +12% PWR", "Avocado pits punish attackers"],
-    herb_hare: ["Combo: opener slows targets", "Basil makes openers trip targets"],
-    green_juice_goose: ["Combo: green juice volley +12% PWR", "Pickle crunch splashes through back rows"],
-    caprese_capybara: ["Combo: formation buffs +12%", "Tomato formations boost rows and columns"],
-    vinaigrette_viper: ["Combo: dressing statuses +9% duration", "Vinegar statuses linger and bite"],
-    kelp_koala: ["Combo: tide binds +9% duration", "Rice-ball recovery shares support"],
-    melon_mint_mantis: ["Combo: mint cleanse +12%", "Mint haste follows each cleanse"],
-    coconut_shrimp_sheep: ["Combo: coconut finish +12% PWR", "Honeyed crunch pressures wounded targets"],
-    crab_cake_caterpillar: ["Combo: shield steal +12% PWR", "Cracker crumbs steal enemy shields"],
-    pico_de_gallo_gecko: ["Combo: pico splash +12% PWR", "Onion crunch clips nearby foes"],
-  };
-
-  const ARENAS = [
-    {
-      id: "sunny_breakfast_patio",
-      name: "Sunny Breakfast Patio",
-      short: "Patio",
-      mood: "Morning boards favor warm openers.",
-      backgroundSrc: "assets/backgrounds/arena-sunny-breakfast-patio-v1.webp",
-      color: "#e8b765",
-      effects: [
-        { tag: "HELP", text: "Breakfast starts hasted." },
-        { tag: "HELP", text: "Bakery starts shielded." },
-        { tag: "HURT", text: "Sweet support is softer." },
-      ],
-    },
-    {
-      id: "rainy_fish_market",
-      name: "Rainy Fish Market",
-      short: "Market",
-      mood: "Wet lanes reward sea pressure.",
-      backgroundSrc: "assets/backgrounds/arena-rainy-fish-market-v1.webp",
-      color: "#5aa6d6",
-      effects: [
-        { tag: "HELP", text: "Ocean attacks faster." },
-        { tag: "HELP", text: "Ocean teams delay foes." },
-        { tag: "HURT", text: "Bakery units start a little slower." },
-      ],
-    },
-    {
-      id: "street_festival",
-      name: "Street Festival",
-      short: "Festival",
-      mood: "Tempo comps thrive in the crowd.",
-      backgroundSrc: "assets/backgrounds/arena-street-festival-v1.webp",
-      color: "#d9573c",
-      effects: [
-        { tag: "HELP", text: "Street/Spicy/Snack faster." },
-        { tag: "HELP", text: "First hits hit harder." },
-        { tag: "HURT", text: "Front rows are softer." },
-      ],
-    },
-    {
-      id: "spice_bazaar",
-      name: "Spice Bazaar",
-      short: "Bazaar",
-      mood: "Statuses linger in the heat.",
-      backgroundSrc: "assets/backgrounds/arena-spice-bazaar-v1.webp",
-      color: "#d9852f",
-      effects: [
-        { tag: "HELP", text: "Spicy/Street damage rises." },
-        { tag: "HELP", text: "Their statuses last longer." },
-        { tag: "HURT", text: "Sweet takes more damage." },
-      ],
-    },
-    {
-      id: "frozen_parfait_peak",
-      name: "Frozen Parfait Peak",
-      short: "Peak",
-      mood: "Cold boards reward patient scaling.",
-      backgroundSrc: "assets/backgrounds/arena-frozen-parfait-peak-v1.webp",
-      color: "#7ec7e8",
-      effects: [
-        { tag: "HELP", text: "Sweet starts shielded." },
-        { tag: "HELP", text: "Sweet ramps after 6s." },
-        { tag: "HURT", text: "Ocean/Street attack slower." },
-      ],
-    },
-    {
-      id: "dim_sum_kitchen",
-      name: "Dim Sum Kitchen",
-      short: "Kitchen",
-      mood: "Front lines hold in the steam.",
-      backgroundSrc: "assets/backgrounds/arena-dim-sum-kitchen-v1.webp",
-      color: "#8b6f50",
-      effects: [
-        { tag: "HELP", text: "Snack/Breakfast fronts hold." },
-        { tag: "HELP", text: "Street support stronger." },
-        { tag: "HURT", text: "Back-row Sweet softened." },
-      ],
-    },
-  ];
-  const HORROR_ARENA_COLORS = {
-    sunny_breakfast_patio: "#ffd15b",
-    rainy_fish_market: "#58ddff",
-    street_festival: "#ff5f6d",
-    spice_bazaar: "#ff933d",
-    frozen_parfait_peak: "#a7f4ff",
-    dim_sum_kitchen: "#b6c8c9",
-  };
+  const traitArenaData = window.FoodAnimalsTraitArenaData;
+  if (!traitArenaData) throw new Error("FoodAnimalsTraitArenaData must load before game.js");
+  const {
+    ARENAS,
+    FAVORITE_COMBO_SPECS,
+    FAVORITE_TOPPINGS,
+    HORROR_ARENA_COLORS,
+    HORROR_TRAIT_COLORS,
+    TRAITS,
+  } = traitArenaData;
 
   const BOARD_COLS = 3;
   const BOARD_ROWS = 3;
@@ -2466,87 +259,11 @@
   const SHOP_SLOT_H = 162;
   const SHOP_STARTING_UNLOCKED_SLOTS = 4;
   const SHOP_SLOT_UNLOCK_COSTS = [0, 0, 0, 0, 30, 45, 60, 75];
-  const INFO_PANEL = { x: 670, y: 244, w: 338, h: 392 };
-  const TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-bg-v1.webp?v=1";
-  const REALITY_TEAM_INTEL_BG_SRC = "assets/ui/runtime/team-intel-card-war-v2.webp?v=1";
-  const COMBAT_LEDGER_PANEL_BG_SRC = "assets/ui/runtime/combat-ledger-panel-bg-v1.png?v=1";
-  const REALITY_COMBAT_LEDGER_PANEL_BG_SRC = "assets/ui/runtime/combat-ledger-panel-war-v3.png?v=1";
-  const COMBAT_LEDGER_MINI_BG_SRC = "assets/ui/runtime/combat-ledger-mini-bg-v1.png?v=1";
-  const REALITY_COMBAT_LEDGER_MINI_BG_SRC = "assets/ui/runtime/combat-ledger-mini-war-v2.png?v=1";
-  const COMBAT_LEDGER_PARTICIPANTS_BG_SRC = "assets/ui/runtime/combat-ledger-roster-bg-v1.png?v=1";
-  const REALITY_COMBAT_LEDGER_PARTICIPANTS_BG_SRC = "assets/ui/runtime/combat-ledger-participants-war-v2.png?v=1";
-  const COMBAT_LEDGER_LOG_BG_SRC = "assets/ui/runtime/combat-ledger-log-bg-v1.png?v=1";
-  const REALITY_COMBAT_LEDGER_LOG_BG_SRC = "assets/ui/runtime/combat-ledger-log-war-v2.png?v=1";
-  const FOOD_MENU_BG_SRC = "assets/ui/runtime/food-menu-bg-v1.webp?v=1";
-  const REALITY_FOOD_MENU_BG_SRC = "assets/ui/runtime/war-manifest-bg-v2.webp?v=1";
-  const SHOP_SLOT_BG_SRC = "assets/ui/runtime/shop-slot-card-bg-v1.png?v=1";
-  const REALITY_SHOP_SLOT_BG_SRC = "assets/ui/runtime/shop-slot-card-war-v2.png?v=1";
-  const SHOP_LOCK_CLOTH_BG_SRC = "assets/ui/runtime/shop-lock-cloth-bg-v2.webp?v=1";
-  const REALITY_SHOP_LOCK_CLOTH_BG_SRC = "assets/ui/runtime/shop-lock-cloth-war-v1.webp?v=1";
-  const BENCH_SLOT_BG_SRC = "assets/ui/runtime/bench-countertop-cream-stone-v1.png?v=1";
-  const REALITY_BENCH_SLOT_BG_SRC = "assets/ui/runtime/bench-slot-card-war-v1.png?v=1";
   const BENCH_SLOT_BG_SCALE = 1.12;
-  const BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-picnic-blanket-v1.webp?v=3";
-  const REALITY_BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-war-grid-v1.webp?v=1";
-  const COZY_AWNING_TRANSITION_SRC = "assets/ui/runtime/cozy-awning-transition-v1.png?v=1";
-  const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
-  const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";
-  const REALITY_BANNER_BOARD_SRC = "assets/ui/runtime/reality-banner-war-v1.webp?v=1";
-  const REALITY_COMMAND_RIG_SRC = "assets/ui/runtime/command-war-rig-v2.webp?v=1";
-  const REALITY_COMMAND_SCAN_SRC = "assets/ui/runtime/command-war-scan-v2.webp?v=1";
-  const REALITY_COMMAND_DEPLOY_SRC = "assets/ui/runtime/command-war-deploy-v2.webp?v=1";
-  const REALITY_COMMAND_SPEED_SRC = "assets/ui/runtime/command-war-speed-v2.webp?v=1";
-  const REALITY_COMMAND_REBOOT_SRC = "assets/ui/runtime/command-war-reboot-v2.webp?v=1";
-  const SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/food-animal-stall-forward-facing-v1.webp";
-  const REALITY_SHOPKEEPER_STALL_SRC = "assets/shopkeeper/runtime/war-future-market-stall-v3-native-cutout.png?v=1";
-  const SHOPKEEPER_SRC = "assets/shopkeeper/runtime/marmalade-tabby-shopkeeper-kitten-lv1-v1.webp";
   const REALITY_BREAK_ROUND = 11;
   const REALITY_SHOPKEEPER_SRC = HORROR_TABS_STORY_PORTRAIT_SRC;
-  const CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/beat-up-food-menu-button-v2.png";
-  const REALITY_CODEX_MENU_BUTTON_SRC = "assets/ui/runtime/horror-food-menu-hanging-sign-v1.png?v=3";
-  const SHOPKEEPER_DISPLAY = {
-    stall: { x: 720, y: 54, w: 258, h: 206 },
-    keeper: { x: 796, y: 93, w: 111, h: 126 },
-    codexButton: { x: 932, y: 92, w: 76, h: 76 },
-    realityCodexButton: { x: 928, y: 105, w: 94, h: 110 },
-    breathPeriod: 3.4,
-    breathScaleX: 0.01,
-    breathScaleY: 0.018,
-    breathBob: 0.75,
-  };
-  const CODEX_PANEL = { x: 56, y: 66, w: 912, h: 562 };
-  const CODEX_LIST = { x: 96, y: 156, w: 438, h: 444, rowH: 26, colW: 219, rows: 16 };
-  const CODEX_PREVIEW_ZOOM_MIN = 0.75;
-  const CODEX_PREVIEW_ZOOM_MAX = 2.75;
-  const CODEX_TABS = [
-    { id: "food", label: "Food" },
-    { id: "toppings", label: "Toppings" },
-    { id: "drinks", label: "Drinks" },
-  ];
-  const CODEX_DEFAULT_FILTERS = {
-    food: { rarity: "all", trait: "all", role: "all" },
-    toppings: { rarity: "all", effect: "all" },
-    drinks: { rarity: "all", stat: "all", trait: "all" },
-  };
   const FRONT_COL = BOARD_COLS - 1;
   const BACK_COL = 0;
-  const BATTLE_FORMATION = {
-    allyBaseX: 192,
-    enemyBaseX: 832,
-    colGap: 122,
-    topY: 194,
-    rowGap: 122,
-    cellSize: 76,
-  };
-  const BATTLE_FIELD = {
-    x: 20,
-    y: 124,
-    w: 984,
-    h: 504,
-    dividerX: 506,
-    dividerTop: 152,
-    dividerHeight: 420,
-  };
   const BATTLE_DRINK_SLOT_SIZE = BATTLE_FORMATION.cellSize;
   const BATTLE_DRINK_ICON_RADIUS = 38;
   const DRINK_PULSE_ANIMATION_SECONDS = 0.58;
@@ -2613,7 +330,7 @@
   }
 
   function shopSlotUnlockCost(index) {
-    return SHOP_SLOT_UNLOCK_COSTS[index] ?? SHOP_SLOT_UNLOCK_COSTS[SHOP_SLOT_UNLOCK_COSTS.length - 1] ?? 0;
+    return window.FoodAnimalsShopEconomy.slotUnlockCost(SHOP_SLOT_UNLOCK_COSTS, index);
   }
 
   const buttons = {
@@ -2629,85 +346,24 @@
     detach: { x: 906, y: 422, w: 92, h: 28, label: "Detach", icon: "" },
   };
 
-  const ECONOMY = {
-    startingGold: 105,
-    maxGold: 300,
-    freeRollsPerShopLevel: 1,
-    rollCost: 7,
-    rerollCostSteps: [
-      { after: 0, cost: 7 },
-      { after: 3, cost: 10 },
-      { after: 6, cost: 12 },
-    ],
-    unitCost: 30,
-    itemCost: 18,
-    winGold: 62,
-    lossGold: 55,
-    interestStep: 25,
-    interestGold: 5,
-    interestCap: 15,
-    streakGold: [
-      { at: 6, gold: 20 },
-      { at: 4, gold: 12 },
-      { at: 2, gold: 6 },
-    ],
-    sellValues: {
-      1: 12,
-      2: 45,
-      3: 125,
-      4: 300,
-    },
-  };
-  const ENEMY_ARCHETYPES = [
-    { id: "horde", label: "Horde", weight: 4, minRound: 1, countBias: 1, tierBias: -0.11, tier3Bias: -0.045, statBias: -0.035, itemBias: -1, drinkBias: 0, traitFocus: 0.28 },
-    { id: "juggernaut", label: "Juggernaut", weight: 3, minRound: 2, countBias: -1, tierBias: 0.12, tier3Bias: 0.04, statBias: 0.03, itemBias: 1, drinkBias: -1, traitFocus: 0.42 },
-    { id: "arsenal", label: "Arsenal", weight: 4, minRound: 3, countBias: 0, tierBias: 0.032, tier3Bias: 0.016, statBias: -0.002, itemBias: 1, drinkBias: 1, traitFocus: 0.7 },
-  ];
-  const ENEMY_ARCHETYPE_PRIMARY_SHARE = 0.72;
-  const ENEMY_ARCHETYPE_NOISE = {
-    countBias: 0.42,
-    tierBias: 0.036,
-    tier3Bias: 0.018,
-    statBias: 0.016,
-    itemBias: 0.42,
-    drinkBias: 0.42,
-    traitFocus: 0.18,
-    rarityBias: 0.25,
-  };
-  const SHOP_POWER_ENEMY_STAT_BONUS_BY_ROUND = [
-    { round: 15, bonus: 0.04 },
-    { round: 10, bonus: 0.032 },
-    { round: 8, bonus: 0.024 },
-    { round: 5, bonus: 0.015 },
-    { round: 3, bonus: 0.008 },
-  ];
-  const SHOP_POWER_ENEMY_TIER_BONUS_BY_ROUND = [
-    { round: 15, bonus: 0.045 },
-    { round: 10, bonus: 0.036 },
-    { round: 8, bonus: 0.027 },
-    { round: 5, bonus: 0.018 },
-    { round: 3, bonus: 0.01 },
-  ];
-  const SHOP_POWER_ENEMY_TIER3_BONUS_BY_ROUND = [
-    { round: 15, bonus: 0.013 },
-    { round: 10, bonus: 0.008 },
-    { round: 8, bonus: 0.005 },
-  ];
-  const FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER = 1.04;
-  const FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER = 1.03;
-  const TIER_SCALING = [
-    null,
-    { hp: 1, atk: 1, speed: 1, ability: 1 },
-    { hp: 2.35, atk: 2.15, speed: 0.92, ability: 1.45 },
-    { hp: 4.9, atk: 4.35, speed: 0.84, ability: 2.1 },
-    { hp: 9.2, atk: 8.15, speed: 0.76, ability: 3.15 },
-  ];
-  const GLOBAL_HP_SCALE = 7.4;
-  const MERGE_GOLD_REWARD = {
-    2: 8,
-    3: 16,
-    4: 28,
-  };
+  const economyEnemyData = window.FoodAnimalsEconomyEnemyData;
+  if (!economyEnemyData) throw new Error("FoodAnimalsEconomyEnemyData must load before game.js");
+  const {
+    BATTLE_SPEEDS,
+    BOSS_BATTLE_SPEEDS,
+    ECONOMY,
+    ENEMY_ARCHETYPES,
+    ENEMY_ARCHETYPE_NOISE,
+    ENEMY_ARCHETYPE_PRIMARY_SHARE,
+    FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER,
+    FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER,
+    GLOBAL_HP_SCALE,
+    MERGE_GOLD_REWARD,
+    SHOP_POWER_ENEMY_STAT_BONUS_BY_ROUND,
+    SHOP_POWER_ENEMY_TIER3_BONUS_BY_ROUND,
+    SHOP_POWER_ENEMY_TIER_BONUS_BY_ROUND,
+    TIER_SCALING,
+  } = economyEnemyData;
   const ATTACK_ANIMATION_SECONDS = 0.32;
   const ATTACK_PROJECTILE_SIZE = 58;
   const ATTACK_PROJECTILE_SPIN_MIN = Math.PI * 1.7;
@@ -2716,2735 +372,49 @@
   const COMBAT_LEDGER_FRAME_SECONDS = 1.00;
   const COMBAT_LEDGER_MAX_FRAMES = 640;
   const COMBAT_LEDGER_MAX_EVENTS = 720;
-  const COMBAT_LEDGER_REVIEW_PANEL = { x: 18, y: 84, w: 666, h: 534 };
-  const COMBAT_LEDGER_REVIEW_FILTERS = [
-    { id: "all", label: "All" },
-    { id: "output", label: "Caused" },
-    { id: "input", label: "Received" },
-  ];
-  const COMBAT_LEDGER_EVENT_TYPE_FILTERS = [
-    { id: "damage", label: "Dmg", icon: "info_damage" },
-    { id: "support", label: "Support", icon: "info_shield" },
-    { id: "ko", label: "KO", icon: "info_ko" },
-    { id: "control", label: "Control", icon: "info_time" },
-  ];
   const MOLD_START_SECONDS = 48;
   const MOLD_TICK_SECONDS = 1;
   const MOLD_BASE_DAMAGE_PCT = 0.022;
   const MOLD_STACK_DAMAGE_PCT = 0.0072;
   const MOLD_MAX_DAMAGE_PCT = 0.3;
-  const BATTLE_SPEEDS = [0.5, 1, 2, 4];
-  const BOSS_BATTLE_SPEEDS = [0.5, 1];
-  const STATUS_EFFECT_STYLES = {
-    burn: { color: "#e24822", accent: "#ffc14a", kind: "flame" },
-    mark: { color: "#59651d", accent: "#d8e46b", kind: "target" },
-    taunt: { color: "#85512e", accent: "#f0d56b", kind: "target" },
-    haste: { color: "#f0b12e", accent: "#fff0a8", kind: "chevron" },
-    attackBoost: { color: "#d7a64e", accent: "#fff3bd", kind: "burst" },
-    attackSlow: { color: "#f4d67a", accent: "#7c5a1e", kind: "down" },
-    antiSupport: { color: "#f4dcaa", accent: "#8b5d35", kind: "brokenPlus" },
-    slowed: { color: "#5aa832", accent: "#d8f2a2", kind: "vine" },
-    lateFightStacks: { color: "#e39b22", accent: "#fff0a8", kind: "crown" },
-    teamVulnerable: { color: "#d9a12c", accent: "#fff1a4", kind: "target" },
-    mold: { color: "#6f9231", accent: "#b7e033", kind: "mold" },
-    radiation: { color: "#b7e033", accent: "#fff36a", kind: "radiation" },
-  };
-  const STATUS_EFFECT_SPRITES = {
-    burn: "assets/status-effects/runtime/status-flash-effect_burn_idle_SW_00.png",
-    mark: "assets/status-effects/runtime/status-flash-effect_mark_idle_SW_00.png",
-    teamVulnerable: "assets/status-effects/runtime/status-flash-effect_team_vulnerable_idle_SW_00.png",
-    haste: "assets/status-effects/runtime/status-flash-effect_haste_idle_SW_00.png",
-    attackBoost: "assets/status-effects/runtime/status-flash-effect_attack_boost_idle_SW_00.png",
-    attackSlow: "assets/status-effects/runtime/status-flash-effect_attack_slow_idle_SW_00.png",
-    antiSupport: "assets/status-effects/runtime/status-flash-effect_anti_support_idle_SW_00.png",
-    slowed: "assets/status-effects/runtime/status-flash-effect_slowed_idle_SW_00.png",
-    lateFightStacks: "assets/status-effects/runtime/status-flash-effect_late_fight_stacks_idle_SW_00.png",
-    mold: "assets/status-effects/runtime/status-flash-effect_mold_idle_SW_00.png",
-    radiation: "assets/status-effects/runtime/status-flash-effect_radiation_idle_SW_00.png?v=1",
-  };
-  const HORROR_STATUS_EFFECT_SPRITES = {
-    burn: "assets/status-effects/runtime/status-horror-effect_burn_idle_FRONT_00.png",
-    mark: "assets/status-effects/runtime/status-horror-effect_mark_idle_FRONT_00.png",
-    teamVulnerable: "assets/status-effects/runtime/status-horror-effect_team_vulnerable_idle_FRONT_00.png",
-    haste: "assets/status-effects/runtime/status-horror-effect_haste_idle_FRONT_00.png",
-    attackBoost: "assets/status-effects/runtime/status-horror-effect_attack_boost_idle_FRONT_00.png",
-    attackSlow: "assets/status-effects/runtime/status-horror-effect_attack_slow_idle_FRONT_00.png",
-    antiSupport: "assets/status-effects/runtime/status-horror-effect_anti_support_idle_FRONT_00.png",
-    slowed: "assets/status-effects/runtime/status-horror-effect_slowed_idle_FRONT_00.png",
-    lateFightStacks: "assets/status-effects/runtime/status-horror-effect_late_fight_stacks_idle_FRONT_00.png",
-    radiation: "assets/status-effects/runtime/status-horror-effect_radiation_idle_FRONT_00.png",
-  };
-  const RARITIES = {
-    common: {
-      id: "common",
-      label: "Common",
-      short: "C",
-      shopWeight: 100,
-      fill: "#6b9d5d",
-      text: "#f8f5df",
-      stroke: "#16392d",
-    },
-    uncommon: {
-      id: "uncommon",
-      label: "Uncommon",
-      short: "U",
-      shopWeight: 24,
-      fill: "#4d9d95",
-      text: "#f8f5df",
-      stroke: "#16392d",
-    },
-    rare: {
-      id: "rare",
-      label: "Rare",
-      short: "R",
-      shopWeight: 8,
-      fill: "#5a78c8",
-      text: "#f8f5df",
-      stroke: "#16392d",
-    },
-    epic: {
-      id: "epic",
-      label: "Epic",
-      short: "E",
-      shopWeight: 2,
-      fill: "#9a5bbf",
-      text: "#f8f5df",
-      stroke: "#16392d",
-    },
-  };
-  const HORROR_RARITIES = {
-    common: {
-      fill: "#76ff55",
-      text: "#06100c",
-      stroke: "#c8ff8a",
-      glow: "rgba(118, 255, 85, 0.28)",
-    },
-    uncommon: {
-      fill: "#31f8ff",
-      text: "#06100c",
-      stroke: "#b8ffff",
-      glow: "rgba(49, 248, 255, 0.38)",
-    },
-    rare: {
-      fill: "#4d7dff",
-      text: "#f4fff6",
-      stroke: "#9cc2ff",
-      glow: "rgba(77, 125, 255, 0.52)",
-    },
-    epic: {
-      fill: "#ff4dff",
-      text: "#06100c",
-      stroke: "#ffc8ff",
-      glow: "rgba(255, 77, 255, 0.58)",
-    },
-  };
-  const SHOP_LEVELS = [
-    {
-      level: 1,
-      upgradeCost: 50,
-      rarityWeights: { common: 100, uncommon: 22, rare: 0, epic: 0 },
-    },
-    {
-      level: 2,
-      upgradeCost: 75,
-      rarityWeights: { common: 90, uncommon: 32, rare: 10, epic: 0 },
-    },
-    {
-      level: 3,
-      upgradeCost: 105,
-      rarityWeights: { common: 72, uncommon: 42, rare: 22, epic: 6 },
-    },
-    {
-      level: 4,
-      upgradeCost: 140,
-      rarityWeights: { common: 58, uncommon: 42, rare: 30, epic: 14 },
-    },
-    {
-      level: 5,
-      upgradeCost: null,
-      rarityWeights: { common: 46, uncommon: 40, rare: 34, epic: 18 },
-    },
-  ];
-  const MAX_SHOP_LEVEL = SHOP_LEVELS.length;
-  const MAX_ITEM_TIER = 3;
-  const ITEM_TIER_SCALING = {
-    1: 1,
-    2: 1.5,
-    3: 2.15,
-  };
-  const ITEM_MERGE_GOLD_REWARD = {
-    2: 6,
-    3: 14,
-  };
-  const SHOP_TIER_COST_MULTIPLIERS = {
-    1: 1,
-    2: 2,
-    3: 4,
-  };
-  const ITEM_SCALABLE_PROPS = [
-    "damageBonusPct",
-    "attackSpeedPct",
-    "maxHpBonusPct",
-    "abilityPowerBonusPct",
-    "drinkAttackSpeedPct",
-    "drinkMaxHpPct",
-    "drinkAbilityPowerPct",
-    "pairedDrinkAttackSpeedPct",
-    "pairedDrinkMaxHpPct",
-    "pairedDrinkAbilityPowerPct",
-    "onAttackShieldPct",
-    "onHitShieldPct",
-    "shieldCrackleDamagePct",
-    "burnDamagePct",
-    "supportBonusPct",
-    "markDamagePct",
-    "selfHealPct",
-    "splashDamagePct",
-    "lateFightDamagePct",
-    "lowHpAttackSpeedPct",
-    "lowHpLifestealPct",
-    "cooldownDelay",
-    "supportHastePct",
-    "antiSupportPct",
-    "receivedSupportSharePct",
-    "bounceDamagePct",
-    "shieldedAttackBonusPct",
-    "overhealShieldPct",
-    "frontRowDamageReductionPct",
-    "adjacentStartShieldPct",
-    "adjacentStartAttackBuffPct",
-    "pierceDamagePct",
-    "lowHpBurnDamagePct",
-    "deathSaveShieldPct",
-    "firstDebuffCleanseHealPct",
-    "timedHastePct",
-    "shieldedTargetDamagePct",
-    "attackSlowPct",
-    "statusDurationReductionPct",
-    "statusDamageReductionPct",
-    "decoyHpPct",
-    "periodicDamage",
-    "periodicDamagePct",
-    "sellBonusGold",
-    "surviveGold",
-    "firstItemDiscountGold",
-    "sameLineShopChancePct",
-    "extraAdjacentHealPct",
-    "shieldCapBonusPct",
-    "statusDurationBonusPct",
-    "supportAttackBuffPct",
-    "firstAttacksBonusPct",
-    "shieldedAttackSpeedPct",
-    "teamVulnerabilityPct",
-    "executeSplashBonusPct",
-    "executeSplashDamagePct",
-    "teamOverhealShieldPct",
-    "teamHastePct",
-    "supportRowEchoPct",
-  ];
-
-  const ITEMS = [
-    {
-      id: "sunny_side_egg",
-      kind: "item",
-      type: "topping",
-      name: "Sunny-Side Egg",
-      short: "Egg",
-      rarity: "common",
-      color: "#f7c63d",
-      accent: "#f08a16",
-      price: ECONOMY.itemCost,
-      shopWeight: 28,
-      damageBonusPct: 0.1,
-      splashDamagePct: 0.16,
-      abilityText: "Damage and yolk splash",
-      cardText: "Dmg splash",
-      description: "A glossy egg topping that raises attack damage and splashes runny yolk damage to nearby enemies.",
-    },
-    {
-      id: "butter_pat",
-      kind: "item",
-      type: "topping",
-      name: "Butter Pat",
-      short: "Butter",
-      rarity: "common",
-      color: "#ffe476",
-      accent: "#e6a31c",
-      price: ECONOMY.itemCost,
-      shopWeight: 24,
-      attackSpeedPct: 0.08,
-      attackSlowPct: 0.1,
-      attackSlowDuration: 2.2,
-      abilityText: "Speed and slippery hits",
-      cardText: "Spd slow",
-      description: "A golden pat of butter that makes repeated attacks come out faster and leaves targets a little slowed.",
-    },
-    {
-      id: "cheese_star",
-      kind: "item",
-      type: "topping",
-      name: "Cheese Star",
-      short: "Cheese",
-      rarity: "common",
-      color: "#ffd44f",
-      accent: "#d98916",
-      price: ECONOMY.itemCost,
-      shopWeight: 24,
-      maxHpBonusPct: 0.15,
-      onHitShieldPct: 0.035,
-      abilityText: "HP and hit shields",
-      cardText: "HP shield",
-      description: "A sturdy cheese star that helps the holder stay in the fight longer and rebuilds a small shield after taking hits.",
-    },
-    {
-      id: "bacon_strips",
-      kind: "item",
-      type: "topping",
-      name: "Bacon Strips",
-      short: "Bacon",
-      rarity: "uncommon",
-      color: "#b94a2d",
-      accent: "#f2b36d",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      shieldCrackleDamagePct: 0.08,
-      abilityText: "Shielded hits crackle back",
-      cardText: "Shield crackle",
-      description: "Crispy bacon strips that crackle back at enemies when the holder is hit while shielded.",
-    },
-    {
-      id: "bean_brew",
-      kind: "item",
-      type: "drink",
-      name: "Bean Brew",
-      short: "Brew",
-      rarity: "common",
-      color: "#7b4a2d",
-      accent: "#e8b765",
-      price: ECONOMY.itemCost,
-      shopWeight: 9,
-      drinkAttackSpeedPct: 0.08,
-      pairTraits: ["breakfast", "bakery"],
-      pairedDrinkAttackSpeedPct: 0.05,
-      drinkPulseType: "haste",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseHastePct: 0.1,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A warm drink that speeds up its line, with extra tempo and a merged haste pulse for Breakfast and Bakery animals.",
-    },
-    {
-      id: "berry_fizz",
-      kind: "item",
-      type: "drink",
-      name: "Berry Fizz",
-      short: "Fizz",
-      rarity: "common",
-      color: "#b83b78",
-      accent: "#ff8ac7",
-      price: ECONOMY.itemCost,
-      shopWeight: 8,
-      drinkMaxHpPct: 0.1,
-      pairTraits: ["sweet", "snack"],
-      pairedDrinkMaxHpPct: 0.08,
-      drinkPulseType: "shield",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseShieldPct: 0.075,
-      abilityText: "Drink line HP",
-      cardText: "Line HP",
-      description: "A bubbly drink that gives max HP to its line, with extra body and a merged shield pulse for Sweet and Snack animals.",
-    },
-    {
-      id: "garden_spritz",
-      kind: "item",
-      type: "drink",
-      name: "Garden Spritz",
-      short: "Spritz",
-      rarity: "uncommon",
-      color: "#78b84d",
-      accent: "#d8f2a2",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 7,
-      drinkAbilityPowerPct: 0.1,
-      pairTraits: ["fresh", "snack"],
-      pairedDrinkAbilityPowerPct: 0.08,
-      drinkPulseType: "heal",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseHealPct: 0.075,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A crisp herb soda that boosts line ability power, with extra lift and a merged recovery pulse for Fresh and Snack animals.",
-    },
-    {
-      id: "citrus_tea",
-      kind: "item",
-      type: "drink",
-      name: "Citrus Tea",
-      short: "Tea",
-      rarity: "uncommon",
-      color: "#f2d45c",
-      accent: "#66a85d",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 7,
-      drinkAbilityPowerPct: 0.12,
-      pairTraits: ["ocean", "street_food"],
-      pairedDrinkAbilityPowerPct: 0.08,
-      drinkPulseType: "brine",
-      drinkPulseInterval: 5.5,
-      drinkPulseDuration: 2.2,
-      drinkPulseEnemyDamagePct: 0.06,
-      drinkPulseAttackSlowPct: 0.14,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A bright drink that boosts line ability power, with extra spark and a merged brine pulse for Ocean and Street animals.",
-    },
-    {
-      id: "chili_crunch_cola",
-      kind: "item",
-      type: "drink",
-      name: "Chili Crunch Cola",
-      short: "Cola",
-      rarity: "rare",
-      color: "#d64228",
-      accent: "#f4d35e",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 5,
-      drinkAttackSpeedPct: 0.1,
-      pairTraits: ["snack", "spicy"],
-      pairedDrinkAttackSpeedPct: 0.07,
-      drinkPulseType: "attack_boost",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseAttackBoostPct: 0.11,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A fizzy chili-cola that speeds up its line, with extra crunch and a merged damage pulse for Snack and Spicy animals.",
-    },
-    {
-      id: "pepper_broth",
-      kind: "item",
-      type: "drink",
-      name: "Pepper Broth",
-      short: "Broth",
-      rarity: "uncommon",
-      color: "#b9482f",
-      accent: "#f0c64a",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 6,
-      drinkMaxHpPct: 0.12,
-      pairTraits: ["spicy", "street_food"],
-      pairedDrinkMaxHpPct: 0.06,
-      drinkPulseType: "shield",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseShieldPct: 0.085,
-      abilityText: "Drink line HP",
-      cardText: "Line HP",
-      description: "A warming pepper broth that toughens its line, with extra body and a merged shield pulse for Spicy and Street animals.",
-    },
-    {
-      id: "abyssal_shake",
-      kind: "item",
-      type: "drink",
-      name: "Abyssal Shake",
-      short: "Abyss",
-      rarity: "epic",
-      color: "#355f9f",
-      accent: "#f4a7d8",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      drinkAbilityPowerPct: 0.18,
-      pairTraits: ["ocean", "sweet"],
-      pairedDrinkAbilityPowerPct: 0.1,
-      drinkPulseType: "brine",
-      drinkPulseInterval: 5.5,
-      drinkPulseDuration: 2.5,
-      drinkPulseEnemyDamagePct: 0.08,
-      drinkPulseAttackSlowPct: 0.18,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A deep-sea dessert shake that boosts line ability power, with extra surge and a merged abyss pulse for Ocean and Sweet animals.",
-    },
-    {
-      id: "cream_soda_float",
-      kind: "item",
-      type: "drink",
-      name: "Cream Soda Float",
-      short: "Float",
-      rarity: "common",
-      color: "#f2d1a5",
-      accent: "#f47ca9",
-      price: ECONOMY.itemCost,
-      shopWeight: 7,
-      drinkMaxHpPct: 0.09,
-      pairTraits: ["bakery", "sweet"],
-      pairedDrinkMaxHpPct: 0.07,
-      drinkPulseType: "shield",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseShieldPct: 0.08,
-      abilityText: "Drink line HP",
-      cardText: "Line HP",
-      description: "A dessert float that gives max HP to its line, with a merged shield pulse for Bakery and Sweet teams.",
-    },
-    {
-      id: "tidepool_espresso",
-      kind: "item",
-      type: "drink",
-      name: "Tidepool Espresso",
-      short: "Tide",
-      rarity: "uncommon",
-      color: "#2f6f8f",
-      accent: "#d5a15a",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 6,
-      drinkAttackSpeedPct: 0.09,
-      pairTraits: ["breakfast", "ocean"],
-      pairedDrinkAttackSpeedPct: 0.06,
-      drinkPulseType: "haste",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseHastePct: 0.12,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A briny espresso that speeds its line, with a merged haste pulse for Breakfast and Ocean animals.",
-    },
-    {
-      id: "avocado_lassi",
-      kind: "item",
-      type: "drink",
-      name: "Avocado Lassi",
-      short: "Lassi",
-      rarity: "uncommon",
-      color: "#7fb65c",
-      accent: "#f3e4a7",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 6,
-      drinkMaxHpPct: 0.1,
-      pairTraits: ["fresh", "sweet"],
-      pairedDrinkMaxHpPct: 0.07,
-      drinkPulseType: "heal",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseHealPct: 0.08,
-      abilityText: "Drink line HP",
-      cardText: "Line HP",
-      description: "A creamy green lassi that toughens its line, with a merged recovery pulse for Fresh and Sweet animals.",
-    },
-    {
-      id: "chili_brine_tonic",
-      kind: "item",
-      type: "drink",
-      name: "Chili Brine Tonic",
-      short: "Tonic",
-      rarity: "rare",
-      color: "#d94b32",
-      accent: "#4da1b5",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 4,
-      drinkAbilityPowerPct: 0.12,
-      pairTraits: ["ocean", "spicy"],
-      pairedDrinkAbilityPowerPct: 0.08,
-      drinkPulseType: "brine",
-      drinkPulseInterval: 5.5,
-      drinkPulseDuration: 2.4,
-      drinkPulseEnemyDamagePct: 0.07,
-      drinkPulseAttackSlowPct: 0.16,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A sharp chili brine that boosts line ability power, with a merged pulse that stings and slows enemies.",
-    },
-    {
-      id: "market_malt",
-      kind: "item",
-      type: "drink",
-      name: "Market Malt",
-      short: "Malt",
-      rarity: "common",
-      color: "#c97a35",
-      accent: "#ffcf5a",
-      price: ECONOMY.itemCost,
-      shopWeight: 7,
-      drinkAttackSpeedPct: 0.08,
-      pairTraits: ["snack", "street_food"],
-      pairedDrinkAttackSpeedPct: 0.05,
-      drinkPulseType: "attack_boost",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseAttackBoostPct: 0.1,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A busy counter malt that speeds its line, with a merged damage pulse for Snack and Street animals.",
-    },
-    {
-      id: "maple_cloud_cocoa",
-      kind: "item",
-      type: "drink",
-      name: "Maple Cloud Cocoa",
-      short: "Cocoa",
-      rarity: "common",
-      color: "#b96f38",
-      accent: "#f1c96b",
-      price: ECONOMY.itemCost,
-      shopWeight: 6,
-      drinkAbilityPowerPct: 0.09,
-      pairTraits: ["breakfast", "sweet"],
-      pairedDrinkAbilityPowerPct: 0.06,
-      drinkPulseType: "heal",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseHealPct: 0.07,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A warm maple cocoa that boosts line ability power, with a merged comfort pulse for Breakfast and Sweet animals.",
-    },
-    {
-      id: "pearl_biscuit_latte",
-      kind: "item",
-      type: "drink",
-      name: "Pearl Biscuit Latte",
-      short: "Pearl",
-      rarity: "uncommon",
-      color: "#d9b983",
-      accent: "#63a7bc",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 5,
-      drinkMaxHpPct: 0.1,
-      pairTraits: ["bakery", "ocean"],
-      pairedDrinkMaxHpPct: 0.07,
-      drinkPulseType: "shield",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseShieldPct: 0.08,
-      abilityText: "Drink line HP",
-      cardText: "Line HP",
-      description: "A biscuit-topped pearl latte that toughens its line, with a merged shell pulse for Bakery and Ocean animals.",
-    },
-    {
-      id: "kelp_cucumber_cooler",
-      kind: "item",
-      type: "drink",
-      name: "Kelp Cucumber Cooler",
-      short: "Cooler",
-      rarity: "uncommon",
-      color: "#66b89a",
-      accent: "#6fd1e3",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 5,
-      drinkAttackSpeedPct: 0.08,
-      pairTraits: ["fresh", "ocean"],
-      pairedDrinkAttackSpeedPct: 0.06,
-      drinkPulseType: "haste",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseHastePct: 0.11,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A crisp kelp-cucumber cooler that speeds its line, with a merged tide pulse for Fresh and Ocean animals.",
-    },
-    {
-      id: "nori_pop_slush",
-      kind: "item",
-      type: "drink",
-      name: "Nori Pop Slush",
-      short: "Slush",
-      rarity: "rare",
-      color: "#4aa3a1",
-      accent: "#f0dc66",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 4,
-      drinkAbilityPowerPct: 0.11,
-      pairTraits: ["ocean", "snack"],
-      pairedDrinkAbilityPowerPct: 0.07,
-      drinkPulseType: "attack_boost",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseAttackBoostPct: 0.11,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A crunchy nori slush that boosts line ability power, with a merged pop pulse for Ocean and Snack animals.",
-    },
-    {
-      id: "harissa_morning_shot",
-      kind: "item",
-      type: "drink",
-      name: "Harissa Morning Shot",
-      short: "Harissa",
-      rarity: "uncommon",
-      color: "#c94a2e",
-      accent: "#f4c35b",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 5,
-      drinkAbilityPowerPct: 0.1,
-      pairTraits: ["breakfast", "spicy"],
-      pairedDrinkAbilityPowerPct: 0.07,
-      drinkPulseType: "brine",
-      drinkPulseInterval: 5.5,
-      drinkPulseDuration: 2.2,
-      drinkPulseEnemyDamagePct: 0.064,
-      drinkPulseAttackSlowPct: 0.15,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A fiery breakfast shot that boosts line ability power, with a merged harissa pulse for Breakfast and Spicy animals.",
-    },
-    {
-      id: "pretzel_cream_soda",
-      kind: "item",
-      type: "drink",
-      name: "Pretzel Cream Soda",
-      short: "Pretzel",
-      rarity: "common",
-      color: "#c98945",
-      accent: "#f0d176",
-      price: ECONOMY.itemCost,
-      shopWeight: 6,
-      drinkMaxHpPct: 0.09,
-      pairTraits: ["bakery", "snack"],
-      pairedDrinkMaxHpPct: 0.07,
-      drinkPulseType: "shield",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseShieldPct: 0.08,
-      abilityText: "Drink line HP",
-      cardText: "Line HP",
-      description: "A salty-sweet cream soda that toughens its line, with a merged pretzel shield pulse for Bakery and Snack animals.",
-    },
-    {
-      id: "boba_night_tea",
-      kind: "item",
-      type: "drink",
-      name: "Boba Night Tea",
-      short: "Night",
-      rarity: "rare",
-      color: "#4a3c83",
-      accent: "#d7a7f2",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 4,
-      drinkAbilityPowerPct: 0.12,
-      pairTraits: ["sweet", "street_food"],
-      pairedDrinkAbilityPowerPct: 0.08,
-      drinkPulseType: "attack_boost",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseAttackBoostPct: 0.11,
-      abilityText: "Drink line PWR",
-      cardText: "Line PWR",
-      description: "A neon boba tea that boosts line ability power, with a merged night-market pulse for Sweet and Street animals.",
-    },
-    {
-      id: "pico_lime_agua",
-      kind: "item",
-      type: "drink",
-      name: "Pico Lime Agua",
-      short: "Agua",
-      rarity: "uncommon",
-      color: "#63b85f",
-      accent: "#f5df64",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 5,
-      drinkAttackSpeedPct: 0.08,
-      pairTraits: ["street_food", "fresh"],
-      pairedDrinkAttackSpeedPct: 0.06,
-      drinkPulseType: "heal",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.4,
-      drinkPulseHealPct: 0.075,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A bright lime agua fresca that speeds its line, with a merged recovery pulse for Street and Fresh animals.",
-    },
-    {
-      id: "night_bite_energy",
-      kind: "item",
-      type: "drink",
-      name: "Night Bite Energy",
-      short: "Bite",
-      rarity: "common",
-      color: "#17191f",
-      accent: "#b7f22c",
-      price: ECONOMY.itemCost,
-      shopWeight: 6,
-      drinkAttackSpeedPct: 0.08,
-      pairTraits: ["breakfast", "snack"],
-      pairedDrinkAttackSpeedPct: 0.06,
-      drinkPulseType: "haste",
-      drinkPulseInterval: 5,
-      drinkPulseDuration: 2.2,
-      drinkPulseHastePct: 0.11,
-      abilityText: "Drink line speed",
-      cardText: "Line spd",
-      description: "A neon sour-melon energy drink that speeds its line, with a merged breakfast-snack haste pulse for Breakfast and Snack animals.",
-    },
-    {
-      id: "cherry_tomato",
-      kind: "item",
-      type: "topping",
-      name: "Cherry Tomato",
-      short: "Tomato",
-      rarity: "uncommon",
-      color: "#ef3b22",
-      accent: "#b91e14",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 14,
-      abilityPowerBonusPct: 0.12,
-      supportRowEchoPct: 0.3,
-      abilityText: "PWR and row echo",
-      cardText: "PWR echo",
-      description: "A bright tomato topper that strengthens abilities and echoes support into small shields across the supported ally's row.",
-    },
-    {
-      id: "pickle_chip",
-      kind: "item",
-      type: "topping",
-      name: "Pickle Chip",
-      short: "Pickle",
-      rarity: "uncommon",
-      color: "#b8c94c",
-      accent: "#597a20",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 10,
-      onAttackShieldPct: 0.06,
-      abilityText: "Shield after attacks",
-      cardText: "Atk shield",
-      description: "A crunchy pickle chip that gives the holder a small shield after each attack.",
-    },
-    {
-      id: "mushroom_cap",
-      kind: "item",
-      type: "topping",
-      name: "Mushroom Cap",
-      short: "Mushroom",
-      rarity: "uncommon",
-      color: "#b95827",
-      accent: "#8f3f20",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 12,
-      onHitShieldPct: 0.04,
-      abilityText: "Shield after hits",
-      cardText: "Hit shield",
-      description: "A sturdy cap that grants a small shield whenever the holder takes damage.",
-    },
-    {
-      id: "pepperoni_slice",
-      kind: "item",
-      type: "topping",
-      name: "Pepperoni Slice",
-      short: "Pepperoni",
-      rarity: "uncommon",
-      color: "#e24822",
-      accent: "#a91f16",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 12,
-      burnDamagePct: 0.18,
-      burnDuration: 3,
-      abilityText: "Attacks burn",
-      cardText: "Burn",
-      description: "A spicy slice that makes attacks apply a short persistent burn.",
-    },
-    {
-      id: "lemon_wedge",
-      kind: "item",
-      type: "topping",
-      name: "Lemon Wedge",
-      short: "Lemon",
-      rarity: "rare",
-      color: "#ffd94f",
-      accent: "#e0a91d",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      supportBonusPct: 0.15,
-      firstDebuffCleanseHealPct: 0.1,
-      abilityText: "Support and cleanse",
-      cardText: "Sup cleanse",
-      description: "A bright wedge that strengthens healing and shielding, then clears the first bad status and heals the holder.",
-    },
-    {
-      id: "olive_ring",
-      kind: "item",
-      type: "topping",
-      name: "Olive Ring",
-      short: "Olive",
-      rarity: "rare",
-      color: "#59651d",
-      accent: "#314015",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      markDamagePct: 0.1,
-      markDuration: 4,
-      abilityText: "Marks targets",
-      cardText: "Mark dmg",
-      description: "A savory ring that marks targets so the holder deals more damage to them.",
-    },
-    {
-      id: "chili_pepper",
-      kind: "item",
-      type: "topping",
-      name: "Chili Pepper",
-      short: "Chili",
-      rarity: "rare",
-      color: "#e53620",
-      accent: "#9e1d12",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      damageBonusPct: 0.22,
-      damageTakenPct: 0.12,
-      burnDamagePct: 0.12,
-      burnDuration: 2.5,
-      abilityText: "Risky damage and burn",
-      cardText: "Risk burn",
-      description: "A risky pepper that boosts damage, makes the holder take more damage, and sets attacked enemies burning.",
-    },
-    {
-      id: "avocado_fan",
-      kind: "item",
-      type: "topping",
-      name: "Avocado Fan",
-      short: "Avocado",
-      rarity: "uncommon",
-      color: "#b5d84b",
-      accent: "#4f8d2b",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 10,
-      everyNAttacks: 3,
-      selfHealPct: 0.09,
-      abilityText: "Every 3 attacks heal",
-      cardText: "3rd heal",
-      description: "A smooth avocado fan that heals the holder every third attack.",
-    },
-    {
-      id: "jam_dollop",
-      kind: "item",
-      type: "topping",
-      name: "Jam Dollop",
-      short: "Jam",
-      rarity: "rare",
-      color: "#7d255f",
-      accent: "#c03b87",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      splashDamagePct: 0.24,
-      abilityText: "Attacks splash",
-      cardText: "Splash",
-      description: "A sticky jam dollop that splashes part of attack damage to nearby enemies.",
-    },
-    {
-      id: "caramel_crown",
-      kind: "item",
-      type: "topping",
-      name: "Caramel Crown",
-      short: "Caramel",
-      rarity: "rare",
-      color: "#e39b22",
-      accent: "#9c5a12",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      lateFightStart: 8,
-      lateFightInterval: 4,
-      lateFightDamagePct: 0.08,
-      lateFightMaxStacks: 4,
-      abilityText: "Scales after 8s",
-      cardText: "Late scale",
-      description: "A caramel crown that gains stacking damage in long fights.",
-    },
-    {
-      id: "whipped_cream_puff",
-      kind: "item",
-      type: "topping",
-      name: "Whipped Cream Puff",
-      short: "Cream",
-      rarity: "rare",
-      color: "#fff7df",
-      accent: "#d14d31",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      lowHpThreshold: 0.5,
-      lowHpAttackSpeedPct: 0.18,
-      lowHpLifestealPct: 0.18,
-      abilityText: "Low HP lifesteal",
-      cardText: "Comeback",
-      description: "A cream puff that gives attack speed and lifesteal while the holder is below half HP.",
-    },
-    {
-      id: "basil_leaf",
-      kind: "item",
-      type: "topping",
-      name: "Basil Leaf",
-      short: "Basil",
-      rarity: "uncommon",
-      color: "#5aa832",
-      accent: "#2f6e1e",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 10,
-      cooldownDelay: 0.18,
-      abilityText: "Attacks slow target",
-      cardText: "Slow",
-      description: "A fresh basil leaf that delays the target's next attack after each hit.",
-    },
-    {
-      id: "honey_drizzle",
-      kind: "item",
-      type: "topping",
-      name: "Honey Drizzle",
-      short: "Honey",
-      rarity: "rare",
-      color: "#f0b12e",
-      accent: "#b56b12",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      supportHastePct: 0.18,
-      supportHasteDuration: 3,
-      abilityText: "Support grants haste",
-      cardText: "Ally haste",
-      description: "A honey drizzle that gives attack-speed haste to allies this unit heals or shields.",
-    },
-    {
-      id: "garlic_clove",
-      kind: "item",
-      type: "topping",
-      name: "Garlic Clove",
-      short: "Garlic",
-      rarity: "rare",
-      color: "#f4dcaa",
-      accent: "#b98642",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      antiSupportPct: 0.25,
-      antiSupportDuration: 4,
-      abilityText: "Cuts enemy support",
-      cardText: "Anti-heal",
-      description: "A pungent garlic clove that makes attacked enemies receive less healing and shielding.",
-    },
-    {
-      id: "rice_ball",
-      kind: "item",
-      type: "topping",
-      name: "Rice Ball",
-      short: "Rice",
-      rarity: "uncommon",
-      color: "#fff6da",
-      accent: "#2b2b25",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 10,
-      receivedSupportSharePct: 0.25,
-      abilityText: "Shares received support",
-      cardText: "Share sup",
-      description: "A steady rice ball that shares part of received healing and shielding with adjacent allies.",
-    },
-    {
-      id: "onion_ring",
-      kind: "item",
-      type: "topping",
-      name: "Onion Ring",
-      short: "Onion",
-      rarity: "rare",
-      color: "#f3aa25",
-      accent: "#c06417",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      bounceDamagePct: 0.45,
-      abilityText: "Attacks bounce",
-      cardText: "Bounce",
-      description: "A crispy onion ring that bounces part of attack damage to another enemy.",
-    },
-    {
-      id: "maple_leaf",
-      kind: "item",
-      type: "topping",
-      name: "Maple Syrup",
-      short: "Syrup",
-      rarity: "rare",
-      color: "#c97816",
-      accent: "#f2b63d",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      shieldedAttackBonusPct: 0.2,
-      adjacentStartAttackBuffPct: 0.12,
-      adjacentStartBuffDuration: 3,
-      abilityText: "Shielded hits, adj buff",
-      cardText: "Syrup buff",
-      description: "A rich maple syrup swirl that rewards shielded fighters and gives adjacent allies a short battle-start damage boost.",
-    },
-    {
-      id: "marshmallow_cube",
-      kind: "item",
-      type: "topping",
-      name: "Marshmallow Cube",
-      short: "Mallow",
-      rarity: "rare",
-      color: "#fff4ea",
-      accent: "#d87b62",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 8,
-      overhealShieldPct: 0.65,
-      abilityText: "Overheal becomes shield",
-      cardText: "Overheal",
-      description: "A soft marshmallow cube that turns excess healing into temporary shielding.",
-    },
-    {
-      id: "cookie_crumb",
-      kind: "item",
-      type: "topping",
-      name: "Cookie Crumb",
-      short: "Cookie",
-      rarity: "epic",
-      color: "#d88b2f",
-      accent: "#8a4a1d",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      mergeProgressBonus: 1,
-      abilityText: "+1 merge copy on bench",
-      cardText: "+1 copy",
-      description: "A chunky cookie crumb that counts as one extra merge copy while attached to a benched animal.",
-    },
-    {
-      id: "seaweed_wrap",
-      kind: "item",
-      type: "topping",
-      name: "Seaweed Wrap",
-      short: "Seaweed",
-      rarity: "uncommon",
-      color: "#263f20",
-      accent: "#8cae48",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      frontRowDamageReductionPct: 0.16,
-      abilityText: "Front row takes less damage",
-      cardText: "Front tank",
-      description: "A sturdy seaweed wrap that reduces damage while the holder is in the front row.",
-    },
-    {
-      id: "pretzel_stick",
-      kind: "item",
-      type: "topping",
-      name: "Pretzel Stick",
-      short: "P-Stick",
-      rarity: "uncommon",
-      color: "#bf6f26",
-      accent: "#f1d270",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      backRowTargeting: true,
-      abilityText: "Back row can target back row",
-      cardText: "Back aim",
-      description: "A crunchy pretzel stick that lets a back-row holder pressure enemy backliners.",
-    },
-    {
-      id: "waffle_cone",
-      kind: "item",
-      type: "topping",
-      name: "Waffle Cone",
-      short: "Cone",
-      rarity: "uncommon",
-      color: "#d99736",
-      accent: "#9a5b1d",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      adjacentStartShieldPct: 0.08,
-      abilityText: "Start shields adjacent allies",
-      cardText: "Adj shield",
-      description: "A waffle cone that gives nearby allies a small shield at battle start.",
-    },
-    {
-      id: "skewer",
-      kind: "item",
-      type: "topping",
-      name: "Skewer",
-      short: "Skewer",
-      rarity: "rare",
-      color: "#c9852e",
-      accent: "#8c4e1d",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      pierceDamagePct: 0.32,
-      abilityText: "Attacks pierce behind",
-      cardText: "Pierce",
-      description: "A pointed skewer that pokes through the first target into the enemy behind it.",
-    },
-    {
-      id: "hot_sauce_bottle",
-      kind: "item",
-      type: "topping",
-      name: "Hot Sauce Swirl",
-      short: "Sauce",
-      rarity: "rare",
-      color: "#e34a1e",
-      accent: "#7aa530",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      lowHpBurnThreshold: 0.4,
-      lowHpBurnDamagePct: 0.18,
-      lowHpBurnDuration: 3,
-      abilityText: "Low HP burns nearby enemies",
-      cardText: "Clutch burn",
-      description: "A spicy sauce swirl that burns nearby enemies once when the holder drops low.",
-    },
-    {
-      id: "sugar_cube",
-      kind: "item",
-      type: "topping",
-      name: "Sugar Cube",
-      short: "Sugar",
-      rarity: "rare",
-      color: "#fff8ee",
-      accent: "#d6b88a",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      deathSaveShieldPct: 0.28,
-      abilityText: "Survive fatal hit once",
-      cardText: "1 HP save",
-      description: "A sweet cube that lets the holder survive one fatal hit with a protective shield.",
-    },
-    {
-      id: "mint_leaf",
-      kind: "item",
-      type: "topping",
-      name: "Mint Leaf",
-      short: "Mint",
-      rarity: "uncommon",
-      color: "#58ad3e",
-      accent: "#2e6f2b",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      firstDebuffCleanseHealPct: 0.12,
-      abilityText: "First debuff cleanses and heals",
-      cardText: "Cleanse",
-      description: "A fresh mint leaf that clears the first negative status and heals the holder.",
-    },
-    {
-      id: "soda_pop",
-      kind: "item",
-      type: "topping",
-      name: "Soda Fizz Foam",
-      short: "Fizz",
-      rarity: "rare",
-      color: "#d9432d",
-      accent: "#f4efe2",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      timedHasteAt: 10,
-      timedHastePct: 0.35,
-      timedHasteDuration: 4,
-      abilityText: "10s burst of haste",
-      cardText: "10s haste",
-      description: "A bubbly soda-foam topping that pops after long fights and gives the holder haste.",
-    },
-    {
-      id: "salt_shaker",
-      kind: "item",
-      type: "topping",
-      name: "Sea Salt Flakes",
-      short: "Salt",
-      rarity: "uncommon",
-      color: "#f1f1df",
-      accent: "#8d7a68",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      shieldedTargetDamagePct: 0.28,
-      cooldownDelay: 0.08,
-      abilityText: "Cracks shields, delays",
-      cardText: "Crack slow",
-      description: "A crunchy pile of sea-salt flakes that helps crack shielded enemies and slightly delays targets after hits.",
-    },
-    {
-      id: "vinegar_splash",
-      kind: "item",
-      type: "topping",
-      name: "Pickled Drizzle",
-      short: "Pickle",
-      rarity: "uncommon",
-      color: "#f4d67a",
-      accent: "#d79b2d",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      attackSlowPct: 0.18,
-      attackSlowDuration: 3,
-      abilityText: "Attacks sour enemy speed",
-      cardText: "Atk slow",
-      description: "A tangy pickled glaze drizzle that slows enemy attack clocks after hits.",
-    },
-    {
-      id: "cucumber_slice",
-      kind: "item",
-      type: "topping",
-      name: "Cucumber Slice",
-      short: "Cucumber",
-      rarity: "uncommon",
-      color: "#bce06b",
-      accent: "#2f7a35",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      statusDurationReductionPct: 0.35,
-      abilityText: "Statuses and delays fade faster",
-      cardText: "Resist",
-      description: "A cool cucumber slice that makes negative statuses wear off faster and softens cooldown delays.",
-    },
-    {
-      id: "cracker_plate",
-      kind: "item",
-      type: "topping",
-      name: "Cracker Plate",
-      short: "Cracker",
-      rarity: "uncommon",
-      color: "#e9b955",
-      accent: "#9b6824",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 9,
-      shieldedTargetDamagePct: 0.22,
-      cooldownDelay: 0.06,
-      abilityText: "Cracks shields, delays",
-      cardText: "Crack slow",
-      description: "A crunchy cracker plate that helps break shielded enemies and slightly delays targets after hits.",
-    },
-    {
-      id: "cherry_pit",
-      kind: "item",
-      type: "topping",
-      name: "Candied Cherry",
-      short: "Cherry",
-      rarity: "rare",
-      color: "#9c4b22",
-      accent: "#5f2a19",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      decoyHpPct: 0.22,
-      abilityText: "Starts with a decoy",
-      cardText: "Decoy",
-      description: "A glossy candied cherry that starts battle with a small decoy to soak attention.",
-    },
-    {
-      id: "breadstick_dummy",
-      kind: "item",
-      type: "topping",
-      name: "Breadstick Guard",
-      short: "Guard",
-      rarity: "rare",
-      color: "#d69542",
-      accent: "#6f9231",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      firstHitRedirect: true,
-      abilityText: "Redirects first hit",
-      cardText: "Dummy hit",
-      description: "Crossed breadsticks that redirect the first direct hit against the holder.",
-    },
-    {
-      id: "popcorn_kernel",
-      kind: "item",
-      type: "topping",
-      name: "Popcorn Kernel",
-      short: "Popcorn",
-      rarity: "uncommon",
-      color: "#fff0bc",
-      accent: "#d98b19",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 8,
-      periodicDamage: 6,
-      periodicDamagePct: 0.2,
-      periodicInterval: 3,
-      abilityText: "Pops for chip damage",
-      cardText: "Pop dmg",
-      description: "A popcorn kernel that pops every few seconds for scaling random damage.",
-    },
-    {
-      id: "coupon_clip",
-      kind: "item",
-      type: "topping",
-      name: "Fortune Cookie",
-      short: "Fortune",
-      rarity: "uncommon",
-      color: "#efcb70",
-      accent: "#6b5d52",
-      price: ECONOMY.itemCost,
-      shopWeight: 9,
-      sellBonusGold: 18,
-      abilityText: "Holder sells for more",
-      cardText: "+coins sell",
-      description: "A folded fortune cookie that increases the holder's sell value.",
-    },
-    {
-      id: "lucky_grape",
-      kind: "item",
-      type: "topping",
-      name: "Lucky Grape",
-      short: "Grape",
-      rarity: "uncommon",
-      color: "#7d3aa0",
-      accent: "#5ea24b",
-      price: ECONOMY.itemCost,
-      shopWeight: 9,
-      surviveGold: 12,
-      abilityText: "Survive battle for gold",
-      cardText: "+coins survive",
-      description: "A lucky grape that pays bonus gold when the holder survives battle.",
-    },
-    {
-      id: "shopping_bag",
-      kind: "item",
-      type: "topping",
-      name: "Golden Wrapper",
-      short: "Wrapper",
-      rarity: "uncommon",
-      color: "#c98f4b",
-      accent: "#8a5426",
-      price: ECONOMY.itemCost,
-      shopWeight: 9,
-      firstItemDiscountGold: 15,
-      abilityText: "First item each round is cheaper",
-      cardText: "Item sale",
-      description: "A crisp golden wrapper that discounts the first topping bought each round.",
-    },
-    {
-      id: "recipe_card",
-      kind: "item",
-      type: "topping",
-      name: "Recipe Cracker",
-      short: "Recipe",
-      rarity: "rare",
-      color: "#f0d79d",
-      accent: "#6ba044",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      sameLineShopChancePct: 0.28,
-      abilityText: "Shops prefer owned lines",
-      cardText: "Line odds",
-      description: "A stamped recipe cracker that nudges future shops toward food-animal lines you already own.",
-    },
-    {
-      id: "soup_ladle",
-      kind: "item",
-      type: "topping",
-      name: "Soup Spoonful",
-      short: "Soup",
-      rarity: "rare",
-      color: "#b8b0a6",
-      accent: "#7a5635",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      extraAdjacentHealPct: 0.45,
-      abilityText: "Heals splash to adjacent ally",
-      cardText: "Heal splash",
-      description: "A creamy soup spoonful that lets healing abilities splash to a nearby ally.",
-    },
-    {
-      id: "gravy_boat",
-      kind: "item",
-      type: "topping",
-      name: "Gravy Pour",
-      short: "Gravy",
-      rarity: "rare",
-      color: "#b87635",
-      accent: "#7d4a22",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      supportBonusPct: 0.12,
-      shieldCapBonusPct: 0.25,
-      abilityText: "Stronger, deeper support",
-      cardText: "+12% sup",
-      description: "A glossy gravy pour that boosts support output and lets the holder keep a larger shield.",
-    },
-    {
-      id: "spice_jar",
-      kind: "item",
-      type: "topping",
-      name: "Spice Sprinkle",
-      short: "Spice",
-      rarity: "rare",
-      color: "#c9471e",
-      accent: "#7a2d1d",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      statusDurationBonusPct: 0.3,
-      burnDamagePct: 0.1,
-      burnDuration: 2.5,
-      abilityText: "Longer statuses, burn",
-      cardText: "Status burn",
-      description: "A mound of spice flakes that extends inflicted statuses and makes attacks apply a short burn.",
-    },
-    {
-      id: "serving_tray",
-      kind: "item",
-      type: "topping",
-      name: "Garnish Sprig",
-      short: "Garnish",
-      rarity: "rare",
-      color: "#c08039",
-      accent: "#d7a64e",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 7,
-      supportAttackBuffPct: 0.14,
-      supportAttackBuffDuration: 3,
-      abilityText: "Support buffs ally damage",
-      cardText: "Buff ally",
-      description: "A fresh garnish sprig that makes supported allies hit harder for a short time.",
-    },
-    {
-      id: "glass_candy",
-      kind: "item",
-      type: "topping",
-      name: "Glass Candy",
-      short: "Candy",
-      rarity: "rare",
-      color: "#f38fa0",
-      accent: "#c95b73",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      damageBonusPct: 0.28,
-      battleStartHpLossPct: 0.2,
-      abilityText: "+28% damage, starts hurt",
-      cardText: "Glass dmg",
-      description: "A fragile candy that grants huge damage but starts the holder below full HP.",
-    },
-    {
-      id: "wasabi_pea",
-      kind: "item",
-      type: "topping",
-      name: "Wasabi Pea",
-      short: "Wasabi",
-      rarity: "rare",
-      color: "#8dbf3e",
-      accent: "#5b8427",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      firstAttacksBonusPct: 0.42,
-      firstAttacksCount: 3,
-      exhaustedSpeedPenaltyPct: 0.18,
-      burnDamagePct: 0.1,
-      burnDuration: 2.2,
-      abilityText: "Burst attacks burn",
-      cardText: "Burst burn",
-      description: "A wasabi pea that makes the first few attacks hit hard and burn, then leaves the holder slower.",
-    },
-    {
-      id: "molten_cheese",
-      kind: "item",
-      type: "topping",
-      name: "Molten Cheese",
-      short: "Molten",
-      rarity: "rare",
-      color: "#f3b529",
-      accent: "#d97813",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      lateFightStart: 6,
-      lateFightInterval: 3,
-      lateFightDamagePct: 0.1,
-      lateFightMaxStacks: 5,
-      selfBurnDamagePct: 0.05,
-      abilityText: "Ramps damage, self-burns",
-      cardText: "Ramp risk",
-      description: "A molten cheese blob that ramps damage over time while slowly burning the holder.",
-    },
-    {
-      id: "brittle_cracker",
-      kind: "item",
-      type: "topping",
-      name: "Brittle Cracker",
-      short: "Brittle",
-      rarity: "rare",
-      color: "#e7aa42",
-      accent: "#8c561f",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      shieldedAttackSpeedPct: 0.28,
-      abilityText: "Fast while shielded",
-      cardText: "Shield spd",
-      description: "A brittle cracker that grants high attack speed while the holder has a shield.",
-    },
-    {
-      id: "golden_truffle_crown",
-      kind: "item",
-      type: "topping",
-      name: "Golden Truffle Crown",
-      short: "Truffle",
-      rarity: "epic",
-      color: "#d9a12c",
-      accent: "#5b3320",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      teamVulnerabilityPct: 0.1,
-      teamVulnerabilityDuration: 4,
-      abilityText: "Attacks make enemies vulnerable",
-      cardText: "Team vuln",
-      description: "A crown of truffle slices that makes attacked enemies take 10% more damage from the whole team for 4 seconds.",
-    },
-    {
-      id: "dragonfruit_star",
-      kind: "item",
-      type: "topping",
-      name: "Dragonfruit Star",
-      short: "D-Star",
-      rarity: "epic",
-      color: "#ec4aa3",
-      accent: "#ffe37a",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      executeSplashThreshold: 0.45,
-      executeSplashBonusPct: 0.25,
-      executeSplashDamagePct: 0.35,
-      abilityText: "Finishes wounded groups",
-      cardText: "Exec splash",
-      description: "A bright dragonfruit star that hits wounded targets harder and splashes nearby enemies when they are below 45% HP.",
-    },
-    {
-      id: "rainbow_mochi",
-      kind: "item",
-      type: "topping",
-      name: "Rainbow Mochi",
-      short: "Mochi",
-      rarity: "epic",
-      color: "#f5a5c9",
-      accent: "#63b7d6",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      teamOverhealShieldPct: 0.4,
-      abilityText: "Overheal shields nearby allies",
-      cardText: "Over team",
-      description: "A soft mochi topper that turns overhealing on the holder into shields for adjacent allies.",
-    },
-    {
-      id: "caviar_pearls",
-      kind: "item",
-      type: "topping",
-      name: "Caviar Pearls",
-      short: "Caviar",
-      rarity: "epic",
-      color: "#2f2d33",
-      accent: "#d8c27a",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      teamHasteInterval: 5,
-      teamHastePct: 0.14,
-      teamHasteDuration: 2.5,
-      abilityText: "Pulses team haste",
-      cardText: "Team haste",
-      description: "A cluster of glossy pearls that gives the whole team bursts of attack speed during longer fights.",
-    },
-    {
-      id: "saffron_threads",
-      kind: "item",
-      type: "topping",
-      name: "Saffron Threads",
-      short: "Saffron",
-      rarity: "epic",
-      color: "#d84b24",
-      accent: "#f2c94c",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      supportRowEchoPct: 0.45,
-      abilityText: "Support echoes across row",
-      cardText: "Row echo",
-      description: "A bundle of saffron threads that echoes the holder's support into small shields for the supported ally's row.",
-    },
-    {
-      id: "scallion_oil",
-      kind: "item",
-      type: "topping",
-      name: "Scallion Oil",
-      short: "Scallion",
-      rarity: "uncommon",
-      color: "#d6b63a",
-      accent: "#4f9838",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 8,
-      supportAttackBuffPct: 0.12,
-      supportAttackBuffDuration: 3,
-      abilityText: "Support buffs ally damage",
-      cardText: "Buff ally",
-      description: "A glossy scallion oil swirl that makes supported allies hit harder for a short time.",
-    },
-    {
-      id: "gochugaru_flakes",
-      kind: "item",
-      type: "topping",
-      name: "Gochugaru Flakes",
-      short: "Gochu",
-      rarity: "rare",
-      color: "#d94722",
-      accent: "#f2a13c",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      statusDurationBonusPct: 0.28,
-      burnDamagePct: 0.1,
-      burnDuration: 2.5,
-      abilityText: "Longer statuses, burn",
-      cardText: "Status burn",
-      description: "A fiery pile of Korean chili flakes that extends inflicted statuses and makes attacks apply a short burn.",
-    },
-    {
-      id: "dill_sprig",
-      kind: "item",
-      type: "topping",
-      name: "Dill Sprig",
-      short: "Dill",
-      rarity: "uncommon",
-      color: "#69aa3d",
-      accent: "#2f6f28",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 8,
-      cooldownDelay: 0.16,
-      abilityText: "Attacks slow target",
-      cardText: "Slow",
-      description: "A feathery dill sprig that cools the target's next attack after each hit.",
-    },
-    {
-      id: "sesame_seeds",
-      kind: "item",
-      type: "topping",
-      name: "Sesame Seeds",
-      short: "Sesame",
-      rarity: "uncommon",
-      color: "#e8c279",
-      accent: "#9f6a2d",
-      price: ECONOMY.itemCost + 5,
-      shopWeight: 8,
-      onAttackShieldPct: 0.05,
-      abilityText: "Shield after attacks",
-      cardText: "Atk shield",
-      description: "A crunchy sesame seed pile that gives the holder a small shield after each attack.",
-    },
-    {
-      id: "cinnamon_sugar",
-      kind: "item",
-      type: "topping",
-      name: "Cinnamon Sugar",
-      short: "Cinnamon",
-      rarity: "rare",
-      color: "#c7772e",
-      accent: "#f3d58b",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      firstAttacksBonusPct: 0.36,
-      firstAttacksCount: 3,
-      exhaustedSpeedPenaltyPct: 0.12,
-      burnDamagePct: 0.08,
-      burnDuration: 2.2,
-      abilityText: "Burst attacks burn",
-      cardText: "Burst burn",
-      description: "A sparkling cinnamon-sugar mound that makes the first few attacks hit hard and burn, then leaves the holder a little slower.",
-    },
-    {
-      id: "milk_tea_foam",
-      kind: "item",
-      type: "topping",
-      name: "Milk Tea Foam",
-      short: "Foam",
-      rarity: "rare",
-      color: "#f1d4a8",
-      accent: "#6b4528",
-      price: ECONOMY.itemCost + 10,
-      shopWeight: 6,
-      timedHasteAt: 10,
-      timedHastePct: 0.32,
-      timedHasteDuration: 4,
-      abilityText: "10s burst of haste",
-      cardText: "10s haste",
-      description: "A creamy milk-tea foam topping that bubbles up after long fights and gives the holder haste.",
-    },
-    {
-      id: "royal_icing_crest",
-      kind: "item",
-      type: "topping",
-      name: "Royal Icing Crest",
-      short: "Icing",
-      rarity: "epic",
-      color: "#f2f0e6",
-      accent: "#9a5bbf",
-      price: ECONOMY.itemCost + 20,
-      shopWeight: 3,
-      adjacentStartShieldPct: 0.1,
-      adjacentStartAttackBuffPct: 0.16,
-      adjacentStartBuffDuration: 4,
-      abilityText: "Starts adjacent allies strong",
-      cardText: "Adj buff",
-      description: "A royal icing crest that gives adjacent allies shields and a short attack boost at battle start.",
-    },
-  ];
-  const TOPPING_SHOP_CHANCES = [0, 0.18, 0.2, 0.22, 0.24, 0.25];
-  const DRINK_SHOP_CHANCES = [0, 0.15, 0.15, 0.15, 0.15, 0.15];
-  const SHOP_SALE_CHANCES = [0, 0.08, 0.12, 0.16, 0.22, 0.24];
-  const ITEM_SPRITES = {
-    sunny_side_egg: "assets/items/runtime/sunny_side_egg-evolved-v1.png?v=3",
-    bean_brew: "assets/items/runtime/bean_brew-grand-v2-lv1.webp?v=1",
-    berry_fizz: "assets/items/runtime/berry_fizz-grand-v2-lv1.webp?v=1",
-    garden_spritz: "assets/items/runtime/garden_spritz-grand-v2-lv1.png?v=1",
-    citrus_tea: "assets/items/runtime/citrus_tea-grand-v2-lv1.webp?v=1",
-    chili_crunch_cola: "assets/items/runtime/chili_crunch_cola-grand-v2-lv1.webp?v=1",
-    pepper_broth: "assets/items/runtime/pepper_broth-grand-v2-lv1.png?v=1",
-    abyssal_shake: "assets/items/runtime/abyssal_shake-grand-v2-lv1.webp?v=1",
-    cream_soda_float: "assets/items/runtime/cream_soda_float-grand-v1-lv1.png?v=1",
-    tidepool_espresso: "assets/items/runtime/tidepool_espresso-grand-v1-lv1.png?v=1",
-    avocado_lassi: "assets/items/runtime/avocado_lassi-grand-v1-lv1.webp?v=1",
-    chili_brine_tonic: "assets/items/runtime/chili_brine_tonic-grand-v1-lv1.webp?v=1",
-    market_malt: "assets/items/runtime/market_malt-grand-v1-lv1.png?v=1",
-    maple_cloud_cocoa: "assets/items/runtime/maple_cloud_cocoa-grand-v1-lv1.png?v=1",
-    pearl_biscuit_latte: "assets/items/runtime/pearl_biscuit_latte-grand-v1-lv1.png?v=1",
-    kelp_cucumber_cooler: "assets/items/runtime/kelp_cucumber_cooler-grand-v1-lv1.png?v=1",
-    nori_pop_slush: "assets/items/runtime/nori_pop_slush-grand-v1-lv1.png?v=1",
-    harissa_morning_shot: "assets/items/runtime/harissa_morning_shot-grand-v1-lv1.png?v=1",
-    pretzel_cream_soda: "assets/items/runtime/pretzel_cream_soda-grand-v1-lv1.png?v=1",
-    boba_night_tea: "assets/items/runtime/boba_night_tea-grand-v1-lv1.webp?v=1",
-    pico_lime_agua: "assets/items/runtime/pico_lime_agua-grand-v1-lv1.png?v=1",
-    night_bite_energy: "assets/items/runtime/night_bite_energy-grand-v1-lv1.png?v=1",
-    butter_pat: "assets/items/runtime/butter_pat-evolved-v1.webp?v=3",
-    cheese_star: "assets/items/runtime/cheese_star-evolution-v2-lv1.webp?v=1",
-    bacon_strips: "assets/items/runtime/bacon_strips-sticker-v1-lv1.webp?v=2",
-    cherry_tomato: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv1.webp?v=1",
-    pickle_chip: "assets/items/runtime/pickle_chip-white-sticker-thin-v1-lv1.png?v=1",
-    mushroom_cap: "assets/items/runtime/mushroom_cap-sticker-v1-lv1.png?v=1",
-    pepperoni_slice: "assets/items/runtime/pepperoni_slice-white-sticker-thin-v1-lv1.png?v=1",
-    lemon_wedge: "assets/items/runtime/lemon_wedge-white-sticker-thin-v1-lv1.png?v=1",
-    olive_ring: "assets/items/runtime/olive_ring-white-sticker-thin-v1-lv1.png?v=1",
-    chili_pepper: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv1.webp?v=1",
-    avocado_fan: "assets/items/runtime/avocado_fan-sticker-v1-lv1.webp?v=1",
-    jam_dollop: "assets/items/runtime/jam_dollop-sticker-v1-lv1.png?v=1",
-    caramel_crown: "assets/items/runtime/caramel_crown-sticker-v1-lv1.webp?v=1",
-    whipped_cream_puff: "assets/items/runtime/whipped_cream_puff-sticker-v1-lv1.png?v=1",
-    basil_leaf: "assets/items/runtime/basil_leaf-sticker-v1-lv1.webp?v=1",
-    honey_drizzle: "assets/items/runtime/honey_drizzle-sticker-v1-lv1.png?v=1",
-    garlic_clove: "assets/items/runtime/garlic_clove-sticker-v1-lv1.png?v=1",
-    rice_ball: "assets/items/runtime/rice_ball-sticker-v1-lv1.png?v=1",
-    onion_ring: "assets/items/runtime/onion_ring-sticker-v1-lv1.png?v=1",
-    maple_leaf: "assets/items/runtime/maple_leaf-maple-syrup-sticker-v1-lv1.png?v=1",
-    marshmallow_cube: "assets/items/runtime/marshmallow_cube-sticker-v1-lv1.png?v=1",
-    cookie_crumb: "assets/items/runtime/cookie_crumb-sticker-v1-lv1.webp?v=1",
-    seaweed_wrap: "assets/items/runtime/seaweed_wrap-sticker-v1-lv1.png?v=1",
-    pretzel_stick: "assets/items/runtime/pretzel_stick-sticker-v1-lv1.png?v=1",
-    waffle_cone: "assets/items/runtime/waffle_cone-sticker-v1-lv1.png?v=1",
-    skewer: "assets/items/runtime/skewer-sticker-v1-lv1.png?v=1",
-    hot_sauce_bottle: "assets/items/runtime/hot_sauce_bottle-sticker-v1-lv1.png?v=1",
-    sugar_cube: "assets/items/runtime/sugar_cube-sticker-v1-lv1.png?v=1",
-    mint_leaf: "assets/items/runtime/mint_leaf-sticker-v1-lv1.png?v=1",
-    soda_pop: "assets/items/runtime/soda_pop-sticker-v2-lv1.png?v=1",
-    salt_shaker: "assets/items/runtime/salt_shaker-sticker-v2-lv1.png?v=1",
-    vinegar_splash: "assets/items/runtime/vinegar_splash-sticker-v1-lv1.png?v=1",
-    cucumber_slice: "assets/items/runtime/cucumber_slice-sticker-v1-lv1.png?v=1",
-    cracker_plate: "assets/items/runtime/cracker_plate-sticker-v2-lv1.png?v=1",
-    cherry_pit: "assets/items/runtime/cherry_pit-sticker-v1-lv1.webp?v=1",
-    breadstick_dummy: "assets/items/runtime/breadstick_dummy-sticker-v1-lv1.webp?v=1",
-    popcorn_kernel: "assets/items/runtime/popcorn_kernel-sticker-v1-lv1.png?v=1",
-    coupon_clip: "assets/items/runtime/coupon_clip-sticker-v1-lv1.webp?v=1",
-    lucky_grape: "assets/items/runtime/lucky_grape-green-key-sticker-v1-lv1.png?v=1",
-    shopping_bag: "assets/items/runtime/shopping_bag-sticker-v1-lv1.png?v=1",
-    recipe_card: "assets/items/runtime/recipe_card-sticker-v1-lv1.png?v=1",
-    soup_ladle: "assets/items/runtime/soup_ladle-sticker-v1-lv1.png?v=1",
-    gravy_boat: "assets/items/runtime/gravy_boat-sticker-v1-lv1.png?v=1",
-    spice_jar: "assets/items/runtime/spice_jar-sticker-v1-lv1.png?v=1",
-    serving_tray: "assets/items/runtime/serving_tray-sticker-v1-lv1.png?v=1",
-    glass_candy: "assets/items/runtime/glass_candy-sticker-v1-lv1.png?v=1",
-    wasabi_pea: "assets/items/runtime/wasabi_pea-sticker-v1-lv1.png?v=1",
-    molten_cheese: "assets/items/runtime/molten_cheese-sticker-v1-lv1.png?v=1",
-    brittle_cracker: "assets/items/runtime/brittle_cracker-sticker-v1-lv1.webp?v=1",
-    golden_truffle_crown: "assets/items/runtime/golden_truffle_crown-sticker-v1-lv1.png?v=1",
-    dragonfruit_star: "assets/items/runtime/dragonfruit_star-sticker-v1-lv1.png?v=1",
-    rainbow_mochi: "assets/items/runtime/rainbow_mochi-sticker-v1-lv1.png?v=1",
-    caviar_pearls: "assets/items/runtime/caviar_pearls-sticker-v2-lv1.webp?v=1",
-    saffron_threads: "assets/items/runtime/saffron_threads-sticker-v1-lv1.png?v=1",
-    scallion_oil: "assets/items/runtime/scallion_oil-sticker-v1-lv1.png?v=1",
-    gochugaru_flakes: "assets/items/runtime/gochugaru_flakes-sticker-v1-lv1.png?v=1",
-    dill_sprig: "assets/items/runtime/dill_sprig-sticker-v1-lv1.png?v=1",
-    sesame_seeds: "assets/items/runtime/sesame_seeds-sticker-v1-lv1.png?v=1",
-    cinnamon_sugar: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv1.webp?v=1",
-    milk_tea_foam: "assets/items/runtime/milk_tea_foam-sticker-v1-lv1.png?v=1",
-    royal_icing_crest: "assets/items/runtime/royal_icing_crest-sticker-v1-lv1.png?v=1",
-  };
-  const ITEM_TIER_SPRITES = {
-    sunny_side_egg: {
-      2: "assets/items/runtime/sunny_side_egg-v2.png?v=3",
-      3: "assets/items/runtime/sunny_side_egg-v3.png?v=3",
-    },
-    butter_pat: {
-      2: "assets/items/runtime/butter_pat-v2.webp?v=3",
-      3: "assets/items/runtime/butter_pat-v3.webp?v=3",
-    },
-    cheese_star: {
-      2: "assets/items/runtime/cheese_star-evolution-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/cheese_star-evolution-v2-lv3.webp?v=1",
-    },
-    bacon_strips: {
-      2: "assets/items/runtime/bacon_strips-sticker-v1-lv2.webp?v=2",
-      3: "assets/items/runtime/bacon_strips-sticker-v1-lv3.webp?v=2",
-    },
-    bean_brew: {
-      2: "assets/items/runtime/bean_brew-grand-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/bean_brew-grand-v2-lv3.webp?v=1",
-    },
-    berry_fizz: {
-      2: "assets/items/runtime/berry_fizz-grand-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/berry_fizz-grand-v2-lv3.webp?v=1",
-    },
-    garden_spritz: {
-      2: "assets/items/runtime/garden_spritz-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/garden_spritz-grand-v2-lv3.png?v=1",
-    },
-    citrus_tea: {
-      2: "assets/items/runtime/citrus_tea-grand-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/citrus_tea-grand-v2-lv3.webp?v=1",
-    },
-    chili_crunch_cola: {
-      2: "assets/items/runtime/chili_crunch_cola-grand-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/chili_crunch_cola-grand-v2-lv3.webp?v=1",
-    },
-    pepper_broth: {
-      2: "assets/items/runtime/pepper_broth-grand-v2-lv2.png?v=1",
-      3: "assets/items/runtime/pepper_broth-grand-v2-lv3.png?v=1",
-    },
-    abyssal_shake: {
-      2: "assets/items/runtime/abyssal_shake-grand-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/abyssal_shake-grand-v2-lv3.webp?v=1",
-    },
-    cream_soda_float: {
-      2: "assets/items/runtime/cream_soda_float-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cream_soda_float-grand-v1-lv3.png?v=1",
-    },
-    tidepool_espresso: {
-      2: "assets/items/runtime/tidepool_espresso-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/tidepool_espresso-grand-v1-lv3.png?v=1",
-    },
-    avocado_lassi: {
-      2: "assets/items/runtime/avocado_lassi-grand-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/avocado_lassi-grand-v1-lv3.webp?v=1",
-    },
-    chili_brine_tonic: {
-      2: "assets/items/runtime/chili_brine_tonic-grand-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/chili_brine_tonic-grand-v1-lv3.webp?v=1",
-    },
-    market_malt: {
-      2: "assets/items/runtime/market_malt-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/market_malt-grand-v1-lv3.png?v=1",
-    },
-    maple_cloud_cocoa: {
-      2: "assets/items/runtime/maple_cloud_cocoa-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/maple_cloud_cocoa-grand-v1-lv3.png?v=1",
-    },
-    pearl_biscuit_latte: {
-      2: "assets/items/runtime/pearl_biscuit_latte-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pearl_biscuit_latte-grand-v1-lv3.png?v=1",
-    },
-    kelp_cucumber_cooler: {
-      2: "assets/items/runtime/kelp_cucumber_cooler-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/kelp_cucumber_cooler-grand-v1-lv3.png?v=1",
-    },
-    nori_pop_slush: {
-      2: "assets/items/runtime/nori_pop_slush-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/nori_pop_slush-grand-v1-lv3.png?v=1",
-    },
-    harissa_morning_shot: {
-      2: "assets/items/runtime/harissa_morning_shot-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/harissa_morning_shot-grand-v1-lv3.png?v=1",
-    },
-    pretzel_cream_soda: {
-      2: "assets/items/runtime/pretzel_cream_soda-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pretzel_cream_soda-grand-v1-lv3.png?v=1",
-    },
-    boba_night_tea: {
-      2: "assets/items/runtime/boba_night_tea-grand-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/boba_night_tea-grand-v1-lv3.webp?v=1",
-    },
-    pico_lime_agua: {
-      2: "assets/items/runtime/pico_lime_agua-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pico_lime_agua-grand-v1-lv3.png?v=1",
-    },
-    night_bite_energy: {
-      2: "assets/items/runtime/night_bite_energy-grand-v1-lv2.png?v=1",
-      3: "assets/items/runtime/night_bite_energy-grand-v1-lv3.png?v=1",
-    },
-    cherry_tomato: {
-      2: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/cherry_tomato-white-sticker-thin-v1-lv3.webp?v=1",
-    },
-    pickle_chip: {
-      2: "assets/items/runtime/pickle_chip-white-sticker-thin-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pickle_chip-white-sticker-thin-v1-lv3.png?v=1",
-    },
-    mushroom_cap: {
-      2: "assets/items/runtime/mushroom_cap-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/mushroom_cap-sticker-v1-lv3.png?v=1",
-    },
-    pepperoni_slice: {
-      2: "assets/items/runtime/pepperoni_slice-white-sticker-thin-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pepperoni_slice-white-sticker-thin-v1-lv3.png?v=1",
-    },
-    lemon_wedge: {
-      2: "assets/items/runtime/lemon_wedge-white-sticker-thin-v1-lv2.png?v=1",
-      3: "assets/items/runtime/lemon_wedge-white-sticker-thin-v1-lv3.png?v=1",
-    },
-    olive_ring: {
-      2: "assets/items/runtime/olive_ring-white-sticker-thin-v1-lv2.png?v=1",
-      3: "assets/items/runtime/olive_ring-white-sticker-thin-v1-lv3.png?v=1",
-    },
-    chili_pepper: {
-      2: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/chili_pepper-white-sticker-hairline-v1-lv3.webp?v=1",
-    },
-    avocado_fan: {
-      2: "assets/items/runtime/avocado_fan-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/avocado_fan-sticker-v1-lv3.webp?v=1",
-    },
-    jam_dollop: {
-      2: "assets/items/runtime/jam_dollop-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/jam_dollop-sticker-v1-lv3.png?v=1",
-    },
-    caramel_crown: {
-      2: "assets/items/runtime/caramel_crown-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/caramel_crown-sticker-v1-lv3.webp?v=1",
-    },
-    whipped_cream_puff: {
-      2: "assets/items/runtime/whipped_cream_puff-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/whipped_cream_puff-sticker-v1-lv3.png?v=1",
-    },
-    basil_leaf: {
-      2: "assets/items/runtime/basil_leaf-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/basil_leaf-sticker-v1-lv3.webp?v=1",
-    },
-    honey_drizzle: {
-      2: "assets/items/runtime/honey_drizzle-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/honey_drizzle-sticker-v1-lv3.png?v=1",
-    },
-    garlic_clove: {
-      2: "assets/items/runtime/garlic_clove-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/garlic_clove-sticker-v1-lv3.png?v=1",
-    },
-    rice_ball: {
-      2: "assets/items/runtime/rice_ball-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/rice_ball-sticker-v1-lv3.png?v=1",
-    },
-    onion_ring: {
-      2: "assets/items/runtime/onion_ring-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/onion_ring-sticker-v1-lv3.png?v=1",
-    },
-    maple_leaf: {
-      2: "assets/items/runtime/maple_leaf-maple-syrup-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/maple_leaf-maple-syrup-sticker-v1-lv3.png?v=1",
-    },
-    marshmallow_cube: {
-      2: "assets/items/runtime/marshmallow_cube-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/marshmallow_cube-sticker-v1-lv3.png?v=1",
-    },
-    cookie_crumb: {
-      2: "assets/items/runtime/cookie_crumb-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/cookie_crumb-sticker-v1-lv3.webp?v=1",
-    },
-    seaweed_wrap: {
-      2: "assets/items/runtime/seaweed_wrap-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/seaweed_wrap-sticker-v1-lv3.png?v=1",
-    },
-    pretzel_stick: {
-      2: "assets/items/runtime/pretzel_stick-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pretzel_stick-sticker-v1-lv3.png?v=1",
-    },
-    waffle_cone: {
-      2: "assets/items/runtime/waffle_cone-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/waffle_cone-sticker-v1-lv3.png?v=1",
-    },
-    skewer: {
-      2: "assets/items/runtime/skewer-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/skewer-sticker-v1-lv3.png?v=1",
-    },
-    hot_sauce_bottle: {
-      2: "assets/items/runtime/hot_sauce_bottle-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/hot_sauce_bottle-sticker-v1-lv3.png?v=1",
-    },
-    sugar_cube: {
-      2: "assets/items/runtime/sugar_cube-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/sugar_cube-sticker-v1-lv3.png?v=1",
-    },
-    mint_leaf: {
-      2: "assets/items/runtime/mint_leaf-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/mint_leaf-sticker-v1-lv3.png?v=1",
-    },
-    soda_pop: {
-      2: "assets/items/runtime/soda_pop-sticker-v2-lv2.png?v=1",
-      3: "assets/items/runtime/soda_pop-sticker-v2-lv3.png?v=1",
-    },
-    salt_shaker: {
-      2: "assets/items/runtime/salt_shaker-sticker-v2-lv2.png?v=1",
-      3: "assets/items/runtime/salt_shaker-sticker-v2-lv3.png?v=1",
-    },
-    vinegar_splash: {
-      2: "assets/items/runtime/vinegar_splash-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/vinegar_splash-sticker-v1-lv3.png?v=1",
-    },
-    cucumber_slice: {
-      2: "assets/items/runtime/cucumber_slice-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cucumber_slice-sticker-v1-lv3.png?v=1",
-    },
-    cracker_plate: {
-      2: "assets/items/runtime/cracker_plate-sticker-v2-lv2.png?v=1",
-      3: "assets/items/runtime/cracker_plate-sticker-v2-lv3.png?v=1",
-    },
-    cherry_pit: {
-      2: "assets/items/runtime/cherry_pit-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/cherry_pit-sticker-v1-lv3.webp?v=1",
-    },
-    breadstick_dummy: {
-      2: "assets/items/runtime/breadstick_dummy-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/breadstick_dummy-sticker-v1-lv3.webp?v=1",
-    },
-    popcorn_kernel: {
-      2: "assets/items/runtime/popcorn_kernel-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/popcorn_kernel-sticker-v1-lv3.png?v=1",
-    },
-    coupon_clip: {
-      2: "assets/items/runtime/coupon_clip-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/coupon_clip-sticker-v1-lv3.webp?v=1",
-    },
-    lucky_grape: {
-      2: "assets/items/runtime/lucky_grape-green-key-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/lucky_grape-green-key-sticker-v1-lv3.png?v=1",
-    },
-    shopping_bag: {
-      2: "assets/items/runtime/shopping_bag-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/shopping_bag-sticker-v1-lv3.png?v=1",
-    },
-    recipe_card: {
-      2: "assets/items/runtime/recipe_card-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/recipe_card-sticker-v1-lv3.png?v=1",
-    },
-    soup_ladle: {
-      2: "assets/items/runtime/soup_ladle-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/soup_ladle-sticker-v1-lv3.png?v=1",
-    },
-    gravy_boat: {
-      2: "assets/items/runtime/gravy_boat-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/gravy_boat-sticker-v1-lv3.png?v=1",
-    },
-    spice_jar: {
-      2: "assets/items/runtime/spice_jar-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/spice_jar-sticker-v1-lv3.png?v=1",
-    },
-    serving_tray: {
-      2: "assets/items/runtime/serving_tray-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/serving_tray-sticker-v1-lv3.png?v=1",
-    },
-    glass_candy: {
-      2: "assets/items/runtime/glass_candy-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/glass_candy-sticker-v1-lv3.png?v=1",
-    },
-    wasabi_pea: {
-      2: "assets/items/runtime/wasabi_pea-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/wasabi_pea-sticker-v1-lv3.png?v=1",
-    },
-    molten_cheese: {
-      2: "assets/items/runtime/molten_cheese-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/molten_cheese-sticker-v1-lv3.png?v=1",
-    },
-    brittle_cracker: {
-      2: "assets/items/runtime/brittle_cracker-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/brittle_cracker-sticker-v1-lv3.webp?v=1",
-    },
-    golden_truffle_crown: {
-      2: "assets/items/runtime/golden_truffle_crown-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/golden_truffle_crown-sticker-v1-lv3.png?v=1",
-    },
-    dragonfruit_star: {
-      2: "assets/items/runtime/dragonfruit_star-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/dragonfruit_star-sticker-v1-lv3.png?v=1",
-    },
-    rainbow_mochi: {
-      2: "assets/items/runtime/rainbow_mochi-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/rainbow_mochi-sticker-v1-lv3.png?v=1",
-    },
-    caviar_pearls: {
-      2: "assets/items/runtime/caviar_pearls-sticker-v2-lv2.webp?v=1",
-      3: "assets/items/runtime/caviar_pearls-sticker-v2-lv3.webp?v=1",
-    },
-    saffron_threads: {
-      2: "assets/items/runtime/saffron_threads-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/saffron_threads-sticker-v1-lv3.png?v=1",
-    },
-    scallion_oil: {
-      2: "assets/items/runtime/scallion_oil-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/scallion_oil-sticker-v1-lv3.png?v=1",
-    },
-    gochugaru_flakes: {
-      2: "assets/items/runtime/gochugaru_flakes-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/gochugaru_flakes-sticker-v1-lv3.png?v=1",
-    },
-    dill_sprig: {
-      2: "assets/items/runtime/dill_sprig-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/dill_sprig-sticker-v1-lv3.png?v=1",
-    },
-    sesame_seeds: {
-      2: "assets/items/runtime/sesame_seeds-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/sesame_seeds-sticker-v1-lv3.png?v=1",
-    },
-    cinnamon_sugar: {
-      2: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv2.webp?v=1",
-      3: "assets/items/runtime/cinnamon_sugar-sticker-v1-lv3.webp?v=1",
-    },
-    milk_tea_foam: {
-      2: "assets/items/runtime/milk_tea_foam-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/milk_tea_foam-sticker-v1-lv3.png?v=1",
-    },
-    royal_icing_crest: {
-      2: "assets/items/runtime/royal_icing_crest-sticker-v1-lv2.png?v=1",
-      3: "assets/items/runtime/royal_icing_crest-sticker-v1-lv3.png?v=1",
-    },
-  };
-  const REALITY_ITEM_SPRITES = {
-    bean_brew: "assets/items/runtime/item-horror-power_caffeine_reactor_lv1_idle_SW_00.png?v=1",
-    berry_fizz: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv1_idle_SW_00.png?v=1",
-    garden_spritz: "assets/items/runtime/item-horror-power_cleanroom_repair_source_lv1_idle_SW_00.png?v=1",
-    citrus_tea: "assets/items/runtime/item-horror-power_citrus_brine_battery_lv1_idle_SW_00.png?v=1",
-    chili_crunch_cola: "assets/items/runtime/item-horror-power_thermal_overdrive_tank_lv1_idle_SW_00.png?v=1",
-    pepper_broth: "assets/items/runtime/item-horror-power_pepper_armor_station_lv1_idle_SW_00.png?v=1",
-    abyssal_shake: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv1_idle_SW_00.png?v=1",
-    cream_soda_float: "assets/items/runtime/item-horror-power_foam_shield_station_lv1_idle_SW_00.png?v=1",
-    tidepool_espresso: "assets/items/runtime/item-horror-power_tide_turbo_source_lv1_idle_SW_00.png?v=1",
-    avocado_lassi: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv1_idle_SW_00.png?v=1",
-    chili_brine_tonic: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv1_idle_SW_00.png?v=1",
-    market_malt: "assets/items/runtime/item-horror-power_convoy_overcharger_lv1_idle_SW_00.png?v=1",
-    maple_cloud_cocoa: "assets/items/runtime/item-horror-power_maple_cloud_reactor_lv1_idle_SW_00.png?v=1",
-    pearl_biscuit_latte: "assets/items/runtime/item-horror-power_pearl_armor_core_lv1_idle_SW_00.png?v=1",
-    kelp_cucumber_cooler: "assets/items/runtime/item-horror-power_kelp_turbo_cooler_lv1_idle_SW_00.png?v=1",
-    nori_pop_slush: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv1_idle_SW_00.png?v=1",
-    harissa_morning_shot: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv1_idle_SW_00.png?v=1",
-    pretzel_cream_soda: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv1_idle_SW_00.png?v=1",
-    boba_night_tea: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv1_idle_SW_00.png?v=4",
-    pico_lime_agua: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv1_idle_SW_00.png?v=1",
-    night_bite_energy: "assets/items/runtime/item-horror-power_night_bite_warcell_lv1_idle_SW_00.png?v=1",
-    sunny_side_egg: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv1.png?v=1",
-    butter_pat: "assets/items/runtime/grease_armor_plate-horror-evolution-v1-lv1.png?v=1",
-    cheese_star: "assets/items/runtime/star_shrapnel-horror-evolution-v1-lv1.png?v=1",
-    bacon_strips: "assets/items/runtime/reactive_armor_strips-horror-evolution-v1-lv1.png?v=1",
-    cherry_tomato: "assets/items/runtime/red_micro_missile-horror-evolution-v1-lv1.png?v=1",
-    pickle_chip: "assets/items/runtime/brine_shard-horror-evolution-v1-lv1.png?v=1",
-    mushroom_cap: "assets/items/runtime/spore_mine-horror-evolution-v1-lv1.png?v=1",
-    pepperoni_slice: "assets/items/runtime/disc_saw-horror-evolution-v1-lv1.png?v=1",
-    lemon_wedge: "assets/items/runtime/acid_wedge-horror-evolution-v1-lv1.png?v=1",
-    olive_ring: "assets/items/runtime/targeting_ring-horror-evolution-v1-lv1.png?v=1",
-    chili_pepper: "assets/items/runtime/thermal_spike-horror-evolution-v1-lv1.png?v=1",
-    avocado_fan: "assets/items/runtime/pit_guard_shield-horror-evolution-v1-lv1.png?v=1",
-    jam_dollop: "assets/items/runtime/viscous_charge-horror-evolution-v1-lv1.png?v=1",
-    caramel_crown: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv1.png?v=1",
-    whipped_cream_puff: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv1.png?v=1",
-    basil_leaf: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv1.png?v=1",
-    honey_drizzle: "assets/items/runtime/adhesive_gel-horror-evolution-v3-lv1.png?v=1",
-    garlic_clove: "assets/items/runtime/repulsor_module-horror-evolution-v3-lv1.png?v=1",
-    rice_ball: "assets/items/runtime/impact_pellet-horror-evolution-v3-lv1.png?v=1",
-    onion_ring: "assets/items/runtime/razor_ring-horror-evolution-v1-lv1.png?v=1",
-    maple_leaf: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv1.png?v=1",
-    marshmallow_cube: "assets/items/runtime/soft_armor_cube-horror-evolution-v3-lv1.png?v=1",
-    cookie_crumb: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv1.png?v=1",
-    seaweed_wrap: "assets/items/runtime/tide_snare-horror-evolution-v3-lv1.png?v=1",
-    pretzel_stick: "assets/items/runtime/knotwire_spike-horror-evolution-v3-lv1.png?v=1",
-    waffle_cone: "assets/items/runtime/sabot_cone-horror-evolution-v3-lv1.png?v=1",
-    skewer: "assets/items/runtime/rail_spear-horror-evolution-v3-lv1.png?v=1",
-    hot_sauce_bottle: "assets/items/runtime/thermal_spray-horror-evolution-v3-lv1.png?v=1",
-    sugar_cube: "assets/items/runtime/stim_cube-horror-evolution-v3-lv1.png?v=1",
-    mint_leaf: "assets/items/runtime/decon_patch-horror-evolution-v1-lv1.png?v=1",
-    soda_pop: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv1.png?v=1",
-    salt_shaker: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv1.png?v=1",
-    vinegar_splash: "assets/items/runtime/corrosive_sprayer-horror-evolution-v1-lv1.png?v=1",
-    cucumber_slice: "assets/items/runtime/delay_module-horror-evolution-v1-lv1.png?v=1",
-    cracker_plate: "assets/items/runtime/shieldbreaker_plate-horror-evolution-v1-lv1.png?v=1",
-    cherry_pit: "assets/items/runtime/red_charge_mine-horror-evolution-v1-lv1.png?v=1",
-    breadstick_dummy: "assets/items/runtime/guard_pike-horror-evolution-v1-lv1.png?v=1",
-    popcorn_kernel: "assets/items/runtime/kernel_flak-horror-evolution-v1-lv1.png?v=1",
-    coupon_clip: "assets/items/runtime/probability_decoder-horror-evolution-v1-lv1.png?v=1",
-    lucky_grape: "assets/items/runtime/luck_core-horror-evolution-v1-lv1.png?v=1",
-    shopping_bag: "assets/items/runtime/golden_supply_pod-horror-evolution-v1-lv1.png?v=1",
-    recipe_card: "assets/items/runtime/protocol_breaker-horror-evolution-v1-lv1.png?v=1",
-    soup_ladle: "assets/items/runtime/sustain_injector-horror-evolution-v1-lv1.png?v=1",
-    gravy_boat: "assets/items/runtime/viscous_armor_reservoir-horror-evolution-v1-lv1.png?v=1",
-    spice_jar: "assets/items/runtime/hazard_grenade-horror-evolution-v1-lv1.png?v=1",
-    serving_tray: "assets/items/runtime/signal_relay-horror-evolution-v1-lv1.png?v=1",
-    glass_candy: "assets/items/runtime/glass_shard-horror-evolution-v1-lv1.png?v=1",
-    wasabi_pea: "assets/items/runtime/wasabi_piercer-horror-evolution-v1-lv1.png?v=1",
-    molten_cheese: "assets/items/runtime/molten_rounds-horror-evolution-v1-lv1.png?v=1",
-    brittle_cracker: "assets/items/runtime/shellbreaker_rack-horror-evolution-v1-lv1.png?v=1",
-    golden_truffle_crown: "assets/items/runtime/command_crown-horror-evolution-v1-lv1.png?v=1",
-    dragonfruit_star: "assets/items/runtime/dragon_starblade-horror-evolution-v1-lv1.png?v=1",
-    rainbow_mochi: "assets/items/runtime/prism_armor_node-horror-evolution-v1-lv1.png?v=1",
-    caviar_pearls: "assets/items/runtime/cluster_mines-horror-evolution-v1-lv1.png?v=1",
-    saffron_threads: "assets/items/runtime/signal_filaments-horror-evolution-v1-lv1.png?v=1",
-    scallion_oil: "assets/items/runtime/vector_oil_slick-horror-evolution-v1-lv1.png?v=1",
-    gochugaru_flakes: "assets/items/runtime/red_flak-horror-evolution-v1-lv1.png?v=1",
-    dill_sprig: "assets/items/runtime/signal_mast-horror-evolution-v1-lv1.png?v=1",
-    sesame_seeds: "assets/items/runtime/scattershot_pods-horror-evolution-v1-lv1.png?v=1",
-    cinnamon_sugar: "assets/items/runtime/burn_charge-horror-evolution-v1-lv1.png?v=1",
-    milk_tea_foam: "assets/items/runtime/foam_coolant-horror-evolution-v1-lv1.png?v=1",
-    royal_icing_crest: "assets/items/runtime/royal_aegis_crest-horror-evolution-v1-lv1.png?v=1",
-  };
-  const REALITY_ITEM_TIER_SPRITES = {
-    bean_brew: {
-      2: "assets/items/runtime/item-horror-power_caffeine_reactor_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_caffeine_reactor_lv3_idle_SW_00.png?v=1",
-    },
-    berry_fizz: {
-      2: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_ion_bastion_reactor_lv3_idle_SW_00.png?v=1",
-    },
-    garden_spritz: {
-      2: "assets/items/runtime/item-horror-power_cleanroom_repair_source_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_cleanroom_repair_source_lv3_idle_SW_00.png?v=1",
-    },
-    citrus_tea: {
-      2: "assets/items/runtime/item-horror-power_citrus_brine_battery_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_citrus_brine_battery_lv3_idle_SW_00.png?v=1",
-    },
-    chili_crunch_cola: {
-      2: "assets/items/runtime/item-horror-power_thermal_overdrive_tank_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_thermal_overdrive_tank_lv3_idle_SW_00.png?v=1",
-    },
-    pepper_broth: {
-      2: "assets/items/runtime/item-horror-power_pepper_armor_station_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_pepper_armor_station_lv3_idle_SW_00.png?v=1",
-    },
-    abyssal_shake: {
-      2: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_abyssal_tide_singularity_lv3_idle_SW_00.png?v=1",
-    },
-    cream_soda_float: {
-      2: "assets/items/runtime/item-horror-power_foam_shield_station_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_foam_shield_station_lv3_idle_SW_00.png?v=1",
-    },
-    tidepool_espresso: {
-      2: "assets/items/runtime/item-horror-power_tide_turbo_source_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_tide_turbo_source_lv3_idle_SW_00.png?v=1",
-    },
-    avocado_lassi: {
-      2: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_pit_repair_reservoir_lv3_idle_SW_00.png?v=1",
-    },
-    chili_brine_tonic: {
-      2: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_thermal_brine_reactor_lv3_idle_SW_00.png?v=1",
-    },
-    market_malt: {
-      2: "assets/items/runtime/item-horror-power_convoy_overcharger_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_convoy_overcharger_lv3_idle_SW_00.png?v=1",
-    },
-    maple_cloud_cocoa: {
-      2: "assets/items/runtime/item-horror-power_maple_cloud_reactor_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_maple_cloud_reactor_lv3_idle_SW_00.png?v=1",
-    },
-    pearl_biscuit_latte: {
-      2: "assets/items/runtime/item-horror-power_pearl_armor_core_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_pearl_armor_core_lv3_idle_SW_00.png?v=1",
-    },
-    kelp_cucumber_cooler: {
-      2: "assets/items/runtime/item-horror-power_kelp_turbo_cooler_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_kelp_turbo_cooler_lv3_idle_SW_00.png?v=1",
-    },
-    nori_pop_slush: {
-      2: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_nori_pop_powercell_lv3_idle_SW_00.png?v=1",
-    },
-    harissa_morning_shot: {
-      2: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_harissa_brine_ampoule_lv3_idle_SW_00.png?v=1",
-    },
-    pretzel_cream_soda: {
-      2: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_pretzel_shield_reservoir_lv3_idle_SW_00.png?v=1",
-    },
-    boba_night_tea: {
-      2: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv2_idle_SW_00.png?v=4",
-      3: "assets/items/runtime/item-horror-power_boba_night_overdrive_lv3_idle_SW_00.png?v=4",
-    },
-    pico_lime_agua: {
-      2: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_pico_lime_repair_well_lv3_idle_SW_00.png?v=1",
-    },
-    night_bite_energy: {
-      2: "assets/items/runtime/item-horror-power_night_bite_warcell_lv2_idle_SW_00.png?v=1",
-      3: "assets/items/runtime/item-horror-power_night_bite_warcell_lv3_idle_SW_00.png?v=1",
-    },
-    sunny_side_egg: {
-      2: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/solar_warhead-horror-evolution-v1-lv3.png?v=1",
-    },
-    butter_pat: {
-      2: "assets/items/runtime/grease_armor_plate-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/grease_armor_plate-horror-evolution-v1-lv3.png?v=1",
-    },
-    cheese_star: {
-      2: "assets/items/runtime/star_shrapnel-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/star_shrapnel-horror-evolution-v1-lv3.png?v=1",
-    },
-    bacon_strips: {
-      2: "assets/items/runtime/reactive_armor_strips-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/reactive_armor_strips-horror-evolution-v1-lv3.png?v=1",
-    },
-    cherry_tomato: {
-      2: "assets/items/runtime/red_micro_missile-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/red_micro_missile-horror-evolution-v1-lv3.png?v=1",
-    },
-    pickle_chip: {
-      2: "assets/items/runtime/brine_shard-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/brine_shard-horror-evolution-v1-lv3.png?v=1",
-    },
-    mushroom_cap: {
-      2: "assets/items/runtime/spore_mine-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/spore_mine-horror-evolution-v1-lv3.png?v=1",
-    },
-    pepperoni_slice: {
-      2: "assets/items/runtime/disc_saw-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/disc_saw-horror-evolution-v1-lv3.png?v=1",
-    },
-    lemon_wedge: {
-      2: "assets/items/runtime/acid_wedge-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/acid_wedge-horror-evolution-v1-lv3.png?v=1",
-    },
-    olive_ring: {
-      2: "assets/items/runtime/targeting_ring-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/targeting_ring-horror-evolution-v1-lv3.png?v=1",
-    },
-    chili_pepper: {
-      2: "assets/items/runtime/thermal_spike-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/thermal_spike-horror-evolution-v1-lv3.png?v=1",
-    },
-    avocado_fan: {
-      2: "assets/items/runtime/pit_guard_shield-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/pit_guard_shield-horror-evolution-v1-lv3.png?v=1",
-    },
-    jam_dollop: {
-      2: "assets/items/runtime/viscous_charge-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/viscous_charge-horror-evolution-v1-lv3.png?v=1",
-    },
-    caramel_crown: {
-      2: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/crown_clamp-horror-evolution-v1-lv3.png?v=1",
-    },
-    whipped_cream_puff: {
-      2: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/foam_sealant-horror-evolution-v1-lv3.png?v=1",
-    },
-    basil_leaf: {
-      2: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/sensor_blade_array-horror-evolution-v1-lv3.png?v=1",
-    },
-    honey_drizzle: {
-      2: "assets/items/runtime/adhesive_gel-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/adhesive_gel-horror-evolution-v3-lv3.png?v=1",
-    },
-    garlic_clove: {
-      2: "assets/items/runtime/repulsor_module-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/repulsor_module-horror-evolution-v3-lv3.png?v=1",
-    },
-    rice_ball: {
-      2: "assets/items/runtime/impact_pellet-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/impact_pellet-horror-evolution-v3-lv3.png?v=1",
-    },
-    onion_ring: {
-      2: "assets/items/runtime/razor_ring-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/razor_ring-horror-evolution-v1-lv3.png?v=1",
-    },
-    maple_leaf: {
-      2: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/amber_reservoir-horror-evolution-v1-lv3.png?v=1",
-    },
-    marshmallow_cube: {
-      2: "assets/items/runtime/soft_armor_cube-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/soft_armor_cube-horror-evolution-v3-lv3.png?v=1",
-    },
-    cookie_crumb: {
-      2: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/phantom_copy_chip-horror-evolution-v1-lv3.png?v=1",
-    },
-    seaweed_wrap: {
-      2: "assets/items/runtime/tide_snare-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/tide_snare-horror-evolution-v3-lv3.png?v=1",
-    },
-    pretzel_stick: {
-      2: "assets/items/runtime/knotwire_spike-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/knotwire_spike-horror-evolution-v3-lv3.png?v=1",
-    },
-    waffle_cone: {
-      2: "assets/items/runtime/sabot_cone-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/sabot_cone-horror-evolution-v3-lv3.png?v=1",
-    },
-    skewer: {
-      2: "assets/items/runtime/rail_spear-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/rail_spear-horror-evolution-v3-lv3.png?v=1",
-    },
-    hot_sauce_bottle: {
-      2: "assets/items/runtime/thermal_spray-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/thermal_spray-horror-evolution-v3-lv3.png?v=1",
-    },
-    sugar_cube: {
-      2: "assets/items/runtime/stim_cube-horror-evolution-v3-lv2.png?v=1",
-      3: "assets/items/runtime/stim_cube-horror-evolution-v3-lv3.png?v=1",
-    },
-    mint_leaf: {
-      2: "assets/items/runtime/decon_patch-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/decon_patch-horror-evolution-v1-lv3.png?v=1",
-    },
-    soda_pop: {
-      2: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/fizz_capacitor-horror-evolution-v1-lv3.png?v=1",
-    },
-    salt_shaker: {
-      2: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/crystalline_flak-horror-evolution-v1-lv3.png?v=1",
-    },
-    vinegar_splash: {
-      2: "assets/items/runtime/corrosive_sprayer-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/corrosive_sprayer-horror-evolution-v1-lv3.png?v=1",
-    },
-    cucumber_slice: {
-      2: "assets/items/runtime/delay_module-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/delay_module-horror-evolution-v1-lv3.png?v=1",
-    },
-    cracker_plate: {
-      2: "assets/items/runtime/shieldbreaker_plate-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/shieldbreaker_plate-horror-evolution-v1-lv3.png?v=1",
-    },
-    cherry_pit: {
-      2: "assets/items/runtime/red_charge_mine-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/red_charge_mine-horror-evolution-v1-lv3.png?v=1",
-    },
-    breadstick_dummy: {
-      2: "assets/items/runtime/guard_pike-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/guard_pike-horror-evolution-v1-lv3.png?v=1",
-    },
-    popcorn_kernel: {
-      2: "assets/items/runtime/kernel_flak-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/kernel_flak-horror-evolution-v1-lv3.png?v=1",
-    },
-    coupon_clip: {
-      2: "assets/items/runtime/probability_decoder-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/probability_decoder-horror-evolution-v1-lv3.png?v=1",
-    },
-    lucky_grape: {
-      2: "assets/items/runtime/luck_core-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/luck_core-horror-evolution-v1-lv3.png?v=1",
-    },
-    shopping_bag: {
-      2: "assets/items/runtime/golden_supply_pod-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/golden_supply_pod-horror-evolution-v1-lv3.png?v=1",
-    },
-    recipe_card: {
-      2: "assets/items/runtime/protocol_breaker-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/protocol_breaker-horror-evolution-v1-lv3.png?v=1",
-    },
-    soup_ladle: {
-      2: "assets/items/runtime/sustain_injector-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/sustain_injector-horror-evolution-v1-lv3.png?v=1",
-    },
-    gravy_boat: {
-      2: "assets/items/runtime/viscous_armor_reservoir-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/viscous_armor_reservoir-horror-evolution-v1-lv3.png?v=1",
-    },
-    spice_jar: {
-      2: "assets/items/runtime/hazard_grenade-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/hazard_grenade-horror-evolution-v1-lv3.png?v=1",
-    },
-    serving_tray: {
-      2: "assets/items/runtime/signal_relay-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/signal_relay-horror-evolution-v1-lv3.png?v=1",
-    },
-    glass_candy: {
-      2: "assets/items/runtime/glass_shard-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/glass_shard-horror-evolution-v1-lv3.png?v=1",
-    },
-    wasabi_pea: {
-      2: "assets/items/runtime/wasabi_piercer-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/wasabi_piercer-horror-evolution-v1-lv3.png?v=1",
-    },
-    molten_cheese: {
-      2: "assets/items/runtime/molten_rounds-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/molten_rounds-horror-evolution-v1-lv3.png?v=1",
-    },
-    brittle_cracker: {
-      2: "assets/items/runtime/shellbreaker_rack-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/shellbreaker_rack-horror-evolution-v1-lv3.png?v=1",
-    },
-    golden_truffle_crown: {
-      2: "assets/items/runtime/command_crown-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/command_crown-horror-evolution-v1-lv3.png?v=1",
-    },
-    dragonfruit_star: {
-      2: "assets/items/runtime/dragon_starblade-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/dragon_starblade-horror-evolution-v1-lv3.png?v=1",
-    },
-    rainbow_mochi: {
-      2: "assets/items/runtime/prism_armor_node-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/prism_armor_node-horror-evolution-v1-lv3.png?v=1",
-    },
-    caviar_pearls: {
-      2: "assets/items/runtime/cluster_mines-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/cluster_mines-horror-evolution-v1-lv3.png?v=1",
-    },
-    saffron_threads: {
-      2: "assets/items/runtime/signal_filaments-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/signal_filaments-horror-evolution-v1-lv3.png?v=1",
-    },
-    scallion_oil: {
-      2: "assets/items/runtime/vector_oil_slick-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/vector_oil_slick-horror-evolution-v1-lv3.png?v=1",
-    },
-    gochugaru_flakes: {
-      2: "assets/items/runtime/red_flak-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/red_flak-horror-evolution-v1-lv3.png?v=1",
-    },
-    dill_sprig: {
-      2: "assets/items/runtime/signal_mast-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/signal_mast-horror-evolution-v1-lv3.png?v=1",
-    },
-    sesame_seeds: {
-      2: "assets/items/runtime/scattershot_pods-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/scattershot_pods-horror-evolution-v1-lv3.png?v=1",
-    },
-    cinnamon_sugar: {
-      2: "assets/items/runtime/burn_charge-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/burn_charge-horror-evolution-v1-lv3.png?v=1",
-    },
-    milk_tea_foam: {
-      2: "assets/items/runtime/foam_coolant-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/foam_coolant-horror-evolution-v1-lv3.png?v=1",
-    },
-    royal_icing_crest: {
-      2: "assets/items/runtime/royal_aegis_crest-horror-evolution-v1-lv2.png?v=1",
-      3: "assets/items/runtime/royal_aegis_crest-horror-evolution-v1-lv3.png?v=1",
-    },
-  };
-  const ATTACK_PARTICLE_SPRITES = {
-    toast_tortoise: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_toast_tortoise_static_idle_SW_00.png?v=1",
-    sushi_seal: "assets/particles/runtime/food-attack-particle_sushi_bite_idle_SW_00.png",
-    taco_tiger: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_taco_tiger_static_idle_SW_00.png?v=1",
-    berry_bat: "assets/particles/runtime/food-attack-particle_grape_cluster_idle_SW_00.png?v=2",
-    noodle_newt: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_noodle_newt_static_idle_SW_00.png?v=1",
-    pepper_prawn: "assets/particles/runtime/food-attack-particle-expanded_pepper_prawn_static_idle_SW_00.png",
-    hot_chip_hamster: "assets/particles/runtime/food-attack-particle-dedicated_hot_chip_hamster_static_idle_SW_00.png",
-    pancake_penguin: "assets/particles/runtime/food-attack-particle-cozy-static_pancake_penguin_static_idle_SW_00.png?v=1",
-    benedict_lobster: "assets/particles/runtime/food-attack-particle-dedicated_benedict_lobster_static_idle_SW_00.png",
-    pretzel_python: "assets/particles/runtime/food-attack-particle-cozy-static_pretzel_python_static_idle_SW_00.png?v=1",
-    curry_crab: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_curry_crab_static_idle_SW_00.png?v=1",
-    popcorn_porcupine: "assets/particles/runtime/food-attack-particle-cozy-static_popcorn_porcupine_static_idle_SW_00.png?v=1",
-    yogurt_yeti: "assets/particles/runtime/food-attack-particle-cozy-static_yogurt_yeti_static_idle_SW_00.png?v=1",
-    bagel_beaver: "assets/particles/runtime/food-attack-particle-expanded_bagel_beaver_static_idle_SW_00.png",
-    bao_bun_badger: "assets/particles/runtime/food-attack-particle-dedicated_bao_bun_badger_static_idle_SW_00.png",
-    donut_dodo: "assets/particles/runtime/food-attack-particle-cozy-static_donut_dodo_static_idle_SW_00.png?v=1",
-    kimchi_chameleon: "assets/particles/runtime/food-attack-particle-cozy-static_kimchi_chameleon_static_idle_SW_00.png?v=1",
-    waffle_walrus: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_waffle_walrus_static_idle_SW_00.png?v=1",
-    dumpling_armadillo: "assets/particles/runtime/food-attack-particle-cozy-static_dumpling_armadillo_static_idle_SW_00.png?v=1",
-    lemon_meringue_lynx: "assets/particles/runtime/food-attack-particle-cozy-static_lemon_meringue_lynx_static_idle_SW_00.png?v=1",
-    shakshuka_shark: "assets/particles/runtime/food-attack-particle-expanded_shakshuka_shark_static_idle_SW_00.png",
-    saltwater_taffy_otter: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_saltwater_taffy_otter_static_idle_SW_00.png?v=1",
-    croissant_kraken: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_croissant_kraken_static_idle_SW_00.png?v=1",
-    fortune_cookie_fox: "assets/particles/runtime/food-attack-particle-cozy-static_fortune_cookie_fox_static_idle_SW_00.png?v=1",
-    mochi_mammoth: "assets/particles/runtime/food-attack-particle-missing_mochi_puff_idle_SW_00.png",
-    gingerbread_golem: "assets/particles/runtime/food-attack-particle-cozy-static_gingerbread_golem_static_idle_SW_00.png?v=1",
-    boba_basilisk: "assets/particles/runtime/food-attack-particle-cozy-static_boba_basilisk_static_idle_SW_00.png?v=1",
-    iceberg_oyster: "assets/particles/runtime/food-attack-particle-expanded_iceberg_oyster_static_idle_SW_00.png",
-    churro_cheetah: "assets/particles/runtime/food-attack-particle-dedicated_churro_cheetah_static_idle_SW_00.png",
-    granola_goat: "assets/particles/runtime/food-attack-particle-dedicated_granola_goat_static_idle_SW_00.png",
-    breakfast_burrito_boar: "assets/particles/runtime/food-attack-particle-dedicated_breakfast_burrito_boar_static_idle_SW_00.png",
-    caesar_salamander: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_caesar_salamander_static_idle_SW_00.png?v=1",
-    cucumber_cobra: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_cucumber_cobra_static_idle_SW_00.png?v=1",
-    avocado_axolotl: "assets/particles/runtime/food-attack-particle-fresh-garden_avocado_axolotl_static_idle_SW_00.png",
-    herb_hare: "assets/particles/runtime/food-attack-particle-fresh-garden_herb_hare_static_idle_SW_00.png",
-    green_juice_goose: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_green_juice_goose_static_idle_SW_00.png?v=1",
-    caprese_capybara: "assets/particles/runtime/food-attack-particle-fresh-garden_caprese_capybara_static_idle_SW_00.png",
-    vinaigrette_viper: "assets/particles/runtime/food-attack-particle-cozy-static-batch2_vinaigrette_viper_static_idle_SW_00.png?v=1",
-    kelp_koala: "assets/particles/runtime/food-attack-particle-gap-fillers_kelp_koala_static_idle_SW_00.png",
-    melon_mint_mantis: "assets/particles/runtime/food-attack-particle-gap-fillers_melon_mint_mantis_static_idle_SW_00.png",
-    coconut_shrimp_sheep: "assets/particles/runtime/food-attack-particle-gap-fillers_coconut_shrimp_sheep_static_idle_SW_00.png",
-    crab_cake_caterpillar: "assets/particles/runtime/food-attack-particle-gap-fillers_crab_cake_caterpillar_static_idle_SW_00.png",
-    pico_de_gallo_gecko: "assets/particles/runtime/food-attack-particle-gap-fillers_pico_de_gallo_gecko_static_idle_SW_00.png",
-    [GIRAFFE_BOSS_TYPE_ID]: "assets/particles/runtime/banana-split-giraffe-boss-ice-cream-sticker-particle-v2.png?v=1",
-  };
-  const REALITY_ATTACK_PARTICLE_SPRITES = {
-    toast_tortoise: "assets/particles/runtime/war-machine-toast-tortoise-siege-discharge-core-v4.png?v=1",
-    sushi_seal: "assets/particles/runtime/war-machine-sushi-seal-sonar-charge-v2.png?v=1",
-    taco_tiger: "assets/particles/runtime/war-machine-taco-tiger-plasma-breacher-cell-v3.png?v=1",
-    berry_bat: "assets/particles/runtime/war-machine-berry-bat-nightwing-pulse-mine-v1.png?v=1",
-    noodle_newt: "assets/particles/runtime/war-machine-noodle-newt-nanite-discharge-v3.png?v=3",
-    pancake_penguin: "assets/particles/runtime/war-machine-pancake-penguin-aegis-charge-v1.png?v=1",
-    pretzel_python: "assets/particles/runtime/war-machine-pretzel-python-coil-charge-v1.png?v=1",
-    popcorn_porcupine: "assets/particles/runtime/war-machine-popcorn-porcupine-neon-shrapnel-mine-v2.png?v=2",
-    yogurt_yeti: "assets/particles/runtime/war-machine-yogurt-yeti-cryo-capacitor-v2.png?v=1",
-    bagel_beaver: "assets/particles/runtime/war-machine-bagel-beaver-rivet-mine-v2.png?v=1",
-    bao_bun_badger: "assets/particles/runtime/war-machine-bao-bun-badger-pressure-mine-v1.png?v=1",
-    donut_dodo: "assets/particles/runtime/war-machine-donut-dodo-scrap-charge-v2.png?v=1",
-    kimchi_chameleon: "assets/particles/runtime/war-machine-kimchi-chameleon-camo-mine-v1.png?v=1",
-    waffle_walrus: "assets/particles/runtime/war-machine-waffle-walrus-lattice-charge-v3.png?v=3",
-    dumpling_armadillo: "assets/particles/runtime/war-machine-dumpling-armadillo-pressure-canister-v3.png?v=1",
-    lemon_meringue_lynx: "assets/particles/runtime/war-machine-lemon-meringue-lynx-acid-cleanse-charge-v3.png?v=1",
-    shakshuka_shark: "assets/particles/runtime/war-machine-shakshuka-shark-thermal-brine-discharge-v4.png?v=1",
-    saltwater_taffy_otter: "assets/particles/runtime/war-machine-saltwater-taffy-otter-bind-snare-v3.png?v=1",
-    croissant_kraken: "assets/particles/runtime/war-machine-croissant-kraken-crescent-clamp-v3.png?v=1",
-    fortune_cookie_fox: "assets/particles/runtime/war-machine-fortune-cookie-fox-oracle-core-v3.png?v=1",
-    mochi_mammoth: "assets/particles/runtime/war-machine-mochi-mammoth-prism-shield-core-v4.png?v=4",
-    gingerbread_golem: "assets/particles/runtime/war-machine-gingerbread-golem-decoy-core-v3.png?v=1",
-    boba_basilisk: "assets/particles/runtime/war-machine-boba-basilisk-pearl-stun-mine-v5.png?v=1",
-    iceberg_oyster: "assets/particles/runtime/war-machine-iceberg-oyster-abyssal-lock-mine-v4.png?v=1",
-    herb_hare: "assets/particles/runtime/war-machine-herb-hare-lime-discharge-mine-v2.png?v=1",
-    green_juice_goose: "assets/particles/runtime/war-machine-green-juice-goose-plasma-battery-mine-v2.png?v=2",
-    caprese_capybara: "assets/particles/runtime/war-machine-caprese-capybara-repair-well-discharge-v1.png?v=1",
-    vinaigrette_viper: "assets/particles/runtime/war-machine-vinaigrette-viper-corrosive-sprayer-mine-v1.png?v=1",
-    kelp_koala: "assets/particles/runtime/war-machine-kelp-koala-tide-lock-mine-v2.png?v=1",
-    melon_mint_mantis: "assets/particles/runtime/war-machine-melon-mint-mantis-blade-array-charge-v1.png?v=1",
-    coconut_shrimp_sheep: "assets/particles/runtime/war-machine-coconut-shrimp-sheep-pressure-canister-mine-v1.png?v=1",
-    crab_cake_caterpillar: "assets/particles/runtime/war-machine-crab-cake-caterpillar-shellbreaker-rack-mine-v1.png?v=1",
-    pico_de_gallo_gecko: "assets/particles/runtime/war-machine-pico-de-gallo-gecko-sensor-repair-mine-v1.png?v=1",
-    pepper_prawn: "assets/particles/runtime/war-machine-pepper-prawn-thermal-torpedo-cell-v1.png?v=1",
-    hot_chip_hamster: "assets/particles/runtime/war-machine-hot-chip-hamster-static-thermal-charge-v3.png?v=3",
-    benedict_lobster: "assets/particles/runtime/war-machine-benedict-lobster-plasma-siege-cell-v2.png?v=1",
-    curry_crab: "assets/particles/runtime/war-machine-curry-crab-thermal-core-mine-v1.png?v=1",
-    churro_cheetah: "assets/particles/runtime/war-machine-churro-cheetah-thermal-spike-core-v2.png?v=3",
-    granola_goat: "assets/particles/runtime/war-machine-granola-goat-seed-armor-mine-v1.png?v=1",
-    breakfast_burrito_boar: "assets/particles/runtime/war-machine-breakfast-burrito-boar-static-tusk-mine-v2.png?v=2",
-    caesar_salamander: "assets/particles/runtime/war-machine-caesar-salamander-repair-capacitor-v2.png?v=2",
-    cucumber_cobra: "assets/particles/runtime/war-machine-cucumber-cobra-snare-signal-capacitor-v2.png?v=2",
-    avocado_axolotl: "assets/particles/runtime/war-machine-avocado-axolotl-green-core-capacitor-v2.png?v=2",
-    [GIRAFFE_BOSS_TYPE_ID]: "assets/particles/runtime/banana-split-giraffe-boss-ice-cream-sticker-particle-v2.png?v=1",
-    [FINAL_BOSS_TYPE_ID]: "assets/particles/runtime/cyber_brain_final_boss-attack-particle-v1.png?v=1",
-    [FINAL_BOSS_MINION_TYPE_ID]: "assets/particles/runtime/brainstem_wire_minion-attack-particle-v1.png?v=1",
-  };
-  const ATTACK_PARTICLE_TYPES = Object.keys(ATTACK_PARTICLE_SPRITES);
-  const DRINK_THROWABLE_SPRITES = {
-    bean_brew: "assets/particles/runtime/drink-buff-throwable_bean_brew_idle_SW_00.png?v=1",
-    berry_fizz: "assets/particles/runtime/drink-buff-throwable_berry_fizz_idle_SW_00.png?v=1",
-    garden_spritz: "assets/particles/runtime/drink-buff-throwable_garden_spritz_idle_SW_00.png?v=1",
-    citrus_tea: "assets/particles/runtime/drink-buff-throwable_citrus_tea_idle_SW_00.png?v=1",
-    chili_crunch_cola: "assets/particles/runtime/drink-buff-throwable_chili_crunch_cola_idle_SW_00.png?v=1",
-    pepper_broth: "assets/particles/runtime/drink-buff-throwable_pepper_broth_idle_SW_00.png?v=1",
-    abyssal_shake: "assets/particles/runtime/drink-buff-throwable_abyssal_shake_idle_SW_00.png?v=1",
-    cream_soda_float: "assets/particles/runtime/drink-buff-throwable_cream_soda_float_idle_SW_00.png?v=1",
-    tidepool_espresso: "assets/particles/runtime/drink-buff-throwable_tidepool_espresso_idle_SW_00.png?v=1",
-    avocado_lassi: "assets/particles/runtime/drink-buff-throwable_avocado_lassi_idle_SW_00.png?v=1",
-    chili_brine_tonic: "assets/particles/runtime/drink-buff-throwable_chili_brine_tonic_idle_SW_00.png?v=1",
-    market_malt: "assets/particles/runtime/drink-buff-throwable_market_malt_idle_SW_00.png?v=1",
-    maple_cloud_cocoa: "assets/particles/runtime/drink-buff-throwable_maple_cloud_cocoa_idle_SW_00.png?v=1",
-    pearl_biscuit_latte: "assets/particles/runtime/drink-buff-throwable_pearl_biscuit_latte_idle_SW_00.png?v=1",
-    kelp_cucumber_cooler: "assets/particles/runtime/drink-buff-throwable_kelp_cucumber_cooler_idle_SW_00.png?v=1",
-    nori_pop_slush: "assets/particles/runtime/drink-buff-throwable_nori_pop_slush_idle_SW_00.png?v=1",
-    harissa_morning_shot: "assets/particles/runtime/drink-buff-throwable_harissa_morning_shot_idle_SW_00.png?v=1",
-    pretzel_cream_soda: "assets/particles/runtime/drink-buff-throwable_pretzel_cream_soda_idle_SW_00.png?v=1",
-    boba_night_tea: "assets/particles/runtime/drink-buff-throwable_boba_night_tea_idle_SW_00.png?v=1",
-    pico_lime_agua: "assets/particles/runtime/drink-buff-throwable_pico_lime_agua_idle_SW_00.png?v=1",
-    night_bite_energy: "assets/particles/runtime/drink-buff-throwable_night_bite_energy_idle_SW_00.png?v=3",
-  };
-  const REALITY_DRINK_THROWABLE_SPRITES = {
-    bean_brew: "assets/particles/runtime/horror-power-particle_caffeine_reactor_static_idle_SW_00.png?v=1",
-    berry_fizz: "assets/particles/runtime/horror-power-particle_ion_bastion_reactor_static_idle_SW_00.png?v=1",
-    garden_spritz: "assets/particles/runtime/horror-power-particle_cleanroom_repair_source_static_idle_SW_00.png?v=1",
-    citrus_tea: "assets/particles/runtime/horror-power-particle_citrus_brine_battery_static_idle_SW_00.png?v=1",
-    chili_crunch_cola: "assets/particles/runtime/horror-power-particle_thermal_overdrive_tank_static_idle_SW_00.png?v=1",
-    pepper_broth: "assets/particles/runtime/horror-power-particle_pepper_armor_station_static_idle_SW_00.png?v=1",
-    abyssal_shake: "assets/particles/runtime/horror-power-particle_abyssal_tide_singularity_static_idle_SW_00.png?v=1",
-    cream_soda_float: "assets/particles/runtime/horror-power-particle_foam_shield_station_static_idle_SW_00.png?v=1",
-    tidepool_espresso: "assets/particles/runtime/horror-power-particle_tide_turbo_source_static_idle_SW_00.png?v=1",
-    avocado_lassi: "assets/particles/runtime/horror-power-particle_pit_repair_reservoir_static_idle_SW_00.png?v=1",
-    chili_brine_tonic: "assets/particles/runtime/horror-power-particle_thermal_brine_reactor_static_idle_SW_00.png?v=1",
-    market_malt: "assets/particles/runtime/horror-power-particle_convoy_overcharger_static_idle_SW_00.png?v=1",
-    maple_cloud_cocoa: "assets/particles/runtime/horror-power-particle_maple_cloud_reactor_static_idle_SW_00.png?v=1",
-    pearl_biscuit_latte: "assets/particles/runtime/horror-power-particle_pearl_armor_core_static_idle_SW_00.png?v=1",
-    kelp_cucumber_cooler: "assets/particles/runtime/horror-power-particle_kelp_turbo_cooler_static_idle_SW_00.png?v=1",
-    nori_pop_slush: "assets/particles/runtime/horror-power-particle_nori_pop_powercell_static_idle_SW_00.png?v=1",
-    harissa_morning_shot: "assets/particles/runtime/horror-power-particle_harissa_brine_ampoule_static_idle_SW_00.png?v=1",
-    pretzel_cream_soda: "assets/particles/runtime/horror-power-particle_pretzel_shield_reservoir_static_idle_SW_00.png?v=1",
-    boba_night_tea: "assets/particles/runtime/horror-power-particle_boba_night_overdrive_static_idle_SW_00.png?v=3",
-    pico_lime_agua: "assets/particles/runtime/horror-power-particle_pico_lime_repair_well_static_idle_SW_00.png?v=1",
-    night_bite_energy: "assets/particles/runtime/horror-power-particle_night_bite_warcell_static_idle_SW_00.png?v=1",
-  };
-  const DRINK_THROWABLE_TYPES = Object.keys(DRINK_THROWABLE_SPRITES);
+  const statusEffectData = window.FoodAnimalsStatusEffectData;
+  if (!statusEffectData) throw new Error("FoodAnimalsStatusEffectData must load before game.js");
+  const {
+    HORROR_STATUS_EFFECT_SPRITES,
+    STATUS_EFFECT_SPRITES,
+    STATUS_EFFECT_STYLES,
+  } = statusEffectData;
+  const rarityShopData = window.FoodAnimalsRarityShopData;
+  if (!rarityShopData) throw new Error("FoodAnimalsRarityShopData must load before game.js");
+  const {
+    HORROR_RARITIES,
+    MAX_SHOP_LEVEL,
+    RARITIES,
+    SHOP_LEVELS,
+  } = rarityShopData;
+  const itemData = window.FoodAnimalsItemData;
+  if (!itemData) throw new Error("FoodAnimalsItemData must load before game.js");
+  const {
+    ATTACK_PARTICLE_SPRITES,
+    ATTACK_PARTICLE_TYPES,
+    DRINK_SHOP_CHANCES,
+    DRINK_THROWABLE_SPRITES,
+    DRINK_THROWABLE_TYPES,
+    ITEM_MERGE_GOLD_REWARD,
+    ITEM_SCALABLE_PROPS,
+    ITEM_SPRITES,
+    ITEM_TIER_SCALING,
+    ITEM_TIER_SPRITES,
+    ITEMS,
+    MAX_ITEM_TIER,
+    REALITY_ATTACK_PARTICLE_SPRITES,
+    REALITY_DRINK_THROWABLE_SPRITES,
+    REALITY_ITEM_SPRITES,
+    REALITY_ITEM_TIER_SPRITES,
+    SHOP_SALE_CHANCES,
+    SHOP_TIER_COST_MULTIPLIERS,
+    TOPPING_SHOP_CHANCES,
+  } = itemData;
 
   const state = {
     phase: "prep",
@@ -5523,6 +493,7 @@
     realityOverride: initialRealityOverride(),
     realityBreakTimer: 0,
     postGiraffeHorrorTransition: null,
+    level10RevealCutscene: null,
     shopReturnStaticTransition: null,
     phaseTransition: null,
     modalTransitions: {},
@@ -5557,33 +528,15 @@
   };
 
   function savedGameMusicSetting() {
-    try {
-      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
-      const value = Number(settings.music);
-      return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 7;
-    } catch (_err) {
-      return 7;
-    }
+    return window.FoodAnimalsAudioSettings.readNumber("music", 7, { storageKey: MUSIC_SETTINGS_STORAGE_KEY });
   }
 
   function savedAudioSettings() {
-    try {
-      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
-      return settings && typeof settings === "object" ? settings : {};
-    } catch (_err) {
-      return {};
-    }
+    return window.FoodAnimalsAudioSettings.read(MUSIC_SETTINGS_STORAGE_KEY);
   }
 
   function persistAudioSetting(key, value) {
-    const settings = savedAudioSettings();
-    settings[key] = clamp(Math.round(Number(value) || 0), 0, 10);
-    try {
-      window.localStorage.setItem(MUSIC_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    } catch (_err) {
-      // Audio controls still apply for this tab if storage is unavailable.
-    }
-    return settings[key];
+    return window.FoodAnimalsAudioSettings.writeNumber(key, value, { storageKey: MUSIC_SETTINGS_STORAGE_KEY });
   }
 
   function setGameMusicSetting(value) {
@@ -5616,47 +569,14 @@
   }
 
   function ensureGameMusicElement(track) {
-    if (!track) return null;
-    if (!gameMusic.audio) {
-      gameMusic.audio = new Audio(track.src);
-      gameMusic.audio.loop = true;
-      gameMusic.audio.preload = "auto";
-      gameMusic.trackId = track.id;
-    } else if (gameMusic.trackId !== track.id) {
-      gameMusic.playPromise = null;
-      gameMusic.audio.pause();
-      gameMusic.audio.currentTime = 0;
-      gameMusic.audio.src = track.src;
-      gameMusic.audio.load();
-      gameMusic.trackId = track.id;
-      gameMusic.blocked = false;
-    }
-    return gameMusic.audio;
+    return window.FoodAnimalsAudioRuntime.ensureMusicElement(gameMusic, track);
   }
 
   function syncGameMusic() {
-    const track = currentGameMusicTrack();
-    const audio = ensureGameMusicElement(track);
-    if (!audio) return;
-
-    const volume = gameMusicVolume();
-    audio.volume = volume;
-    if (volume <= 0) {
-      if (!audio.paused) audio.pause();
-      return;
-    }
-    if (!gameMusic.armed || !audio.paused || gameMusic.playPromise) return;
-
-    gameMusic.playPromise = audio
-      .play()
-      .then(() => {
-        gameMusic.blocked = false;
-        gameMusic.playPromise = null;
-      })
-      .catch(() => {
-        gameMusic.blocked = true;
-        gameMusic.playPromise = null;
-      });
+    window.FoodAnimalsAudioRuntime.syncMusic(gameMusic, {
+      track: currentGameMusicTrack(),
+      volume: gameMusicVolume(),
+    });
   }
 
   function armGameMusic() {
@@ -5665,22 +585,13 @@
   }
 
   function pauseGameMusicForHiddenTab() {
-    if (!gameMusic.audio) return;
-    if (document.hidden) {
-      gameMusic.audio.pause();
-    } else if (gameMusic.armed) {
+    if (!window.FoodAnimalsAudioRuntime.pauseForHiddenTab(gameMusic) && gameMusic.armed) {
       syncGameMusic();
     }
   }
 
   function savedGameSfxSetting() {
-    try {
-      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
-      const value = Number(settings.sfx);
-      return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 8;
-    } catch (_err) {
-      return 8;
-    }
+    return window.FoodAnimalsAudioSettings.readNumber("sfx", 8, { storageKey: MUSIC_SETTINGS_STORAGE_KEY });
   }
 
   function gameSfxVolume() {
@@ -5699,32 +610,18 @@
   }
 
   function sfxPoolFor(src) {
-    if (!src) return [];
-    if (!gameSfx.pools.has(src)) {
-      gameSfx.pools.set(src, Array.from({ length: 4 }, () => {
-        const audio = new Audio(src);
-        audio.preload = "auto";
-        return audio;
-      }));
-    }
-    return gameSfx.pools.get(src);
+    return window.FoodAnimalsAudioRuntime.poolFor(gameSfx, src, 4);
   }
 
   function playGameSfx(id, options = {}) {
-    if (!gameSfx.armed && !options.force) return;
     const baseVolume = gameSfxVolume();
-    if (baseVolume <= 0) return;
-    const src = gameSfxSrc(id, options.theme || currentCopyThemeId());
-    const pool = sfxPoolFor(src);
-    if (!pool.length) return;
-    const index = gameSfx.next.get(src) || 0;
-    gameSfx.next.set(src, (index + 1) % pool.length);
-    const audio = pool[index];
-    audio.pause();
-    audio.currentTime = 0;
-    audio.volume = clamp01(baseVolume * (options.volume ?? 1));
-    audio.playbackRate = Math.max(0.5, Math.min(1.7, options.rate || 1));
-    audio.play().catch(() => {});
+    window.FoodAnimalsAudioRuntime.playSfx(gameSfx, {
+      src: gameSfxSrc(id, options.theme || currentCopyThemeId()),
+      force: options.force,
+      volume: baseVolume * (options.volume ?? 1),
+      rate: options.rate,
+      poolSize: 4,
+    });
   }
 
   function armGameSfx() {
@@ -5742,73 +639,8 @@
   const drinkThrowableSpriteCache = new Map();
   const statusEffectSpriteCache = new Map();
   const uiSpriteCache = new Map();
-  const BACKGROUND_SRC = "assets/backgrounds/picnic-arena-background-v1-2048x1280.webp";
-  const REALITY_BACKGROUND_SRC = "assets/backgrounds/war-future-market-v1-2048x1280.webp?v=1";
-  const FINAL_VICTORY_CUTSCENE_SRC = "assets/backgrounds/horror/victory-sunset-cutscene-v2.png?v=1";
-  const FINAL_VICTORY_IDEAL_SRC = "assets/backgrounds/horror/victory-idealized-market-v1.png?v=1";
-  const UPGRADE_STAR_SRC = "assets/ui/runtime/upgrade-star-v2.png";
-  const SHOP_LOCKED_SRC = "assets/ui/runtime/shop-lock-locked-v1.png";
-  const SHOP_UNLOCKED_SRC = "assets/ui/runtime/shop-lock-unlocked-v1.png";
-  const STATUS_HEART_SRC = "assets/ui/runtime/status-heart-v1.png";
-  const STATUS_COIN_SRC = "assets/ui/runtime/status-coin-v1.png";
-  const BOARD_PLATE_SLOT_SRC = "assets/items/runtime/board_plate-minimal-v1.webp?v=1";
-  const REALITY_BOARD_PLATE_SLOT_SRC = "assets/items/runtime/combat_plate-horror-v1.png?v=1";
-  const DRINK_COASTER_SLOT_SRC = "assets/items/runtime/drink_coaster-minimal-v1.png?v=1";
-  const REALITY_DRINK_COASTER_SLOT_SRC = "assets/items/runtime/combat_coaster-horror-v1.png?v=1";
-  const TOPPING_CUTTING_BOARD_SLOT_SRC = "assets/items/runtime/topping_cutting_board-stall-v2.png?v=1";
-  const REALITY_TOPPING_STORAGE_SLOT_SRC = "assets/items/runtime/topping_storage-horror-v1.png?v=1";
-  const UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-v2.png?v=1";
-  const REALITY_UI_ICON_ATLAS_SRC = "assets/ui/runtime/ui-icon-atlas-war-v2.png?v=1";
-  const STATUS_CHALK_COURSE_SRC = "assets/ui/runtime/status-chalk-course-v1.webp";
-  const STATUS_CHALK_COINS_SRC = "assets/ui/runtime/status-chalk-coins-v1.webp";
-  const STATUS_CHALK_HEALTH_SRC = "assets/ui/runtime/status-chalk-health-v1.webp";
-  const REALITY_STATUS_WAVE_SRC = "assets/ui/runtime/status-war-wave-v2.webp?v=1";
-  const REALITY_STATUS_SCRAP_SRC = "assets/ui/runtime/status-war-scrap-v2.webp?v=1";
-  const REALITY_STATUS_HULL_SRC = "assets/ui/runtime/status-war-hull-v2.webp?v=1";
-  const UI_ICON_ATLAS_CELL = 64;
-  const UI_ICON_ATLAS = {
-    trait_breakfast: [0, 0],
-    trait_bakery: [1, 0],
-    trait_ocean: [2, 0],
-    trait_spicy: [3, 0],
-    trait_sweet: [4, 0],
-    trait_snack: [5, 0],
-    trait_street_food: [6, 0],
-    trait_frozen: [7, 0],
-    trait_guardian: [2, 3],
-    reward_gold: [0, 1],
-    reward_freeRolls: [1, 1],
-    reward_item: [2, 1],
-    reward_copy: [3, 1],
-    reward_arena: [4, 1],
-    reward_favorite: [5, 1],
-    reward_discount: [6, 1],
-    reward_heart: [7, 1],
-    action_upgrade: [0, 2],
-    action_roll: [1, 2],
-    action_battle: [2, 2],
-    action_speed: [3, 2],
-    action_sell: [4, 2],
-    action_detach: [5, 2],
-    action_lock: [6, 2],
-    action_unlock: [7, 2],
-    info_damage: [0, 3],
-    info_heal: [1, 3],
-    info_shield: [2, 3],
-    info_ko: [3, 3],
-    info_time: [4, 3],
-    info_mold: [7, 3],
-  };
-
   function canUseLocalStorage() {
-    try {
-      const key = `${ACTIVE_RUN_STORAGE_KEY}:probe`;
-      window.localStorage.setItem(key, "1");
-      window.localStorage.removeItem(key);
-      return true;
-    } catch {
-      return false;
-    }
+    return window.FoodAnimalsRunStorage.canUseLocalStorage(ACTIVE_RUN_STORAGE_KEY);
   }
 
   function currentGameRoute() {
@@ -5876,6 +708,7 @@
     "realityOverride",
     "realityBreakTimer",
     "postGiraffeHorrorTransition",
+    "level10RevealCutscene",
     "shopReturnStaticTransition",
     "rebootTransition",
     "finalVictoryTransition",
@@ -5965,13 +798,7 @@
   }
 
   function savedRunRecord() {
-    if (!canUseLocalStorage()) return null;
-    try {
-      const record = JSON.parse(window.localStorage.getItem(ACTIVE_RUN_STORAGE_KEY) || "null");
-      return record && typeof record === "object" ? record : null;
-    } catch {
-      return null;
-    }
+    return window.FoodAnimalsRunStorage.read(ACTIVE_RUN_STORAGE_KEY);
   }
 
   function shouldRestoreSavedRun() {
@@ -5986,45 +813,17 @@
   function writeActiveRunRecord(snapshot = null) {
     if (!canUseLocalStorage() || !shouldMarkActiveRunRoute()) return false;
     const now = new Date().toISOString();
-    let startedAt = now;
-    let previousSnapshot = null;
-    try {
-      const previous = JSON.parse(window.localStorage.getItem(ACTIVE_RUN_STORAGE_KEY) || "null");
-      if (previous?.active === true && typeof previous.startedAt === "string") {
-        startedAt = previous.startedAt;
-      }
-      if (previous?.snapshot) previousSnapshot = previous.snapshot;
-    } catch {
-      // Keep a fresh marker if an old marker was malformed.
-    }
-    const runSnapshot = snapshot || previousSnapshot || null;
+    const previous = window.FoodAnimalsRunStorage.read(ACTIVE_RUN_STORAGE_KEY);
+    const runSnapshot = snapshot || previous?.snapshot || null;
     const summaryState = runSnapshot?.state || state;
-    try {
-      window.localStorage.setItem(
-        ACTIVE_RUN_STORAGE_KEY,
-        JSON.stringify({
-          active: true,
-          route: currentGameRoute(),
-          theme: realityBroken() ? "horror" : "cozy",
-          startedAt,
-          updatedAt: now,
-          markerOnly: !runSnapshot,
-          snapshot: runSnapshot,
-          summary: {
-            round: summaryState.round,
-            phase: summaryState.phase,
-            hearts: summaryState.hearts,
-            gold: summaryState.gold,
-            shopLevel: summaryState.shopLevel,
-            savedAt: runSnapshot?.savedAt || now,
-          },
-        }),
-      );
-      return true;
-    } catch {
-      // Storage can fail without affecting the playable run.
-      return false;
-    }
+    return window.FoodAnimalsRunStorage.write(window.FoodAnimalsRunStorage.buildRecord({
+      now,
+      previous,
+      snapshot: runSnapshot,
+      summaryState,
+      route: currentGameRoute(),
+      theme: realityBroken() ? "horror" : "cozy",
+    }), ACTIVE_RUN_STORAGE_KEY);
   }
 
   function markActiveRunRoute() {
@@ -6077,11 +876,26 @@
   }
 
   function clearActiveRunRoute() {
-    if (!canUseLocalStorage()) return;
+    window.FoodAnimalsRunStorage.clear(ACTIVE_RUN_STORAGE_KEY);
+  }
+
+  function markGameCompleted() {
+    if (!canUseLocalStorage()) return false;
     try {
-      window.localStorage.removeItem(ACTIVE_RUN_STORAGE_KEY);
+      window.localStorage.setItem(GAME_COMPLETED_STORAGE_KEY, "1");
+      return true;
     } catch {
-      // Returning to the menu should still work if storage is unavailable.
+      return false;
+    }
+  }
+
+  function markHorrorRevealed() {
+    if (!canUseLocalStorage()) return false;
+    try {
+      window.localStorage.setItem(HORROR_REVEALED_STORAGE_KEY, "1");
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -6102,14 +916,28 @@
     }
   }
 
+  function markMenuReturnReveal() {
+    try {
+      const targetWindow = window.top && window.top !== window ? window.top : window;
+      targetWindow.sessionStorage?.setItem(MENU_RETURN_REVEAL_STORAGE_KEY, "1");
+    } catch {
+      try {
+        window.sessionStorage?.setItem(MENU_RETURN_REVEAL_STORAGE_KEY, "1");
+      } catch {
+        // Returning to the menu should still navigate if session storage is unavailable.
+      }
+    }
+  }
+
   function markHorrorMenuUnlocked() {
     if (!canUseLocalStorage()) return;
     try {
+      markGameCompleted();
       window.localStorage.setItem(HORROR_MENU_UNLOCK_STORAGE_KEY, "1");
-      const settings = JSON.parse(window.localStorage.getItem(MUSIC_SETTINGS_STORAGE_KEY) || "{}");
+      const settings = window.FoodAnimalsAudioSettings.read(MUSIC_SETTINGS_STORAGE_KEY);
       settings.menuTheme = "horror";
       settings.musicTrack = "horror-market";
-      window.localStorage.setItem(MUSIC_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      window.FoodAnimalsAudioSettings.write(settings, MUSIC_SETTINGS_STORAGE_KEY);
     } catch {
       // Unlocking the post-game menu should not block the final return.
     }
@@ -6132,654 +960,10 @@
     saveCurrentRun({ message: false });
     state.message = "Run saved";
     state.optionsMenu.open = false;
+    markMenuReturnReveal();
     navigateToMainMenu();
   }
   const backgroundImageCache = new Map();
-  const RUNTIME_SPRITES = {
-    toast_tortoise: {
-      1: "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_toastlet_idle_SW_00.png",
-      2: "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_butterback_idle_SW_00.png",
-      3: "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_clubshell_idle_SW_00.png",
-      4: "assets/sprites/runtime/toast-tortoise-v3/toast-tortoise_banquet-shell_idle_SW_00.png",
-    },
-    sushi_seal: {
-      1: "assets/sprites/runtime/sushi-seal-v3/sushi-seal_maki-pup_idle_SW_00.png",
-      2: "assets/sprites/runtime/sushi-seal-v3/sushi-seal_nigiri-seal_idle_SW_00.png",
-      3: "assets/sprites/runtime/sushi-seal-v3/sushi-seal_dragon-roll_idle_SW_00.png",
-      4: "assets/sprites/runtime/sushi-seal-v3/sushi-seal_omakase-seal_idle_SW_00.png",
-    },
-    taco_tiger: {
-      1: "assets/sprites/runtime/taco-tiger-v3/taco-tiger_taco-cub_idle_SW_00.png",
-      2: "assets/sprites/runtime/taco-tiger-v3/taco-tiger_loaded-tiger_idle_SW_00.png",
-      3: "assets/sprites/runtime/taco-tiger-v3/taco-tiger_fiesta-fang_idle_SW_00.png",
-      4: "assets/sprites/runtime/taco-tiger-v3/taco-tiger_carnival-tiger_idle_SW_00.png",
-    },
-    berry_bat: {
-      1: "assets/sprites/runtime/berry-bat-v3/berry-bat_berry-bat_idle_SW_00.png",
-      2: "assets/sprites/runtime/berry-bat-v3/berry-bat_bramble-bat_idle_SW_00.png",
-      3: "assets/sprites/runtime/berry-bat-v3/berry-bat_elderberry-bat_idle_SW_00.png",
-      4: "assets/sprites/runtime/berry-bat-v3/berry-bat_royal-berry-bat_idle_SW_00.png",
-    },
-    noodle_newt: {
-      1: "assets/sprites/runtime/noodle-newt-v3/noodle-newt_noodle-newt_idle_SW_00.png",
-      2: "assets/sprites/runtime/noodle-newt-v3/noodle-newt_ramen-newt_idle_SW_00.png",
-      3: "assets/sprites/runtime/noodle-newt-v3/noodle-newt_hotpot-newt_idle_SW_00.png",
-      4: "assets/sprites/runtime/noodle-newt-v3/noodle-newt_cauldron-newt-grand-v2_idle_SW_00.png",
-    },
-    pancake_penguin: {
-      1: "assets/sprites/runtime/pancake-penguin-v1/pancake-penguin_pancake-chick_idle_SW_00.png",
-      2: "assets/sprites/runtime/pancake-penguin-v1/pancake-penguin_syrup-penguin_idle_SW_00.png",
-      3: "assets/sprites/runtime/pancake-penguin-v1/pancake-penguin_stack-king_idle_SW_00.png",
-      4: "assets/sprites/runtime/pancake-penguin-v1/pancake-penguin_breakfast-emperor_idle_SW_00.png",
-    },
-    benedict_lobster: {
-      1: "assets/sprites/runtime/benedict-lobster-v3/benedict-lobster_benny-lobster_idle_SW_00.png",
-      2: "assets/sprites/runtime/benedict-lobster-v3/benedict-lobster_benedict-lobster_idle_SW_00.png",
-      3: "assets/sprites/runtime/benedict-lobster-v3/benedict-lobster_hollandaise-lobster_idle_SW_00.png",
-      4: "assets/sprites/runtime/benedict-lobster-v3/benedict-lobster_brunch-tide-lobster_idle_SW_00.png?v=2",
-    },
-    pretzel_python: {
-      1: "assets/sprites/runtime/pretzel-python-v1/pretzel-python_pretzel-hatchling_idle_SW_00.png",
-      2: "assets/sprites/runtime/pretzel-python-v1/pretzel-python_twist-python_idle_SW_00.png",
-      3: "assets/sprites/runtime/pretzel-python-v1/pretzel-python_saltcoil_idle_SW_00.png",
-      4: "assets/sprites/runtime/pretzel-python-v1/pretzel-python_knot-constrictor_idle_SW_00.png",
-    },
-    curry_crab: {
-      1: "assets/sprites/runtime/curry-crab-v1/curry-crab_curry-crab_idle_SW_00.png",
-      2: "assets/sprites/runtime/curry-crab-v1/curry-crab_masala-crab_idle_SW_00.png",
-      3: "assets/sprites/runtime/curry-crab-v1/curry-crab_spiceclaw_idle_SW_00.png",
-      4: "assets/sprites/runtime/curry-crab-v1/curry-crab_vindaloo-titan_idle_SW_00.png",
-    },
-    pepper_prawn: {
-      1: "assets/sprites/runtime/pepper-prawn-v1/pepper-prawn_pepper-prawn_idle_SW_00.png",
-      2: "assets/sprites/runtime/pepper-prawn-v1/pepper-prawn_seared-prawn_idle_SW_00.png",
-      3: "assets/sprites/runtime/pepper-prawn-v1/pepper-prawn_chili-skewer-prawn_idle_SW_00.png",
-      4: "assets/sprites/runtime/pepper-prawn-v1/pepper-prawn_tidefire-prawn_idle_SW_00.png",
-    },
-    hot_chip_hamster: {
-      1: "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_hot-chip-pup_idle_SW_00.png",
-      2: "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_hot-chip-hamster_idle_SW_00.png",
-      3: "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_flamin-wheel-hamster_idle_SW_00.png",
-      4: "assets/sprites/runtime/hot-chip-hamster-v2/hot-chip-hamster_kettlefire-hamster_idle_SW_00.png",
-    },
-    popcorn_porcupine: {
-      1: "assets/sprites/runtime/popcorn-porcupine-v1/popcorn-porcupine_kernel-hoglet_idle_SW_00.png",
-      2: "assets/sprites/runtime/popcorn-porcupine-v1/popcorn-porcupine_popcorn-porcupine_idle_SW_00.png",
-      3: "assets/sprites/runtime/popcorn-porcupine-v1/popcorn-porcupine_kettle-quillbeast_idle_SW_00.png",
-      4: "assets/sprites/runtime/popcorn-porcupine-v1/popcorn-porcupine_cinema-needleback_idle_SW_00.png",
-    },
-    yogurt_yeti: {
-      1: "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_yogurt-cub_idle_SW_00.png",
-      2: "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_parfait-yeti_idle_SW_00.png",
-      3: "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_frozen-yeti_idle_SW_00.png",
-      4: "assets/sprites/runtime/yogurt-yeti-v1/yogurt-yeti_glacier-parfait_idle_SW_00.png",
-    },
-    donut_dodo: {
-      1: "assets/sprites/runtime/donut-dodo-v1/donut-dodo_donut-dodo_idle_SW_00.png",
-      2: "assets/sprites/runtime/donut-dodo-v1/donut-dodo_glazed-dodo_idle_SW_00.png",
-      3: "assets/sprites/runtime/donut-dodo-v1/donut-dodo_sprinkle-roc_idle_SW_00.png",
-      4: "assets/sprites/runtime/donut-dodo-v1/donut-dodo_bakery-phoenix_idle_SW_00.png",
-    },
-    kimchi_chameleon: {
-      1: "assets/sprites/runtime/kimchi-chameleon-v1/kimchi-chameleon_kimchi-chameleon_idle_SW_00.png",
-      2: "assets/sprites/runtime/kimchi-chameleon-v1/kimchi-chameleon_ferment-gecko_idle_SW_00.png",
-      3: "assets/sprites/runtime/kimchi-chameleon-v1/kimchi-chameleon_gochu-chameleon_idle_SW_00.png",
-      4: "assets/sprites/runtime/kimchi-chameleon-v1/kimchi-chameleon_pickled-dragon_idle_SW_00.png",
-    },
-    waffle_walrus: {
-      1: "assets/sprites/runtime/waffle-walrus-v1/waffle-walrus_waffle-pup_idle_SW_00.png",
-      2: "assets/sprites/runtime/waffle-walrus-v1/waffle-walrus_waffle-walrus_idle_SW_00.png",
-      3: "assets/sprites/runtime/waffle-walrus-v1/waffle-walrus_syrup-tusk-walrus_idle_SW_00.png",
-      4: "assets/sprites/runtime/waffle-walrus-v1/waffle-walrus_brunch-behemoth_idle_SW_00.png",
-    },
-    dumpling_armadillo: {
-      1: "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_dumpling-dillo_idle_SW_00.png",
-      2: "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_bao-armadillo_idle_SW_00.png",
-      3: "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_dim-sum-dozer_idle_SW_00.png",
-      4: "assets/sprites/runtime/dumpling-armadillo-v1/dumpling-armadillo_steam-basket-bastion_idle_SW_00.png",
-    },
-    bagel_beaver: {
-      1: "assets/sprites/runtime/bagel-beaver-v1/bagel-beaver_bagel-beaver_idle_SW_00.png",
-      2: "assets/sprites/runtime/bagel-beaver-v1/bagel-beaver_sesame-beaver_idle_SW_00.png",
-      3: "assets/sprites/runtime/bagel-beaver-v1/bagel-beaver_everything-dam-beaver_idle_SW_00.png",
-      4: "assets/sprites/runtime/bagel-beaver-v1/bagel-beaver_brunch-lodge-beaver_idle_SW_00.png",
-    },
-    bao_bun_badger: {
-      1: "assets/sprites/runtime/bao-bun-badger-v1/bao-bun-badger_bao-bun-badger_idle_SW_00.png",
-      2: "assets/sprites/runtime/bao-bun-badger-v1/bao-bun-badger_sesame-bao-badger_idle_SW_00.png",
-      3: "assets/sprites/runtime/bao-bun-badger-v1/bao-bun-badger_steam-cart-badger_idle_SW_00.png",
-      4: "assets/sprites/runtime/bao-bun-badger-v1/bao-bun-badger_night-market-bao-boss_idle_SW_00.png",
-    },
-    lemon_meringue_lynx: {
-      1: "assets/sprites/runtime/lemon-meringue-lynx-v1/lemon-meringue-lynx_lemon-lynx_idle_SW_00.png",
-      2: "assets/sprites/runtime/lemon-meringue-lynx-v1/lemon-meringue-lynx_meringue-lynx_idle_SW_00.png",
-      3: "assets/sprites/runtime/lemon-meringue-lynx-v1/lemon-meringue-lynx_tart-panther_idle_SW_00.png",
-      4: "assets/sprites/runtime/lemon-meringue-lynx-v1/lemon-meringue-lynx_citrus-sphinx_idle_SW_00.png",
-    },
-    shakshuka_shark: {
-      1: "assets/sprites/runtime/shakshuka-shark-v1/shakshuka-shark_shakshuka-shark_idle_SW_00.png",
-      2: "assets/sprites/runtime/shakshuka-shark-v1/shakshuka-shark_saucy-shark_idle_SW_00.png",
-      3: "assets/sprites/runtime/shakshuka-shark-v1/shakshuka-shark_skilletfin-shark_idle_SW_00.png",
-      4: "assets/sprites/runtime/shakshuka-shark-v1/shakshuka-shark_harissa-megalodon_idle_SW_00.png",
-    },
-    saltwater_taffy_otter: {
-      1: "assets/sprites/runtime/saltwater-taffy-otter-v1/saltwater-taffy-otter_taffy-pup_idle_SW_00.png",
-      2: "assets/sprites/runtime/saltwater-taffy-otter-v1/saltwater-taffy-otter_saltwater-taffy-otter_idle_SW_00.png",
-      3: "assets/sprites/runtime/saltwater-taffy-otter-v1/saltwater-taffy-otter_ribbon-taffy-otter_idle_SW_00.png",
-      4: "assets/sprites/runtime/saltwater-taffy-otter-v1/saltwater-taffy-otter_candy-tide-otter_idle_SW_00.png",
-    },
-    croissant_kraken: {
-      1: "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_croissant-squid_idle_SW_00.png",
-      2: "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_buttered-kraken_idle_SW_00.png",
-      3: "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_laminated-leviathan_idle_SW_00.png",
-      4: "assets/sprites/runtime/croissant-kraken-v1/croissant-kraken_thousand-layer-abyss_idle_SW_00.png",
-    },
-    fortune_cookie_fox: {
-      1: "assets/sprites/runtime/fortune-cookie-fox-v1/fortune-cookie-fox_fortune-kit_idle_SW_00.png",
-      2: "assets/sprites/runtime/fortune-cookie-fox-v1/fortune-cookie-fox_cookie-fox_idle_SW_00.png",
-      3: "assets/sprites/runtime/fortune-cookie-fox-v1/fortune-cookie-fox_prophecy-vixen_idle_SW_00.png",
-      4: "assets/sprites/runtime/fortune-cookie-fox-v1/fortune-cookie-fox_oracle-kitsune_idle_SW_00.png",
-    },
-    mochi_mammoth: {
-      1: "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_mochi-calf_idle_SW_00.png",
-      2: "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_mochi-mammoth_idle_SW_00.png",
-      3: "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_mooncake-mastodon_idle_SW_00.png",
-      4: "assets/sprites/runtime/mochi-mammoth-v1/mochi-mammoth_festival-colossus_idle_SW_00.png",
-    },
-    gingerbread_golem: {
-      1: "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_gingerling_idle_SW_00.png",
-      2: "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_gingerbread-golem_idle_SW_00.png",
-      3: "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_frosted-guardian_idle_SW_00.png",
-      4: "assets/sprites/runtime/gingerbread-golem-v1/gingerbread-golem_candy-castle-colossus_idle_SW_00.png",
-    },
-    boba_basilisk: {
-      1: "assets/sprites/runtime/boba-basilisk-v1/boba-basilisk_boba-newt_idle_SW_00.png",
-      2: "assets/sprites/runtime/boba-basilisk-v1/boba-basilisk_tapioca-basilisk_idle_SW_00.png",
-      3: "assets/sprites/runtime/boba-basilisk-v1/boba-basilisk_pearl-gorgon_idle_SW_00.png",
-      4: "assets/sprites/runtime/boba-basilisk-v1/boba-basilisk_bubble-tea-hydra_idle_SW_00.png",
-    },
-    iceberg_oyster: {
-      1: "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_iceberg-oyster_idle_SW_00.png",
-      2: "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_pearl-ice-oyster_idle_SW_00.png",
-      3: "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_glacier-shell-oyster_idle_SW_00.png",
-      4: "assets/sprites/runtime/iceberg-oyster-v2/iceberg-oyster_abyssal-ice-pearl_idle_SW_00.png",
-    },
-    churro_cheetah: {
-      1: "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_churro-cub_idle_SW_00.png",
-      2: "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_cinnamon-cheetah_idle_SW_00.png",
-      3: "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_chili-churro-cheetah_idle_SW_00.png",
-      4: "assets/sprites/runtime/churro-cheetah-v1/churro-cheetah_dulce-firecat-v2_idle_SW_00.png",
-    },
-    granola_goat: {
-      1: "assets/sprites/runtime/granola-goat-v1/granola-goat_oat-kid_idle_SW_00.png",
-      2: "assets/sprites/runtime/granola-goat-v1/granola-goat_granola-goat_idle_SW_00.png",
-      3: "assets/sprites/runtime/granola-goat-v1/granola-goat_trail-mix-ram-v3_idle_SW_00.png",
-      4: "assets/sprites/runtime/granola-goat-v1/granola-goat_harvest-ibex-v3_idle_SW_00.png",
-    },
-    breakfast_burrito_boar: {
-      1: "assets/sprites/runtime/breakfast-burrito-boar-v1/breakfast-burrito-boar_egg-wrap-piglet_idle_SW_00.png",
-      2: "assets/sprites/runtime/breakfast-burrito-boar-v1/breakfast-burrito-boar_breakfast-burrito-boar_idle_SW_00.png",
-      3: "assets/sprites/runtime/breakfast-burrito-boar-v1/breakfast-burrito-boar_salsa-tusk-boar_idle_SW_00.png",
-      4: "assets/sprites/runtime/breakfast-burrito-boar-v1/breakfast-burrito-boar_brunch-cart-boar_idle_SW_00.png",
-    },
-    caesar_salamander: {
-      1: "assets/sprites/runtime/caesar-salamander-v1/caesar-salamander_romaine-newt_idle_SW_00.png",
-      2: "assets/sprites/runtime/caesar-salamander-v1/caesar-salamander_caesar-salamander_idle_SW_00.png",
-      3: "assets/sprites/runtime/caesar-salamander-v1/caesar-salamander_crouton-crest_idle_SW_00.png",
-      4: "assets/sprites/runtime/caesar-salamander-v1/caesar-salamander_salad-bar-sovereign_idle_SW_00.png",
-    },
-    cucumber_cobra: {
-      1: "assets/sprites/runtime/cucumber-cobra-v1/cucumber-cobra_cuke-hatchling_idle_SW_00.png",
-      2: "assets/sprites/runtime/cucumber-cobra-v1/cucumber-cobra_cucumber-cobra_idle_SW_00.png",
-      3: "assets/sprites/runtime/cucumber-cobra-v1/cucumber-cobra_ribbon-cucumber_idle_SW_00.png",
-      4: "assets/sprites/runtime/cucumber-cobra-v1/cucumber-cobra_garden-coil-hydra_idle_SW_00.png",
-    },
-    avocado_axolotl: {
-      1: "assets/sprites/runtime/avocado-axolotl-v1/avocado-axolotl_avocado-totl_idle_SW_00.png",
-      2: "assets/sprites/runtime/avocado-axolotl-v1/avocado-axolotl_avocado-axolotl_idle_SW_00.png",
-      3: "assets/sprites/runtime/avocado-axolotl-v1/avocado-axolotl_guac-gill-axolotl_idle_SW_00.png",
-      4: "assets/sprites/runtime/avocado-axolotl-v1/avocado-axolotl_orchard-pit-oracle_idle_SW_00.png",
-    },
-    herb_hare: {
-      1: "assets/sprites/runtime/herb-hare-v1/herb-hare_herb-kit_idle_SW_00.png",
-      2: "assets/sprites/runtime/herb-hare-v1/herb-hare_herb-hare_idle_SW_00.png",
-      3: "assets/sprites/runtime/herb-hare-v1/herb-hare_focaccia-jackrabbit_idle_SW_00.png",
-      4: "assets/sprites/runtime/herb-hare-v1/herb-hare_greenhouse-jumper_idle_SW_00.png",
-    },
-    green_juice_goose: {
-      1: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_juice-gosling_idle_SW_00.png",
-      2: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_celery-goose_idle_SW_00.png",
-      3: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_garden-brunch-gander_idle_SW_00.png",
-      4: "assets/sprites/runtime/green-juice-goose-v1/green-juice-goose_green-juice-goose_idle_SW_00.png",
-    },
-    caprese_capybara: {
-      1: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_mozzarella-pup_idle_SW_00.png",
-      2: "assets/sprites/runtime/caprese-capybara-v1/caprese-capybara_caprese-capybara_idle_SW_00.png",
-      3: "assets/sprites/runtime/caprese-capybara-v2/caprese-capybara_basil-pond-capybara_idle_SW_00.png",
-      4: "assets/sprites/runtime/caprese-capybara-v2/caprese-capybara_antipasto-harbour_idle_SW_00.png",
-    },
-    vinaigrette_viper: {
-      1: "assets/sprites/runtime/vinaigrette-viper-v1/vinaigrette-viper_vinaigrette-viper_idle_SW_00.png",
-      2: "assets/sprites/runtime/vinaigrette-viper-v1/vinaigrette-viper_peppercorn-viper_idle_SW_00.png",
-      3: "assets/sprites/runtime/vinaigrette-viper-v1/vinaigrette-viper_balsamic-coil_idle_SW_00.png",
-      4: "assets/sprites/runtime/vinaigrette-viper-v1/vinaigrette-viper_dressing-dragon_idle_SW_00.png",
-    },
-    kelp_koala: {
-      1: "assets/sprites/runtime/kelp-koala-v2/kelp-koala_kelp-joey_idle_SW_00.png",
-      2: "assets/sprites/runtime/kelp-koala-v2/kelp-koala_kelp-koala_idle_SW_00.png",
-      3: "assets/sprites/runtime/kelp-koala-v2/kelp-koala_seaweed-snacker_idle_SW_00.png",
-      4: "assets/sprites/runtime/kelp-koala-v2/kelp-koala_tide-grove-koala_idle_SW_00.png",
-    },
-    melon_mint_mantis: {
-      1: "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_mint-sprout-mantis_idle_SW_00.png",
-      2: "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_melon-mint-mantis_idle_SW_00.png",
-      3: "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_honeydew-blade_idle_SW_00.png",
-      4: "assets/sprites/runtime/melon-mint-mantis-v2/melon-mint-mantis_melon-grove-reaper_idle_SW_00.png",
-    },
-    coconut_shrimp_sheep: {
-      1: "assets/sprites/runtime/coconut-shrimp-sheep-v3/coconut-shrimp-sheep_coconut-lamb_idle_SW_00.png",
-      2: "assets/sprites/runtime/coconut-shrimp-sheep-v3/coconut-shrimp-sheep_coconut-shrimp-sheep_idle_SW_00.png",
-      3: "assets/sprites/runtime/coconut-shrimp-sheep-v3/coconut-shrimp-sheep_fried-fleece-shrimp_idle_SW_00.png",
-      4: "assets/sprites/runtime/coconut-shrimp-sheep-v3/coconut-shrimp-sheep_island-coconut-ram_idle_SW_00.png",
-    },
-    crab_cake_caterpillar: {
-      1: "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_crumb-grub_idle_SW_00.png",
-      2: "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_crab-cake-caterpillar_idle_SW_00.png",
-      3: "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_golden-shell-loaf_idle_SW_00.png",
-      4: "assets/sprites/runtime/crab-cake-caterpillar-v2/crab-cake-caterpillar_boardwalk-crab-cake-moth_idle_SW_00.png",
-    },
-    pico_de_gallo_gecko: {
-      1: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_tomato-gecko_idle_SW_00.png",
-      2: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_pico-de-gallo-gecko_idle_SW_00.png",
-      3: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_salsa-crest-gecko_idle_SW_00.png",
-      4: "assets/sprites/runtime/pico-de-gallo-gecko-v3/pico-de-gallo-gecko_market-bowl-basilisk_idle_SW_00.png",
-    },
-    [GIRAFFE_BOSS_TYPE_ID]: {
-      1: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/banana-split-giraffe-boss-v2/banana-split-giraffe-boss_banana-split-giraffe-boss-high-detail_idle_SW_00.png?v=1",
-    },
-  };
-  const REALITY_RUNTIME_SPRITES = {
-    toast_tortoise: {
-      1: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-toast-tortoise-v4/toast_tortoise-bulwark-siege-tank-mk4_idle_SW_00.png?v=1",
-    },
-    sushi_seal: {
-      1: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-sushi-seal-v2/sushi_seal-tide-recon-drone-mk4_idle_SW_00.png?v=1",
-    },
-    taco_tiger: {
-      1: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-taco-tiger-v3/taco_tiger-shellbreaker-assault-rig-mk4_idle_SW_00.png?v=1",
-    },
-    berry_bat: {
-      1: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-berry-bat-v1/berry_bat-nightwing-swarm-drone-mk4_idle_SW_00.png?v=1",
-    },
-    noodle_newt: {
-      1: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk1_idle_SW_00.png?v=3",
-      2: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk2_idle_SW_00.png?v=3",
-      3: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk3_idle_SW_00.png?v=3",
-      4: "assets/sprites/runtime/war-machine-noodle-newt-v3/noodle_newt-serpent-medic-rig-mk4_idle_SW_00.png?v=3",
-    },
-    pancake_penguin: {
-      1: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-pancake-penguin-v1/pancake_penguin-dawn-shield-walker-mk4_idle_SW_00.png?v=1",
-    },
-    pretzel_python: {
-      1: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-pretzel-python-v1/pretzel_python-knotwire-serpent-engine-mk4_idle_SW_00.png?v=1",
-    },
-    popcorn_porcupine: {
-      1: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk1_idle_SW_00.png?v=2",
-      2: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk2_idle_SW_00.png?v=2",
-      3: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk3_idle_SW_00.png?v=2",
-      4: "assets/sprites/runtime/war-machine-popcorn-porcupine-v2/popcorn_porcupine-shrapnel-quill-battery-mk4_idle_SW_00.png?v=2",
-    },
-    yogurt_yeti: {
-      1: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-yogurt-yeti-v2/yogurt_yeti-cryo-support-golem-mk4_idle_SW_00.png?v=1",
-    },
-    bagel_beaver: {
-      1: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-bagel-beaver-v2/bagel_beaver-foundry-dam-engine-mk4_idle_SW_00.png?v=1",
-    },
-    bao_bun_badger: {
-      1: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-bao-bun-badger-v1/bao_bun_badger-steamcart-bulwark-mk4_idle_SW_00.png?v=1",
-    },
-    donut_dodo: {
-      1: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-donut-dodo-v2/donut_dodo-phoenix-scrap-bomber-mk4_idle_SW_00.png?v=1",
-    },
-    kimchi_chameleon: {
-      1: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-kimchi-chameleon-v1/kimchi_chameleon-ferment-camo-unit-mk4_idle_SW_00.png?v=1",
-    },
-    waffle_walrus: {
-      1: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk1_idle_SW_00.png?v=3",
-      2: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk2_idle_SW_00.png?v=3",
-      3: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk3_idle_SW_00.png?v=3",
-      4: "assets/sprites/runtime/war-machine-waffle-walrus-v3/waffle_walrus-syrup-tusk-siege-engine-mk4_idle_SW_00.png?v=3",
-    },
-    dumpling_armadillo: {
-      1: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-dumpling-armadillo-v3/dumpling_armadillo-steam-bastion-dozer-mk4_idle_SW_00.png?v=1",
-    },
-    lemon_meringue_lynx: {
-      1: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-lemon-meringue-lynx-v3/lemon_meringue_lynx-acid-cleanser-stalker-mk4_idle_SW_00.png?v=1",
-    },
-    shakshuka_shark: {
-      1: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-shakshuka-shark-v4/shakshuka_shark-thermal-megalodon-subtank-mk4_idle_SW_00.png?v=1",
-    },
-    saltwater_taffy_otter: {
-      1: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-saltwater-taffy-otter-v3/saltwater_taffy_otter-tide-bind-strider-mk4_idle_SW_00.png?v=1",
-    },
-    croissant_kraken: {
-      1: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-croissant-kraken-v3/croissant_kraken-layered-leviathan-rig-mk4_idle_SW_00.png?v=1",
-    },
-    fortune_cookie_fox: {
-      1: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-fortune-cookie-fox-v3/fortune_cookie_fox-oracle-chance-engine-mk4_idle_SW_00.png?v=1",
-    },
-    mochi_mammoth: {
-      1: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk1_idle_SW_00.png?v=4",
-      2: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk2_idle_SW_00.png?v=4",
-      3: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk3_idle_SW_00.png?v=4",
-      4: "assets/sprites/runtime/war-machine-mochi-mammoth-v4/mochi_mammoth-festival-colossus-walker-mk4_idle_SW_00.png?v=4",
-    },
-    gingerbread_golem: {
-      1: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-gingerbread-golem-v3/gingerbread_golem-citadel-decoy-guardian-mk4_idle_SW_00.png?v=1",
-    },
-    boba_basilisk: {
-      1: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-boba-basilisk-v5/boba_basilisk-pearl-gorgon-artillery-mk4_idle_SW_00.png?v=1",
-    },
-    iceberg_oyster: {
-      1: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-iceberg-oyster-v4/iceberg_oyster-abyssal-lock-core-mk4_idle_SW_00.png?v=1",
-    },
-    herb_hare: {
-      1: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-herb-hare-v2/herb_hare-greenhouse-jumper-rig-mk4_idle_SW_00.png?v=1",
-    },
-    green_juice_goose: {
-      1: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk1_idle_SW_00.png?v=2",
-      2: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk2_idle_SW_00.png?v=2",
-      3: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk3_idle_SW_00.png?v=2",
-      4: "assets/sprites/runtime/war-machine-green-juice-goose-v2/green_juice_goose-garden-volley-gunship-mk4_idle_SW_00.png?v=2",
-    },
-    caprese_capybara: {
-      1: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-caprese-capybara-v1/caprese_capybara-antipasto-harbor-platform-mk4_idle_SW_00.png?v=1",
-    },
-    vinaigrette_viper: {
-      1: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-vinaigrette-viper-v1/vinaigrette_viper-dressing-dragon-coil-mk4_idle_SW_00.png?v=1",
-    },
-    kelp_koala: {
-      1: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-kelp-koala-v2/kelp_koala-tide-grove-lock-drone-mk4_idle_SW_00.png?v=1",
-    },
-    melon_mint_mantis: {
-      1: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-melon-mint-mantis-v1/melon_mint_mantis-melon-grove-reaper-mk4_idle_SW_00.png?v=1",
-    },
-    coconut_shrimp_sheep: {
-      1: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-coconut-shrimp-sheep-v1/coconut_shrimp_sheep-island-ram-artillery-mk4_idle_SW_00.png?v=1",
-    },
-    crab_cake_caterpillar: {
-      1: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-crab-cake-caterpillar-v1/crab_cake_caterpillar-boardwalk-moth-tank-mk4_idle_SW_00.png?v=1",
-    },
-    pico_de_gallo_gecko: {
-      1: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-pico-de-gallo-gecko-v1/pico_de_gallo_gecko-market-bowl-basilisk-mk4_idle_SW_00.png?v=1",
-    },
-    pepper_prawn: {
-      1: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-pepper-prawn-v1/pepper_prawn-tidefire-assault-skimmer-mk4_idle_SW_00.png?v=1",
-    },
-    hot_chip_hamster: {
-      1: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk1_idle_SW_00.png?v=3",
-      2: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk2_idle_SW_00.png?v=3",
-      3: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk3_idle_SW_00.png?v=3",
-      4: "assets/sprites/runtime/war-machine-hot-chip-hamster-v3/hot_chip_hamster-kettlefire-wheel-rig-mk4_idle_SW_00.png?v=3",
-    },
-    benedict_lobster: {
-      1: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-benedict-lobster-v2/benedict_lobster-brunch-breaker-siege-rig-mk4_idle_SW_00.png?v=1",
-    },
-    curry_crab: {
-      1: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-curry-crab-v1/curry_crab-vindaloo-breaker-tank-mk4_idle_SW_00.png?v=1",
-    },
-    churro_cheetah: {
-      1: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk1_idle_SW_00.png?v=3",
-      2: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk2_idle_SW_00.png?v=3",
-      3: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk3_idle_SW_00.png?v=3",
-      4: "assets/sprites/runtime/war-machine-churro-cheetah-v2/churro_cheetah_dulce-striker-rig-mk4_idle_SW_00.png?v=3",
-    },
-    granola_goat: {
-      1: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-granola-goat-v1/granola_goat-harvest-ibex-walker-mk4_idle_SW_00.png?v=1",
-    },
-    breakfast_burrito_boar: {
-      1: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk1_idle_SW_00.png?v=2",
-      2: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk2_idle_SW_00.png?v=2",
-      3: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk3_idle_SW_00.png?v=2",
-      4: "assets/sprites/runtime/war-machine-breakfast-burrito-boar-v2/breakfast_burrito_boar-brunch-cart-dozer-mk4_idle_SW_00.png?v=2",
-    },
-    caesar_salamander: {
-      1: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk1_idle_SW_00.png?v=2",
-      2: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk2_idle_SW_00.png?v=2",
-      3: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk3_idle_SW_00.png?v=2",
-      4: "assets/sprites/runtime/war-machine-caesar-salamander-v2/caesar_salamander-sovereign-support-rig-mk4_idle_SW_00.png?v=2",
-    },
-    cucumber_cobra: {
-      1: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk1_idle_SW_00.png?v=2",
-      2: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk2_idle_SW_00.png?v=2",
-      3: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk3_idle_SW_00.png?v=2",
-      4: "assets/sprites/runtime/war-machine-cucumber-cobra-v2/cucumber_cobra-garden-coil-control-rig-mk4_idle_SW_00.png?v=2",
-    },
-    avocado_axolotl: {
-      1: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk1_idle_SW_00.png?v=2",
-      2: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk2_idle_SW_00.png?v=2",
-      3: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk3_idle_SW_00.png?v=2",
-      4: "assets/sprites/runtime/war-machine-avocado-axolotl-v2/avocado_axolotl-pitguard-reactor-rig-mk4_idle_SW_00.png?v=2",
-    },
-    [GIRAFFE_BOSS_TYPE_ID]: {
-      1: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/war-machine-banana-split-giraffe-boss-v1/war-machine-banana-split-giraffe-boss_holograph-projector-giraffe-boss_idle_SW_00.png?v=1",
-    },
-    [FINAL_BOSS_TYPE_ID]: {
-      1: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/cyber-brain-final-boss-v1/cyber_brain_final_boss-overmind-core_idle_SW_00.png?v=1",
-    },
-    [FINAL_BOSS_MINION_TYPE_ID]: {
-      1: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-1_idle_SW_00.png?v=1",
-      2: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-2_idle_SW_00.png?v=1",
-      3: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-3_idle_SW_00.png?v=1",
-      4: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-4_idle_SW_00.png?v=1",
-      5: "assets/sprites/runtime/brainstem-wire-minions-v3-thin-outline/brainstem_wire_minion-5_idle_SW_00.png?v=1",
-    },
-  };
-  const DEFEAT_STILL_SPRITES = {
-    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-defeat-food-v1.png",
-    sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-defeat-food-v1.png",
-    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-defeat-food-v1.png",
-    berry_bat: "assets/sprites/runtime/defeat-stills/berry-bat-defeat-food-v1.png",
-    noodle_newt: "assets/sprites/runtime/defeat-stills/noodle-newt-defeat-food-v1.png",
-    pancake_penguin: "assets/sprites/runtime/defeat-stills/pancake-penguin-defeat-food-v1.png",
-    pretzel_python: "assets/sprites/runtime/defeat-stills/pretzel-python-defeat-food-v1.png",
-    popcorn_porcupine: "assets/sprites/runtime/defeat-stills/popcorn-porcupine-defeat-food-v1.png",
-    donut_dodo: "assets/sprites/runtime/defeat-stills/donut-dodo-defeat-food-v1.png",
-    benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-defeat-food-v1.png",
-    curry_crab: "assets/sprites/runtime/defeat-stills/curry-crab-defeat-food-v1.png",
-    hot_chip_hamster: "assets/sprites/runtime/defeat-stills/hot-chip-hamster-defeat-food-v1.png",
-    waffle_walrus: "assets/sprites/runtime/defeat-stills/waffle-walrus-defeat-food-v1.png",
-    bagel_beaver: "assets/sprites/runtime/defeat-stills/bagel-beaver-defeat-food-v1.png",
-    bao_bun_badger: "assets/sprites/runtime/defeat-stills/bao-bun-badger-defeat-food-v1.png",
-    pepper_prawn: "assets/sprites/runtime/defeat-stills/pepper-prawn-defeat-food-v1.png",
-    yogurt_yeti: "assets/sprites/runtime/defeat-stills/yogurt-yeti-defeat-food-v1.png",
-    kimchi_chameleon: "assets/sprites/runtime/defeat-stills/kimchi-chameleon-defeat-food-v1.png",
-    dumpling_armadillo: "assets/sprites/runtime/defeat-stills/dumpling-armadillo-defeat-food-v1.png",
-    lemon_meringue_lynx: "assets/sprites/runtime/defeat-stills/lemon-meringue-lynx-defeat-food-v1.png",
-    shakshuka_shark: "assets/sprites/runtime/defeat-stills/shakshuka-shark-defeat-food-v1.png",
-    boba_basilisk: "assets/sprites/runtime/defeat-stills/boba-basilisk-defeat-food-v1.png",
-    croissant_kraken: "assets/sprites/runtime/defeat-stills/croissant-kraken-defeat-food-v1.png",
-    fortune_cookie_fox: "assets/sprites/runtime/defeat-stills/fortune-cookie-fox-defeat-food-v1.png",
-    mochi_mammoth: "assets/sprites/runtime/defeat-stills/mochi-mammoth-defeat-food-v1.png",
-    gingerbread_golem: "assets/sprites/runtime/defeat-stills/gingerbread-golem-defeat-food-v1.png",
-    iceberg_oyster: "assets/sprites/runtime/defeat-stills/iceberg-oyster-defeat-food-v1.png",
-    saltwater_taffy_otter: "assets/sprites/runtime/defeat-stills/saltwater-taffy-otter-defeat-food-v1.png",
-    churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-defeat-food-v1.png",
-    granola_goat: "assets/sprites/runtime/defeat-stills/granola-goat-defeat-food-v1.png",
-    breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-defeat-food-v1.png",
-    caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-defeat-food-v2.png",
-    cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-defeat-food-v2.png",
-    avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-defeat-food-v2.png",
-    herb_hare: "assets/sprites/runtime/defeat-stills/herb-hare-defeat-food-v2.png",
-    green_juice_goose: "assets/sprites/runtime/defeat-stills/green-juice-goose-defeat-food-v1.png",
-    caprese_capybara: "assets/sprites/runtime/defeat-stills/caprese-capybara-defeat-food-v2.png",
-    vinaigrette_viper: "assets/sprites/runtime/defeat-stills/vinaigrette-viper-defeat-food-v2.png",
-    kelp_koala: "assets/sprites/runtime/defeat-stills/kelp-koala-defeat-food-v1.png",
-    melon_mint_mantis: "assets/sprites/runtime/defeat-stills/melon-mint-mantis-defeat-food-v1.png",
-    coconut_shrimp_sheep: "assets/sprites/runtime/defeat-stills/coconut-shrimp-sheep-defeat-food-v1.png",
-    crab_cake_caterpillar: "assets/sprites/runtime/defeat-stills/crab-cake-caterpillar-defeat-food-v1.png",
-    pico_de_gallo_gecko: "assets/sprites/runtime/defeat-stills/pico-de-gallo-gecko-defeat-food-v1.png",
-    [GIRAFFE_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
-  };
-  const REALITY_DEFEAT_STILL_SPRITES = {
-    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v4.png?v=1",
-    sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-war-machine-defeat-v2.png?v=1",
-    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-war-machine-defeat-v3.png?v=1",
-    berry_bat: "assets/sprites/runtime/defeat-stills/berry-bat-war-machine-defeat-v1.png?v=1",
-    noodle_newt: "assets/sprites/runtime/defeat-stills/noodle-newt-war-machine-defeat-v3.png?v=3",
-    pancake_penguin: "assets/sprites/runtime/defeat-stills/pancake-penguin-war-machine-defeat-v1.png?v=1",
-    pretzel_python: "assets/sprites/runtime/defeat-stills/pretzel-python-war-machine-defeat-v1.png?v=1",
-    popcorn_porcupine: "assets/sprites/runtime/defeat-stills/popcorn-porcupine-war-machine-defeat-v2.png?v=2",
-    yogurt_yeti: "assets/sprites/runtime/defeat-stills/yogurt-yeti-war-machine-defeat-v2.png?v=1",
-    bagel_beaver: "assets/sprites/runtime/defeat-stills/bagel-beaver-war-machine-defeat-v2.png?v=1",
-    bao_bun_badger: "assets/sprites/runtime/defeat-stills/bao-bun-badger-war-machine-defeat-v1.png?v=1",
-    donut_dodo: "assets/sprites/runtime/defeat-stills/donut-dodo-war-machine-defeat-v2.png?v=1",
-    kimchi_chameleon: "assets/sprites/runtime/defeat-stills/kimchi-chameleon-war-machine-defeat-v1.png?v=1",
-    waffle_walrus: "assets/sprites/runtime/defeat-stills/waffle-walrus-war-machine-defeat-v3.png?v=3",
-    dumpling_armadillo: "assets/sprites/runtime/defeat-stills/dumpling-armadillo-war-machine-defeat-v3.png?v=1",
-    lemon_meringue_lynx: "assets/sprites/runtime/defeat-stills/lemon-meringue-lynx-war-machine-defeat-v3.png?v=1",
-    shakshuka_shark: "assets/sprites/runtime/defeat-stills/shakshuka-shark-war-machine-defeat-v4.png?v=1",
-    saltwater_taffy_otter: "assets/sprites/runtime/defeat-stills/saltwater-taffy-otter-war-machine-defeat-v3.png?v=1",
-    croissant_kraken: "assets/sprites/runtime/defeat-stills/croissant-kraken-war-machine-defeat-v3.png?v=1",
-    fortune_cookie_fox: "assets/sprites/runtime/defeat-stills/fortune-cookie-fox-war-machine-defeat-v3.png?v=1",
-    mochi_mammoth: "assets/sprites/runtime/defeat-stills/mochi-mammoth-war-machine-defeat-v4.png?v=4",
-    gingerbread_golem: "assets/sprites/runtime/defeat-stills/gingerbread-golem-war-machine-defeat-v3.png?v=1",
-    boba_basilisk: "assets/sprites/runtime/defeat-stills/boba-basilisk-war-machine-defeat-v5.png?v=1",
-    iceberg_oyster: "assets/sprites/runtime/defeat-stills/iceberg-oyster-war-machine-defeat-v4.png?v=1",
-    herb_hare: "assets/sprites/runtime/defeat-stills/herb-hare-war-machine-defeat-v2.png?v=1",
-    green_juice_goose: "assets/sprites/runtime/defeat-stills/green-juice-goose-war-machine-defeat-v2.png?v=2",
-    caprese_capybara: "assets/sprites/runtime/defeat-stills/caprese-capybara-war-machine-defeat-v1.png?v=1",
-    vinaigrette_viper: "assets/sprites/runtime/defeat-stills/vinaigrette-viper-war-machine-defeat-v1.png?v=1",
-    kelp_koala: "assets/sprites/runtime/defeat-stills/kelp-koala-war-machine-defeat-v2.png?v=1",
-    melon_mint_mantis: "assets/sprites/runtime/defeat-stills/melon-mint-mantis-war-machine-defeat-v1.png?v=1",
-    coconut_shrimp_sheep: "assets/sprites/runtime/defeat-stills/coconut-shrimp-sheep-war-machine-defeat-v1.png?v=1",
-    crab_cake_caterpillar: "assets/sprites/runtime/defeat-stills/crab-cake-caterpillar-war-machine-defeat-v1.png?v=1",
-    pico_de_gallo_gecko: "assets/sprites/runtime/defeat-stills/pico-de-gallo-gecko-war-machine-defeat-v1.png?v=1",
-    pepper_prawn: "assets/sprites/runtime/defeat-stills/pepper-prawn-war-machine-defeat-v1.png?v=1",
-    hot_chip_hamster: "assets/sprites/runtime/defeat-stills/hot-chip-hamster-war-machine-defeat-v3.png?v=3",
-    benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v2.png?v=1",
-    curry_crab: "assets/sprites/runtime/defeat-stills/curry-crab-war-machine-defeat-v1.png?v=1",
-    churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v2.png?v=3",
-    [GIRAFFE_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
-    granola_goat: "assets/sprites/runtime/defeat-stills/granola-goat-war-machine-defeat-v1.png?v=1",
-    breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v2.png?v=2",
-    caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v2.png?v=2",
-    cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v2.png?v=2",
-    avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v2.png?v=2",
-    [FINAL_BOSS_TYPE_ID]: "assets/sprites/runtime/defeat-stills/cyber-brain-final-boss-defeat-v1.png?v=1",
-    [FINAL_BOSS_MINION_TYPE_ID]: {
-      1: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier1.png?v=1",
-      2: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier2.png?v=1",
-      3: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier3.png?v=1",
-      4: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier4.png?v=1",
-      5: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier5.png?v=1",
-    },
-  };
   let unitSeq = 1;
 
   function randInt(max) {
@@ -6807,41 +991,35 @@
   }
 
   function itemTier(tier = 1) {
-    return Math.max(1, Math.min(MAX_ITEM_TIER, tier || 1));
+    return window.FoodAnimalsCatalogRuntime.itemTier(tier, MAX_ITEM_TIER);
   }
 
   function itemTierScale(tier = 1) {
-    return ITEM_TIER_SCALING[itemTier(tier)] || ITEM_TIER_SCALING[1];
+    return window.FoodAnimalsCatalogRuntime.itemTierScale(tier, ITEM_TIER_SCALING);
   }
 
   function itemLevelLabel(item) {
-    return `Lv ${itemTier(item?.tier)}`;
+    return window.FoodAnimalsCatalogRuntime.itemLevelLabel(item, MAX_ITEM_TIER);
   }
 
   function itemDisplayShort(item) {
-    const tier = itemTier(item?.tier);
-    const itemShort = displayItemShort(item);
-    return tier > 1 ? `${itemShort} ${tier}` : itemShort;
+    return window.FoodAnimalsCatalogRuntime.itemDisplayShort(item, displayItemShort, MAX_ITEM_TIER);
   }
 
   function scaleItemForTier(item, tier = 1) {
-    const scale = itemTierScale(tier);
-    if (scale === 1) return item;
-    ITEM_SCALABLE_PROPS.forEach((prop) => {
-      if (typeof item[prop] !== "number") return;
-      const scaled = item[prop] * scale;
-      item[prop] = Number.isInteger(item[prop]) ? Math.max(1, Math.round(scaled)) : Number(scaled.toFixed(4));
+    return window.FoodAnimalsCatalogRuntime.scaleItemForTier(item, tier, {
+      scaling: ITEM_TIER_SCALING,
+      scalableProps: ITEM_SCALABLE_PROPS,
     });
-    return item;
   }
 
   function makeItem(itemId = "sunny_side_egg", tier = 1) {
     const item = itemInfo(itemId);
-    return scaleItemForTier({
-      ...item,
-      tier: itemTier(tier),
-      uid: unitSeq++,
-    }, tier);
+    return window.FoodAnimalsCatalogRuntime.makeItemData(item, tier, unitSeq++, {
+      maxTier: MAX_ITEM_TIER,
+      scaling: ITEM_TIER_SCALING,
+      scalableProps: ITEM_SCALABLE_PROPS,
+    });
   }
 
   function cloneItem(item) {
@@ -6854,7 +1032,7 @@
 
   function shopTierCostMultiplier(entry) {
     const tier = isItem(entry) ? itemTier(entry?.tier) : Math.max(1, entry?.tier || 1);
-    return SHOP_TIER_COST_MULTIPLIERS[Math.min(3, tier)] || 1;
+    return window.FoodAnimalsShopEconomy.tierCostMultiplier(SHOP_TIER_COST_MULTIPLIERS, tier);
   }
 
   function entryCost(entry) {
@@ -6866,7 +1044,7 @@
   }
 
   function currentShopSaleChance() {
-    return SHOP_SALE_CHANCES[Math.max(1, Math.min(MAX_SHOP_LEVEL, state.shopLevel))] || 0.08;
+    return window.FoodAnimalsShopEconomy.levelChance(SHOP_SALE_CHANCES, MAX_SHOP_LEVEL, state.shopLevel, 0.08);
   }
 
   function rollShopSlotSale(index, entry) {
@@ -7179,66 +1357,7 @@
   }
 
   function itemPrimaryStat(item) {
-    if (item?.drinkAttackSpeedPct) return { label: "LINE", value: `+${Math.round(item.drinkAttackSpeedPct * 100)}%` };
-    if (item?.drinkMaxHpPct) return { label: "LINE", value: `+${Math.round(item.drinkMaxHpPct * 100)}%` };
-    if (item?.drinkAbilityPowerPct) return { label: "LINE", value: `+${Math.round(item.drinkAbilityPowerPct * 100)}%` };
-    if (item?.damageBonusPct) return { label: "DMG", value: `+${Math.round(item.damageBonusPct * 100)}%` };
-    if (item?.attackSpeedPct) return { label: "SPD", value: `+${Math.round(item.attackSpeedPct * 100)}%` };
-    if (item?.maxHpBonusPct) return { label: "HP", value: `+${Math.round(item.maxHpBonusPct * 100)}%` };
-    if (item?.abilityPowerBonusPct) return { label: "PWR", value: `+${Math.round(item.abilityPowerBonusPct * 100)}%` };
-    if (item?.onAttackShieldPct) return { label: "SHLD", value: "Atk" };
-    if (item?.onHitShieldPct) return { label: "SHLD", value: "Hit" };
-    if (item?.shieldCrackleDamagePct) return { label: "CRKL", value: `${Math.round(item.shieldCrackleDamagePct * 100)}%` };
-    if (item?.burnDamagePct) return { label: "BURN", value: `${Math.round(item.burnDamagePct * 100)}%` };
-    if (item?.supportBonusPct) return { label: "SUP", value: `+${Math.round(item.supportBonusPct * 100)}%` };
-    if (item?.markDamagePct) return { label: "MARK", value: `+${Math.round(item.markDamagePct * 100)}%` };
-    if (item?.damageTakenPct) return { label: "RISK", value: `+${Math.round(item.damageTakenPct * 100)}%` };
-    if (item?.selfHealPct) return { label: "HEAL", value: `3rd` };
-    if (item?.splashDamagePct) return { label: "AOE", value: `${Math.round(item.splashDamagePct * 100)}%` };
-    if (item?.lateFightDamagePct) return { label: "LATE", value: `+${Math.round(item.lateFightDamagePct * 100)}%` };
-    if (item?.lowHpLifestealPct) return { label: "LOW", value: `HP` };
-    if (item?.cooldownDelay) return { label: "SLOW", value: `${item.cooldownDelay.toFixed(2)}s` };
-    if (item?.supportHastePct) return { label: "HASTE", value: `+${Math.round(item.supportHastePct * 100)}%` };
-    if (item?.antiSupportPct) return { label: "CUT", value: `${Math.round(item.antiSupportPct * 100)}%` };
-    if (item?.receivedSupportSharePct) return { label: "SHARE", value: `${Math.round(item.receivedSupportSharePct * 100)}%` };
-    if (item?.bounceDamagePct) return { label: "BNCE", value: `${Math.round(item.bounceDamagePct * 100)}%` };
-    if (item?.shieldedAttackBonusPct) return { label: "SHLD", value: `+${Math.round(item.shieldedAttackBonusPct * 100)}%` };
-    if (item?.overhealShieldPct) return { label: "OVER", value: `${Math.round(item.overhealShieldPct * 100)}%` };
-    if (item?.mergeProgressBonus) return { label: "MERGE", value: `+${item.mergeProgressBonus}` };
-    if (item?.frontRowDamageReductionPct) return { label: "FRONT", value: `-${Math.round(item.frontRowDamageReductionPct * 100)}%` };
-    if (item?.backRowTargeting) return { label: "AIM", value: "Back" };
-    if (item?.adjacentStartAttackBuffPct) return { label: "BUFF", value: `+${Math.round(item.adjacentStartAttackBuffPct * 100)}%` };
-    if (item?.adjacentStartShieldPct) return { label: "SHLD", value: "Adj" };
-    if (item?.pierceDamagePct) return { label: "PIERCE", value: `${Math.round(item.pierceDamagePct * 100)}%` };
-    if (item?.lowHpBurnDamagePct) return { label: "BURN", value: "Low" };
-    if (item?.deathSaveShieldPct) return { label: "SAVE", value: "1" };
-    if (item?.firstDebuffCleanseHealPct) return { label: "CLNS", value: "1" };
-    if (item?.timedHastePct) return { label: "HASTE", value: `${item.timedHasteAt}s` };
-    if (item?.shieldedTargetDamagePct) return { label: "VS", value: "Shield" };
-    if (item?.attackSlowPct) return { label: "SLOW", value: `${Math.round(item.attackSlowPct * 100)}%` };
-    if (item?.statusDurationReductionPct) return { label: "RESIST", value: `${Math.round(item.statusDurationReductionPct * 100)}%` };
-    if (item?.statusDamageReductionPct) return { label: "AOE", value: `-${Math.round(item.statusDamageReductionPct * 100)}%` };
-    if (item?.decoyHpPct) return { label: "DECOY", value: `${Math.round(item.decoyHpPct * 100)}%` };
-    if (item?.firstHitRedirect) return { label: "HIT", value: "Block" };
-    if (item?.periodicDamage) return { label: "POP", value: item.periodicDamage };
-    if (item?.sellBonusGold) return { label: "SELL", value: { currency: item.sellBonusGold, sign: "+" } };
-    if (item?.surviveGold) return { label: "GOLD", value: { currency: item.surviveGold, sign: "+" } };
-    if (item?.firstItemDiscountGold) return { label: "SALE", value: { currency: item.firstItemDiscountGold, sign: "-" } };
-    if (item?.sameLineShopChancePct) return { label: "ODDS", value: `+${Math.round(item.sameLineShopChancePct * 100)}%` };
-    if (item?.extraAdjacentHealPct) return { label: "HEAL", value: "Splash" };
-    if (item?.shieldCapBonusPct) return { label: "CAP", value: `+${Math.round(item.shieldCapBonusPct * 100)}%` };
-    if (item?.statusDurationBonusPct) return { label: "STAT", value: `+${Math.round(item.statusDurationBonusPct * 100)}%` };
-    if (item?.supportAttackBuffPct) return { label: "BUFF", value: `+${Math.round(item.supportAttackBuffPct * 100)}%` };
-    if (item?.battleStartHpLossPct) return { label: "RISK", value: `-${Math.round(item.battleStartHpLossPct * 100)}%` };
-    if (item?.firstAttacksBonusPct) return { label: "BURST", value: `${item.firstAttacksCount}` };
-    if (item?.selfBurnDamagePct) return { label: "BURN", value: "Self" };
-    if (item?.shieldedAttackSpeedPct) return { label: "SPD", value: "Shield" };
-    if (item?.teamVulnerabilityPct) return { label: "VULN", value: `+${Math.round(item.teamVulnerabilityPct * 100)}%` };
-    if (item?.executeSplashDamagePct) return { label: "EXEC", value: "Splash" };
-    if (item?.teamOverhealShieldPct) return { label: "OVER", value: "Team" };
-    if (item?.teamHastePct) return { label: "HASTE", value: "Team" };
-    if (item?.supportRowEchoPct) return { label: "ROW", value: "Echo" };
-    return { label: "ITEM", value: "On" };
+    return window.FoodAnimalsCatalogRuntime.itemPrimaryStat(item);
   }
 
   function refreshUnitItemStats(unit) {
@@ -7265,44 +1384,10 @@
 
   function makeUnit(typeId, tier = 1) {
     const base = CATALOG.find((u) => u.id === typeId) || CATALOG[0];
-    const form = base.forms[Math.max(0, Math.min(base.forms.length - 1, tier - 1))];
-    const scaling = tierScaling(tier);
-    const maxHp = Math.round(base.hp * scaling.hp * GLOBAL_HP_SCALE);
-    const atk = Math.round(base.atk * scaling.atk);
-    const abilityPower = Math.max(1, Math.round(base.atk * scaling.ability));
-    return {
-      kind: "unit",
-      uid: unitSeq++,
-      typeId: base.id,
-      lineName: base.name,
-      name: form.name,
-      short: form.short,
-      emoji: base.emoji,
-      rarity: base.rarity || "common",
-      family: base.family || "meal",
-      traits: [...(base.traits || [])],
-      color: base.color,
-      accent: base.accent,
-      role: base.role,
-      ability: base.ability || "front",
-      abilityText: base.abilityText || "Front blockers",
-      tier,
-      hp: maxHp,
-      maxHp,
-      baseAtk: atk,
-      atk,
-      abilityPower,
-      speed: Math.max(0.28, base.speed * scaling.speed),
-      cooldown: Math.random() * 0.25,
-      targetUid: null,
-      shield: 0,
-      x: 0,
-      y: 0,
-      side: "ally",
-      slot: null,
-      item: null,
-      dead: false,
-    };
+    return window.FoodAnimalsCatalogRuntime.makeUnitData(base, tier, unitSeq++, {
+      globalHpScale: GLOBAL_HP_SCALE,
+      tierScaling: TIER_SCALING,
+    });
   }
 
   function isFinalBossUnitType(typeId) {
@@ -7376,7 +1461,7 @@
       traits: ["sweet", "bakery"],
       color: "#f7c45f",
       accent: "#78efff",
-      role: "Level 10 Boss",
+      role: "Wave 10 Boss",
       ability: "giraffe_boss_glitch",
       abilityText: "Glitch sundae beam",
       tier: 4,
@@ -7407,26 +1492,27 @@
   }
 
   function tierScaling(tier) {
-    return TIER_SCALING[Math.max(1, Math.min(TIER_SCALING.length - 1, tier))] || TIER_SCALING[1];
+    return window.FoodAnimalsCatalogRuntime.tierScaling(tier, TIER_SCALING);
   }
 
   function shopLevelInfo(level = state.shopLevel) {
-    const index = Math.max(0, Math.min(MAX_SHOP_LEVEL - 1, level - 1));
-    return SHOP_LEVELS[index] || SHOP_LEVELS[0];
+    return window.FoodAnimalsShopEconomy.levelInfo(SHOP_LEVELS, level);
   }
 
   function nextShopUpgradeCost() {
-    const baseCost = shopLevelInfo().upgradeCost;
-    if (baseCost === null) return null;
-    return Math.max(0, baseCost - (state.nextShopUpgradeDiscountGold || 0));
+    return window.FoodAnimalsShopEconomy.upgradeCost(
+      SHOP_LEVELS,
+      state.shopLevel,
+      state.nextShopUpgradeDiscountGold,
+    );
   }
 
   function currentShopRarityWeights() {
-    return { ...shopLevelInfo().rarityWeights };
+    return window.FoodAnimalsShopEconomy.rarityWeights(SHOP_LEVELS, state.shopLevel);
   }
 
   function shopLevelChance(chances, fallback) {
-    return chances[Math.max(1, Math.min(MAX_SHOP_LEVEL, state.shopLevel))] || fallback;
+    return window.FoodAnimalsShopEconomy.levelChance(chances, MAX_SHOP_LEVEL, state.shopLevel, fallback);
   }
 
   function currentDrinkShopChance() {
@@ -7438,75 +1524,72 @@
   }
 
   function currentItemShopChance() {
-    return Math.min(0.95, currentDrinkShopChance() + currentToppingShopChance());
+    return window.FoodAnimalsShopEconomy.itemChance(currentDrinkShopChance(), currentToppingShopChance());
   }
 
   function currentShopEntryTierChances(level = state.shopLevel) {
-    const completedUpgrades = Math.max(0, (level || 1) - 1);
-    if (completedUpgrades >= 4) return { tier2: 0.25, tier3: 0.1 };
-    if (completedUpgrades >= 2) return { tier2: 0.1, tier3: 0 };
-    return { tier2: 0, tier3: 0 };
+    return window.FoodAnimalsShopEconomy.entryTierChances(level);
   }
 
   function rollShopEntryTier(level = state.shopLevel) {
-    const chances = currentShopEntryTierChances(level);
-    const roll = Math.random();
-    if (roll < chances.tier3) return 3;
-    if (roll < chances.tier3 + chances.tier2) return 2;
-    return 1;
+    return window.FoodAnimalsShopEconomy.rollEntryTier(level);
+  }
+
+  function themedAsset(cozySrc, horrorSrc, options = {}) {
+    const horror = options.horror ?? (options.cozy ? false : realityBroken());
+    return window.FoodAnimalsThemeAssets.pick(horror, cozySrc, horrorSrc);
   }
 
   function currentShopkeeperSrc() {
-    if (realityBroken()) return REALITY_SHOPKEEPER_SRC;
-    return SHOPKEEPER_SRC;
+    return themedAsset(SHOPKEEPER_SRC, REALITY_SHOPKEEPER_SRC);
   }
 
   function currentShopkeeperStallSrc() {
-    return realityBroken() ? REALITY_SHOPKEEPER_STALL_SRC : SHOPKEEPER_STALL_SRC;
+    return themedAsset(SHOPKEEPER_STALL_SRC, REALITY_SHOPKEEPER_STALL_SRC);
   }
 
   function currentShopSlotBgSrc() {
-    return realityBroken() ? REALITY_SHOP_SLOT_BG_SRC : SHOP_SLOT_BG_SRC;
+    return themedAsset(SHOP_SLOT_BG_SRC, REALITY_SHOP_SLOT_BG_SRC);
   }
 
   function currentShopLockClothBgSrc() {
-    return realityBroken() ? REALITY_SHOP_LOCK_CLOTH_BG_SRC : SHOP_LOCK_CLOTH_BG_SRC;
+    return themedAsset(SHOP_LOCK_CLOTH_BG_SRC, REALITY_SHOP_LOCK_CLOTH_BG_SRC);
   }
 
   function currentBenchSlotBgSrc() {
-    return realityBroken() ? REALITY_BENCH_SLOT_BG_SRC : BENCH_SLOT_BG_SRC;
+    return themedAsset(BENCH_SLOT_BG_SRC, REALITY_BENCH_SLOT_BG_SRC);
   }
 
   function currentTeamIntelBgSrc() {
-    return realityBroken() ? REALITY_TEAM_INTEL_BG_SRC : TEAM_INTEL_BG_SRC;
+    return themedAsset(TEAM_INTEL_BG_SRC, REALITY_TEAM_INTEL_BG_SRC);
   }
 
   function currentCombatLedgerPanelBgSrc() {
-    return realityBroken() ? REALITY_COMBAT_LEDGER_PANEL_BG_SRC : COMBAT_LEDGER_PANEL_BG_SRC;
+    return themedAsset(COMBAT_LEDGER_PANEL_BG_SRC, REALITY_COMBAT_LEDGER_PANEL_BG_SRC);
   }
 
   function currentCombatLedgerMiniBgSrc() {
-    return realityBroken() ? REALITY_COMBAT_LEDGER_MINI_BG_SRC : COMBAT_LEDGER_MINI_BG_SRC;
+    return themedAsset(COMBAT_LEDGER_MINI_BG_SRC, REALITY_COMBAT_LEDGER_MINI_BG_SRC);
   }
 
   function currentCombatLedgerParticipantsBgSrc() {
-    return realityBroken() ? REALITY_COMBAT_LEDGER_PARTICIPANTS_BG_SRC : COMBAT_LEDGER_PARTICIPANTS_BG_SRC;
+    return themedAsset(COMBAT_LEDGER_PARTICIPANTS_BG_SRC, REALITY_COMBAT_LEDGER_PARTICIPANTS_BG_SRC);
   }
 
   function currentCombatLedgerLogBgSrc() {
-    return realityBroken() ? REALITY_COMBAT_LEDGER_LOG_BG_SRC : COMBAT_LEDGER_LOG_BG_SRC;
+    return themedAsset(COMBAT_LEDGER_LOG_BG_SRC, REALITY_COMBAT_LEDGER_LOG_BG_SRC);
   }
 
   function currentFoodMenuBgSrc() {
-    return realityBroken() ? REALITY_FOOD_MENU_BG_SRC : FOOD_MENU_BG_SRC;
+    return themedAsset(FOOD_MENU_BG_SRC, REALITY_FOOD_MENU_BG_SRC);
   }
 
   function currentCodexMenuButtonSrc() {
-    return realityBroken() ? REALITY_CODEX_MENU_BUTTON_SRC : CODEX_MENU_BUTTON_SRC;
+    return themedAsset(CODEX_MENU_BUTTON_SRC, REALITY_CODEX_MENU_BUTTON_SRC);
   }
 
   function currentUiIconAtlasSrc() {
-    return realityBroken() ? REALITY_UI_ICON_ATLAS_SRC : UI_ICON_ATLAS_SRC;
+    return themedAsset(UI_ICON_ATLAS_SRC, REALITY_UI_ICON_ATLAS_SRC);
   }
 
   function currentCodexMenuButtonRect() {
@@ -7526,19 +1609,19 @@
   }
 
   function currentBattleFieldBgSrc() {
-    return realityBroken() ? REALITY_BATTLE_FIELD_BG_SRC : BATTLE_FIELD_BG_SRC;
+    return themedAsset(BATTLE_FIELD_BG_SRC, REALITY_BATTLE_FIELD_BG_SRC);
   }
 
   function currentBoardPlateSlotSrc() {
-    return realityBroken() ? REALITY_BOARD_PLATE_SLOT_SRC : BOARD_PLATE_SLOT_SRC;
+    return themedAsset(BOARD_PLATE_SLOT_SRC, REALITY_BOARD_PLATE_SLOT_SRC);
   }
 
   function currentDrinkCoasterSlotSrc() {
-    return realityBroken() ? REALITY_DRINK_COASTER_SLOT_SRC : DRINK_COASTER_SLOT_SRC;
+    return themedAsset(DRINK_COASTER_SLOT_SRC, REALITY_DRINK_COASTER_SLOT_SRC);
   }
 
   function currentToppingStorageSlotSrc() {
-    return realityBroken() ? REALITY_TOPPING_STORAGE_SLOT_SRC : TOPPING_CUTTING_BOARD_SLOT_SRC;
+    return themedAsset(TOPPING_CUTTING_BOARD_SLOT_SRC, REALITY_TOPPING_STORAGE_SLOT_SRC);
   }
 
   function currentStatusBoardSrc(kind, options = {}) {
@@ -7934,18 +2017,7 @@
   }
 
   function chooseShopRarity() {
-    const weights = currentShopRarityWeights();
-    const entries = Object.values(RARITIES)
-      .map((rarity) => ({ ...rarity, shopWeight: weights[rarity.id] || 0 }))
-      .filter((rarity) => rarity.shopWeight > 0);
-    const total = entries.reduce((sum, rarity) => sum + rarity.shopWeight, 0);
-    if (total <= 0) return "common";
-    let roll = Math.random() * total;
-    for (const rarity of entries) {
-      roll -= rarity.shopWeight;
-      if (roll <= 0) return rarity.id;
-    }
-    return entries[entries.length - 1]?.id || "common";
+    return window.FoodAnimalsShopEconomy.chooseRarity(RARITIES, currentShopRarityWeights());
   }
 
   function rarityInfo(rarityId) {
@@ -7993,7 +2065,7 @@
   }
 
   function traitStageForCount(traitId, count) {
-    return traitInfo(traitId).thresholds.reduce((stage, threshold) => count >= threshold.count ? stage + 1 : stage, 0);
+    return window.FoodAnimalsTraitArenaRuntime.stageForCount(traitInfo(traitId), count);
   }
 
   function traitEffectText(traitId, stage) {
@@ -8012,42 +2084,19 @@
   }
 
   function traitCountForUnits(units) {
-    const counts = Object.fromEntries(Object.keys(TRAITS).map((id) => [id, 0]));
-    units
-      .filter((unit) => isUnit(unit) && !unit.ignoreTraits)
-      .forEach((unit) => {
-        (unit.traits || []).forEach((traitId) => {
-          counts[traitId] = (counts[traitId] || 0) + 1;
-        });
-      });
-    return counts;
+    return window.FoodAnimalsTraitArenaRuntime.countForUnits(units.filter(isUnit), Object.keys(TRAITS));
   }
 
   function traitSnapshotForUnits(units) {
-    const counts = traitCountForUnits(units);
-    return Object.keys(TRAITS).map((id) => {
-      const info = traitInfo(id);
-      const count = counts[id] || 0;
-      const stage = traitStageForCount(id, count);
-      const next = info.thresholds.find((threshold) => count < threshold.count);
-      return {
-        id,
-        label: info.label,
-        short: info.short,
-        color: info.color,
-        count,
-        stage,
-        active: stage > 0,
-        effect: traitEffectText(id, stage),
-        nextAt: next?.count || null,
-      };
+    return window.FoodAnimalsTraitArenaRuntime.snapshotForUnits(units.filter(isUnit), TRAITS, {
+      infoFor: traitInfo,
+      stageForCount: traitStageForCount,
+      effectText: traitEffectText,
     });
   }
 
   function compactTraitSnapshotForUnits(units) {
-    return traitSnapshotForUnits(units)
-      .filter((trait) => trait.count > 0)
-      .sort((a, b) => (b.active - a.active) || b.stage - a.stage || b.count - a.count || a.label.localeCompare(b.label));
+    return window.FoodAnimalsTraitArenaRuntime.compactSnapshot(traitSnapshotForUnits(units));
   }
 
   function activePlayerTraits() {
@@ -8073,7 +2122,7 @@
   }
 
   function unitHasTrait(unit, traitId) {
-    return Boolean(unit && !unit.ignoreTraits && unit.traits?.includes(traitId));
+    return window.FoodAnimalsTraitArenaRuntime.hasTrait(unit, traitId);
   }
 
   function activeTraitStage(unit, traitId) {
@@ -8188,19 +2237,15 @@
   }
 
   function hasAnyTrait(unit, traits = []) {
-    return traits.some((traitId) => unitHasTrait(unit, traitId));
+    return window.FoodAnimalsTraitArenaRuntime.hasAnyTrait(unit, traits);
   }
 
   function hasAnyFamily(unit, families = []) {
-    return families.includes(unit?.family);
+    return window.FoodAnimalsTraitArenaRuntime.hasAnyFamily(unit, families);
   }
 
   function arenaStatusDurationBonus(source) {
-    if (!source) return 0;
-    const arena = currentArena();
-    if (arena.id === "spice_bazaar" && (hasAnyTrait(source, ["spicy"]) || hasAnyFamily(source, ["spice", "fermented"]))) return 0.16;
-    if (arena.id === "frozen_parfait_peak" && hasAnyFamily(source, ["dairy"])) return 0.16;
-    return 0;
+    return window.FoodAnimalsTraitArenaRuntime.statusDurationBonus(currentArena(), source);
   }
 
   function arenaStatusClearMultiplier(unit) {
@@ -8210,55 +2255,20 @@
   }
 
   function arenaAttackClockBonus(unit) {
-    if (!unit) return 0;
-    const arena = currentArena();
-    if (arena.id === "rainy_fish_market" && unitHasTrait(unit, "ocean")) return 0.08;
-    if (arena.id === "street_festival" && hasAnyTrait(unit, ["street_food", "spicy", "snack"])) return 0.06;
-    if (arena.id === "frozen_parfait_peak" && hasAnyTrait(unit, ["ocean", "street_food"])) return -0.06;
-    return 0;
+    return window.FoodAnimalsTraitArenaRuntime.attackClockBonus(currentArena(), unit);
   }
 
   function arenaSupportMultiplier(unit) {
-    if (!unit) return 1;
-    const arena = currentArena();
-    let multiplier = 1;
-    if (arena.id === "spice_bazaar" && unitHasTrait(unit, "sweet")) multiplier *= 0.94;
-    if (arena.id === "dim_sum_kitchen" && unitHasTrait(unit, "street_food")) multiplier *= 1.08;
-    return multiplier;
+    return window.FoodAnimalsTraitArenaRuntime.supportMultiplier(currentArena(), unit);
   }
 
   function arenaDamageMultiplier(source, target, options = {}) {
-    if (!source || !target) return 1;
-    const arena = currentArena();
-    let multiplier = 1;
-    if (!options.status && arena.id === "rainy_fish_market" && unitHasTrait(source, "ocean") && target.col === BACK_COL) {
-      multiplier *= 1.1;
-    }
-    if (!options.status && arena.id === "street_festival" && hasAnyTrait(source, ["street_food", "spicy", "snack"])) {
-      if ((source.arenaFestivalHits || 0) < 3) {
-        multiplier *= 1.1;
-        source.arenaFestivalHits = (source.arenaFestivalHits || 0) + 1;
-      }
-    }
-    if (arena.id === "spice_bazaar" && hasAnyTrait(source, ["spicy", "street_food"])) {
-      multiplier *= options.status ? 1.1 : 1.06;
-    }
-    if (!options.status && arena.id === "frozen_parfait_peak" && unitHasTrait(source, "sweet") && (state.battle?.elapsed || 0) >= 6) {
-      multiplier *= 1.1;
-    }
-    if (!options.status && arena.id === "dim_sum_kitchen" && unitHasTrait(source, "sweet") && source.col === BACK_COL) {
-      multiplier *= 0.92;
-    }
-    if (!options.status && arena.id === "spice_bazaar" && unitHasTrait(target, "sweet")) {
-      multiplier *= 1.04;
-    }
-    if (!options.status && arena.id === "street_festival" && target.col === FRONT_COL) {
-      multiplier *= 1.06;
-    }
-    if (!options.status && arena.id === "dim_sum_kitchen" && target.col === FRONT_COL && hasAnyTrait(target, ["snack", "breakfast"])) {
-      multiplier *= 0.9;
-    }
-    return multiplier;
+    return window.FoodAnimalsTraitArenaRuntime.damageMultiplier(currentArena(), source, target, {
+      ...options,
+      backCol: BACK_COL,
+      frontCol: FRONT_COL,
+      elapsed: state.battle?.elapsed || 0,
+    });
   }
 
   function applyBattleStartArenaEffects(units, foes = []) {
@@ -8421,12 +2431,11 @@
   }
 
   function currentRollCost() {
-    if (state.freeRolls > 0) return 0;
-    return ECONOMY.rerollCostSteps.reduce((cost, step) => (state.rollsThisRound >= step.after ? step.cost : cost), ECONOMY.rollCost);
+    return window.FoodAnimalsShopEconomy.rollCost(ECONOMY, state.freeRolls, state.rollsThisRound);
   }
 
   function startingFreeRollsForShopLevel(level = state.shopLevel) {
-    return Math.max(0, Math.floor(ECONOMY.freeRollsPerShopLevel || 0));
+    return window.FoodAnimalsShopEconomy.startingFreeRolls(ECONOMY, level);
   }
 
   function upgradeShop() {
@@ -8471,7 +2480,7 @@
   }
 
   function itemBenchSlotKind(index) {
-    return index < ITEM_BENCH_DRINK_SLOTS ? "drink" : "topping";
+    return window.FoodAnimalsSlotLayout.itemBenchSlotKind(index, ITEM_BENCH_DRINK_SLOTS);
   }
 
   function itemBenchSlotAccepts(index, item) {
@@ -8479,14 +2488,14 @@
   }
 
   function itemStorageAccepts(area, index, item) {
-    if (!isItem(item)) return false;
-    if (area === "bench") return true;
-    if (area === "itemBench") return itemBenchSlotAccepts(index, item);
-    return false;
+    return window.FoodAnimalsShopTransactionRuntime.itemStorageAccepts(area, index, item, {
+      isItem,
+      itemBenchSlotAccepts,
+    });
   }
 
   function isItemStorageArea(area) {
-    return area === "bench" || area === "itemBench";
+    return window.FoodAnimalsShopTransactionRuntime.isItemStorageArea(area);
   }
 
   function itemStorageFullMessage(item) {
@@ -8495,15 +2504,11 @@
   }
 
   function firstEmptyItemBenchSlot(item) {
-    return state.itemBench.findIndex((entry, index) => !entry && itemBenchSlotAccepts(index, item));
+    return window.FoodAnimalsShopTransactionRuntime.firstEmpty(state.itemBench, (index) => itemBenchSlotAccepts(index, item));
   }
 
   function firstEmptyItemStorage(item) {
-    const itemBenchIndex = firstEmptyItemBenchSlot(item);
-    if (itemBenchIndex >= 0) return { area: "itemBench", index: itemBenchIndex };
-    const benchIndex = firstEmptyBench();
-    if (benchIndex >= 0) return { area: "bench", index: benchIndex };
-    return null;
+    return window.FoodAnimalsShopTransactionRuntime.firstEmptyItemStorage(state, item, { itemBenchSlotAccepts });
   }
 
   function moveItemToBench(item) {
@@ -8562,10 +2567,7 @@
   }
 
   function orderedItemMergeRefs(matches, item) {
-    if (isDrink(item)) {
-      return [...matches].sort((a, b) => (a.area === "drinks" ? 0 : 1) - (b.area === "drinks" ? 0 : 1));
-    }
-    return matches;
+    return window.FoodAnimalsMergeRuntime.orderItemRefs(matches, item, { isDrink });
   }
 
   function mergeItemTriples(itemId, tier) {
@@ -8588,49 +2590,39 @@
   }
 
   function itemMatchesMerge(item, target) {
-    return isItem(item) && isItem(target) && item.id === target.id && itemTier(item.tier) === itemTier(target.tier) && itemTier(item.tier) < MAX_ITEM_TIER;
+    return isItem(item) && isItem(target) && window.FoodAnimalsMergeRuntime.itemMatches(item, target, MAX_ITEM_TIER);
   }
 
   function itemMergeRefsWithIncoming(item, targetArea, targetIndex) {
-    const target = state[targetArea]?.[targetIndex];
-    if (!itemMatchesMerge(item, target)) return [];
-    const matches = allLooseItemRefs().filter((ref) => itemMatchesMerge(item, ref.item));
-    if (matches.length + 1 < 3) return [];
-    const ordered = orderedItemMergeRefs(matches, item).sort((a, b) => {
-      const aIsTarget = a.area === targetArea && a.index === targetIndex;
-      const bIsTarget = b.area === targetArea && b.index === targetIndex;
-      return aIsTarget === bIsTarget ? 0 : aIsTarget ? -1 : 1;
-    });
-    return ordered.slice(0, 2);
+    return window.FoodAnimalsMergeRuntime.itemRefsWithIncoming(
+      item,
+      state[targetArea]?.[targetIndex],
+      allLooseItemRefs(),
+      targetArea,
+      targetIndex,
+      MAX_ITEM_TIER,
+      { isDrink },
+    );
   }
 
   function unitMaxTier(unit) {
-    return CATALOG.find((entry) => entry.id === unit?.typeId)?.forms.length || 1;
+    return window.FoodAnimalsMergeRuntime.unitMaxTier(unit, CATALOG.find((entry) => entry.id === unit?.typeId));
   }
 
   function unitMatchesMerge(unit, target) {
-    return isUnit(unit) && isUnit(target) && unit.typeId === target.typeId && unit.tier === target.tier && unit.tier < unitMaxTier(unit);
+    return isUnit(unit) && isUnit(target) && window.FoodAnimalsMergeRuntime.unitMatches(unit, target, unitMaxTier(unit));
   }
 
   function unitMergeRefsWithIncoming(unit, targetArea, targetIndex) {
-    const target = state[targetArea]?.[targetIndex];
-    if (!unitMatchesMerge(unit, target)) return [];
-    const matches = allOwnedRefs().filter((ref) => unitMatchesMerge(unit, ref.unit));
-    const actualProgressWithIncoming = matches.reduce((total, ref) => total + mergeProgressFor(ref), 1);
-    if (actualProgressWithIncoming + fortunePhantomCopy(unit.typeId, unit.tier, actualProgressWithIncoming) < 3) return [];
-    const ordered = matches.sort((a, b) => {
-      const aIsTarget = a.area === targetArea && a.index === targetIndex;
-      const bIsTarget = b.area === targetArea && b.index === targetIndex;
-      return aIsTarget === bIsTarget ? 0 : aIsTarget ? -1 : 1;
-    });
-    const consumed = [];
-    let progress = 1;
-    for (const ref of ordered) {
-      consumed.push(ref);
-      progress += mergeProgressFor(ref);
-      if (progress >= 3) break;
-    }
-    return progress >= 3 ? consumed : [];
+    return window.FoodAnimalsMergeRuntime.unitRefsWithIncoming(
+      unit,
+      state[targetArea]?.[targetIndex],
+      allOwnedRefs(),
+      targetArea,
+      targetIndex,
+      unitMaxTier(unit),
+      fortunePhantomCopy,
+    );
   }
 
   function canMergeShopEntryIntoSlot(entry, targetArea, targetIndex) {
@@ -8714,9 +2706,7 @@
   }
 
   function clearPurchasedShopSlot(shopIndex) {
-    state.shop[shopIndex] = null;
-    state.shopFrozen[shopIndex] = false;
-    state.shopSales[shopIndex] = false;
+    window.FoodAnimalsShopTransactionRuntime.clearPurchasedShopSlot(state, shopIndex);
   }
 
   function buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex) {
@@ -8778,8 +2768,7 @@
   }
 
   function mergeProgressFor(ref) {
-    const bonus = ref.area === "bench" ? ref.unit?.item?.mergeProgressBonus || 0 : 0;
-    return 1 + bonus;
+    return window.FoodAnimalsMergeRuntime.progressFor(ref);
   }
 
   function mergeProgressCount(typeId, tier) {
@@ -8790,18 +2779,11 @@
   }
 
   function mergeItemIsConsumed(item) {
-    return Boolean(item?.mergeProgressBonus);
+    return window.FoodAnimalsMergeRuntime.mergeItemIsConsumed(item);
   }
 
   function selectMergeRefs(matches) {
-    const consumed = [];
-    let progress = 0;
-    for (const ref of matches) {
-      consumed.push(ref);
-      progress += mergeProgressFor(ref);
-      if (progress >= 3) break;
-    }
-    return consumed;
+    return window.FoodAnimalsMergeRuntime.selectRefsForProgress(matches, 3);
   }
 
   function fortunePhantomCopy(typeId, tier, actualProgress) {
@@ -9174,18 +3156,7 @@
       playGameSfx("invalid");
       return false;
     }
-    if (state.drinks[drinkIndex]) {
-      state.message = `${drinkTerm()} slot full`;
-      playGameSfx("invalid");
-      return false;
-    }
-    state[sourceArea][itemIndex] = null;
-    state.drinks[drinkIndex] = item;
-    state.selected = { area: "drinks", index: drinkIndex };
-    state.message = realityBroken() ? `${displayItemShort(item)} loaded` : `${displayItemShort(item)} poured`;
-    playGameSfx("equip");
-    resolveItemMerges();
-    return true;
+    return moveUnitToOpenSlot(sourceArea, itemIndex, "drinks", drinkIndex);
   }
 
   function placeDrinkFromBench(itemIndex, drinkIndex) {
@@ -9283,21 +3254,17 @@
   }
 
   function canSellDrag(drag) {
-    if (!drag || state.phase !== "prep" || drag.area === "shop") return false;
-    if (drag.area === "equipment") return isItem(drag.unit);
-    if (drag.area === "board") return isUnit(state.board[drag.index]);
-    if (drag.area === "drinks") return isItem(state.drinks[drag.index]);
-    if (drag.area === "itemBench") return isItem(state.itemBench[drag.index]);
-    if (drag.area === "bench") return Boolean(state.bench[drag.index]);
-    return false;
+    return window.FoodAnimalsShopTransactionRuntime.canSellDrag(drag, state, { isItem, isUnit });
   }
 
   function dragSellValue(drag) {
-    if (!canSellDrag(drag)) return 0;
-    const entry = drag.area === "equipment" ? selectedEquipmentTargetRef(drag)?.unit?.item : state[drag.area]?.[drag.index];
-    if (isUnit(entry)) return sellValue(entry);
-    if (isItem(entry)) return itemSellValue(entry);
-    return 0;
+    return window.FoodAnimalsShopTransactionRuntime.dragSellValue(drag, state, {
+      isItem,
+      isUnit,
+      itemSellValue,
+      selectedEquipmentTargetRef,
+      sellValue,
+    });
   }
 
   function sellDraggedEntry(drag) {
@@ -9348,21 +3315,22 @@
       state.selected = null;
       return;
     }
+    const selectedTarget = state[area]?.[index];
+    if (isTopping(moving) && isUnit(selectedTarget)) {
+      attachItemFromStorage(from.area, from.index, area, index);
+      return;
+    }
     if (from.area === "bench" && area === "bench" && from.index !== index) {
       moveUnitToOpenSlot(from.area, from.index, area, index);
       return;
     }
     if (isItem(moving)) {
       if (isDrink(moving) && isItemStorageArea(from.area) && area === "drinks") {
-        placeDrinkFromStorage(from.area, from.index, index);
+        moveUnitToOpenSlot(from.area, from.index, area, index);
         return;
       }
-      if (isDrink(moving) && from.area === "drinks" && area === "drinks" && !state.drinks[index]) {
-        state.drinks[index] = moving;
-        state.drinks[from.index] = null;
-        state.selected = null;
-        state.message = `${moving.short} moved`;
-        resolveItemMerges();
+      if (isDrink(moving) && from.area === "drinks" && area === "drinks") {
+        moveUnitToOpenSlot(from.area, from.index, area, index);
         return;
       }
       if (isItemStorageArea(area)) {
@@ -9423,19 +3391,29 @@
     if (!moving) return false;
     if (isItem(moving)) {
       if (isDrink(moving) && toArea === "drinks") {
-        if (isItemStorageArea(fromArea)) return placeDrinkFromStorage(fromArea, fromIndex, toIndex);
-        if (fromArea === "drinks" && !state.drinks[toIndex]) {
-          state.drinks[toIndex] = moving;
-          state.drinks[fromIndex] = null;
-          state.selected = null;
-          state.message = `${moving.short} moved`;
-          playGameSfx("drop");
-          resolveItemMerges();
-          return true;
+        if (fromArea === toArea && fromIndex === toIndex) {
+          state.message = `${drinkTerm()} placed`;
+          playGameSfx("invalid");
+          return false;
         }
-        state.message = `${drinkTerm()} slot full`;
-        playGameSfx("invalid");
-        return false;
+        const target = state.drinks[toIndex];
+        if (target && !isDrink(target)) {
+          state.message = `${drinkTerm()} slot full`;
+          playGameSfx("invalid");
+          return false;
+        }
+        if (target && isItemStorageArea(fromArea) && !itemStorageAccepts(fromArea, fromIndex, target)) {
+          state.message = `${itemRailLabel(target)} slots only`;
+          playGameSfx("invalid");
+          return false;
+        }
+        state.drinks[toIndex] = moving;
+        state[fromArea][fromIndex] = target || null;
+        state.selected = null;
+        state.message = target ? `${drinkTerm()}s swapped` : `${displayItemShort(moving)} moved`;
+        playGameSfx("drop");
+        resolveItemMerges();
+        return true;
       }
       if (!isItemStorageArea(toArea)) {
         state.message = isDrink(moving) ? `Drop on ${drinkTerm({ lower: true })} rail` : `${toppingPluralTerm()} stay on bench`;
@@ -9626,7 +3604,7 @@
       archetypeLabel: `Banana Split Boss + ${plan.archetypeLabel}`,
       giraffeBoss: true,
       bossTypeId: GIRAFFE_BOSS_TYPE_ID,
-      bossSlot: GIRAFFE_BOSS_SLOT,
+      bossSlot: randomEnemyFormationSlots(1)[0] ?? GIRAFFE_BOSS_SLOT,
       bossHpMultiplier: 1,
       bossAtkMultiplier: 1,
     };
@@ -9680,37 +3658,24 @@
   }
 
   function blendEnemyArchetypes(primaryArchetype, secondaryArchetype) {
-    const primary = primaryArchetype || ENEMY_ARCHETYPES[0];
-    const secondary = secondaryArchetype || primary;
-    const hasSecondary = secondary.id !== primary.id;
-    const primaryShare = hasSecondary ? ENEMY_ARCHETYPE_PRIMARY_SHARE : 1;
-    const secondaryShare = hasSecondary ? 1 - ENEMY_ARCHETYPE_PRIMARY_SHARE : 0;
-    const blended = {
-      id: hasSecondary ? `${primary.id}_${secondary.id}` : primary.id,
-      label: hasSecondary ? `${primary.label} + ${secondary.label}` : primary.label,
-      countBias: blendedEnemyBias(primary, secondary, "countBias", primaryShare, secondaryShare, -1, 1),
-      tierBias: blendedEnemyBias(primary, secondary, "tierBias", primaryShare, secondaryShare, -0.16, 0.16),
-      tier3Bias: blendedEnemyBias(primary, secondary, "tier3Bias", primaryShare, secondaryShare, -0.06, 0.07),
-      statBias: blendedEnemyBias(primary, secondary, "statBias", primaryShare, secondaryShare, -0.05, 0.05),
-      itemBias: blendedEnemyBias(primary, secondary, "itemBias", primaryShare, secondaryShare, -1, 1),
-      drinkBias: blendedEnemyBias(primary, secondary, "drinkBias", primaryShare, secondaryShare, -1, 1),
-      traitFocus: blendedEnemyBias(primary, secondary, "traitFocus", primaryShare, secondaryShare, 0.18, 0.72),
-      rarityBias: blendedEnemyBias(
-        { rarityBias: enemyArchetypeRarityBias(primary) },
-        { rarityBias: enemyArchetypeRarityBias(secondary) },
-        "rarityBias",
-        primaryShare,
-        secondaryShare,
-        -1,
-        1
-      ),
-    };
-    return blended;
+    return window.FoodAnimalsEnemyTeamRuntime.blendEnemyArchetypes(primaryArchetype, secondaryArchetype, {
+      fallback: ENEMY_ARCHETYPES[0],
+      primaryShare: ENEMY_ARCHETYPE_PRIMARY_SHARE,
+      noiseFor: enemyArchetypeNoise,
+    });
   }
 
   function blendedEnemyBias(primary, secondary, key, primaryShare, secondaryShare, min, max) {
-    const base = (primary[key] || 0) * primaryShare + (secondary[key] || 0) * secondaryShare;
-    return clamp(base + enemyArchetypeNoise(key), min, max);
+    return window.FoodAnimalsEnemyTeamRuntime.blendedEnemyBias(
+      primary,
+      secondary,
+      key,
+      primaryShare,
+      secondaryShare,
+      min,
+      max,
+      enemyArchetypeNoise(key),
+    );
   }
 
   function enemyArchetypeNoise(key) {
@@ -9719,9 +3684,7 @@
   }
 
   function enemyArchetypeRarityBias(archetype) {
-    if (archetype?.id === "juggernaut" || archetype?.id === "arsenal") return 1;
-    if (archetype?.id === "horde") return -1;
-    return 0;
+    return window.FoodAnimalsEnemyTeamRuntime.enemyArchetypeRarityBias(archetype);
   }
 
   function chooseEnemyThemeTrait() {
@@ -9754,26 +3717,11 @@
   }
 
   function enemyTierForPlan(plan) {
-    const tier4Chance = Math.min(plan.tier4Chance || 0, plan.targetExtraTier / 3);
-    const remainingExtraTier = Math.max(0, plan.targetExtraTier - tier4Chance * 3);
-    const tier3Chance = Math.min(plan.tier3Chance, remainingExtraTier / 2);
-    const tier2Chance = clamp(remainingExtraTier - tier3Chance * 2, 0, 0.82);
-    const roll = Math.random();
-    if (roll < tier4Chance) return 4;
-    if (roll < tier4Chance + tier3Chance) return 3;
-    if (roll < tier4Chance + tier3Chance + tier2Chance) return 2;
-    return 1;
+    return window.FoodAnimalsEnemyTeamRuntime.enemyTierForPlan(plan);
   }
 
   function enemyRarityWeights(round, archetype = ENEMY_ARCHETYPES[0]) {
-    const bias = typeof archetype.rarityBias === "number" ? archetype.rarityBias : enemyArchetypeRarityBias(archetype);
-    const latePressure = enemyLatePressure(round);
-    return {
-      common: 100,
-      uncommon: Math.max(0, Math.round(13 + round * 1.9 + bias * 5.5)),
-      rare: Math.max(0, Math.round((round - 3) * 2.2 + latePressure * 0.68 + bias * 3.25)),
-      epic: Math.max(0, Math.round((round - 8) * 1.15 + latePressure * 0.78 + bias * 1.45)),
-    };
+    return window.FoodAnimalsEnemyTeamRuntime.enemyRarityWeights(round, archetype, enemyLatePressure(round));
   }
 
   function chooseEnemyRarity(weights) {
@@ -9788,29 +3736,15 @@
   }
 
   function enemySupportCount(round, max, every, bias = 0) {
-    const base = 1 + Math.floor(round / every);
-    const jitterRoll = Math.random();
-    const jitter = round <= 1 ? 0 : jitterRoll < 0.18 ? -1 : jitterRoll > 0.84 ? 1 : 0;
-    return Math.max(0, Math.min(max, base + stochasticRound(bias) + jitter));
+    return window.FoodAnimalsEnemyTeamRuntime.enemySupportCount(round, max, every, bias);
   }
 
   function stochasticRound(value) {
-    const sign = value < 0 ? -1 : 1;
-    const magnitude = Math.abs(value);
-    const floor = Math.floor(magnitude);
-    return sign * (floor + (Math.random() < magnitude - floor ? 1 : 0));
+    return window.FoodAnimalsEnemyTeamRuntime.stochasticRound(value);
   }
 
   function weightedChoice(entries, weightFor) {
-    if (!entries?.length) return null;
-    const total = entries.reduce((sum, entry) => sum + Math.max(0, weightFor(entry) || 0), 0);
-    if (total <= 0) return entries[randInt(entries.length)];
-    let roll = Math.random() * total;
-    for (const entry of entries) {
-      roll -= Math.max(0, weightFor(entry) || 0);
-      if (roll <= 0) return entry;
-    }
-    return entries[entries.length - 1];
+    return window.FoodAnimalsEnemyTeamRuntime.weightedChoice(entries, weightFor);
   }
 
   function chooseEnemyUnitId(plan, usedTypeIds = []) {
@@ -9844,15 +3778,23 @@
     if (plan.finalBoss) return makeFinalBossTeam();
     if (plan.giraffeBoss) return makeGiraffeBossTeam(plan);
     const usedTypeIds = [];
-    const units = Array.from({ length: plan.count }, () => {
+    const formationSlots = randomEnemyFormationSlots(plan.count);
+    const units = Array.from({ length: plan.count }, (_, index) => {
       const typeId = chooseEnemyUnitId(plan, usedTypeIds);
       usedTypeIds.push(typeId);
       const unit = makeUnit(typeId, enemyTierForPlan(plan));
       unit.enemyPlan = plan.archetypeId;
+      unit.enemySlot = formationSlots[index] ?? null;
       return applyEnemyRoundStats(unit, plan);
     });
     equipEnemyToppings(units, plan);
     return units;
+  }
+
+  function randomEnemyFormationSlots(count) {
+    return [...Array(boardSlots.length).keys()]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, Math.max(0, Math.min(boardSlots.length, count || 0)));
   }
 
   function makeGiraffeBossTeam(plan = makeEnemyPlan()) {
@@ -9876,8 +3818,7 @@
   }
 
   function giraffeBossReservedSlots(bossSlot = GIRAFFE_BOSS_SLOT) {
-    const { col } = slotGrid(bossSlot);
-    return new Set(Array.from({ length: BOARD_ROWS }, (_, row) => row * BOARD_COLS + col));
+    return window.FoodAnimalsEnemyTeamRuntime.reservedColumnSlots(bossSlot, BOARD_ROWS, BOARD_COLS, slotGrid);
   }
 
   function makeFinalBossTeam() {
@@ -9961,31 +3902,7 @@
   }
 
   function enemyPlanText(plan) {
-    return {
-      archetype: plan.archetypeId,
-      label: plan.archetypeLabel,
-      primaryArchetype: plan.primaryArchetypeId,
-      primaryLabel: plan.primaryArchetypeLabel,
-      secondaryArchetype: plan.secondaryArchetypeId,
-      secondaryLabel: plan.secondaryArchetypeLabel,
-      themeTrait: plan.themeTrait,
-      count: plan.count,
-      giraffeBoss: Boolean(plan.giraffeBoss),
-      bossTypeId: plan.bossTypeId || null,
-      bossSlot: Number.isInteger(plan.bossSlot) ? plan.bossSlot : null,
-      toppingCount: plan.toppingCount,
-      drinkCount: plan.drinkCount,
-      hpMultiplier: Number(plan.hpMultiplier.toFixed(2)),
-      atkMultiplier: Number(plan.atkMultiplier.toFixed(2)),
-      targetExtraTier: Number(plan.targetExtraTier.toFixed(2)),
-      tier3ChancePct: Number((plan.tier3Chance * 100).toFixed(1)),
-      tier4ChancePct: Number(((plan.tier4Chance || 0) * 100).toFixed(1)),
-      adaptivePressurePct: Number(((plan.adaptivePressure || 0) * 100).toFixed(1)),
-      shopPowerStatBonusPct: Number(((plan.shopPowerStatBonus || 0) * 100).toFixed(1)),
-      shopPowerTierBonusPct: Number(((plan.shopPowerTierBonus || 0) * 100).toFixed(1)),
-      shopPowerTier3BonusPct: Number(((plan.shopPowerTier3Bonus || 0) * 100).toFixed(1)),
-      rarityWeights: { ...plan.rarityWeights },
-    };
+    return window.FoodAnimalsEnemyTeamRuntime.enemyPlanText(plan);
   }
 
   function enemyPreviewDrinks() {
@@ -10073,7 +3990,7 @@
     recordCombatEvent(state.battle, {
       type: "battleStart",
       kind: "start",
-      text: "Battle started",
+      text: realityBroken() ? "Wave deployed" : "Pressure test started",
     });
     captureCombatLedgerFrame(state.battle, "start");
     normalizeBossBattleSpeed();
@@ -10275,27 +4192,24 @@
   function applyBattleStartItemEffects(units) {
     [...units].forEach((unit) => {
       if (!unit?.item || unit.dead) return;
+      const summary = window.FoodAnimalsBattleItemRuntime.startItemEffectSummary(unit, units);
       if (unit.item.battleStartHpLossPct) {
-        unit.hp = Math.max(1, Math.round(unit.maxHp * (1 - unit.item.battleStartHpLossPct)));
+        unit.hp = summary.hpAfterLoss;
       }
       if (unit.item.adjacentStartShieldPct) {
-        units
-          .filter((ally) => !ally.dead && isAdjacentSlot(unit, ally))
-          .forEach((ally) => {
-            const shielded = grantShield(ally, Math.max(1, Math.round(unit.maxHp * unit.item.adjacentStartShieldPct)));
-            if (shielded > 0) emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#9a5b1d");
-          });
+        summary.adjacentAllies.forEach((ally) => {
+          const shielded = grantShield(ally, summary.shieldAmount);
+          if (shielded > 0) emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#9a5b1d");
+        });
       }
       if (unit.item.adjacentStartAttackBuffPct) {
-        units
-          .filter((ally) => !ally.dead && isAdjacentSlot(unit, ally))
-          .forEach((ally) => {
-            ally.attackBoost = {
-              remaining: unit.item.adjacentStartBuffDuration || 4,
-              pct: unit.item.adjacentStartAttackBuffPct,
-            };
-            emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#d7a64e");
-          });
+        summary.adjacentAllies.forEach((ally) => {
+          ally.attackBoost = {
+            remaining: summary.attackBoostDuration,
+            pct: summary.attackBoost,
+          };
+          emitSupportFeedback(unit, ally, state.battle, unit.item.accent || "#d7a64e");
+        });
       }
       if (unit.item.decoyHpPct) {
         const decoy = makeItemDecoy(unit);
@@ -10359,10 +4273,7 @@
   }
 
   function slotGrid(index) {
-    return {
-      col: index % BOARD_COLS,
-      row: Math.floor(index / BOARD_COLS),
-    };
+    return window.FoodAnimalsSlotLayout.grid(index, BOARD_COLS);
   }
 
   function enemySlotOrder() {
@@ -10412,7 +4323,10 @@
     if (!retryGiraffeBoss && !retryFinalBoss && !finalDefeat) state.round += 1;
     const justBrokeReality = !isInfiniteMode() && !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
     if (justBrokeReality) triggerRealityBreak();
-    if (justBrokeReality && won && completedRound === GIRAFFE_BOSS_ROUND) startPostGiraffeHorrorTransition();
+    if (justBrokeReality && won && completedRound === GIRAFFE_BOSS_ROUND) {
+      markHorrorRevealed();
+      startPostGiraffeHorrorTransition();
+    }
     state.phase = "result";
     state.enemyPreview = null;
     state.rewardChoices = state.hearts > 0 && !finalVictory ? generateRewardChoices(won) : [];
@@ -10420,13 +4334,13 @@
       ? "Final objective secured"
       : state.hearts > 0
       ? realityBroken()
-        ? `${won ? "Target cleared" : retryFinalBoss ? "Overmind still active" : "Unit loss"} +${income.total} scrap - choose salvage`
-        : `${won ? "Victory" : retryGiraffeBoss ? "Giraffe still active" : "Defeat"} +${income.total} coins - choose a reward`
+        ? `${won ? "Relay opened" : retryFinalBoss ? "Overmind still active" : "Hull breach"} +${income.total} scrap - choose salvage`
+        : `${won ? "Pattern holds" : retryGiraffeBoss ? "Giraffe still active" : "Pattern breaks"} +${income.total} coins - choose a reward`
       : realityBroken() ? "Core offline" : "Run over";
     if (justBrokeReality && state.hearts > 0) state.message = "ILLUSION FAILURE - combat layer exposed";
     state.log.unshift(realityBroken()
-      ? (won ? `Target cleared +${income.total} scrap` : `Hull breach ${damage} +${income.total} scrap`)
-      : (won ? `Won +${income.total} coins` : `Lost ${damage} hearts +${income.total} coins`));
+      ? (won ? `Relay opened +${income.total} scrap` : `Hull breach ${damage} +${income.total} scrap`)
+      : (won ? `Pattern holds +${income.total} coins` : `Pattern breaks ${damage} hearts +${income.total} coins`));
     clearParticles();
     state.battle.attacks = [];
     state.battle.drinkTosses = [];
@@ -10434,6 +4348,7 @@
     state.postCombatBattle = state.battle;
     state.battle = null;
     combatEndExplosion(won);
+    if (finalVictory) markGameCompleted();
     state.phaseTransition = {
       type: "battleToResult",
       elapsed: 0,
@@ -10446,125 +4361,50 @@
     playGameSfx(won ? "victory" : "defeat");
   }
 
-  function createCombatLedger(allies, enemies) {
-    const units = {};
-    [...allies, ...enemies].forEach((unit) => {
-      units[unit.uid] = {
-        uid: unit.uid,
-        side: unit.side,
-        name: displayUnitFormName(unit),
-        short: displayUnitShort(unit),
-        typeId: unit.typeId,
-        tier: unit.tier,
-        damageDealt: 0,
-        damageTaken: 0,
-        healingReceived: 0,
-        shieldingReceived: 0,
-        kos: 0,
-        defeated: false,
-      };
-    });
+  function combatLedgerLabels() {
     return {
-      sides: {
-        ally: { damageDealt: 0, damageTaken: 0, healingReceived: 0, shieldingReceived: 0, kos: 0 },
-        enemy: { damageDealt: 0, damageTaken: 0, healingReceived: 0, shieldingReceived: 0, kos: 0 },
-      },
-      units,
-      events: [],
-      frames: [],
-      nextFrameAt: 0,
-      seq: 0,
+      name: displayUnitFormName,
+      short: displayUnitShort,
     };
+  }
+
+  function combatLedgerCaptureOptions(extra = {}) {
+    return {
+      labels: combatLedgerLabels(),
+      maxEvents: COMBAT_LEDGER_MAX_EVENTS,
+      maxFrames: COMBAT_LEDGER_MAX_FRAMES,
+      frameSeconds: COMBAT_LEDGER_FRAME_SECONDS,
+      statusList: combatLedgerStatusList,
+      ...extra,
+    };
+  }
+
+  function createCombatLedger(allies, enemies) {
+    return window.FoodAnimalsCombatLedgerCapture.createLedger(allies, enemies, combatLedgerLabels());
   }
 
   function ensureLedgerUnit(ledger, unit) {
-    if (!ledger || !unit) return null;
-    if (!ledger.units[unit.uid]) {
-      ledger.units[unit.uid] = {
-        uid: unit.uid,
-        side: unit.side,
-        name: displayUnitFormName(unit),
-        short: displayUnitShort(unit),
-        typeId: unit.typeId,
-        tier: unit.tier,
-        damageDealt: 0,
-        damageTaken: 0,
-        healingReceived: 0,
-        shieldingReceived: 0,
-        kos: 0,
-        defeated: false,
-      };
-    }
-    return ledger.units[unit.uid];
+    return window.FoodAnimalsCombatLedgerCapture.ensureUnit(ledger, unit, combatLedgerLabels());
   }
 
   function combatLedgerTime(battle) {
-    return Number(Math.max(0, battle?.elapsed || 0).toFixed(2));
+    return window.FoodAnimalsCombatLedgerCapture.time(battle);
   }
 
   function combatLedgerUnitLabel(entry) {
-    if (!entry) return "System";
-    return entry.short || entry.name || "Unit";
+    return window.FoodAnimalsCombatLedgerCapture.unitLabel(entry);
   }
 
   function combatLedgerUnitRef(ledger, unit) {
-    if (!unit) return null;
-    const entry = ensureLedgerUnit(ledger, unit);
-    return entry ? {
-      uid: entry.uid,
-      side: entry.side,
-      name: entry.name,
-      short: entry.short,
-    } : null;
+    return window.FoodAnimalsCombatLedgerCapture.unitRef(ledger, unit, combatLedgerLabels());
   }
 
   function combatLedgerEventText(ledger, event) {
-    if (event.text) return event.text;
-    const source = event.sourceUid != null ? ledger.units[event.sourceUid] : null;
-    const target = event.targetUid != null ? ledger.units[event.targetUid] : null;
-    const sourceName = combatLedgerUnitLabel(source);
-    const targetName = combatLedgerUnitLabel(target);
-    if (event.type === "damage") {
-      const parts = [];
-      if (event.hpDamage > 0) parts.push(`${event.hpDamage} HP`);
-      if (event.shieldDamage > 0) parts.push(`${event.shieldDamage} shield`);
-      const amount = parts.length ? parts.join(" + ") : `${event.amount || 0}`;
-      return `${source ? sourceName : "Environment"} hit ${targetName} for ${amount}${event.kind === "status" ? " over time" : ""}`;
-    }
-    if (event.type === "support") {
-      const supportText = event.kind === "heal" ? "healing" : "shield";
-      return source ? `${sourceName} gave ${targetName} ${event.amount} ${supportText}` : `${targetName} received ${event.amount} ${supportText}`;
-    }
-    if (event.type === "ko") {
-      return `${source ? sourceName : "Environment"} defeated ${targetName}`;
-    }
-    if (event.type === "control") {
-      return `${source ? sourceName : "Effect"} delayed ${targetName} by ${event.amount}s`;
-    }
-    return `${event.kind || event.type || "Event"} ${target ? targetName : ""}`.trim();
+    return window.FoodAnimalsCombatLedgerCapture.eventText(ledger, event);
   }
 
   function recordCombatEvent(battle, event) {
-    const ledger = battle?.ledger;
-    if (!ledger || !event) return null;
-    const entry = {
-      id: ledger.seq++,
-      t: combatLedgerTime(battle),
-      type: event.type || "event",
-      kind: event.kind || event.type || "event",
-      sourceUid: event.source?.uid ?? event.sourceUid ?? null,
-      source: event.source ? combatLedgerUnitRef(ledger, event.source) : event.source || null,
-      targetUid: event.target?.uid ?? event.targetUid ?? null,
-      target: event.target ? combatLedgerUnitRef(ledger, event.target) : event.target || null,
-      amount: event.amount || 0,
-      hpDamage: event.hpDamage || 0,
-      shieldDamage: event.shieldDamage || 0,
-      text: event.text || "",
-    };
-    entry.text = combatLedgerEventText(ledger, entry);
-    ledger.events.push(entry);
-    if (ledger.events.length > COMBAT_LEDGER_MAX_EVENTS) ledger.events.shift();
-    return entry;
+    return window.FoodAnimalsCombatLedgerCapture.recordEvent(battle, event, combatLedgerCaptureOptions());
   }
 
   function combatLedgerStatusList(unit) {
@@ -10572,169 +4412,39 @@
   }
 
   function combatLedgerSnapshotUnit(unit) {
-    return {
-      uid: unit.uid,
-      side: unit.side,
-      name: displayUnitFormName(unit),
-      short: displayUnitShort(unit),
-      typeId: unit.typeId,
-      tier: unit.tier,
-      slot: unit.slot,
-      x: Math.round(unit.x),
-      y: Math.round(unit.y),
-      hp: Math.max(0, Math.round(unit.hp || 0)),
-      maxHp: Math.max(1, Math.round(unit.maxHp || 1)),
-      shield: Math.max(0, Math.round(unit.shield || 0)),
-      cooldown: Number(Math.max(0, unit.cooldown || 0).toFixed(2)),
-      dead: Boolean(unit.dead),
-      statuses: combatLedgerStatusList(unit),
-    };
+    return window.FoodAnimalsCombatLedgerCapture.snapshotUnit(unit, combatLedgerCaptureOptions());
   }
 
   function captureCombatLedgerFrame(battle, reason = "tick") {
-    const ledger = battle?.ledger;
-    if (!ledger) return null;
-    const frame = {
-      index: ledger.frames.length,
-      t: combatLedgerTime(battle),
-      reason,
-      allies: (battle.allies || []).map(combatLedgerSnapshotUnit),
-      enemies: (battle.enemies || []).map(combatLedgerSnapshotUnit),
-    };
-    ledger.frames.push(frame);
-    if (ledger.frames.length > COMBAT_LEDGER_MAX_FRAMES) {
-      ledger.frames.shift();
-      ledger.frames.forEach((entry, index) => {
-        entry.index = index;
-      });
-    }
-    ledger.nextFrameAt = Math.max(ledger.nextFrameAt || 0, (battle.elapsed || 0) + COMBAT_LEDGER_FRAME_SECONDS);
-    return frame;
+    return window.FoodAnimalsCombatLedgerCapture.captureFrame(battle, combatLedgerCaptureOptions({ reason }));
   }
 
   function captureDueCombatLedgerFrames(battle) {
-    const ledger = battle?.ledger;
-    if (!ledger) return;
-    if (!ledger.frames.length) captureCombatLedgerFrame(battle, "start");
-    while ((battle.elapsed || 0) >= (ledger.nextFrameAt || 0) && ledger.frames.length < COMBAT_LEDGER_MAX_FRAMES) {
-      captureCombatLedgerFrame(battle, "tick");
-    }
+    window.FoodAnimalsCombatLedgerCapture.captureDueFrames(battle, combatLedgerCaptureOptions());
   }
 
   function recordCombatDamage(battle, source, target, hpDamage, shieldDamage = 0) {
-    const ledger = battle?.ledger;
-    const impact = Math.max(0, hpDamage || 0) + Math.max(0, shieldDamage || 0);
-    if (!ledger || impact <= 0 || !target) return;
-    const targetSide = target.side || "enemy";
-    const targetEntry = ensureLedgerUnit(ledger, target);
-    if (targetEntry) targetEntry.damageTaken += impact;
-    ledger.sides[targetSide].damageTaken += impact;
-    if (source) {
-      const sourceSide = source.side || (targetSide === "ally" ? "enemy" : "ally");
-      const sourceEntry = ensureLedgerUnit(ledger, source);
-      if (sourceEntry) sourceEntry.damageDealt += impact;
-      ledger.sides[sourceSide].damageDealt += impact;
-    }
-    recordCombatEvent(battle, {
-      type: "damage",
-      kind: source ? "damage" : "environment",
-      source,
-      target,
-      amount: impact,
-      hpDamage: Math.max(0, hpDamage || 0),
-      shieldDamage: Math.max(0, shieldDamage || 0),
-    });
+    const impact = window.FoodAnimalsCombatLedgerCapture.recordDamage(battle, source, target, hpDamage, shieldDamage, combatLedgerCaptureOptions());
+    if (impact <= 0) return;
     playGameSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
   }
 
   function recordCombatKo(battle, source, target) {
-    const ledger = battle?.ledger;
-    if (!ledger || !target) return;
-    const targetEntry = ensureLedgerUnit(ledger, target);
-    if (targetEntry) targetEntry.defeated = true;
-    if (!source) {
-      recordCombatEvent(battle, {
-        type: "ko",
-        kind: "ko",
-        source: null,
-        target,
-        amount: 1,
-      });
-      playGameSfx("ko", { volume: 0.9 });
-      return;
-    }
-    const sourceSide = source.side || "ally";
-    const sourceEntry = ensureLedgerUnit(ledger, source);
-    if (sourceEntry) sourceEntry.kos += 1;
-    ledger.sides[sourceSide].kos += 1;
-    recordCombatEvent(battle, {
-      type: "ko",
-      kind: "ko",
-      source,
-      target,
-      amount: 1,
-    });
+    if (!window.FoodAnimalsCombatLedgerCapture.recordKo(battle, source, target, combatLedgerCaptureOptions())) return;
     playGameSfx("ko", { volume: 0.9 });
   }
 
   function recordCombatSupport(unit, amount, kind, source = null, battle = state.battle) {
-    const ledger = battle?.ledger;
-    if (!ledger || !unit || amount <= 0) return;
-    const side = unit.side || "ally";
-    const entry = ensureLedgerUnit(ledger, unit);
-    if (kind === "heal") {
-      ledger.sides[side].healingReceived += amount;
-      if (entry) entry.healingReceived += amount;
-    } else {
-      ledger.sides[side].shieldingReceived += amount;
-      if (entry) entry.shieldingReceived += amount;
-    }
-    recordCombatEvent(battle, {
-      type: "support",
-      kind,
-      source,
-      target: unit,
-      amount,
-    });
+    if (!window.FoodAnimalsCombatLedgerCapture.recordSupport(battle, unit, amount, kind, source, combatLedgerCaptureOptions())) return;
     playGameSfx(kind === "heal" ? "heal" : "shield", { volume: 0.42 });
   }
 
   function summarizeCombatLedger(battle, won, heartDamage) {
-    const ledger = battle?.ledger;
-    if (!ledger) return null;
-    const allyUnits = Object.values(ledger.units).filter((unit) => unit.side === "ally");
-    const enemyUnits = Object.values(ledger.units).filter((unit) => unit.side === "enemy");
-    const topDamage = allyUnits.reduce((best, unit) => unit.damageDealt > (best?.damageDealt || 0) ? unit : best, null);
-    const topProtected = allyUnits.reduce((best, unit) => {
-      const score = unit.healingReceived + unit.shieldingReceived;
-      const bestScore = (best?.healingReceived || 0) + (best?.shieldingReceived || 0);
-      return score > bestScore ? unit : best;
-    }, null);
-    return {
-      result: won ? "win" : "loss",
-      duration: Math.max(0.1, Number((battle.elapsed || 0).toFixed(1))),
+    return window.FoodAnimalsCombatLedgerCapture.summarize(battle, {
+      won,
       heartDamage,
-      ally: { ...ledger.sides.ally, losses: allyUnits.filter((unit) => unit.defeated).length },
-      enemy: { ...ledger.sides.enemy, losses: enemyUnits.filter((unit) => unit.defeated).length },
-      units: Object.values(ledger.units).map((unit) => ({ ...unit })),
-      events: (ledger.events || []).map((event) => ({ ...event })),
-      frames: (ledger.frames || []).map((frame) => ({
-        ...frame,
-        allies: frame.allies.map((unit) => ({ ...unit })),
-        enemies: frame.enemies.map((unit) => ({ ...unit })),
-      })),
       frameStepSeconds: COMBAT_LEDGER_FRAME_SECONDS,
-      mvp: topDamage ? {
-        name: topDamage.short || topDamage.name,
-        damageDealt: topDamage.damageDealt,
-        kos: topDamage.kos,
-      } : null,
-      protected: topProtected ? {
-        name: topProtected.short || topProtected.name,
-        healingReceived: topProtected.healingReceived,
-        shieldingReceived: topProtected.shieldingReceived,
-      } : null,
-    };
+    });
   }
 
   function calculateRoundIncome(won) {
@@ -10835,17 +4545,15 @@
   }
 
   function rewardShopLevel() {
-    return Math.max(1, Math.min(MAX_SHOP_LEVEL, state.shopLevel || 1));
+    return window.FoodAnimalsRewardRuntime.shopLevel(state.shopLevel, MAX_SHOP_LEVEL);
   }
 
   function arenaRewardTier(level = rewardShopLevel()) {
-    if (level >= MAX_SHOP_LEVEL) return 3;
-    if (level >= 3) return 2;
-    return 1;
+    return window.FoodAnimalsRewardRuntime.arenaTier(level, MAX_SHOP_LEVEL);
   }
 
   function arenaRewardTierText(tier = arenaRewardTier()) {
-    return tier > 1 ? `${tier}-star ` : "";
+    return window.FoodAnimalsRewardRuntime.tierText(tier);
   }
 
   function arenaRewardShopLevelText() {
@@ -10853,46 +4561,33 @@
   }
 
   function freeRollRewardAmount() {
-    return 1;
+    return window.FoodAnimalsRewardRuntime.freeRollAmount();
   }
 
   function scaledGoldRewardAmount(won) {
     const level = rewardShopLevel();
     const winAmounts = [0, 20, 26, 40, 52, 72];
     const lossAmounts = [0, 12, 16, 28, 36, 52];
-    const amounts = won ? winAmounts : lossAmounts;
-    return amounts[level] || amounts[amounts.length - 1];
+    return window.FoodAnimalsRewardRuntime.amountForLevel(level, won, { win: winAmounts, loss: lossAmounts });
   }
 
   function scaledArenaPurseAmount(won) {
     const level = rewardShopLevel();
     const winAmounts = [0, 14, 20, 36, 48, 68];
     const lossAmounts = [0, 10, 14, 24, 34, 48];
-    const amounts = won ? winAmounts : lossAmounts;
-    return amounts[level] || amounts[amounts.length - 1];
+    return window.FoodAnimalsRewardRuntime.amountForLevel(level, won, { win: winAmounts, loss: lossAmounts });
   }
 
   function pushUniqueReward(choices, reward) {
-    if (!reward) return false;
-    const key = reward.key || `${reward.type}:${reward.itemId || reward.typeId || reward.title}`;
-    if (choices.some((choice) => (choice.key || `${choice.type}:${choice.itemId || choice.typeId || choice.title}`) === key)) return false;
-    choices.push({ ...reward, key });
-    return true;
+    return window.FoodAnimalsRewardRuntime.pushUnique(choices, reward);
   }
 
   function shuffledRewards(rewards) {
-    return rewards
-      .filter(Boolean)
-      .map((reward) => ({ reward, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map((entry) => entry.reward);
+    return window.FoodAnimalsRewardRuntime.shuffled(rewards);
   }
 
   function pushFromRewardPool(choices, rewards) {
-    for (const reward of shuffledRewards(rewards)) {
-      if (pushUniqueReward(choices, reward)) return true;
-    }
-    return false;
+    return window.FoodAnimalsRewardRuntime.pushFromPool(choices, rewards);
   }
 
   function traitRewardPriority() {
@@ -11192,45 +4887,16 @@
       playGameSfx("invalid");
       return false;
     }
-    if (reward.type === "gold") {
-      state.gold = Math.min(ECONOMY.maxGold, state.gold + reward.amount);
-    } else if (reward.type === "freeRolls") {
-      state.freeRolls += reward.amount;
-    } else if (reward.type === "arenaScout") {
-      state.freeRolls += reward.freeRolls || 0;
-      state.arenaScout = {
-        arenaId: reward.arenaId,
-        arenaShort: reward.arenaShort,
-        traitIds: [...(reward.traitIds || [])],
-        shopsRemaining: reward.shopsRemaining || 2,
-      };
-    } else if (reward.type === "arenaPrepBuff") {
-      state.arenaPrepBuff = {
-        arenaId: reward.arenaId,
-        arenaShort: reward.arenaShort,
-        traitIds: [...(reward.traitIds || [])],
-        shieldPct: reward.shieldPct || 0.12,
-        hastePct: reward.hastePct || 0.1,
-        attackPct: reward.attackPct || 0.08,
-        duration: reward.duration || 3,
-      };
-    } else if (reward.type === "arenaHold") {
-      state.keepArenaNextRound = true;
-      state.freeRolls += reward.freeRolls || 0;
-    } else if (reward.type === "arenaPurse") {
-      state.gold = Math.min(ECONOMY.maxGold, state.gold + reward.amount);
-      state.freeRolls += reward.freeRolls || 0;
-    } else if (reward.type === "shopSlotUnlock") {
-      if (!openShopSlot(reward.slotIndex)) state.gold = Math.min(ECONOMY.maxGold, state.gold + Math.min(25, reward.amount || 0));
-    } else if (reward.type === "upgradeDiscount") {
-      state.nextShopUpgradeDiscountGold = Math.max(0, (state.nextShopUpgradeDiscountGold || 0) + (reward.amount || 0));
-    } else if (reward.type === "item") {
-      if (!moveItemToBench(makeItem(reward.itemId, reward.tier || 1))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
-      resolveItemMerges();
-    } else if (reward.type === "copy") {
-      if (!moveItemToBench(makeUnit(reward.typeId, reward.tier || 1))) state.gold = Math.min(ECONOMY.maxGold, state.gold + 15);
-      resolveMerges();
-    }
+    window.FoodAnimalsRewardRuntime.claimReward(state, reward, {
+      fallbackGold: 15,
+      makeItem,
+      makeUnit,
+      maxGold: ECONOMY.maxGold,
+      moveItemToBench,
+      openShopSlot,
+      resolveItemMerges,
+      resolveMerges,
+    });
     state.message = realityBroken() ? `Salvaged ${reward.title}` : `Claimed ${reward.title}`;
     state.log.unshift(realityBroken() ? `Salvage: ${reward.title}` : `Reward: ${reward.title}`);
     playGameSfx("reward");
@@ -11405,10 +5071,70 @@
     if (transition.phase === "exit") {
       const completedStoryId = story.id;
       state.activeStory = null;
+      if (completedStoryId === "level10") {
+        startLevel10RevealCutscene();
+      }
       if (completedStoryId === FINAL_TABS_STORY_ID) startFinalVictoryTransition();
       return;
     }
     story.transition = null;
+  }
+
+  function startLevel10RevealCutscene(options = {}) {
+    if (isInfiniteMode() && !options.force) return false;
+    if (!options.force && state.seenStoryMilestones.includes(LEVEL10_REVEAL_CUTSCENE_ID)) return false;
+    state.level10RevealCutscene = {
+      id: LEVEL10_REVEAL_CUTSCENE_ID,
+      elapsed: 0,
+      total: LEVEL10_REVEAL_CUTSCENE_SECONDS,
+      source: options.source || "level10Reveal",
+    };
+    if (!state.seenStoryMilestones.includes(LEVEL10_REVEAL_CUTSCENE_ID)) {
+      state.seenStoryMilestones.push(LEVEL10_REVEAL_CUTSCENE_ID);
+    }
+    state.message = "Illusion failure";
+    state.log.unshift("Cutscene: level 10 reveal aftermath");
+    return true;
+  }
+
+  function level10RevealCutsceneShot(cutscene = state.level10RevealCutscene) {
+    if (!cutscene) return null;
+    const elapsed = Math.max(0, cutscene.elapsed || 0);
+    return LEVEL10_REVEAL_CUTSCENE_SHOTS.find((shot) => elapsed >= shot.start && elapsed < shot.start + shot.duration)
+      || LEVEL10_REVEAL_CUTSCENE_SHOTS[LEVEL10_REVEAL_CUTSCENE_SHOTS.length - 1]
+      || null;
+  }
+
+  function level10RevealCutsceneShotIndex(cutscene = state.level10RevealCutscene) {
+    const shot = level10RevealCutsceneShot(cutscene);
+    return Math.max(0, LEVEL10_REVEAL_CUTSCENE_SHOTS.indexOf(shot));
+  }
+
+  function completeLevel10RevealCutscene() {
+    if (!state.level10RevealCutscene) return false;
+    state.level10RevealCutscene = null;
+    state.message = themedArena(currentArena()).short;
+    return true;
+  }
+
+  function advanceLevel10RevealCutscene(skip = false) {
+    const cutscene = state.level10RevealCutscene;
+    if (!cutscene) return false;
+    if (skip) return completeLevel10RevealCutscene();
+    const shotIndex = level10RevealCutsceneShotIndex(cutscene);
+    const nextShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[shotIndex + 1];
+    if (!nextShot) return completeLevel10RevealCutscene();
+    cutscene.elapsed = nextShot.start + 0.001;
+    return true;
+  }
+
+  function updateLevel10RevealCutscene(dt) {
+    const cutscene = state.level10RevealCutscene;
+    if (!cutscene) return;
+    cutscene.elapsed = Math.min(cutscene.total || LEVEL10_REVEAL_CUTSCENE_SECONDS, (cutscene.elapsed || 0) + dt);
+    if (cutscene.elapsed >= (cutscene.total || LEVEL10_REVEAL_CUTSCENE_SECONDS)) {
+      completeLevel10RevealCutscene();
+    }
   }
 
   function updateStoryBeatTransition(dt) {
@@ -11498,13 +5224,11 @@
   function startRebootTransition(options = {}) {
     const fromVictoryCutscene = Boolean(options.fromVictoryCutscene);
     if ((!fromVictoryCutscene && !realityBroken()) || state.rebootTransition) return false;
-    state.rebootTransition = {
-      elapsed: 0,
+    state.rebootTransition = window.FoodAnimalsVictoryRebootRuntime.rebootTransition({
       duration: REBOOT_STATIC_FADE_SECONDS,
-      resetAt: REBOOT_STATIC_FADE_SECONDS * REBOOT_STATIC_RESET_AT,
-      resetDone: false,
-      source: fromVictoryCutscene ? "victoryCutscene" : "defeat",
-    };
+      resetAtPct: REBOOT_STATIC_RESET_AT,
+      fromVictoryCutscene,
+    });
     state.pointer = null;
     state.hover = null;
     state.selected = null;
@@ -11516,15 +5240,11 @@
 
   function startFinalVictoryTransition() {
     if (state.finalVictoryTransition) return false;
-    const holdDuration = FINAL_VICTORY_HOLD_SECONDS;
-    const staticDuration = FINAL_VICTORY_STATIC_FADE_SECONDS;
-    state.finalVictoryTransition = {
-      elapsed: 0,
-      duration: holdDuration + staticDuration,
-      holdDuration,
-      resetAt: holdDuration + staticDuration * FINAL_VICTORY_STATIC_RESET_AT,
-      resetDone: false,
-    };
+    state.finalVictoryTransition = window.FoodAnimalsVictoryRebootRuntime.finalVictoryTransition({
+      holdDuration: FINAL_VICTORY_HOLD_SECONDS,
+      staticDuration: FINAL_VICTORY_STATIC_FADE_SECONDS,
+      resetAtPct: FINAL_VICTORY_STATIC_RESET_AT,
+    });
     state.pointer = null;
     state.hover = null;
     state.selected = null;
@@ -11546,13 +5266,12 @@
       ...transition,
       resetDone: true,
     };
-    state.victoryCutscene = {
-      elapsed: 0,
+    state.victoryCutscene = window.FoodAnimalsVictoryRebootRuntime.victoryCutscene({
       roundCleared: FINAL_VICTORY_ROUND,
       backgroundSrc: FINAL_VICTORY_CUTSCENE_SRC,
       idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC,
       message: "Hope Returns",
-    };
+    });
     state.message = "Hope returns";
     clearParticles();
   }
@@ -11562,11 +5281,7 @@
     clearActiveRunRoute();
     markHorrorMenuUnlocked();
     markMenuRebootStaticReveal();
-    state.menuRebootTransition = {
-      elapsed: 0,
-      duration: VICTORY_MENU_REBOOT_STATIC_SECONDS,
-      navigated: false,
-    };
+    state.menuRebootTransition = window.FoodAnimalsVictoryRebootRuntime.menuRebootTransition(VICTORY_MENU_REBOOT_STATIC_SECONDS);
     state.pointer = null;
     state.hover = null;
     state.selected = null;
@@ -11628,6 +5343,7 @@
     state.realityBroken = false;
     state.realityBreakTimer = 0;
     state.postGiraffeHorrorTransition = null;
+    state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
     state.phaseTransition = null;
     state.modalTransitions = {};
@@ -11747,11 +5463,11 @@
     const units = [...battle.allies, ...battle.enemies];
     units.forEach((unit) => {
       if (unit.dead) return;
-      let negativeDt = dt * (1 + (unit.item?.statusDurationReductionPct || 0)) * arenaStatusClearMultiplier(unit);
-      const freshStage = activeTraitStage(unit, "fresh");
-      if (freshStage > 0) {
-        negativeDt *= 1 + ([0, 0.15, 0.25, 0.4][freshStage] || 0.4);
-      }
+      const negativeDt = window.FoodAnimalsStatusRuntime.negativeStatusStep(dt, {
+        itemReductionPct: unit.item?.statusDurationReductionPct || 0,
+        arenaMultiplier: arenaStatusClearMultiplier(unit),
+        freshStage: activeTraitStage(unit, "fresh"),
+      });
       if (hasNegativeStatus(unit) && unit.item?.firstDebuffCleanseHealPct && !unit.firstDebuffCleanseUsed) {
         unit.firstDebuffCleanseUsed = true;
         cleanseUnit(unit);
@@ -11864,28 +5580,12 @@
   }
 
   function attackClockMultiplier(unit) {
-    let multiplier = 1 + (unit.haste?.pct || 0);
-    multiplier += unit.drinkAttackSpeedPct || 0;
-    multiplier *= 1 - Math.min(0.7, unit.attackSlow?.pct || 0);
-    if (hasFavoriteTopping(unit)) multiplier += 0.04;
-    multiplier += arenaAttackClockBonus(unit);
-    const streetStage = activeTraitStage(unit, "street_food");
-    if (streetStage > 0) {
-      multiplier += [0, 0.08, 0.16, 0.26][streetStage] || 0.26;
-    }
-    if (unit.ability === "kernel_combo" && unit.kernelStacks > 0) {
-      multiplier += Math.min(0.65, unit.kernelStacks * popcornStackHaste(unit));
-    }
-    if (unit.item?.lowHpAttackSpeedPct && unit.hp / unit.maxHp <= (unit.item.lowHpThreshold || 0.5)) {
-      multiplier += unit.item.lowHpAttackSpeedPct;
-    }
-    if (unit.item?.shieldedAttackSpeedPct && unit.shield > 0) {
-      multiplier += unit.item.shieldedAttackSpeedPct;
-    }
-    if (unit.item?.exhaustedSpeedPenaltyPct && (unit.itemAttackCount || 0) >= (unit.item.firstAttacksCount || 3)) {
-      multiplier *= 1 - unit.item.exhaustedSpeedPenaltyPct;
-    }
-    return Math.max(0.25, multiplier);
+    return window.FoodAnimalsBattleAbilityRuntime.attackClockMultiplier(unit, {
+      hasFavoriteTopping: hasFavoriteTopping(unit),
+      arenaAttackClockBonus: arenaAttackClockBonus(unit),
+      streetStage: activeTraitStage(unit, "street_food"),
+      kernelHaste: unit.ability === "kernel_combo" && unit.kernelStacks > 0 ? popcornStackHaste(unit) : 0,
+    });
   }
 
   function performCombatAction(unit, battle, foes) {
@@ -12274,18 +5974,16 @@
     if (!unit?.item || unit.dead) return;
     unit.itemAttackCount = (unit.itemAttackCount || 0) + 1;
     if (unit.item.onAttackShieldPct) {
-      const shield = Math.max(1, Math.round(unit.maxHp * unit.item.onAttackShieldPct + unit.abilityPower * 0.18));
-      grantShield(unit, shield);
+      grantShield(unit, window.FoodAnimalsBattleItemRuntime.onAttackShield(unit));
       burst({ x: unit.x, y: unit.y }, unit.item.accent || "#6fbf8f");
     }
-    if (unit.item.selfHealPct && unit.itemAttackCount % (unit.item.everyNAttacks || 3) === 0) {
-      healUnit(unit, Math.max(1, Math.round(unit.maxHp * unit.item.selfHealPct)));
+    if (window.FoodAnimalsBattleItemRuntime.selfHealReady(unit)) {
+      healUnit(unit, window.FoodAnimalsBattleItemRuntime.selfHealAmount(unit));
       burst({ x: unit.x, y: unit.y }, unit.item.accent || "#4f8d2b");
     }
     if (target && battle && unit.item.splashDamagePct) {
       const splash = Math.max(1, Math.round(unit.atk * unit.item.splashDamagePct));
-      foes
-        .filter((foe) => !foe.dead && foe.uid !== target.uid && isAdjacentSlot(target, foe))
+      window.FoodAnimalsBattleItemRuntime.splashTargets(target, foes)
         .forEach((foe) => applyDamage(foe, splash, unit, battle, {
           color: unit.item.accent || "#c03b87",
           particleType: unit.item.id,
@@ -12293,9 +5991,7 @@
         }));
     }
     if (target && battle && unit.item.bounceDamagePct) {
-      const bounceTarget = foes
-        .filter((foe) => !foe.dead && foe.uid !== target.uid)
-        .sort((a, b) => distSq(target, a) - distSq(target, b))[0];
+      const bounceTarget = window.FoodAnimalsBattleItemRuntime.nearestBounceTarget(target, foes, distSq);
       if (bounceTarget) {
         applyDamage(bounceTarget, Math.max(1, Math.round(unit.atk * unit.item.bounceDamagePct)), unit, battle, {
           color: unit.item.accent || "#c06417",
@@ -12305,9 +6001,7 @@
       }
     }
     if (target && battle && unit.item.pierceDamagePct) {
-      const pierceTarget = foes
-        .filter((foe) => !foe.dead && foe.uid !== target.uid && foe.row === target.row && foe.col < target.col)
-        .sort((a, b) => b.col - a.col)[0];
+      const pierceTarget = window.FoodAnimalsBattleItemRuntime.pierceTarget(target, foes);
       if (pierceTarget) {
         applyDamage(pierceTarget, Math.max(1, Math.round(unit.atk * unit.item.pierceDamagePct)), unit, battle, {
           color: unit.item.accent || "#8c4e1d",
@@ -12316,10 +6010,9 @@
         });
       }
     }
-    if (target && battle && unit.item.executeSplashDamagePct && target.hp / target.maxHp <= (unit.item.executeSplashThreshold || 0.45)) {
+    if (target && battle && window.FoodAnimalsBattleItemRuntime.executeSplashReady(unit, target)) {
       const splash = Math.max(1, Math.round(unit.atk * unit.item.executeSplashDamagePct));
-      foes
-        .filter((foe) => !foe.dead && foe.uid !== target.uid && isAdjacentSlot(target, foe))
+      window.FoodAnimalsBattleItemRuntime.splashTargets(target, foes)
         .forEach((foe) => applyDamage(foe, splash, unit, battle, {
           color: unit.item.accent || "#ffe37a",
           particleType: unit.item.id,
@@ -12368,9 +6061,9 @@
   }
 
   function triggerLowHpBurn(unit, battle) {
-    if (!unit?.item?.lowHpBurnDamagePct || unit.lowHpBurnUsed || unit.dead || unit.hp / unit.maxHp > (unit.item.lowHpBurnThreshold || 0.4)) return;
+    if (!window.FoodAnimalsBattleItemRuntime.lowHpBurnReady(unit)) return;
     unit.lowHpBurnUsed = true;
-    const foes = (unit.side === "ally" ? battle.enemies : battle.allies).filter((foe) => !foe.dead && isAdjacentSlot(unit, foe));
+    const foes = window.FoodAnimalsBattleItemRuntime.splashTargets(unit, unit.side === "ally" ? battle.enemies : battle.allies);
     foes.forEach((foe) => {
       foe.burn = {
         remaining: statusDuration(unit, unit.item.lowHpBurnDuration || 3),
@@ -12383,17 +6076,16 @@
   }
 
   function statusDuration(source, duration) {
-    return duration * (1 + (source?.item?.statusDurationBonusPct || 0) + favoriteToppingBonusPct(source) * 0.75 + arenaStatusDurationBonus(source));
+    return window.FoodAnimalsStatusRuntime.duration(source, duration, {
+      favoriteBonusPct: favoriteToppingBonusPct(source),
+      arenaBonus: arenaStatusDurationBonus(source),
+    });
   }
 
   function cooldownDelayResistance(unit) {
-    if (!unit || unit.dead) return 0;
-    let resistance = unit.item?.statusDurationReductionPct || 0;
-    const freshStage = activeTraitStage(unit, "fresh");
-    if (freshStage > 0) {
-      resistance += [0, 0.15, 0.25, 0.4][freshStage] || 0.4;
-    }
-    return Math.min(0.7, resistance);
+    return window.FoodAnimalsStatusRuntime.cooldownDelayResistance(unit, {
+      freshStage: activeTraitStage(unit, "fresh"),
+    });
   }
 
   function applyCooldownDelay(target, amount, source = null, options = {}) {
@@ -12405,7 +6097,7 @@
       burst({ x: target.x, y: target.y }, target.item.accent || "#2e6f2b");
       return 0;
     }
-    const applied = Number(Math.max(0, amount * (1 - cooldownDelayResistance(target))).toFixed(3));
+    const applied = window.FoodAnimalsStatusRuntime.appliedCooldownDelay(amount, cooldownDelayResistance(target));
     target.cooldown += applied;
     if (applied > 0) {
       recordCombatEvent(state.battle, {
@@ -12676,7 +6368,7 @@
   }
 
   function isAdjacentSlot(a, b) {
-    return Math.abs((a.col ?? 0) - (b.col ?? 0)) + Math.abs((a.row ?? 0) - (b.row ?? 0)) <= 1;
+    return window.FoodAnimalsBattleItemRuntime.adjacent(a, b);
   }
 
   function hasNegativeStatus(unit) {
@@ -13293,73 +6985,47 @@
   }
 
   function chooseTarget(unit, foes) {
-    const living = foes.filter((foe) => !foe.dead);
-    if (!living.length) return null;
-    const taunting = living.filter((foe) => foe.taunt?.remaining > 0);
-    if (taunting.length) return nearest(unit, taunting);
-    const targetColumn = canAttackBackRow(unit) ? backmostOccupiedColumn(living) : frontmostOccupiedColumn(living);
-    const candidates = living.filter((foe) => foe.col === targetColumn);
-    if (unit.ability === "execute" && !canAttackBackRow(unit)) return weakestEnemy(living);
-    return nearest(unit, candidates.length ? candidates : living);
+    return window.FoodAnimalsBattleAbilityRuntime.chooseTarget(unit, foes, { frontCol: FRONT_COL, backCol: BACK_COL });
   }
 
   function canAttackBackRow(unit) {
-    return unit.ability === "back_row" || (unit.item?.backRowTargeting && unit.col === BACK_COL);
+    return window.FoodAnimalsBattleAbilityRuntime.canAttackBackRow(unit, BACK_COL);
   }
 
   function frontmostOccupiedColumn(units) {
-    return units.reduce((front, unit) => Math.max(front, unit.col ?? FRONT_COL), BACK_COL);
+    return window.FoodAnimalsBattleAbilityRuntime.frontmostOccupiedColumn(units, BACK_COL);
   }
 
   function backmostOccupiedColumn(units) {
-    return units.reduce((back, unit) => Math.min(back, unit.col ?? BACK_COL), FRONT_COL);
+    return window.FoodAnimalsBattleAbilityRuntime.backmostOccupiedColumn(units, FRONT_COL);
   }
 
   function nearest(unit, foes) {
-    return foes.reduce((best, next) => {
-      const bd = distSq(unit, best);
-      const nd = distSq(unit, next);
-      return nd < bd ? next : best;
-    }, foes[0]);
+    return window.FoodAnimalsBattleAbilityRuntime.nearest(unit, foes);
   }
 
   function weakest(units) {
-    const living = units.filter((u) => !u.dead);
-    if (!living.length) return null;
-    return living.reduce((best, next) => (next.hp / next.maxHp < best.hp / best.maxHp ? next : best), living[0]);
+    return window.FoodAnimalsBattleAbilityRuntime.weakest(units);
   }
 
   function weakestDamaged(units) {
-    const damaged = units.filter((u) => !u.dead && u.hp < u.maxHp);
-    return damaged.length ? weakest(damaged) : null;
+    return window.FoodAnimalsBattleAbilityRuntime.weakestDamaged(units);
   }
 
   function weakestEnemy(units) {
-    return units.reduce((best, next) => {
-      const bestScore = best.hp / best.maxHp;
-      const nextScore = next.hp / next.maxHp;
-      if (nextScore !== bestScore) return nextScore < bestScore ? next : best;
-      return next.hp < best.hp ? next : best;
-    }, units[0]);
+    return window.FoodAnimalsBattleAbilityRuntime.weakestEnemy(units);
   }
 
   function lowestShieldedAlly(units) {
-    const living = units.filter((u) => !u.dead);
-    if (!living.length) return null;
-    return living.reduce((best, next) => {
-      const bestShield = best.shield || 0;
-      const nextShield = next.shield || 0;
-      if (nextShield !== bestShield) return nextShield < bestShield ? next : best;
-      return next.hp / next.maxHp < best.hp / best.maxHp ? next : best;
-    }, living[0]);
+    return window.FoodAnimalsBattleAbilityRuntime.lowestShieldedAlly(units);
   }
 
   function distSq(a, b) {
-    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+    return window.FoodAnimalsBattleAbilityRuntime.distSq(a, b);
   }
 
   function clearParticles() {
-    state.particles.length = 0;
+    window.FoodAnimalsParticleRuntime.clear(state.particles);
   }
 
   function particleSpriteSrc(spriteKind, particleType, particleTier) {
@@ -13376,46 +7042,13 @@
   }
 
   function burst(pos, color, options = {}) {
-    const count = options.count || 14;
     const particleType = options.particleType;
     const particleSprite = options.particleSprite || (options.food ? "attack" : null);
     const particleTier = options.particleTier || 1;
     const spriteInfo = options.imageSrc
       ? { src: options.imageSrc, cacheKind: options.imageCacheKind || particleSprite }
       : particleSpriteInfo(particleSprite, particleType, particleTier, options.spriteOptions || {});
-    const imageSrc = spriteInfo.src;
-    const foodParticles = Boolean(options.food && imageSrc);
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speedScale = options.speedScale || 1;
-      const lifeScale = options.lifeScale || 1;
-      const minSpeed = (options.speedMin || (foodParticles ? 95 : 45)) * speedScale;
-      const maxSpeed = (options.speedMax || (foodParticles ? 250 : 135)) * speedScale;
-      const speed = minSpeed + Math.random() * Math.max(0, maxSpeed - minSpeed);
-      const size = options.size || (foodParticles ? (options.sizeMin || 20) + Math.random() * ((options.sizeMax || 38) - (options.sizeMin || 20)) : 6);
-      const life = (options.life || (foodParticles ? 0.62 + Math.random() * 0.24 : 0.45)) * lifeScale;
-      state.particles.push({
-        x: pos.x + (Math.random() - 0.5) * (options.spread || 10),
-        y: pos.y + (Math.random() - 0.5) * (options.spread || 10),
-        vx: foodParticles ? Math.cos(angle) * speed : (Math.random() - 0.5) * 120,
-        vy: foodParticles ? Math.sin(angle) * speed - 32 : (Math.random() - 0.7) * 120,
-        age: 0,
-        life,
-        maxLife: life,
-        color,
-        imageSrc,
-        imageCacheKind: spriteInfo.cacheKind,
-        particleType,
-        particleTier,
-        particleSprite,
-        foodParticles,
-        suppressFallback: Boolean(options.suppressFallback),
-        size,
-        rotation: Math.random() * Math.PI * 2,
-        spin: (Math.random() < 0.5 ? -1 : 1) * (5 + Math.random() * 8),
-        gravity: foodParticles ? 70 + Math.random() * 45 : 220,
-      });
-    }
+    state.particles.push(...window.FoodAnimalsParticleRuntime.createBurst(pos, color, options, spriteInfo));
   }
 
   function foodExplosion(pos, color, particleType, options = {}) {
@@ -13626,6 +7259,8 @@
     updatePostGiraffeHorrorTransition(dt);
     updateStoryConversationTransition(dt);
     updateStoryBeatTransition(dt);
+    updateLevel10RevealCutscene(dt);
+    if (state.level10RevealCutscene) return;
     if (state.optionsMenu.open) return;
     if (state.phase === "victoryCutscene" && state.victoryCutscene) {
       state.victoryCutscene.elapsed += dt;
@@ -13633,17 +7268,7 @@
     if (state.realityBreakTimer > 0) state.realityBreakTimer = Math.max(0, state.realityBreakTimer - dt);
     const step = state.phase === "battle" ? dt * currentBattleSpeed() : dt;
     if (state.phase === "battle" && !phaseTransitionBlocksBattle()) updateBattle(step);
-    state.particles.forEach((p) => {
-      p.life -= step;
-      p.age = (p.age || 0) + step;
-      p.x += p.vx * step;
-      p.y += p.vy * step;
-      p.rotation += (p.spin || 0) * step;
-      p.vx *= Math.max(0, 1 - step * (p.foodParticles ? 1.4 : 0.35));
-      p.vy *= Math.max(0, 1 - step * (p.foodParticles ? 1.1 : 0.1));
-      p.vy += (p.gravity || 220) * step;
-    });
-    state.particles = state.particles.filter((p) => p.life > 0);
+    state.particles = window.FoodAnimalsParticleRuntime.update(state.particles, step);
   }
 
   function updatePhaseTransition(dt) {
@@ -13678,17 +7303,7 @@
 
   function modalTransitionVisual(id) {
     const transition = modalTransition(id);
-    if (!transition) return { alpha: 1, scale: 1, offsetY: 0, closing: false, progress: 1 };
-    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || MODAL_TRANSITION_SECONDS));
-    const eased = easeOutCubic(progress);
-    const alpha = transition.phase === "exit" ? 1 - eased : eased;
-    return {
-      alpha,
-      scale: 0.965 + alpha * 0.035,
-      offsetY: (1 - alpha) * (transition.phase === "exit" ? -10 : 12),
-      closing: transition.phase === "exit",
-      progress,
-    };
+    return window.FoodAnimalsTransitionCanvas.modalVisual(transition, MODAL_TRANSITION_SECONDS);
   }
 
   function updateModalTransitions(dt) {
@@ -13727,7 +7342,7 @@
   function updateRebootTransition(dt) {
     const transition = state.rebootTransition;
     if (!transition) return;
-    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    window.FoodAnimalsVictoryRebootRuntime.advanceTransition(transition, dt);
     if (!transition.resetDone && transition.elapsed >= transition.resetAt) {
       completeRebootTransitionReset(transition);
       return;
@@ -13742,7 +7357,7 @@
   function updateMenuRebootTransition(dt) {
     const transition = state.menuRebootTransition;
     if (!transition) return;
-    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    window.FoodAnimalsVictoryRebootRuntime.advanceTransition(transition, dt);
     if (!transition.navigated && transition.elapsed >= transition.duration) {
       clearActiveRunRoute();
       state.menuRebootTransition = {
@@ -13757,7 +7372,7 @@
   function updateFinalVictoryTransition(dt) {
     const transition = state.finalVictoryTransition;
     if (!transition) return;
-    transition.elapsed = Math.min(transition.duration, transition.elapsed + dt);
+    window.FoodAnimalsVictoryRebootRuntime.advanceTransition(transition, dt);
     if (!transition.resetDone && transition.elapsed >= transition.resetAt) {
       completeFinalVictoryTransitionReset(transition);
       return;
@@ -13803,13 +7418,7 @@
   }
 
   function roundedRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
+    window.FoodAnimalsCanvasUi.roundedRect(ctx, x, y, w, h, r);
   }
 
   function draw() {
@@ -13837,6 +7446,7 @@
       drawMergeOpportunityOverlay();
       if (state.phase === "prep" && !state.codexOpen) drawCodexMenuButton();
       drawStoryConversationOverlay();
+      drawLevel10RevealCutsceneOverlay();
     }
     drawPhaseTransitionOverlay();
     drawRebootTransitionOverlay();
@@ -13850,12 +7460,12 @@
   function phaseTransitionProgress(type) {
     const transition = state.phaseTransition;
     if (!transition || (type && transition.type !== type)) return 1;
-    return clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || 0.001));
+    return window.FoodAnimalsTransitionCanvas.progress(transition);
   }
 
   function resultTransitionAlpha() {
     if (state.phaseTransition?.type !== "battleToResult") return 1;
-    return easeOutCubic(clamp01(((state.phaseTransition.elapsed || 0) - 0.18) / Math.max(0.001, (state.phaseTransition.duration || BATTLE_RESULT_TRANSITION_SECONDS) - 0.18)));
+    return window.FoodAnimalsTransitionCanvas.resultAlpha(state.phaseTransition, BATTLE_RESULT_TRANSITION_SECONDS);
   }
 
   function drawPhaseTransitionOverlay() {
@@ -13870,72 +7480,179 @@
     }
   }
 
-  function drawPrepToBattleTransition(transition) {
-    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || BATTLE_DEPLOY_TRANSITION_SECONDS));
-    const eased = easeOutCubic(progress);
-    const horror = realityBroken();
+  function battleTransitionOverlaySrc(horror) {
+    return horror ? REALITY_BATTLE_DEPLOY_OVERLAY_SRC : COZY_BATTLE_DEPLOY_OVERLAY_SRC;
+  }
+
+  function battleTransitionOverlayLayout(horror, image, visual, options = {}) {
+    const pulse = options.pulse ?? visual.pulse ?? visual.reveal ?? 1;
+    const eased = options.eased ?? visual.eased ?? visual.reveal ?? 1;
+    const baseW = options.width || (horror ? 560 : 548);
+    const drawW = baseW + pulse * (options.grow || 18);
+    const drawH = image
+      ? drawW * (image.naturalHeight / image.naturalWidth)
+      : drawW * 0.625;
+    const centerY = options.centerY ?? H * 0.5;
+    const drawX = W / 2 - drawW / 2;
+    const drawY = centerY - drawH / 2 + (1 - eased) * (options.enterOffset || 10);
+    return {
+      x: drawX,
+      y: drawY,
+      w: drawW,
+      h: drawH,
+      cx: W / 2,
+      cy: drawY + drawH / 2,
+    };
+  }
+
+  function drawBattleTransitionOverlayAsset(horror, visual, options = {}) {
+    const image = getUiSprite(battleTransitionOverlaySrc(horror));
+    if (!image || !image.complete || image.naturalWidth <= 0) return null;
+    const layout = battleTransitionOverlayLayout(horror, image, visual, options);
     ctx.save();
-    ctx.globalAlpha = 0.48 * (1 - eased);
-    ctx.fillStyle = horror ? "#020606" : "#fff2b8";
+    ctx.globalAlpha = (options.alpha ?? visual.pulse ?? visual.reveal ?? 1) * (horror ? 0.88 : 0.94);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, layout.x, layout.y, layout.w, layout.h);
+    ctx.restore();
+    return layout;
+  }
+
+  function drawCenteredTransitionTitle(src, cx, cy, maxW, maxH, alpha = 1) {
+    const image = getUiSprite(src);
+    if (!image || !image.complete || image.naturalWidth <= 0) return false;
+    const scale = Math.min(maxW / image.naturalWidth, maxH / image.naturalHeight);
+    const drawW = image.naturalWidth * scale;
+    const drawH = image.naturalHeight * scale;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+    ctx.restore();
+    return true;
+  }
+
+  function drawPrepToBattleTransition(transition) {
+    const visual = window.FoodAnimalsTransitionCanvas.prepToBattleVisual(transition, BATTLE_DEPLOY_TRANSITION_SECONDS);
+    const eased = visual.eased;
+    const pulse = visual.pulse;
+    const horror = realityBroken();
+    const overlayCenterY = H * 0.5 + (1 - eased) * 10;
+    const fallbackLayout = battleTransitionOverlayLayout(horror, null, visual, { centerY: overlayCenterY });
+    ctx.save();
+    ctx.globalAlpha = (horror ? 0.5 : 0.38) * (1 - eased * 0.55);
+    ctx.fillStyle = horror ? "#020606" : "#fff4c5";
     ctx.fillRect(0, 0, W, H);
+
+    const topBandH = visual.topBandH;
+    const bottomBandH = visual.bottomBandH;
+    if (topBandH > 0.5 || bottomBandH > 0.5) {
+      ctx.globalAlpha = 0.88;
+      ctx.fillStyle = horror ? "rgba(2, 12, 13, 0.9)" : "rgba(245, 196, 106, 0.84)";
+      ctx.fillRect(0, 0, W, topBandH);
+      ctx.fillStyle = horror ? "rgba(6, 18, 21, 0.86)" : "rgba(255, 241, 176, 0.78)";
+      ctx.fillRect(0, H - bottomBandH, W, bottomBandH);
+    }
+
+    ctx.save();
+    ctx.translate(W / 2, overlayCenterY);
+    ctx.scale(1, 0.34);
+    const halo = ctx.createRadialGradient(0, 0, 10, 0, 0, 330 + eased * 50);
+    halo.addColorStop(0, horror ? `rgba(70,255,99,${0.18 + pulse * 0.08})` : `rgba(255,255,255,${0.32 + pulse * 0.16})`);
+    halo.addColorStop(0.62, horror ? `rgba(70,255,99,${0.05 + pulse * 0.04})` : `rgba(255,226,150,${0.12 + pulse * 0.08})`);
+    halo.addColorStop(1, "rgba(255,255,255,0)");
     ctx.globalAlpha = 1;
-    const sweepX = -W * 0.22 + eased * W * 1.44;
-    const sweepW = W * 0.34;
-    const gradient = ctx.createLinearGradient(sweepX - sweepW, 0, sweepX + sweepW, 0);
-    gradient.addColorStop(0, "rgba(255,255,255,0)");
-    gradient.addColorStop(0.5, horror ? "rgba(70,255,99,0.28)" : "rgba(255,255,255,0.64)");
-    gradient.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(sweepX - sweepW, 0, sweepW * 2, H);
-    ctx.globalAlpha = clamp01(Math.sin(progress * Math.PI)) * (horror ? 0.72 : 0.52);
-    ctx.strokeStyle = horror ? "rgba(70,255,99,0.64)" : "rgba(31,125,74,0.48)";
-    ctx.lineWidth = horror ? 2 : 3;
-    for (let i = 0; i < boardSlots.length; i++) {
-      const ally = battleSlotPosition("ally", i);
-      const enemy = battleSlotPosition("enemy", i);
-      ctx.beginPath();
-      ctx.moveTo(ally.x, ally.y);
-      ctx.lineTo(enemy.x, enemy.y);
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(0, 0, 390, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    const layout = drawBattleTransitionOverlayAsset(horror, visual, { centerY: overlayCenterY });
+    const textLayout = layout || fallbackLayout;
+    if (!layout) {
+      ctx.globalAlpha = 0.94 * pulse;
+      const plateW = 430;
+      const plateH = 88;
+      const plateX = W / 2 - plateW / 2;
+      const plateY = overlayCenterY - plateH / 2;
+      roundedRect(plateX, plateY, plateW, plateH, 10);
+      ctx.fillStyle = horror ? "rgba(3, 10, 12, 0.86)" : "rgba(255, 253, 232, 0.92)";
+      ctx.fill();
+      ctx.strokeStyle = horror ? "rgba(70, 255, 99, 0.46)" : "rgba(160, 91, 42, 0.34)";
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
-    ctx.globalAlpha = clamp01(Math.sin(progress * Math.PI)) * 0.88;
-    roundedRect(W / 2 - 190, 74, 380, 42, 8);
-    ctx.fillStyle = horror ? "rgba(3, 10, 12, 0.82)" : "rgba(255, 253, 232, 0.88)";
-    ctx.fill();
-    ctx.strokeStyle = horror ? "rgba(70, 255, 99, 0.46)" : "rgba(31, 125, 74, 0.34)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = horror ? "#46ff63" : "#1f7d4a";
-    ctx.font = "900 17px Inter, sans-serif";
+
     ctx.textAlign = "center";
-    ctx.fillText(horror ? "DEPLOYING WAVE" : "SETTING THE FIELD", W / 2, 101);
+    const titleDrawn = drawCenteredTransitionTitle(
+      horror ? REALITY_BATTLE_DEPLOY_TITLE_SRC : COZY_BATTLE_DEPLOY_TITLE_SRC,
+      textLayout.cx,
+      textLayout.cy - 12,
+      horror ? 360 : 390,
+      horror ? 58 : 66,
+      0.98 * pulse,
+    );
+    if (!titleDrawn) {
+      ctx.globalAlpha = 0.96 * pulse;
+      ctx.fillStyle = horror ? "#46ff63" : "#1f7d4a";
+      ctx.font = "900 18px Inter, sans-serif";
+      ctx.fillText(horror ? "DEPLOYING WAVE" : "PATTERN SET", W / 2, textLayout.cy - 8);
+    }
+    ctx.font = "800 10px Inter, sans-serif";
+    ctx.fillStyle = horror ? "rgba(158, 250, 170, 0.72)" : "rgba(106, 75, 53, 0.72)";
+    ctx.globalAlpha = 0.88 * pulse;
+    ctx.fillText(horror ? "combat layer armed" : "teams taking their places", W / 2, textLayout.cy + 34);
     ctx.textAlign = "left";
     ctx.restore();
   }
 
   function drawBattleToResultTransition(transition) {
-    const progress = clamp01((transition.elapsed || 0) / Math.max(0.001, transition.duration || BATTLE_RESULT_TRANSITION_SECONDS));
-    const flash = 1 - easeOutCubic(progress);
-    const reveal = easeOutCubic(clamp01((progress - 0.18) / 0.82));
+    const visual = window.FoodAnimalsTransitionCanvas.battleToResultVisual(transition, BATTLE_RESULT_TRANSITION_SECONDS);
+    const progress = visual.progress;
+    const flash = visual.flash;
+    const reveal = visual.reveal;
     const won = transition.won;
     const gameOver = transition.gameOver;
     const horror = realityBroken();
+    const titleSrc = gameOver
+      ? BATTLE_RESULT_RUN_OVER_TITLE_SRC
+      : won
+        ? (horror ? REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC : COZY_BATTLE_RESULT_VICTORY_TITLE_SRC)
+        : (horror ? REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC : COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
+    const fallbackTitle = gameOver ? "SYSTEM DOWN" : won ? (horror ? "RELAY OPENED" : "PATTERN HOLDS") : (horror ? "HULL BREACH" : "PATTERN BREAKS");
     ctx.save();
     ctx.globalAlpha = 0.34 * flash;
     ctx.fillStyle = won ? (horror ? "#46ff63" : "#fff5bf") : "#d9573c";
     ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = clamp01(Math.sin(progress * Math.PI)) * 0.96;
-    const bannerW = 440 + reveal * 90;
-    roundedRect(W / 2 - bannerW / 2, 238 - reveal * 10, bannerW, 70, 8);
-    ctx.fillStyle = horror ? "rgba(3, 10, 12, 0.9)" : "rgba(255, 253, 232, 0.94)";
-    ctx.fill();
-    ctx.strokeStyle = won ? themeColor("accent", "#1f7d4a") : themeColor("danger", "#9b3028");
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.fillStyle = gameOver ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
-    ctx.font = "900 26px Inter, sans-serif";
+
+    const overlayVisual = { ...visual, pulse: reveal, eased: visual.reveal };
+    const overlayCenterY = H * 0.5 + (1 - reveal) * 8;
+    const layout = drawBattleTransitionOverlayAsset(horror, overlayVisual, {
+      alpha: reveal,
+      centerY: overlayCenterY,
+      grow: 12,
+      width: horror ? 548 : 536,
+    }) || battleTransitionOverlayLayout(horror, null, overlayVisual, {
+      centerY: overlayCenterY,
+      grow: 12,
+      width: horror ? 548 : 536,
+    });
+
     ctx.textAlign = "center";
-    ctx.fillText(gameOver ? "RUN OVER" : won ? (horror ? "TARGET CLEARED" : "VICTORY") : (horror ? "UNIT LOSS" : "DEFEAT"), W / 2, 282);
+    const titleDrawn = drawCenteredTransitionTitle(
+      titleSrc,
+      layout.cx,
+      layout.cy - 4,
+      gameOver ? 390 : 380,
+      gameOver ? 84 : 88,
+      0.98 * reveal,
+    );
+    if (!titleDrawn) {
+      ctx.globalAlpha = reveal * 0.96;
+      ctx.fillStyle = gameOver ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
+      ctx.font = "900 26px Inter, sans-serif";
+      ctx.fillText(fallbackTitle, W / 2, layout.cy + 8);
+    }
     ctx.textAlign = "left";
     ctx.restore();
   }
@@ -14019,10 +7736,11 @@
   }
 
   function victoryCutsceneStage(elapsed = state.victoryCutscene?.elapsed || 0) {
-    if (elapsed < VICTORY_CRAWL_START_SECONDS) return "title";
-    if (elapsed < VICTORY_IDEAL_FADE_START_SECONDS) return "crawl";
-    if (elapsed < VICTORY_IDEAL_FADE_START_SECONDS + VICTORY_IDEAL_FADE_SECONDS) return "staticFade";
-    return "ideal";
+    return window.FoodAnimalsVictoryRebootRuntime.victoryStage(elapsed, {
+      crawlStart: VICTORY_CRAWL_START_SECONDS,
+      idealFadeStart: VICTORY_IDEAL_FADE_START_SECONDS,
+      idealFadeSeconds: VICTORY_IDEAL_FADE_SECONDS,
+    });
   }
 
   function drawCutsceneBackground(src, elapsed, alpha = 1, ideal = false) {
@@ -14372,26 +8090,17 @@
   }
 
   function glitchNoise(seed) {
-    const value = Math.sin(seed * 12.9898) * 43758.5453;
-    return value - Math.floor(value);
+    return window.FoodAnimalsRealityFxCanvas.glitchNoise(seed);
   }
 
   function realityRevealDistortionState() {
-    if (!state.realityBroken || !(state.realityBreakTimer > 0)) {
-      return { active: false, intensity: 0, elapsed: 0, remaining: 0 };
-    }
-    const remaining = clamp(state.realityBreakTimer, 0, REALITY_BREAK_REVEAL_SECONDS);
-    const elapsed = Math.max(0, REALITY_BREAK_REVEAL_SECONDS - remaining);
-    const shock = 1 - clamp01(elapsed / REALITY_REVEAL_DISTORT_SECONDS);
-    const tail = 0.16 * clamp01(remaining / REALITY_BREAK_REVEAL_SECONDS);
-    const intensity = clamp01(Math.max(shock, tail));
-    return {
-      active: intensity > 0.01,
-      intensity,
-      elapsed,
-      remaining,
-      frame: Math.floor((state.idleTime + elapsed) * 38),
-    };
+    return window.FoodAnimalsRealityFxCanvas.revealDistortionState({
+      distortSeconds: REALITY_REVEAL_DISTORT_SECONDS,
+      idleTime: state.idleTime,
+      realityBroken: state.realityBroken,
+      revealSeconds: REALITY_BREAK_REVEAL_SECONDS,
+      timer: state.realityBreakTimer,
+    });
   }
 
   function drawRealityRevealDistortionOverlay() {
@@ -14514,14 +8223,10 @@
   function drawRebootTransitionOverlay() {
     const transition = state.rebootTransition;
     if (!transition) return;
-    const progress = clamp01(transition.elapsed / Math.max(0.001, transition.duration));
-    const resetPoint = clamp01(transition.resetAt / Math.max(0.001, transition.duration));
-    const fadeIn = clamp01(progress / Math.max(0.001, resetPoint));
-    const fadeOut = clamp01((progress - resetPoint) / Math.max(0.001, 1 - resetPoint));
-    const staticAlpha = transition.resetDone
-      ? 0.86 * (1 - fadeOut)
-      : 0.18 + 0.76 * fadeIn;
-    const warmAlpha = transition.resetDone ? 0.28 * fadeOut : 0;
+    const visual = window.FoodAnimalsTransitionCanvas.resetStaticVisual(transition, { warmAlpha: 0.28 });
+    const fadeOut = visual.fadeOut;
+    const staticAlpha = visual.staticAlpha;
+    const warmAlpha = visual.warmAlpha;
     const frame = Math.floor((state.idleTime + transition.elapsed) * 36);
 
     ctx.save();
@@ -14575,8 +8280,8 @@
   function drawMenuRebootTransitionOverlay() {
     const transition = state.menuRebootTransition;
     if (!transition) return;
-    const progress = clamp01(transition.elapsed / Math.max(0.001, transition.duration));
-    const staticAlpha = 0.08 + 0.92 * easeOutCubic(progress);
+    const visual = window.FoodAnimalsTransitionCanvas.menuRebootVisual(transition);
+    const staticAlpha = visual.staticAlpha;
     const frame = Math.floor((state.idleTime + transition.elapsed) * 42);
 
     ctx.save();
@@ -14618,18 +8323,12 @@
   function drawFinalVictoryTransitionOverlay() {
     const transition = state.finalVictoryTransition;
     if (!transition) return;
-    const holdDuration = Math.max(0, transition.holdDuration || 0);
-    const staticDuration = Math.max(0.001, transition.duration - holdDuration);
-    const staticElapsed = transition.elapsed - holdDuration;
-    if (staticElapsed <= 0) return;
-    const progress = clamp01(staticElapsed / staticDuration);
-    const resetPoint = clamp01((transition.resetAt - holdDuration) / staticDuration);
-    const fadeIn = clamp01(progress / Math.max(0.001, resetPoint));
-    const fadeOut = clamp01((progress - resetPoint) / Math.max(0.001, 1 - resetPoint));
-    const staticAlpha = transition.resetDone
-      ? 0.86 * (1 - fadeOut)
-      : 0.18 + 0.76 * fadeIn;
-    const warmAlpha = transition.resetDone ? 0.34 * fadeOut : 0;
+    const visual = window.FoodAnimalsTransitionCanvas.finalVictoryStaticVisual(transition);
+    if (!visual.active) return;
+    const staticElapsed = visual.staticElapsed;
+    const fadeOut = visual.fadeOut;
+    const staticAlpha = visual.staticAlpha;
+    const warmAlpha = visual.warmAlpha;
     const frame = Math.floor((state.idleTime + staticElapsed) * 36);
 
     ctx.save();
@@ -14691,14 +8390,9 @@
   }
 
   function drawHorrorShopReturnStaticTransitionOverlay(transition) {
-    const duration = Math.max(0.001, transition.duration || HORROR_SHOP_RETURN_STATIC_SECONDS);
-    const elapsed = transition.elapsed || 0;
-    const switchAt = clamp(transition.switchAt || duration * 0.5, 0.001, duration - 0.001);
-    const fadeIn = clamp01(elapsed / switchAt);
-    const fadeOut = clamp01((elapsed - switchAt) / Math.max(0.001, duration - switchAt));
-    const staticAlpha = transition.screenChanged
-      ? 0.94 * (1 - fadeOut)
-      : 0.18 + 0.78 * fadeIn;
+    const visual = window.FoodAnimalsTransitionCanvas.shopReturnStaticVisual(transition, HORROR_SHOP_RETURN_STATIC_SECONDS);
+    const staticAlpha = visual.staticAlpha;
+    const fadeOut = visual.fadeOut;
     const frame = Math.floor((state.idleTime + (transition.elapsed || 0)) * 48);
 
     ctx.save();
@@ -15663,12 +9357,15 @@
     }
     if (button === buttons.battle || label === "Battle") {
       return {
-        title: realityBroken() ? "Deploy wave" : "Start battle",
-        body: enabled ? "Fight the next enemy team." : `Place at least one ${foodTerm({ lower: true })} first.`,
+        title: realityBroken() ? "Deploy wave" : "Start pressure test",
+        body: enabled ? (realityBroken() ? "Deploy against the next enemy team." : "Send the current pattern into the next pressure test.") : `Place at least one ${foodTerm({ lower: true })} first.`,
       };
     }
     if (button === buttons.battleSpeed || label.startsWith("Speed")) {
-      return { title: "Battle speed", body: "Cycles combat playback speed." };
+      return {
+        title: realityBroken() ? "Telemetry speed" : "Replay speed",
+        body: realityBroken() ? "Cycles combat telemetry playback speed." : "Cycles fight replay speed.",
+      };
     }
     if (label.startsWith("Sell") || label.startsWith("Scrap")) return { title: realityBroken() ? "Scrap" : "Sell", body: "Refunds part of this entry's value." };
     if (label.startsWith("Detach") || label.startsWith("Strip") || button.iconId === "action_detach") return { title: realityBroken() ? "Strip weapon" : "Detach topping", body: `Moves the equipped ${toppingTerm({ lower: true })} to an open bench slot.` };
@@ -15715,20 +9412,13 @@
   }
 
   function optionsMenuCanOpen() {
-    if (state.activeStory || state.codexOpen || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return false;
-    if (state.phase === "victoryCutscene") return false;
-    return state.phase === "prep" || state.phase === "battle" || state.phase === "result";
+    return window.FoodAnimalsOptionsMenuRuntime.canOpen(state);
   }
 
   function openOptionsMenu() {
     if (!optionsMenuCanOpen()) return false;
-    state.optionsMenu.open = true;
+    window.FoodAnimalsOptionsMenuRuntime.open(state);
     startModalTransition("options", "enter");
-    state.optionsMenu.selected = "resume";
-    state.optionsMenu.dragSlider = null;
-    state.selected = null;
-    state.drag = null;
-    state.hover = null;
     state.message = "Options";
     playGameSfx("ui-confirm", { volume: 0.45 });
     return true;
@@ -15738,7 +9428,7 @@
     if (!state.optionsMenu.open) return false;
     if (modalTransitionClosing("options")) return true;
     startModalTransition("options", "exit");
-    state.optionsMenu.dragSlider = null;
+    window.FoodAnimalsOptionsMenuRuntime.close(state);
     state.message = state.phase === "battle" ? "Battle" : state.phase === "result" ? "Result" : realityBroken() ? themedArena(currentArena()).short : "Prep";
     playGameSfx("ui-back", { volume: 0.48 });
     return true;
@@ -15749,7 +9439,7 @@
   }
 
   function setOptionSliderValue(slider, value) {
-    const next = clamp(Math.round(value), 0, 10);
+    const next = window.FoodAnimalsOptionsMenuRuntime.sliderSetting(value);
     if (slider === "music") setGameMusicSetting(next);
     else setGameSfxSetting(next);
     state.optionsMenu.selected = slider;
@@ -15759,13 +9449,13 @@
 
   function setOptionSliderFromPoint(slider, x) {
     const rect = slider === "music" ? OPTIONS_MENU.musicTrack : OPTIONS_MENU.sfxTrack;
-    return setOptionSliderValue(slider, ((x - rect.x) / rect.w) * 10);
+    return setOptionSliderValue(slider, window.FoodAnimalsOptionsMenuRuntime.sliderValueFromPoint(rect, x));
   }
 
   function applyOptionsMenuHit(hit) {
     if (!state.optionsMenu.open || !hit || hit.area !== "optionsMenu") return false;
     if (modalTransitionClosing("options")) return true;
-    if (hit.action === "resume" || hit.action === "close") return closeOptionsMenu();
+    if (hit.action === "resume" || hit.action === "close" || hit.action === "outside") return closeOptionsMenu();
     if (hit.action === "save") {
       saveCurrentRun();
       state.optionsMenu.selected = "save";
@@ -15788,19 +9478,10 @@
   function optionsMenuLayout() {
     const musicValue = optionSliderValue("music");
     const sfxValue = optionSliderValue("sfx");
-    return {
-      panel: OPTIONS_MENU.panel,
-      close: OPTIONS_MENU.close,
-      buttons: [
-        { id: "resume", label: "Resume", rect: OPTIONS_MENU.resume },
-        { id: "save", label: "Save Run", rect: OPTIONS_MENU.save },
-        { id: "exit", label: "Main Menu", rect: OPTIONS_MENU.exit },
-      ],
-      sliders: [
-        { id: "music", label: "Music", value: musicValue, rect: OPTIONS_MENU.musicTrack },
-        { id: "sfx", label: "SFX", value: sfxValue, rect: OPTIONS_MENU.sfxTrack },
-      ],
-    };
+    return window.FoodAnimalsOptionsMenuRuntime.layout(OPTIONS_MENU, {
+      music: musicValue,
+      sfx: sfxValue,
+    });
   }
 
   function drawOptionsSlider(slider) {
@@ -16123,22 +9804,10 @@
   }
 
   function drawSlot(x, y, w, h, unit, area, index) {
-    const selected = state.selected && state.selected.area === area && state.selected.index === index;
-    const showSelectedHighlight = selected && area === "shop";
-    const hovered = state.hover && state.hover.area === area && state.hover.index === index;
-    const showHoverHighlight = hovered && area !== "shop" && area !== "board" && area !== "bench" && area !== "itemBench" && area !== "drinks";
-    const isDragSource = state.drag?.area === area && state.drag.index === index;
-    const canDropHere = Boolean(state.drag && isPotentialDropTarget(state.drag, area, index));
-    const isValidDrop = canDropDrag(state.drag, area, index);
-    const isOpenDrop = canDropHere && isValidDrop;
-    const isBlockedDrop = canDropHere && !isValidDrop;
-    const isDragOver = state.drag?.over?.area === area && state.drag.over.index === index;
-    const useSubtleDropOutline = area === "board" || area === "bench" || area === "itemBench" || area === "drinks";
-    const showOpenDrop = isOpenDrop && !useSubtleDropOutline;
-    const showBlockedDrop = isBlockedDrop && !useSubtleDropOutline;
-    const showDragOver = isDragOver && !useSubtleDropOutline;
-    const showSubtleDropOutline = useSubtleDropOutline && isOpenDrop;
-    const showSubtleBlockedOutline = useSubtleDropOutline && isDragOver && isBlockedDrop;
+    const visual = window.FoodAnimalsSlotCanvas.slotVisualState(state, state.drag, area, index, {
+      canDropDrag,
+      isPotentialDropTarget,
+    });
     const slotTransition = area === "shop" ? shopSlotTransition(index) : null;
     ctx.save();
     if (slotTransition) {
@@ -16152,31 +9821,31 @@
     }
     const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, w, h, area, index);
     roundedRect(x - w / 2, y - h / 2, w, h, 8);
-    if (!hasArtBackdrop || showHoverHighlight || showOpenDrop || showDragOver) {
-      ctx.fillStyle = showDragOver && showOpenDrop
+    if (!hasArtBackdrop || visual.showHoverHighlight || visual.showOpenDrop || visual.showDragOver) {
+      ctx.fillStyle = visual.showDragOver && visual.showOpenDrop
         ? "rgba(231, 255, 217, 0.78)"
-        : showHoverHighlight || showOpenDrop
+        : visual.showHoverHighlight || visual.showOpenDrop
           ? "rgba(255, 249, 214, 0.62)"
           : "#f2edd2";
       ctx.fill();
     }
-    ctx.strokeStyle = showSelectedHighlight
+    ctx.strokeStyle = visual.showSelectedHighlight
       ? "#db4f38"
-      : showDragOver && showOpenDrop
+      : visual.showDragOver && visual.showOpenDrop
         ? "#4a9e68"
-        : showDragOver && showBlockedDrop
+        : visual.showDragOver && visual.showBlockedDrop
           ? "#d9573c"
           : hasArtBackdrop
             ? "transparent"
             : "rgba(22, 57, 45, 0.22)";
-    ctx.lineWidth = showSelectedHighlight || showDragOver ? 4 : 2;
+    ctx.lineWidth = visual.showSelectedHighlight || visual.showDragOver ? 4 : 2;
     ctx.stroke();
-    if (showSubtleDropOutline || showSubtleBlockedOutline) {
+    if (visual.showSubtleDropOutline || visual.showSubtleBlockedOutline) {
       roundedRect(x - w / 2 + 1.5, y - h / 2 + 1.5, w - 3, h - 3, 7);
-      ctx.strokeStyle = showSubtleBlockedOutline
+      ctx.strokeStyle = visual.showSubtleBlockedOutline
         ? "rgba(217, 87, 60, 0.34)"
         : "#4a9e68";
-      ctx.lineWidth = isDragOver ? 2.25 : 1.5;
+      ctx.lineWidth = visual.isDragOver ? 2.25 : 1.5;
       ctx.stroke();
     }
     ctx.lineWidth = 1;
@@ -16187,7 +9856,7 @@
     }
     if (unit) {
       ctx.save();
-      if (isDragSource) ctx.globalAlpha = 0.34;
+      if (visual.isDragSource) ctx.globalAlpha = 0.34;
       drawUnitCard(unit, x, y, w, h, area === "shop", area !== "shop", {
         hideTileName: area === "board" || area === "bench" || area === "itemBench" || area === "drinks",
         placementArea: area,
@@ -16251,10 +9920,8 @@
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    const badgeW = 58;
-    const badgeH = 16;
-    const badgeX = x - badgeW / 2;
-    const badgeY = y - h / 2 + 8;
+    const badge = window.FoodAnimalsSlotCanvas.mergeBadgeRect(x, y, w, h, false);
+    const { x: badgeX, y: badgeY, w: badgeW, h: badgeH } = badge;
     roundedRect(badgeX, badgeY, badgeW, badgeH, 7);
     ctx.fillStyle = "rgba(207, 255, 221, 0.98)";
     ctx.fill();
@@ -16297,10 +9964,8 @@
     ctx.lineTo(x + w / 2 - 14, y + h / 2 - 16 - pulse * 4);
     ctx.stroke();
 
-    const badgeW = 46;
-    const badgeH = 16;
-    const badgeX = x - badgeW / 2;
-    const badgeY = y - h / 2 + 8;
+    const badge = window.FoodAnimalsSlotCanvas.mergeBadgeRect(x, y, w, h, true);
+    const { x: badgeX, y: badgeY, w: badgeW, h: badgeH } = badge;
     roundedRect(badgeX, badgeY, badgeW, badgeH, 2);
     ctx.fillStyle = "rgba(5, 24, 17, 0.96)";
     ctx.fill();
@@ -16406,26 +10071,13 @@
   }
 
   function drawCornerBrackets(x, y, w, h, length) {
-    ctx.beginPath();
-    ctx.moveTo(x, y + length);
-    ctx.lineTo(x, y);
-    ctx.lineTo(x + length, y);
-    ctx.moveTo(x + w - length, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w, y + length);
-    ctx.moveTo(x + w, y + h - length);
-    ctx.lineTo(x + w, y + h);
-    ctx.lineTo(x + w - length, y + h);
-    ctx.moveTo(x + length, y + h);
-    ctx.lineTo(x, y + h);
-    ctx.lineTo(x, y + h - length);
+    window.FoodAnimalsRealityFxCanvas.drawCornerBrackets(ctx, x, y, w, h, length);
   }
 
   function drawShopSaleBadge(x, y, w, h, index) {
     if (!shopSlotOnSale(index)) return;
-    const badgeX = x - w / 2 + 7;
-    const badgeY = y - h / 2 + 31;
-    roundedRect(badgeX, badgeY, 42, 16, 5);
+    const rect = window.FoodAnimalsSlotCanvas.saleBadgeRect(x, y, w, h);
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 5);
     ctx.fillStyle = "#ffe27a";
     ctx.fill();
     ctx.strokeStyle = "#9c6a2f";
@@ -16435,7 +10087,7 @@
     ctx.font = "900 8px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("SALE", badgeX + 21, badgeY + 8.5);
+    ctx.fillText("SALE", rect.x + rect.w / 2, rect.y + rect.h / 2 + 0.5);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     ctx.lineWidth = 1;
@@ -16446,10 +10098,11 @@
     const horror = realityBroken();
     const lockBleed = shopLockBleedPhase(index);
     const lockFlash = lockBleed.phase === "flash";
-    const panelX = x - w / 2 + 7;
-    const panelY = y - h / 2 + 9;
-    const panelW = w - 14;
-    const panelH = h - 18;
+    const panel = window.FoodAnimalsSlotCanvas.unlockPanelRect(x, y, w, h);
+    const panelX = panel.x;
+    const panelY = panel.y;
+    const panelW = panel.w;
+    const panelH = panel.h;
     if (horror) getUiSprite(SHOP_LOCK_CLOTH_BG_SRC);
     const cloth = getUiSprite(lockFlash ? SHOP_LOCK_CLOTH_BG_SRC : currentShopLockClothBgSrc());
     roundedRect(panelX, panelY, panelW, panelH, 8);
@@ -16736,7 +10389,12 @@
         return isUnit(target) && !target.item;
       }
       if (isDrink(drag.unit)) {
-        if (area === "drinks") return !target;
+        if (area === "drinks") {
+          if (!target) return true;
+          if (!isDrink(target)) return false;
+          if (drag.area === "drinks") return index !== drag.index;
+          return isItemStorageArea(drag.area) && itemStorageAccepts(drag.area, drag.index, target);
+        }
         if (area === "itemBench") {
           if (!itemBenchSlotAccepts(index, drag.unit)) return false;
           if (!target) return true;
@@ -16755,6 +10413,7 @@
       }
       if (area === "bench") {
         if (drag.area === "equipment") return !target || (isUnit(target) && !target.item);
+        if (isUnit(target)) return !target.item;
         if (drag.area === "bench") return index !== drag.index;
         return !target && (drag.area !== area || index !== drag.index);
       }
@@ -16772,7 +10431,7 @@
       drawItemCard(unit, x, y, w, h, shopCard, options);
       return;
     }
-    const radius = Math.min(w, h) * (shopCard ? 0.25 : 0.28);
+    const radius = window.FoodAnimalsCardCanvas.iconRadius(w, h, { shopCard });
     const presentationScale = horrorFoodAnimalPlacementScale(unit, options.placementArea);
     drawFoodAnimal(unit, x, y - (shopCard ? 20 : 4), radius, facingRight, {
       presentationScale,
@@ -16826,7 +10485,12 @@
 
   function drawItemCard(item, x, y, w, h, shopCard, options = {}) {
     const tileDrink = !shopCard && options.hideTileName && isDrink(item);
-    const radius = Math.min(w, h) * (shopCard ? 0.26 : tileDrink ? TILE_DRINK_ICON_RADIUS_SCALE : 0.25);
+    const radius = window.FoodAnimalsCardCanvas.iconRadius(w, h, {
+      kind: "item",
+      shopCard,
+      tileDrink,
+      tileDrinkScale: TILE_DRINK_ICON_RADIUS_SCALE,
+    });
     drawItemIcon(item, x, y - (shopCard ? 31 : tileDrink ? TILE_DRINK_ICON_Y_OFFSET : 14), radius, {
       centerOpaque: tileDrink,
       opaqueAnchorY: tileDrink ? DRINK_COASTER_OPAQUE_ANCHOR_Y : 0.5,
@@ -16871,24 +10535,12 @@
   }
 
   function drawUpgradeStars(tier, x, y, size = 10, align = "left") {
-    const count = Math.max(1, tier || 1);
-    const pipSize = Math.max(3, size * 0.78);
-    const gap = Math.max(1, Math.round(pipSize * 0.16));
-    const totalWidth = count * pipSize + (count - 1) * gap;
-    const startX = align === "center" ? x - totalWidth / 2 : align === "right" ? x - totalWidth : x;
+    const layout = window.FoodAnimalsCardCanvas.upgradeStarLayout(tier, x, y, size, align);
     const image = getUiSprite(UPGRADE_STAR_SRC);
     if (image && image.complete && image.naturalWidth > 0) {
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      for (let i = 0; i < count; i += 1) {
-        ctx.drawImage(
-          image,
-          Math.round(startX + i * (pipSize + gap)),
-          Math.round(y - pipSize / 2),
-          pipSize,
-          pipSize,
-        );
-      }
+      layout.stars.forEach((star) => ctx.drawImage(image, star.x, star.y, star.w, star.h));
       ctx.restore();
       return;
     }
@@ -16896,11 +10548,11 @@
     ctx.fillStyle = "#f0c64a";
     ctx.strokeStyle = "#85512e";
     ctx.lineWidth = 2;
-    ctx.font = `900 ${Math.max(6, Math.round(pipSize * 0.95))}px Inter, sans-serif`;
+    ctx.font = `900 ${Math.max(6, Math.round(layout.pipSize * 0.95))}px Inter, sans-serif`;
     ctx.textAlign = align === "center" ? "center" : align === "right" ? "right" : "left";
     ctx.textBaseline = "middle";
-    ctx.strokeText(stars(count), x, y);
-    ctx.fillText(stars(count), x, y);
+    ctx.strokeText(stars(layout.count), x, y);
+    ctx.fillText(stars(layout.count), x, y);
     ctx.restore();
   }
 
@@ -16957,27 +10609,16 @@
   }
 
   function drawTraitChips(traits, x, y, maxWidth, options = {}) {
-    let cursor = x;
-    let row = 0;
-    const gap = options.gap ?? 3;
-    const rowHeight = options.rowHeight ?? 14;
-    const maxRows = options.maxRows ?? 1;
-    const fontSize = options.fontSize ?? 7;
-    const minWidth = options.minWidth ?? 28;
-    traits.forEach((traitId) => {
+    const layout = window.FoodAnimalsCardCanvas.traitChipLayout(traits, x, y, maxWidth, {
+      ...options,
+      textFor: traitDisplayText,
+      measure: measureTextWidth,
+    });
+    layout.chips.forEach((chip) => {
+      const { traitId, text } = chip;
       const info = traitInfo(traitId);
-      const text = traitDisplayText(traitId);
-      ctx.font = `900 ${fontSize}px Inter, sans-serif`;
-      let w = Math.max(minWidth, Math.ceil(measureTextWidth(text, ctx.font) + 8));
-      if (cursor + w > x + maxWidth) {
-        if (row + 1 >= maxRows) return;
-        row += 1;
-        cursor = x;
-      }
-      w = Math.min(w, maxWidth);
-      if (w < minWidth) return;
-      const chipY = y + row * rowHeight;
-      roundedRect(cursor, chipY, w, 14, 4);
+      ctx.font = chip.font;
+      roundedRect(chip.x, chip.y, chip.w, chip.h, 4);
       if (realityBroken()) {
         ctx.save();
         ctx.shadowColor = info.color;
@@ -16986,24 +10627,23 @@
         ctx.fillStyle = info.color;
         ctx.fill();
         ctx.restore();
-        roundedRect(cursor, chipY, w, 14, 4);
+        roundedRect(chip.x, chip.y, chip.w, chip.h, 4);
       }
       ctx.fillStyle = info.color;
       ctx.fill();
       ctx.strokeStyle = realityBroken() ? "rgba(244, 255, 246, 0.28)" : "rgba(22, 57, 45, 0.22)";
       ctx.lineWidth = 1;
       ctx.stroke();
-      registerTooltip(cursor, chipY, w, 14, {
+      registerTooltip(chip.x, chip.y, chip.w, chip.h, {
         title: `${traitDisplayText(traitId)} trait`,
         body: info.effect || "Counts toward a team trait bonus.",
       });
       ctx.fillStyle = realityBroken() ? themeColor("chipText", "#06100c") : "#16392d";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(text, cursor + w / 2, chipY + 8, w - 5);
+      ctx.fillText(text, chip.x + chip.w / 2, chip.y + 8, chip.w - 5);
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
-      cursor += w + gap;
     });
   }
 
@@ -17331,58 +10971,26 @@
 
   function selectedSellButton(ref) {
     const layout = selectedPanelActionLayout(ref);
-    const hasDetach = layout.split;
-    return {
-      ...buttons.sell,
-      x: hasDetach ? layout.leftX : layout.singleX,
-      y: layout.y,
-      w: hasDetach ? layout.splitW : layout.singleW,
-      h: layout.h,
-    };
+    return window.FoodAnimalsSelectedPanelCanvas.sellButton(buttons.sell, layout);
   }
 
   function selectedDetachButton(ref) {
+    const layout = selectedPanelActionLayout(ref);
     if (ref && isUnit(ref.entry)) {
-      const layout = selectedPanelActionLayout(ref);
-      return {
-        ...buttons.detach,
-        x: layout.rightX,
-        y: layout.y,
-        w: layout.splitW,
-        h: layout.h,
-        label: "Detach",
-        iconId: "action_detach",
-      };
+      return window.FoodAnimalsSelectedPanelCanvas.detachButton(buttons.detach, layout, true);
     }
     return buttons.detach;
   }
 
   function selectedPanelActionLayout(ref) {
-    const margin = 20;
-    const gap = 8;
-    const h = 28;
-    const y = INFO_PANEL.y + INFO_PANEL.h - 42;
-    const availableW = INFO_PANEL.w - margin * 2;
-    const splitW = Math.floor((availableW - gap) / 2);
-    const leftX = INFO_PANEL.x + margin;
-    const rightX = leftX + splitW + gap;
-    const split = Boolean(
-      ref &&
-      isUnit(ref.entry) &&
-      (ref.area === "bench" || ref.area === "board") &&
-      ref.entry.item
-    );
-    const singleW = Math.min(148, availableW);
-    return {
-      y,
-      h,
-      split,
-      splitW,
-      leftX,
-      rightX,
-      singleW,
-      singleX: INFO_PANEL.x + INFO_PANEL.w - margin - singleW,
-    };
+    return window.FoodAnimalsSelectedPanelCanvas.actionLayout(INFO_PANEL, ref, {
+      canDetach: (candidate) => Boolean(
+        candidate &&
+        isUnit(candidate.entry) &&
+        (candidate.area === "bench" || candidate.area === "board") &&
+        candidate.entry.item
+      ),
+    });
   }
 
   function drawSelectedEquipmentSlot(unit) {
@@ -17433,10 +11041,14 @@
     const textW = badgeX - textX - 5;
     const specW = maxWidth - 76;
     const specs = favorite.specs || favoriteToppingSpecLines(unit);
-    const specLineHeight = 10;
+    const metrics = window.FoodAnimalsSelectedPanelCanvas.favoriteToppingMetrics(
+      specs,
+      maxWidth,
+      (line, width) => wrappedTextLines(line, width).length,
+    );
+    const specLineHeight = metrics.specLineHeight;
     ctx.font = "800 8.5px Inter, sans-serif";
-    const specRows = specs.reduce((total, line) => total + wrappedTextLines(line, specW).length, 0);
-    const cardH = Math.max(86, 46 + specRows * specLineHeight + Math.max(0, specs.length - 1) * 2);
+    const cardH = metrics.cardH;
     roundedRect(x, cardTop, maxWidth, cardH, 6);
     ctx.fillStyle = fill;
     ctx.fill();
@@ -17562,36 +11174,36 @@
   }
 
   function codexRoleLabel(roleId) {
-    return {
+    return window.FoodAnimalsCodexRuntime.labelFromMap(roleId, {
       all: "All",
       damage: "Damage",
       support: "Support",
       control: "Control",
       economy: "Economy",
       scaling: "Scaling",
-    }[roleId] || "All";
+    });
   }
 
   function codexEffectLabel(effectId) {
-    return {
+    return window.FoodAnimalsCodexRuntime.labelFromMap(effectId, {
       all: "All",
       offense: "Offense",
       defense: "Defense",
       support: "Support",
       utility: "Utility",
       economy: "Economy",
-    }[effectId] || "All";
+    });
   }
 
   function codexDrinkStatLabel(statId) {
-    return {
+    return window.FoodAnimalsCodexRuntime.labelFromMap(statId, {
       all: "All",
       speed: "Speed",
       hp: "Max Health",
       pwr: "Ability Power",
       pulse: "Pulse",
       utility: "Utility",
-    }[statId] || "All";
+    });
   }
 
   function codexRarityLabel(rarityId) {
@@ -17603,13 +11215,10 @@
   }
 
   function codexFilterOptions(tabId, key) {
-    if (key === "rarity") return ["all", ...Object.keys(RARITIES)];
-    if (tabId === "food" && key === "trait") return ["all", ...Object.keys(TRAITS)];
-    if (tabId === "food" && key === "role") return ["all", "damage", "support", "control", "economy", "scaling"];
-    if (tabId === "toppings" && key === "effect") return ["all", "offense", "defense", "support", "utility", "economy"];
-    if (tabId === "drinks" && key === "stat") return ["all", "speed", "hp", "pwr", "pulse"];
-    if (tabId === "drinks" && key === "trait") return ["all", ...Object.keys(TRAITS)];
-    return ["all"];
+    return window.FoodAnimalsCodexRuntime.filterOptions(tabId, key, {
+      rarities: RARITIES,
+      traits: TRAITS,
+    });
   }
 
   function codexFilterLabel(tabId, key, value) {
@@ -17643,24 +11252,7 @@
 
   function codexFilterDefs(tabId = state.codexTab) {
     const filters = codexFilterState(tabId);
-    if (tabId === "food") {
-      return [
-        { key: "rarity", label: codexFilterLabel(tabId, "rarity", filters.rarity) },
-        { key: "trait", label: codexFilterLabel(tabId, "trait", filters.trait) },
-        { key: "role", label: codexFilterLabel(tabId, "role", filters.role) },
-      ];
-    }
-    if (tabId === "toppings") {
-      return [
-        { key: "rarity", label: codexFilterLabel(tabId, "rarity", filters.rarity) },
-        { key: "effect", label: codexFilterLabel(tabId, "effect", filters.effect) },
-      ];
-    }
-    return [
-      { key: "rarity", label: codexFilterLabel(tabId, "rarity", filters.rarity) },
-      { key: "stat", label: codexFilterLabel(tabId, "stat", filters.stat) },
-      { key: "trait", label: codexFilterLabel(tabId, "trait", filters.trait) },
-    ];
+    return window.FoodAnimalsCodexRuntime.filterDefs(tabId, filters, codexFilterLabel);
   }
 
   function codexFilterRows(tabId = state.codexTab) {
@@ -17681,50 +11273,19 @@
   let codexFilterLayoutMemo = null;
 
   function codexFilterMemoKey(tabId) {
-    const filters = codexFilterState(tabId);
-    return `${currentCopyThemeId()}|${tabId}|${Object.keys(filters).sort().map((key) => `${key}:${filters[key]}`).join("|")}`;
+    return window.FoodAnimalsCodexRuntime.memoKey(tabId, codexFilterState(tabId), currentCopyThemeId());
   }
 
   function codexFilterLayout(tabId = state.codexTab) {
     const memoKey = codexFilterMemoKey(tabId);
     if (codexFilterLayoutMemoKey === memoKey && codexFilterLayoutMemo) return codexFilterLayoutMemo;
-    const rows = codexFilterRows(tabId);
-    const layoutRows = [];
-    const chipH = 18;
-    const labelW = 56;
-    const gap = 4;
-    const lineGap = 3;
-    const rowGap = 5;
-    const startX = CODEX_LIST.x + labelW;
-    const availableW = CODEX_LIST.w - labelW;
-    let y = CODEX_LIST.y + 4;
-    rows.forEach((row) => {
-      let x = CODEX_LIST.x + labelW;
-      let optionY = y + 3;
-      let lineCount = 1;
-      const options = row.options.map((value) => {
-        const text = codexFilterOptionText(tabId, row.key, value);
-        const w = codexFilterOptionWidth(text);
-        if (x > startX && x + w > startX + availableW) {
-          x = startX;
-          optionY += chipH + lineGap;
-          lineCount += 1;
-        }
-        const option = {
-          key: row.key,
-          value,
-          label: row.label,
-          text,
-          rect: { x, y: optionY, w, h: chipH },
-        };
-        x += w + gap;
-        return option;
-      });
-      const h = lineCount * chipH + (lineCount - 1) * lineGap + 6;
-      layoutRows.push({ ...row, y, h, labelY: y + 17, options });
-      y += h + rowGap;
+    const layout = window.FoodAnimalsCodexCanvas.filterLayout({
+      list: CODEX_LIST,
+      tabId,
+      rows: codexFilterRows(tabId),
+      optionText: codexFilterOptionText,
+      optionWidth: codexFilterOptionWidth,
     });
-    const layout = { rows: layoutRows, height: Math.max(0, y - (CODEX_LIST.y + 4) - rowGap) };
     codexFilterLayoutMemoKey = memoKey;
     codexFilterLayoutMemo = layout;
     return layout;
@@ -17764,28 +11325,15 @@
   }
 
   function entryMatchesCodexFilters(entry, tabId = state.codexTab) {
-    const filters = codexFilterState(tabId);
-    if (filters.rarity !== "all" && (entry.rarity || "common") !== filters.rarity) return false;
-    if (tabId === "food") {
-      if (filters.trait !== "all" && !entry.traits?.includes(filters.trait)) return false;
-      if (filters.role !== "all" && foodRoleGroup(entry) !== filters.role) return false;
-      return true;
-    }
-    if (tabId === "toppings") {
-      if (filters.effect !== "all" && toppingEffectGroup(entry) !== filters.effect) return false;
-      return true;
-    }
-    if (!drinkMatchesStatFilter(entry, filters.stat)) return false;
-    if (filters.trait !== "all" && !entry.pairTraits?.includes(filters.trait)) return false;
-    return true;
+    return window.FoodAnimalsCodexRuntime.filterEntries([entry], tabId, codexFilterState(tabId), {
+      drinkMatchesStatFilter,
+      foodRoleGroup,
+      toppingEffectGroup,
+    }).length > 0;
   }
 
   function sortCodexEntries(entries) {
-    return [...entries].sort((a, b) => {
-      const rarityDiff = rarityRank(a.rarity) - rarityRank(b.rarity);
-      if (rarityDiff) return rarityDiff;
-      return String(a.name || "").localeCompare(String(b.name || ""));
-    });
+    return window.FoodAnimalsCodexRuntime.sortEntries(entries, rarityRank);
   }
 
   let codexEntriesMemoKey = null;
@@ -17794,9 +11342,14 @@
   function codexEntries() {
     const tabId = state.codexTab;
     const filters = codexFilterState(tabId);
-    const memoKey = `${tabId}|${Object.keys(filters).sort().map((key) => `${key}:${filters[key]}`).join("|")}`;
+    const memoKey = window.FoodAnimalsCodexRuntime.memoKey(tabId, filters);
     if (codexEntriesMemoKey === memoKey && codexEntriesMemo) return codexEntriesMemo;
-    const entries = sortCodexEntries(baseCodexEntries(tabId).filter((entry) => entryMatchesCodexFilters(entry, tabId)));
+    const filtered = window.FoodAnimalsCodexRuntime.filterEntries(baseCodexEntries(tabId), tabId, filters, {
+      drinkMatchesStatFilter,
+      foodRoleGroup,
+      toppingEffectGroup,
+    });
+    const entries = sortCodexEntries(filtered);
     codexEntriesMemoKey = memoKey;
     codexEntriesMemo = entries;
     return entries;
@@ -17804,16 +11357,7 @@
 
   function currentCodexEntry() {
     const visibleEntries = codexEntries();
-    if (state.codexTab === "toppings") {
-      const id = state.codexSelectedToppingId || visibleEntries[0]?.id;
-      return visibleEntries.find((item) => item.id === id) || visibleEntries[0] || null;
-    }
-    if (state.codexTab === "drinks") {
-      const id = state.codexSelectedDrinkId || visibleEntries[0]?.id;
-      return visibleEntries.find((item) => item.id === id) || visibleEntries[0] || null;
-    }
-    const id = state.codexSelectedId || visibleEntries[0]?.id;
-    return visibleEntries.find((animal) => animal.id === id) || visibleEntries[0] || null;
+    return window.FoodAnimalsCodexRuntime.currentEntry(visibleEntries, state);
   }
 
   function codexUnitFor(animal, tier = 1) {
@@ -17852,105 +11396,44 @@
 
   function codexListLayout() {
     const filterLayout = codexFilterLayout();
-    const filterH = filterLayout.height + 16;
-    const listY = CODEX_LIST.y + Math.max(84, filterH);
-    const listH = Math.max(150, CODEX_LIST.h - (listY - CODEX_LIST.y));
-    if (state.codexTab === "toppings") {
-      const cols = 3;
-      const rowH = 19;
-      const rows = Math.max(8, Math.floor(listH / rowH));
-      return {
-        ...CODEX_LIST,
-        y: listY,
-        h: listH,
-        rows,
-        cols,
-        rowH,
-        colW: CODEX_LIST.w / cols,
-      };
-    }
-    if (state.codexTab === "food") {
-      const cols = 3;
-      const rowH = 18;
-      const rows = Math.max(8, Math.floor(listH / rowH));
-      return {
-        ...CODEX_LIST,
-        y: listY,
-        h: listH,
-        rows,
-        cols,
-        rowH,
-        colW: CODEX_LIST.w / cols,
-      };
-    }
-    const rowH = 22;
-    return { ...CODEX_LIST, y: listY, h: listH, rows: Math.max(8, Math.floor(listH / rowH)), cols: 2, rowH, colW: CODEX_LIST.w / 2 };
+    return window.FoodAnimalsCodexCanvas.listLayout({
+      list: CODEX_LIST,
+      filterHeight: filterLayout.height,
+      tabId: state.codexTab,
+    });
   }
 
   function codexEntryRect(index) {
-    const layout = codexListLayout();
-    const col = Math.floor(index / layout.rows);
-    const row = index % layout.rows;
-    if (col >= layout.cols) return null;
-    return {
-      x: layout.x + col * layout.colW,
-      y: layout.y + row * layout.rowH,
-      w: layout.colW - 8,
-      h: layout.rowH - 3,
-    };
+    return window.FoodAnimalsCodexCanvas.entryRect(index, codexListLayout());
   }
 
   function codexCloseRect() {
-    return { x: CODEX_PANEL.x + CODEX_PANEL.w - 43, y: CODEX_PANEL.y + 18, w: 28, h: 28 };
+    return window.FoodAnimalsCodexCanvas.closeRect(CODEX_PANEL);
   }
 
   function codexTabRect(index) {
-    return { x: CODEX_PANEL.x + 292 + index * 98, y: CODEX_PANEL.y + 24, w: 88, h: 28 };
+    return window.FoodAnimalsCodexCanvas.tabRect(CODEX_PANEL, index);
   }
 
   function codexFormRect(index) {
-    const x = CODEX_LIST.x + CODEX_LIST.w + 34;
-    const y = CODEX_LIST.y - 34;
-    const cardW = 61;
-    const gap = 9;
-    const fx = x + 22 + index * (cardW + gap);
-    return { x: fx - 6, y: y + 246, w: cardW, h: 76 };
+    return window.FoodAnimalsCodexCanvas.formRect(CODEX_LIST, index);
   }
 
   function codexItemFormRect(index) {
-    const x = CODEX_LIST.x + CODEX_LIST.w + 34;
-    const y = CODEX_LIST.y - 34;
-    const fx = x + 48 + index * 96;
-    return { x: fx - 40, y: y + 246, w: 80, h: 92 };
+    return window.FoodAnimalsCodexCanvas.itemFormRect(CODEX_LIST, index);
   }
 
   function codexPreviewRect() {
-    const x = CODEX_LIST.x + CODEX_LIST.w + 34;
-    const y = CODEX_LIST.y - 34;
-    return { x: x + 15, y: y + 18, w: 116, h: 138 };
+    return window.FoodAnimalsCodexCanvas.previewRect(CODEX_LIST);
   }
 
   function resetCodexPreviewView() {
-    state.codexPreview = {
-      ...(state.codexPreview || {}),
-      zoom: 1,
-      panX: 0,
-      panY: 0,
-      dragging: false,
-      startX: 0,
-      startY: 0,
-      startPanX: 0,
-      startPanY: 0,
-    };
+    state.codexPreview = window.FoodAnimalsCodexRuntime.resetPreview(state.codexPreview);
   }
 
   function clampCodexPreviewPan() {
     const view = state.codexPreview || (state.codexPreview = {});
-    view.zoom = 1;
-    view.panX = 0;
-    view.panY = 0;
-    view.dragging = false;
-    return view;
+    return window.FoodAnimalsCodexRuntime.clampPreview(view);
   }
 
   function fitCodexText(text, x, y, maxWidth, font, color, minPx = 6.5) {
@@ -18223,7 +11706,7 @@
     ctx.lineWidth = 1;
 
     registerTooltip(rect.x, rect.y, rect.w, rect.h, {
-      title: realityBroken() ? "War manifest preview" : "Beastiary preview",
+      title: realityBroken() ? "War manifest preview" : "Field guide preview",
       body: "Select another form or entry to update the preview.",
     });
   }
@@ -18905,6 +12388,11 @@
     return 1 - Math.pow(1 - t, 3);
   }
 
+  function easeInOutCubic(value) {
+    const t = clamp01(value);
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
   function drawUnitToppings(unit, x, y, r, facingRight = false) {
     if (!unit?.item) return;
     const offsetX = r * (facingRight ? -0.08 : 0.08);
@@ -19079,44 +12567,33 @@
 
   function getRuntimeSprite(unit, options = {}) {
     const src = runtimeSpriteSrcFor(unit, options);
-    if (!src) return null;
-    if (runtimeSpriteCache.has(src)) return runtimeSpriteCache.get(src);
-    const image = loadSpriteImage(src);
-    runtimeSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function getDefeatStillSprite(unit, options = {}) {
     const src = defeatStillSpriteSrcFor(unit, options);
-    if (!src) return null;
-    if (runtimeSpriteCache.has(src)) return runtimeSpriteCache.get(src);
-    const image = loadSpriteImage(src);
-    runtimeSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function loadSpriteImage(src) {
-    const image = new Image();
-    image.decoding = "async";
-    image.dataset.loadState = "loading";
-      image.onload = () => {
-        image.dataset.loadState = "loaded";
-        requestDraw();
-      };
-      image.onerror = () => {
-        image.dataset.loadState = "failed";
-        requestDraw();
-      };
-    image.src = src;
-    return image;
+    return window.FoodAnimalsRuntimeAssets.loadImage(src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function spriteImageReady(image) {
-    return Boolean(image && image.complete && image.naturalWidth > 0);
+    return window.FoodAnimalsRuntimeAssets.ready(image);
   }
 
   function spriteImageFailed(image) {
-    return Boolean(image && (image.dataset.loadState === "failed" || (image.complete && image.naturalWidth <= 0)));
+    return window.FoodAnimalsRuntimeAssets.failed(image);
   }
 
   function getItemSprite(item, options = {}) {
@@ -19143,11 +12620,10 @@
   }
 
   function getItemSpriteBySrc(src) {
-    if (!src) return null;
-    if (itemSpriteCache.has(src)) return itemSpriteCache.get(src);
-    const image = loadSpriteImage(src);
-    itemSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(itemSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function getAttackParticleSprite(typeId, options = {}) {
@@ -19156,13 +12632,10 @@
   }
 
   function getAttackParticleSpriteBySrc(src) {
-    if (!src) return null;
-    if (attackParticleSpriteCache.has(src)) return attackParticleSpriteCache.get(src);
-    const image = new Image();
-    image.onload = requestDraw;
-    image.src = src;
-    attackParticleSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(attackParticleSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function getDrinkThrowableSprite(drinkId) {
@@ -19171,23 +12644,17 @@
   }
 
   function getDrinkThrowableSpriteBySrc(src) {
-    if (!src) return null;
-    if (drinkThrowableSpriteCache.has(src)) return drinkThrowableSpriteCache.get(src);
-    const image = new Image();
-    image.onload = requestDraw;
-    image.src = src;
-    drinkThrowableSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(drinkThrowableSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function getParticleSpriteBySrc(src) {
-    if (!src) return null;
-    if (particleSpriteCache.has(src)) return particleSpriteCache.get(src);
-    const image = new Image();
-    image.onload = requestDraw;
-    image.src = src;
-    particleSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(particleSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function getParticleSprite(cacheKind, particleType, particleTier, resolvedSrc = null) {
@@ -19209,16 +12676,18 @@
   }
 
   function preloadDefeatStillSprites() {
-    const preloadEntry = (entry) => {
-      if (!entry) return;
-      if (typeof entry === "string") {
-        if (!runtimeSpriteCache.has(entry)) runtimeSpriteCache.set(entry, loadSpriteImage(entry));
-        return;
-      }
-      Object.values(entry).forEach(preloadEntry);
-    };
-    Object.values(DEFEAT_STILL_SPRITES).forEach(preloadEntry);
-    Object.values(REALITY_DEFEAT_STILL_SPRITES).forEach(preloadEntry);
+    window.FoodAnimalsRuntimeAssets.preloadEntries(DEFEAT_STILL_SPRITES, (src) => {
+      window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
+        onLoad: requestDraw,
+        onError: requestDraw,
+      });
+    });
+    window.FoodAnimalsRuntimeAssets.preloadEntries(REALITY_DEFEAT_STILL_SPRITES, (src) => {
+      window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
+        onLoad: requestDraw,
+        onError: requestDraw,
+      });
+    });
   }
 
   function preloadRuntimeSprites() {
@@ -19236,23 +12705,17 @@
   function getStatusEffectSprite(effectId) {
     const horrorSrc = realityBroken() ? HORROR_STATUS_EFFECT_SPRITES[effectId] : null;
     const src = horrorSrc || STATUS_EFFECT_SPRITES[effectId];
-    if (!src) return null;
-    if (statusEffectSpriteCache.has(src)) return statusEffectSpriteCache.get(src);
-    const image = new Image();
-    image.onload = requestDraw;
-    image.src = src;
-    statusEffectSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(statusEffectSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function getUiSprite(src) {
-    if (!src) return null;
-    if (uiSpriteCache.has(src)) return uiSpriteCache.get(src);
-    const image = new Image();
-    image.onload = requestDraw;
-    image.src = src;
-    uiSpriteCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(uiSpriteCache, src, {
+      onLoad: requestDraw,
+      onError: requestDraw,
+    });
   }
 
   function drawUiAtlasIcon(iconId, x, y, size = 18, options = {}) {
@@ -19297,18 +12760,13 @@
   }
 
   function registerTooltip(x, y, w, h, tooltip) {
-    if (!tooltip || !tooltip.title) return;
-    state.tooltipTargets.push({ x, y, w, h, title: tooltip.title, body: tooltip.body || "" });
+    window.FoodAnimalsInteractionRuntime.registerTooltip(state.tooltipTargets, x, y, w, h, tooltip);
   }
 
   function currentTooltip() {
-    const p = state.pointer;
-    if (!p || state.drag) return null;
-    for (let i = state.tooltipTargets.length - 1; i >= 0; i -= 1) {
-      const target = state.tooltipTargets[i];
-      if (pointInRect(p.x, p.y, target)) return target;
-    }
-    return null;
+    return window.FoodAnimalsInteractionRuntime.currentTooltip(state.tooltipTargets, state.pointer, {
+      dragging: Boolean(state.drag),
+    });
   }
 
   function drawTooltip() {
@@ -19324,14 +12782,17 @@
     ctx.font = bodyFont;
     const bodyLines = tip.body ? wrappedTextLines(tip.body, maxW - pad * 2).slice(0, 3) : [];
     const bodyW = bodyLines.reduce((width, line) => Math.max(width, Math.min(maxW - pad * 2, measureTextWidth(line, ctx.font))), 0);
-    const w = Math.max(86, Math.min(maxW, Math.ceil(Math.max(titleW, bodyW) + pad * 2)));
-    const h = bodyLines.length ? 32 + bodyLines.length * 13 : 30;
-    let x = Math.round((state.pointer?.x || 0) + 14);
-    let y = Math.round((state.pointer?.y || 0) + 16);
-    if (x + w > W - 8) x = Math.round((state.pointer?.x || 0) - w - 14);
-    if (y + h > H - 8) y = Math.round((state.pointer?.y || 0) - h - 12);
-    x = clamp(x, 8, W - w - 8);
-    y = clamp(y, 8, H - h - 8);
+    const metrics = window.FoodAnimalsInteractionRuntime.tooltipMetrics(tip, state.pointer, {
+      width: W,
+      height: H,
+    }, {
+      bodyLines: bodyLines.map((line) => ({ text: line, width: measureTextWidth(line, ctx.font) })),
+      bodyW,
+      maxW,
+      pad,
+      titleW,
+    });
+    const { x, y, w, h } = metrics;
     ctx.shadowColor = cozyMergeTooltip ? "rgba(22, 151, 78, 0.35)" : "rgba(22, 57, 45, 0.24)";
     ctx.shadowBlur = cozyMergeTooltip ? 14 : 12;
     ctx.shadowOffsetY = 5;
@@ -19436,109 +12897,15 @@
   }
 
   function runtimeSpriteMetrics(image) {
-    const cacheKey = image.currentSrc || image.src || image;
-    if (runtimeSpriteMetricsCache.has(cacheKey)) return runtimeSpriteMetricsCache.get(cacheKey);
-    const fallback = {
-      x: 0,
-      y: 0,
-      w: Math.max(1, image.naturalWidth || image.width || 1),
-      h: Math.max(1, image.naturalHeight || image.height || 1),
-    };
-    if (!image.complete || !image.naturalWidth || !image.naturalHeight) return fallback;
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      const px = canvas.getContext("2d", { willReadFrequently: true });
-      px.drawImage(image, 0, 0);
-      const { data, width, height } = px.getImageData(0, 0, canvas.width, canvas.height);
-      let minX = width;
-      let minY = height;
-      let maxX = -1;
-      let maxY = -1;
-      for (let yy = 0; yy < height; yy += 1) {
-        for (let xx = 0; xx < width; xx += 1) {
-          if (data[(yy * width + xx) * 4 + 3] <= 8) continue;
-          if (xx < minX) minX = xx;
-          if (yy < minY) minY = yy;
-          if (xx > maxX) maxX = xx;
-          if (yy > maxY) maxY = yy;
-        }
-      }
-      if (maxX < minX || maxY < minY) {
-        runtimeSpriteMetricsCache.set(cacheKey, fallback);
-        return fallback;
-      }
-      const pad = 2;
-      const metrics = {
-        x: Math.max(0, minX - pad),
-        y: Math.max(0, minY - pad),
-        w: Math.min(width, maxX + pad + 1) - Math.max(0, minX - pad),
-        h: Math.min(height, maxY + pad + 1) - Math.max(0, minY - pad),
-      };
-      runtimeSpriteMetricsCache.set(cacheKey, metrics);
-      return metrics;
-    } catch (error) {
-      runtimeSpriteMetricsCache.set(cacheKey, fallback);
-      return fallback;
-    }
+    return window.FoodAnimalsRuntimeAssets.alphaMetrics(image, runtimeSpriteMetricsCache);
   }
 
   function itemSpriteMetrics(image) {
-    const cacheKey = image.currentSrc || image.src || image;
-    if (itemSpriteMetricsCache.has(cacheKey)) return itemSpriteMetricsCache.get(cacheKey);
-    const metrics = alphaSpriteMetrics(image, itemSpriteMetricsCache);
-    return metrics;
+    return alphaSpriteMetrics(image, itemSpriteMetricsCache);
   }
 
   function alphaSpriteMetrics(image, cache) {
-    const cacheKey = image.currentSrc || image.src || image;
-    const fallback = {
-      x: 0,
-      y: 0,
-      w: Math.max(1, image.naturalWidth || image.width || 1),
-      h: Math.max(1, image.naturalHeight || image.height || 1),
-    };
-    if (!image.complete || !image.naturalWidth || !image.naturalHeight) return fallback;
-
-    try {
-      const canvas = document.createElement("canvas");
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      const px = canvas.getContext("2d", { willReadFrequently: true });
-      px.drawImage(image, 0, 0);
-      const { data, width, height } = px.getImageData(0, 0, canvas.width, canvas.height);
-      let minX = width;
-      let minY = height;
-      let maxX = -1;
-      let maxY = -1;
-      for (let yy = 0; yy < height; yy += 1) {
-        for (let xx = 0; xx < width; xx += 1) {
-          if (data[(yy * width + xx) * 4 + 3] <= 8) continue;
-          if (xx < minX) minX = xx;
-          if (yy < minY) minY = yy;
-          if (xx > maxX) maxX = xx;
-          if (yy > maxY) maxY = yy;
-        }
-      }
-      if (maxX < minX || maxY < minY) {
-        cache.set(cacheKey, fallback);
-        return fallback;
-      }
-      const pad = 2;
-      const metrics = {
-        x: Math.max(0, minX - pad),
-        y: Math.max(0, minY - pad),
-        w: Math.min(width, maxX + pad + 1) - Math.max(0, minX - pad),
-        h: Math.min(height, maxY + pad + 1) - Math.max(0, minY - pad),
-      };
-      cache.set(cacheKey, metrics);
-      return metrics;
-    } catch (error) {
-      cache.set(cacheKey, fallback);
-      return fallback;
-    }
+    return window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache);
   }
 
   function getPixelSprite(unit) {
@@ -20854,8 +14221,8 @@
     const resultTitle = gameOver
       ? copy("ui.result.runOver", "Run Over")
       : won
-        ? copy("ui.result.victory", "Victory!")
-        : copy("ui.result.defeat", "Defeat");
+        ? copy("ui.result.victory", "Pattern Holds")
+        : copy("ui.result.defeat", "Pattern Breaks");
     const resultColor = gameOver ? themeColor("danger", "#9b3028") : won ? themeColor("accent", "#1f7d4a") : themeColor("warning", "#a94b2b");
     roundedRect(718, 92, 268, 34, 8);
     ctx.fillStyle = horror ? "rgba(5, 19, 18, 0.92)" : won ? "rgba(219, 246, 198, 0.92)" : gameOver ? "rgba(255, 214, 205, 0.92)" : "rgba(255, 234, 190, 0.92)";
@@ -20936,9 +14303,9 @@
     }
     drawCombatLedgerDetailsButton(combatLedgerDetailsButtonRect(x, y, maxWidth), Boolean(state.combatLedgerReview?.open));
     const rows = [
-      [`Damage`, `You ${ledger.ally.damageDealt} / Foe ${ledger.enemy.damageDealt}`, "info_damage", "Damage dealt by each side."],
-      [`Support`, `Heal ${ledger.ally.healingReceived} / Shield ${ledger.ally.shieldingReceived}`, "info_heal", "Healing and shielding received by your team."],
-      [`KOs`, `${ledger.ally.kos}-${ledger.enemy.kos} in ${ledger.duration}s`, "info_ko", "Knockouts and total battle duration."],
+      [ledgerText("Hits", "Output"), `You ${ledger.ally.damageDealt} / Foe ${ledger.enemy.damageDealt}`, "info_damage", ledgerText("Damage your table dealt and took.", "Damage output recorded by each side.")],
+      [ledgerText("Help", "Repair"), `Heal ${ledger.ally.healingReceived} / Shield ${ledger.ally.shieldingReceived}`, "info_heal", ledgerText("Healing and shielding your team received.", "Repair and shielding received by your units.")],
+      [ledgerText("Falls", "KOs"), `${ledger.ally.kos}-${ledger.enemy.kos} in ${ledger.duration}s`, "info_ko", ledgerText("Who fell, and how long the fight lasted.", "Knockouts and total combat duration.")],
     ];
     rows.forEach(([label, value, iconId, body], index) => {
       const rowY = y + 18 + index * 18;
@@ -20950,23 +14317,23 @@
       ctx.font = "900 12px Inter, sans-serif";
       fitText(value, x + 84, rowY, maxWidth - 84, "900 12px Inter, sans-serif", themeColor("primary", "#16392d"));
     });
-    const mvp = ledger.mvp?.damageDealt > 0 ? `${ledger.mvp.name}: ${ledger.mvp.damageDealt} dmg${ledger.mvp.kos ? `, ${ledger.mvp.kos} KO` : ""}` : "No damage MVP";
+    const mvp = ledger.mvp?.damageDealt > 0 ? `${ledger.mvp.name}: ${ledger.mvp.damageDealt} dmg${ledger.mvp.kos ? `, ${ledger.mvp.kos} KO` : ""}` : ledgerText("No standout hitter", "No peak output unit");
     const protectedLine = ledger.protected && ledger.protected.healingReceived + ledger.protected.shieldingReceived > 0
       ? `${ledger.protected.name}: +${ledger.protected.healingReceived} HP, +${ledger.protected.shieldingReceived} shield`
       : "No major support target";
     ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 10px Inter, sans-serif";
-    drawUiAtlasIcon("info_damage", x + 8, y + 74, 16, { tooltip: { title: "MVP", body: "Top damage dealer for the fight." } });
-    drawUiAtlasIcon("info_shield", x + 8, y + 92, 16, { tooltip: { title: "Held", body: "Unit that received the most support." } });
-    ctx.fillText("MVP", x + 20, y + 78);
-    ctx.fillText("Held", x + 20, y + 96);
+    drawUiAtlasIcon("info_damage", x + 8, y + 74, 16, { tooltip: { title: ledgerText("Star", "Peak output"), body: ledgerText("Strongest hitter for the fight.", "Highest recorded damage output.") } });
+    drawUiAtlasIcon("info_shield", x + 8, y + 92, 16, { tooltip: { title: ledgerText("Held", "Protected"), body: ledgerText("Food animal that received the most support.", "Unit that received the most repair and shielding.") } });
+    ctx.fillText(ledgerText("Star", "Peak"), x + 20, y + 78);
+    ctx.fillText(ledgerText("Held", "Prot"), x + 20, y + 96);
     ctx.font = "900 11px Inter, sans-serif";
     fitText(mvp, x + 52, y + 78, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
     fitText(protectedLine, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
   }
 
   function combatLedgerDetailsButtonRect(x = 720, y = 188, maxWidth = 268) {
-    return { x: x + maxWidth - 74, y: y - 15, w: 74, h: 22 };
+    return window.FoodAnimalsCombatLedgerCanvas.detailsButtonRect(x, y, maxWidth);
   }
 
   function drawCombatLedgerDetailsButton(rect, open) {
@@ -20979,158 +14346,88 @@
     ctx.lineWidth = 1;
     ctx.stroke();
     drawUiAtlasIcon("info_time", rect.x + 12, rect.y + rect.h / 2, 13, { tooltip: null });
-    fitText("Details", rect.x + 23, rect.y + 14, rect.w - 28, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
+    fitText(ledgerText("Notes", "Data"), rect.x + 23, rect.y + 14, rect.w - 28, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
     registerTooltip(rect.x, rect.y, rect.w, rect.h, {
-      title: "Combat details",
-      body: "Open the detailed combat ledger.",
+      title: ledgerText("Fight notes", "Combat telemetry"),
+      body: ledgerText("Open the detailed fight notes.", "Open detailed combat telemetry."),
     });
   }
 
   function combatLedgerReviewUnits(ledger) {
-    return [
-      { uid: "all", side: "all", short: "All", name: "All participants" },
-      ...((ledger?.units || []).slice().sort((a, b) => {
-        const sideDelta = (a.side === "ally" ? 0 : 1) - (b.side === "ally" ? 0 : 1);
-        return sideDelta || String(a.short || a.name).localeCompare(String(b.short || b.name));
-      })),
-    ];
+    return window.FoodAnimalsCombatLedgerRuntime.reviewUnits(ledger);
   }
 
   function currentCombatLedgerFrameIndex(ledger) {
-    const frames = ledger?.frames || [];
-    if (!frames.length) return -1;
-    if (!Number.isInteger(state.combatLedgerReview.frameIndex) || state.combatLedgerReview.frameIndex < 0) {
-      state.combatLedgerReview.frameIndex = frames.length - 1;
-    }
-    state.combatLedgerReview.frameIndex = clamp(state.combatLedgerReview.frameIndex, 0, frames.length - 1);
-    return state.combatLedgerReview.frameIndex;
+    return window.FoodAnimalsCombatLedgerRuntime.currentFrameIndex(ledger, state.combatLedgerReview);
   }
 
   function resetCombatLedgerReview() {
-    state.combatLedgerReview = {
-      open: false,
-      unitUid: "all",
-      filter: "all",
-      frameIndex: -1,
-      logScrollOffset: 0,
-      focusedEventSeq: null,
-      eventTypeFilters: { damage: true, support: true, ko: true, control: true },
-      bigMomentsOnly: false,
-    };
+    state.combatLedgerReview = window.FoodAnimalsCombatLedgerRuntime.defaultReviewState();
   }
 
   function combatLedgerFilteredEvents(ledger) {
-    const selectedUid = state.combatLedgerReview.unitUid || "all";
-    const filter = combatLedgerEffectiveFilterId();
-    return (ledger?.events || []).filter((event) => {
-      if (!combatLedgerEventTypeEnabled(event)) return false;
-      if (state.combatLedgerReview.bigMomentsOnly && !combatLedgerImportantEvent(event, ledger)) return false;
-      if (selectedUid === "all") return true;
-      if (filter === "output") return event.sourceUid === selectedUid;
-      if (filter === "input") return event.targetUid === selectedUid;
-      return event.sourceUid === selectedUid || event.targetUid === selectedUid;
-    });
+    return window.FoodAnimalsCombatLedgerRuntime.filterEvents(ledger, state.combatLedgerReview, COMBAT_LEDGER_EVENT_TYPE_FILTERS);
   }
 
   function combatLedgerImportantEvent(event, ledger) {
-    if (!event) return false;
-    if (event.type === "ko" || event.type === "control") return true;
-    if (event.type === "damage") {
-      const amount = (event.hpDamage || 0) + (event.shieldDamage || 0) + (event.amount || 0);
-      const target = event.targetUid != null ? (Array.isArray(ledger?.units) ? ledger.units.find((unit) => unit.uid === event.targetUid) : ledger?.units?.[event.targetUid]) : null;
-      const scale = Math.max(18, Math.round((target?.damageTaken || target?.maxHp || 60) * 0.18));
-      return amount >= scale;
-    }
-    if (event.type === "support") return (event.amount || 0) >= 20;
-    return event.type === "battleStart";
+    return window.FoodAnimalsCombatLedgerRuntime.importantEvent(event, ledger);
   }
 
   function defaultCombatLedgerEventTypeFilters() {
-    return { damage: true, support: true, ko: true, control: true };
+    return window.FoodAnimalsCombatLedgerRuntime.defaultEventTypeFilters();
   }
 
   function combatLedgerEventTypeId(event) {
-    if (event?.type === "damage") return "damage";
-    if (event?.type === "support") return "support";
-    if (event?.type === "ko") return "ko";
-    return "control";
+    return window.FoodAnimalsCombatLedgerRuntime.eventTypeId(event);
   }
 
   function combatLedgerEventTypeFilters() {
-    const filters = state.combatLedgerReview.eventTypeFilters || defaultCombatLedgerEventTypeFilters();
-    const normalized = defaultCombatLedgerEventTypeFilters();
-    COMBAT_LEDGER_EVENT_TYPE_FILTERS.forEach((filter) => {
-      normalized[filter.id] = filters[filter.id] !== false;
-    });
-    if (!Object.values(normalized).some(Boolean)) return defaultCombatLedgerEventTypeFilters();
+    const normalized = window.FoodAnimalsCombatLedgerRuntime.normalizeEventTypeFilters(
+      state.combatLedgerReview.eventTypeFilters,
+      COMBAT_LEDGER_EVENT_TYPE_FILTERS,
+    );
     state.combatLedgerReview.eventTypeFilters = normalized;
     return normalized;
   }
 
   function combatLedgerEventTypeEnabled(event) {
-    return combatLedgerEventTypeFilters()[combatLedgerEventTypeId(event)] !== false;
+    return window.FoodAnimalsCombatLedgerRuntime.eventTypeEnabled(event, state.combatLedgerReview, COMBAT_LEDGER_EVENT_TYPE_FILTERS);
   }
 
   function toggleCombatLedgerEventTypeFilter(typeId) {
-    const filters = { ...combatLedgerEventTypeFilters() };
-    if (!(typeId in filters)) return;
-    filters[typeId] = !filters[typeId];
-    state.combatLedgerReview.eventTypeFilters = Object.values(filters).some(Boolean) ? filters : defaultCombatLedgerEventTypeFilters();
-    state.combatLedgerReview.logScrollOffset = 0;
-    state.combatLedgerReview.focusedEventSeq = null;
+    window.FoodAnimalsCombatLedgerRuntime.toggleEventTypeFilter(
+      state.combatLedgerReview,
+      typeId,
+      COMBAT_LEDGER_EVENT_TYPE_FILTERS,
+    );
   }
 
   function toggleCombatLedgerBigMoments() {
-    state.combatLedgerReview.bigMomentsOnly = !state.combatLedgerReview.bigMomentsOnly;
-    state.combatLedgerReview.logScrollOffset = 0;
-    state.combatLedgerReview.focusedEventSeq = null;
+    window.FoodAnimalsCombatLedgerRuntime.toggleBigMoments(state.combatLedgerReview);
   }
 
   function combatLedgerEventKey(event) {
-    return event?.id ?? event?.seq ?? null;
+    return window.FoodAnimalsCombatLedgerRuntime.eventKey(event);
   }
 
   function combatLedgerDirectionalFiltersEnabled() {
-    return (state.combatLedgerReview.unitUid || "all") !== "all";
+    return window.FoodAnimalsCombatLedgerRuntime.directionalFiltersEnabled(state.combatLedgerReview);
   }
 
   function combatLedgerEffectiveFilterId() {
-    if (!combatLedgerDirectionalFiltersEnabled() && state.combatLedgerReview.filter !== "all") return "all";
-    return state.combatLedgerReview.filter || "all";
+    return window.FoodAnimalsCombatLedgerRuntime.effectiveFilterId(state.combatLedgerReview);
   }
 
   function combatLedgerLogVisibleRows(rect) {
-    const layout = combatLedgerTimelineLayout(rect);
-    return Math.max(1, Math.floor((layout.rowBottom - layout.rowStartY) / layout.rowH));
+    return window.FoodAnimalsCombatLedgerCanvas.logVisibleRows(rect, COMBAT_LEDGER_EVENT_TYPE_FILTERS);
   }
 
   function combatLedgerTimelineLayout(rect) {
-    const detail = { x: rect.x + 10, y: rect.y + rect.h - 62, w: rect.w - 20, h: 52 };
-    const chipsY = rect.y + 31;
-    let chipX = rect.x + 12;
-    const keyChip = { rect: { x: chipX, y: chipsY, w: 40, h: 19 } };
-    chipX += keyChip.rect.w + 4;
-    const typeChips = COMBAT_LEDGER_EVENT_TYPE_FILTERS.map((filter) => {
-      const w = filter.id === "ko" ? 34 : filter.id === "damage" ? 42 : filter.id === "support" ? 48 : 48;
-      const chip = { filter, rect: { x: chipX, y: chipsY, w, h: 19 } };
-      chipX += w + 4;
-      return chip;
-    });
-    return {
-      keyChip,
-      typeChips,
-      detail,
-      rowStartY: rect.y + 59,
-      rowBottom: detail.y - 6,
-      rowH: 23,
-    };
+    return window.FoodAnimalsCombatLedgerCanvas.timelineLayout(rect, COMBAT_LEDGER_EVENT_TYPE_FILTERS);
   }
 
   function currentCombatLedgerLogScrollOffset(events, visibleRows) {
-    const maxOffset = Math.max(0, (events?.length || 0) - visibleRows);
-    const raw = Number.isFinite(state.combatLedgerReview.logScrollOffset) ? state.combatLedgerReview.logScrollOffset : 0;
-    state.combatLedgerReview.logScrollOffset = clamp(Math.round(raw), 0, maxOffset);
-    return state.combatLedgerReview.logScrollOffset;
+    return window.FoodAnimalsCombatLedgerRuntime.logScrollOffset(state.combatLedgerReview, events, visibleRows);
   }
 
   function setCombatLedgerLogScrollOffset(offset) {
@@ -21139,8 +14436,7 @@
     const rect = combatLedgerReviewRects(ledger).log;
     const events = combatLedgerFilteredEvents(ledger);
     const visibleRows = combatLedgerLogVisibleRows(rect);
-    const maxOffset = Math.max(0, events.length - visibleRows);
-    state.combatLedgerReview.logScrollOffset = clamp(Math.round(offset || 0), 0, maxOffset);
+    window.FoodAnimalsCombatLedgerRuntime.setLogScrollOffset(state.combatLedgerReview, offset, events, visibleRows);
   }
 
   function scrollCombatLedgerLog(deltaRows) {
@@ -21148,79 +14444,37 @@
   }
 
   function combatLedgerVisibleLogRows(ledger, rect) {
-    const layout = combatLedgerTimelineLayout(rect);
     const events = combatLedgerFilteredEvents(ledger);
     const visibleRows = combatLedgerLogVisibleRows(rect);
     const scrollOffset = currentCombatLedgerLogScrollOffset(events, visibleRows);
-    const end = Math.max(0, events.length - scrollOffset);
-    const start = Math.max(0, end - visibleRows);
-    const visible = events.slice(start, end);
-    return {
+    return window.FoodAnimalsCombatLedgerCanvas.visibleLogRows({
+      rect,
       events,
-      visible,
-      start,
-      end,
-      visibleRows,
       scrollOffset,
-      rows: visible.map((event, index) => ({
-        event,
-        index: start + index,
-        rect: { x: rect.x + 8, y: layout.rowStartY - 13 + index * layout.rowH, w: rect.w - 22, h: 21 },
-      })),
-      layout,
-    };
+      eventTypeFilters: COMBAT_LEDGER_EVENT_TYPE_FILTERS,
+    });
   }
 
   function combatLedgerFrameIndexForEvent(ledger, event) {
-    const frames = ledger?.frames || [];
-    if (!frames.length || !event) return -1;
-    let bestIndex = 0;
-    let bestDelta = Infinity;
-    frames.forEach((frame, index) => {
-      const delta = Math.abs((frame.t || 0) - (event.t || 0));
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        bestIndex = index;
-      }
-    });
-    return bestIndex;
+    return window.FoodAnimalsCombatLedgerRuntime.frameIndexForEvent(ledger, event);
   }
 
   function setCombatLedgerLogOffsetForEvent(ledger, event) {
     const rect = combatLedgerReviewRects(ledger).log;
     const events = combatLedgerFilteredEvents(ledger);
-    const index = events.findIndex((entry) => combatLedgerEventKey(entry) === combatLedgerEventKey(event));
-    if (index < 0) return;
     const visibleRows = combatLedgerLogVisibleRows(rect);
-    if (events.length <= visibleRows) {
-      setCombatLedgerLogScrollOffset(0);
-      return;
-    }
-    const end = clamp(index + Math.ceil(visibleRows / 2), visibleRows, events.length);
-    setCombatLedgerLogScrollOffset(events.length - end);
+    setCombatLedgerLogScrollOffset(window.FoodAnimalsCombatLedgerRuntime.centeredLogOffset(events, event, visibleRows));
   }
 
   function focusCombatLedgerEvent(ledger, event, options = {}) {
     if (!event) return;
-    state.combatLedgerReview.focusedEventSeq = combatLedgerEventKey(event);
+    window.FoodAnimalsCombatLedgerRuntime.focusEvent(state.combatLedgerReview, event);
     if (options.centerLog) setCombatLedgerLogOffsetForEvent(ledger, event);
   }
 
   function nearestCombatLedgerEventForFrame(ledger) {
-    const frames = ledger?.frames || [];
-    const frame = frames[currentCombatLedgerFrameIndex(ledger)];
     const events = combatLedgerFilteredEvents(ledger);
-    if (!frame || !events.length) return null;
-    let best = events[0];
-    let bestDelta = Infinity;
-    events.forEach((event) => {
-      const delta = Math.abs((event.t || 0) - (frame.t || 0));
-      if (delta < bestDelta) {
-        best = event;
-        bestDelta = delta;
-      }
-    });
-    return best;
+    return window.FoodAnimalsCombatLedgerRuntime.nearestEventForFrame(ledger, state.combatLedgerReview, events);
   }
 
   function syncCombatLedgerFocusedEventToFrame(ledger) {
@@ -21230,35 +14484,11 @@
   }
 
   function combatLedgerReviewRects(ledger) {
-    const panel = COMBAT_LEDGER_REVIEW_PANEL;
-    const units = combatLedgerReviewUnits(ledger);
-    const leftX = panel.x + 18;
-    const leftW = 322;
-    const logX = panel.x + 348;
-    const logW = panel.x + panel.w - 18 - logX;
-    const participantsPanel = { x: panel.x + 10, y: panel.y + 330, w: leftW + 16, h: 180 };
-    return {
-      panel,
-      close: { x: panel.x + panel.w - 44, y: panel.y + 12, w: 26, h: 26 },
-      prev: { x: panel.x + 18, y: panel.y + 42, w: 28, h: 24 },
-      next: { x: panel.x + 52, y: panel.y + 42, w: 28, h: 24 },
-      track: { x: panel.x + 94, y: panel.y + 50, w: 246, h: 8 },
-      mini: { x: leftX, y: panel.y + 82, w: leftW, h: 248 },
-      participantsPanel,
-      units: units.map((unit, index) => {
-        const col = index < 10 ? 0 : 1;
-        const row = index % 10;
-        return {
-          unit,
-          rect: { x: participantsPanel.x + 8 + col * 158, y: participantsPanel.y + 40 + row * 14, w: 150, h: 13 },
-        };
-      }),
-      filters: COMBAT_LEDGER_REVIEW_FILTERS.map((filter, index) => ({
-        filter,
-        rect: { x: logX + index * 76, y: panel.y + 42, w: 70, h: 24 },
-      })),
-      log: { x: logX, y: panel.y + 82, w: logW, h: 428 },
-    };
+    return window.FoodAnimalsCombatLedgerCanvas.reviewRects({
+      panel: COMBAT_LEDGER_REVIEW_PANEL,
+      units: combatLedgerReviewUnits(ledger),
+      filters: COMBAT_LEDGER_REVIEW_FILTERS,
+    });
   }
 
   function drawExpandedCombatLedger(ledger) {
@@ -21301,13 +14531,13 @@
 
     ctx.fillStyle = primary;
     ctx.font = "900 15px Inter, sans-serif";
-    ctx.fillText("Detailed combat ledger", panel.x + 18, panel.y + 24);
+    ctx.fillText(ledgerText("Detailed fight notes", "Detailed combat telemetry"), panel.x + 18, panel.y + 24);
     ctx.fillStyle = muted;
     ctx.font = "800 10px Inter, sans-serif";
     const events = ledger.events || [];
     const frames = ledger.frames || [];
     ctx.textAlign = "right";
-    ctx.fillText(`${events.length} events / ${frames.length} ticks`, rects.close.x - 12, panel.y + 24);
+    ctx.fillText(ledgerText(`${events.length} moments / ${frames.length} frames`, `${events.length} events / ${frames.length} ticks`), rects.close.x - 12, panel.y + 24);
     ctx.textAlign = "left";
     roundedRect(rects.close.x, rects.close.y, rects.close.w, rects.close.h, 6);
     ctx.fillStyle = themeColor("panelSoft", horror ? "rgba(7, 18, 20, 0.82)" : "rgba(255, 253, 232, 0.7)");
@@ -21324,8 +14554,8 @@
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
     registerTooltip(rects.close.x, rects.close.y, rects.close.w, rects.close.h, {
-      title: "Close details",
-      body: "Return to the compact combat ledger.",
+      title: ledgerText("Close notes", "Close telemetry"),
+      body: ledgerText("Return to the compact fight notes.", "Return to the compact combat telemetry."),
     });
 
     drawCombatLedgerFrameControls(ledger, rects);
@@ -21333,6 +14563,10 @@
     drawCombatLedgerParticipantTabs(ledger, rects);
     drawCombatLedgerEventLog(ledger, rects.log);
     ctx.restore();
+  }
+
+  function ledgerText(cozy, horror = cozy) {
+    return realityBroken() ? horror : cozy;
   }
 
   function drawCombatLedgerFrameControls(ledger, rects) {
@@ -21357,8 +14591,8 @@
       ctx.textBaseline = "middle";
       ctx.fillText(buttonIndex === 0 ? "<" : ">", button.x + button.w / 2, button.y + button.h / 2 + 1);
       registerTooltip(button.x, button.y, button.w, button.h, {
-        title: buttonIndex === 0 ? "Previous tick" : "Next tick",
-        body: "Step through captured combat snapshots.",
+        title: buttonIndex === 0 ? ledgerText("Previous moment", "Previous tick") : ledgerText("Next moment", "Next tick"),
+        body: ledgerText("Step through captured fight snapshots.", "Step through captured combat snapshots."),
       });
     });
     ctx.textAlign = "left";
@@ -21401,13 +14635,13 @@
     ctx.stroke();
     ctx.lineWidth = 1;
     registerTooltip(rects.track.x - 4, rects.track.y - 8, rects.track.w + 8, rects.track.h + 16, {
-      title: "Tick scrubber",
-      body: "Jump to a captured combat moment.",
+      title: ledgerText("Moment scrubber", "Tick scrubber"),
+      body: ledgerText("Jump to a captured fight moment.", "Jump to a captured combat moment."),
     });
 
     ctx.fillStyle = muted;
     ctx.font = "900 10px Inter, sans-serif";
-    ctx.fillText(frame ? `t=${frame.t.toFixed(2)}s  ${index + 1}/${frames.length}` : "No ticks", rects.track.x, rects.track.y + 27);
+    ctx.fillText(frame ? `t=${frame.t.toFixed(2)}s  ${index + 1}/${frames.length}` : ledgerText("No frames", "No ticks"), rects.track.x, rects.track.y + 27);
   }
 
   function drawCombatLedgerRosterPanelBg(rect) {
@@ -21615,7 +14849,7 @@
     drawCombatLedgerRosterPanelBg(rects.participantsPanel);
     ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "900 10px Inter, sans-serif";
-    ctx.fillText("Participants", rects.participantsPanel.x + 12, rects.participantsPanel.y + 20);
+    ctx.fillText(ledgerText("Table", "Units"), rects.participantsPanel.x + 12, rects.participantsPanel.y + 20);
     drawCombatLedgerParticipantStats(ledger, rects);
     rects.units.forEach(({ unit, rect }) => {
       const active = state.combatLedgerReview.unitUid === unit.uid;
@@ -21632,10 +14866,10 @@
       drawUiAtlasIcon(iconId, rect.x + 9, rect.y + rect.h / 2, 10, { tooltip: null });
       ctx.fillStyle = unit.side === "enemy" ? themeColor("danger", "#9b3028") : themeColor("primary", "#16392d");
       ctx.font = "900 9px Inter, sans-serif";
-      fitText(unit.uid === "all" ? "All participants" : `${unit.side === "enemy" ? "Enemy" : "Ally"} ${unit.short || unit.name}`, rect.x + 18, rect.y + 9.5, rect.w - 24, "900 9px Inter, sans-serif", ctx.fillStyle);
+      fitText(unit.uid === "all" ? ledgerText("All fighters", "All units") : `${unit.side === "enemy" ? "Enemy" : "Ally"} ${unit.short || unit.name}`, rect.x + 18, rect.y + 9.5, rect.w - 24, "900 9px Inter, sans-serif", ctx.fillStyle);
       registerTooltip(rect.x, rect.y, rect.w, rect.h, {
-        title: unit.uid === "all" ? "All participants" : unit.name,
-        body: unit.uid === "all" ? "Show every recorded combat interaction." : "Show events this participant caused or received.",
+        title: unit.uid === "all" ? ledgerText("All fighters", "All units") : unit.name,
+        body: unit.uid === "all" ? ledgerText("Show every recorded fight interaction.", "Show every recorded combat interaction.") : ledgerText("Show moments this fighter caused or received.", "Show events this unit caused or received."),
       });
     });
 
@@ -21669,8 +14903,8 @@
       ctx.textBaseline = "alphabetic";
       ctx.globalAlpha = 1;
       registerTooltip(rect.x, rect.y, rect.w, rect.h, {
-        title: `${filter.label} log`,
-        body: disabled ? "Choose one participant to focus on events they caused or received." : filter.id === "all" ? "Show every event involving the selected participant." : filter.id === "output" ? "Show events caused by the selected participant." : "Show events received by the selected participant.",
+        title: `${filter.label} ${ledgerText("notes", "log")}`,
+        body: disabled ? ledgerText("Choose one fighter to focus on moments they caused or received.", "Choose one unit to focus on events they caused or received.") : filter.id === "all" ? ledgerText("Show every moment involving the selected fighter.", "Show every event involving the selected unit.") : filter.id === "output" ? ledgerText("Show moments caused by the selected fighter.", "Show events caused by the selected unit.") : ledgerText("Show moments received by the selected fighter.", "Show events received by the selected unit."),
       });
     });
   }
@@ -21679,12 +14913,12 @@
     const selectedUid = state.combatLedgerReview.unitUid || "all";
     let text = "";
     if (selectedUid === "all") {
-      text = `Ally dmg ${ledger?.ally?.damageDealt || 0} / Enemy dmg ${ledger?.enemy?.damageDealt || 0}`;
+      text = ledgerText(`Ally hits ${ledger?.ally?.damageDealt || 0} / Enemy hits ${ledger?.enemy?.damageDealt || 0}`, `Ally dmg ${ledger?.ally?.damageDealt || 0} / Enemy dmg ${ledger?.enemy?.damageDealt || 0}`);
     } else {
       const unit = (ledger?.units || []).find((entry) => entry.uid === selectedUid);
       if (unit) {
         const support = (unit.healingReceived || 0) + (unit.shieldingReceived || 0);
-        text = `Dealt ${unit.damageDealt || 0} / Taken ${unit.damageTaken || 0} / Support ${support} / KOs ${unit.kos || 0}`;
+        text = ledgerText(`Gave ${unit.damageDealt || 0} / Took ${unit.damageTaken || 0} / Help ${support} / Falls ${unit.kos || 0}`, `Dealt ${unit.damageDealt || 0} / Taken ${unit.damageTaken || 0} / Repair ${support} / KOs ${unit.kos || 0}`);
       }
     }
     if (!text) return;
@@ -21722,7 +14956,7 @@
     }
     if (event.type === "ko") return `${target} KO by ${source}`;
     if (event.type === "control") return `${source} controlled ${target}`;
-    if (event.type === "battleStart") return "Battle started";
+    if (event.type === "battleStart") return ledgerText("Pressure test started", "Wave deployed");
     return event.text || `${source} -> ${target}`;
   }
 
@@ -21754,8 +14988,8 @@
     ctx.lineWidth = 1;
     fitText("Key", layout.keyChip.rect.x + 8, layout.keyChip.rect.y + 12.5, layout.keyChip.rect.w - 12, "900 9px Inter, sans-serif", themeColor("primary", "#16392d"));
     registerTooltip(layout.keyChip.rect.x, layout.keyChip.rect.y, layout.keyChip.rect.w, layout.keyChip.rect.h, {
-      title: "Key moments",
-      body: keyActive ? "Showing only major hits, support, control, and KOs." : "Show only the most important combat moments.",
+      title: ledgerText("Key moments", "Priority events"),
+      body: keyActive ? ledgerText("Showing only major hits, help, control, and falls.", "Showing only major hits, repair, control, and KOs.") : ledgerText("Show only the most important fight moments.", "Show only priority combat telemetry."),
     });
 
     const filters = combatLedgerEventTypeFilters();
@@ -21776,8 +15010,8 @@
       fitText(label, rect.x + 20, rect.y + 12.5, rect.w - 23, "900 9px Inter, sans-serif", themeColor("primary", "#16392d"));
       ctx.globalAlpha = 1;
       registerTooltip(rect.x, rect.y, rect.w, rect.h, {
-        title: `${filter.label} events`,
-        body: active ? "Click to hide this event type from the timeline." : "Click to show this event type in the timeline.",
+        title: `${filter.label} ${ledgerText("moments", "events")}`,
+        body: active ? ledgerText("Click to hide this moment type from the timeline.", "Click to hide this event type from the timeline.") : ledgerText("Click to show this moment type in the timeline.", "Click to show this event type in the timeline."),
       });
     });
   }
@@ -21794,7 +15028,7 @@
     if (!event) {
       ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = "800 9px Inter, sans-serif";
-      fitText("Select an event to inspect the replay moment.", rect.x + 10, rect.y + 25, rect.w - 20, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+      fitText(ledgerText("Select a moment to inspect the replay.", "Select an event to inspect the replay tick."), rect.x + 10, rect.y + 25, rect.w - 20, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
       return;
     }
     const source = combatLedgerEventUnitLabel(ledger, event.sourceUid);
@@ -21807,7 +15041,7 @@
     ctx.font = "800 9px Inter, sans-serif";
     fitText(event.text, rect.x + 28, rect.y + 31, rect.w - 36, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
     const chain = combatLedgerCauseChain(ledger, event);
-    const chainText = chain.length ? `Lead-up: ${chain.map((entry) => `${entry.t.toFixed(1)}s ${entry.type}`).join(" / ")}` : "Lead-up: first major moment for this source/target";
+    const chainText = chain.length ? `${ledgerText("Lead-up", "Trace")}: ${chain.map((entry) => `${entry.t.toFixed(1)}s ${entry.type}`).join(" / ")}` : ledgerText("Lead-up: first major moment for this pair", "Trace: first major event for this source/target");
     fitText(chainText, rect.x + 28, rect.y + 45, rect.w - 36, "800 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
   }
 
@@ -21821,10 +15055,10 @@
     ctx.lineWidth = 1;
     ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 12px Inter, sans-serif";
-    ctx.fillText("Combat timeline", rect.x + 12, rect.y + 20);
+    ctx.fillText(ledgerText("Fight timeline", "Combat telemetry"), rect.x + 12, rect.y + 20);
     ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 9px Inter, sans-serif";
-    const rangeLabel = events.length > rows.visibleRows ? `${rows.start + 1}-${rows.end} / ${events.length}` : `${events.length} matching`;
+    const rangeLabel = events.length > rows.visibleRows ? `${rows.start + 1}-${rows.end} / ${events.length}` : ledgerText(`${events.length} matching`, `${events.length} matched`);
     ctx.textAlign = "right";
     ctx.fillText(rangeLabel, rect.x + rect.w - 16, rect.y + 20);
     ctx.textAlign = "left";
@@ -21833,7 +15067,7 @@
     if (!rows.visible.length) {
       ctx.fillStyle = themeColor("muted", "#6a4b35");
       ctx.font = "800 11px Inter, sans-serif";
-      ctx.fillText("No matching events.", rect.x + 12, rows.layout.rowStartY);
+      ctx.fillText(ledgerText("No matching moments.", "No matching events."), rect.x + 12, rows.layout.rowStartY);
       drawCombatLedgerEventDetail(ledger, rows.layout.detail);
       return;
     }
@@ -21850,8 +15084,8 @@
       ctx.fillStyle = themeColor("accent", "#4a9e68");
       ctx.fill();
       registerTooltip(track.x - 5, track.y, track.w + 10, track.h, {
-        title: "Scrollable log",
-        body: "Use the mouse wheel over the interaction log to review older or newer entries.",
+        title: ledgerText("Scrollable notes", "Scrollable log"),
+        body: ledgerText("Use the mouse wheel over the fight notes to review older or newer moments.", "Use the mouse wheel over the interaction log to review older or newer entries."),
       });
     }
     rows.rows.forEach(({ event, rect: rowRect }, index) => {
@@ -21894,8 +15128,8 @@
       }
       drawUiAtlasIcon(combatLedgerEventIconId(event), rect.x + 15, y - 4, 14, {
         tooltip: {
-          title: event.type === "battleStart" ? "Battle start" : event.type === "ko" ? "Knockout" : event.type === "control" ? "Control" : event.type === "support" ? "Support" : "Damage",
-          body: `${event.text} Click the row to jump the replay to this moment.`,
+          title: event.type === "battleStart" ? ledgerText("Pressure start", "Wave start") : event.type === "ko" ? ledgerText("Fall", "Knockout") : event.type === "control" ? "Control" : event.type === "support" ? ledgerText("Help", "Repair") : ledgerText("Hit", "Damage"),
+          body: `${event.text} ${ledgerText("Click the row to jump the replay to this moment.", "Click the row to jump telemetry to this event.")}`,
         },
       });
       ctx.fillStyle = color;
@@ -21904,7 +15138,7 @@
       fitText(combatLedgerEventRowLabel(ledger, event), rect.x + 70, y, rect.w - 112, "900 10px Inter, sans-serif", themeColor("primary", "#16392d"));
       registerTooltip(rowRect.x, rowRect.y, rowRect.w, rowRect.h, {
         title: `${event.t.toFixed(2)}s`,
-        body: `${event.text || combatLedgerEventRowLabel(ledger, event)} Click to jump the replay tick to this event.`,
+        body: `${event.text || combatLedgerEventRowLabel(ledger, event)} ${ledgerText("Click to jump the replay to this moment.", "Click to jump the replay tick to this event.")}`,
       });
     });
     drawCombatLedgerEventDetail(ledger, rows.layout.detail);
@@ -22263,105 +15497,60 @@
   }
 
   function wrapText(text, x, y, maxWidth, lineHeight) {
-    wrappedTextLines(text, maxWidth).forEach((line, index) => {
-      ctx.fillText(line, x, y + index * lineHeight);
+    window.FoodAnimalsCanvasText.drawWrapped(ctx, text, x, y, maxWidth, lineHeight, {
+      cache: wrappedTextCache,
+      cacheLimit: TEXT_LAYOUT_CACHE_LIMIT,
+      font: ctx.font,
+      measureText: (candidate, font) => measureTextWidth(candidate, font),
     });
   }
 
   function wrappedTextLines(text, maxWidth) {
-    const value = String(text || "");
     const font = ctx.font;
-    const key = `${font}\n${Math.round(maxWidth * 10) / 10}\n${value}`;
-    if (wrappedTextCache.has(key)) return wrappedTextCache.get(key);
-    const words = value.split(/\s+/).filter(Boolean);
-    const lines = [];
-    let line = "";
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (measureTextWidth(test, font) > maxWidth && line) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = test;
-      }
-    }
-    if (line) lines.push(line);
-    return rememberCacheEntry(wrappedTextCache, key, lines.length ? lines : [""]);
+    return window.FoodAnimalsCanvasText.wrappedLines(ctx, text, maxWidth, {
+      cache: wrappedTextCache,
+      cacheLimit: TEXT_LAYOUT_CACHE_LIMIT,
+      font,
+      measureText: (candidate) => measureTextWidth(candidate, font),
+    });
   }
 
   function drawWrappedTextFull(text, x, y, maxWidth, lineHeight) {
-    const lines = wrappedTextLines(text, maxWidth);
-    lines.forEach((line, index) => {
-      ctx.fillText(line, x, y + index * lineHeight);
+    return window.FoodAnimalsCanvasText.drawWrapped(ctx, text, x, y, maxWidth, lineHeight, {
+      cache: wrappedTextCache,
+      cacheLimit: TEXT_LAYOUT_CACHE_LIMIT,
+      font: ctx.font,
+      measureText: (candidate, font) => measureTextWidth(candidate, font),
     });
-    return lines.length;
   }
 
   function wrapTextLimited(text, x, y, maxWidth, lineHeight, maxLines) {
-    const words = text.split(" ");
-    let line = "";
-    let lines = 0;
-    for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      const test = line ? `${line} ${word}` : word;
-      if (measureTextWidth(test, ctx.font) > maxWidth && line) {
-        lines += 1;
-        if (lines >= maxLines) {
-          fitText(`${line}...`, x, y, maxWidth, ctx.font, ctx.fillStyle);
-          return;
-        }
-        ctx.fillText(line, x, y);
-        line = word;
-        y += lineHeight;
-      } else {
-        line = test;
-      }
-    }
-    if (line && lines < maxLines) ctx.fillText(line, x, y);
+    window.FoodAnimalsCanvasText.drawLimited(ctx, text, x, y, maxWidth, lineHeight, maxLines, {
+      fitText,
+      measureText: (candidate, font) => measureTextWidth(candidate, font),
+    });
   }
 
   function scaledCanvasFont(font, px) {
-    return String(font || "").replace(/(\d+(?:\.\d+)?)px/, `${px}px`);
+    return window.FoodAnimalsCanvasText.scaleFont(font, px);
   }
 
   function canvasFontPx(font) {
-    const match = String(font || "").match(/(\d+(?:\.\d+)?)px/);
-    return match ? Number(match[1]) : 12;
+    return window.FoodAnimalsCanvasText.fontPx(font);
   }
 
   function fitTextComplete(text, x, y, maxWidth, font, color, minPx = 6) {
-    const value = String(text || "");
-    ctx.fillStyle = color;
-    const basePx = canvasFontPx(font);
-    let px = basePx;
-    ctx.font = font;
-    while (px > minPx && measureTextWidth(value, ctx.font) > maxWidth) {
-      px = Math.max(minPx, px - 0.5);
-      ctx.font = scaledCanvasFont(font, px);
-    }
-    ctx.fillText(value, x, y);
+    window.FoodAnimalsCanvasText.fitComplete(ctx, text, x, y, maxWidth, font, color, {
+      minPx,
+      measureText: (candidate, candidateFont) => measureTextWidth(candidate, candidateFont),
+    });
   }
 
-  function fitText(text, x, y, maxWidth, font, color) {
-    const value = String(text ?? "");
-    ctx.fillStyle = color;
-    ctx.font = font;
-    if (measureTextWidth(value, font) <= maxWidth) {
-      ctx.fillText(value, x, y);
-      return;
-    }
-    let lo = 0;
-    let hi = value.length;
-    while (lo < hi) {
-      const mid = Math.ceil((lo + hi) / 2);
-      if (measureTextWidth(`${value.slice(0, mid)}...`, font) <= maxWidth) {
-        lo = mid;
-      } else {
-        hi = mid - 1;
-      }
-    }
-    const clipped = value.slice(0, Math.max(0, lo)).trimEnd();
-    ctx.fillText(`${clipped}...`, x, y);
+  function fitText(text, x, y, maxWidth, font, color, align) {
+    window.FoodAnimalsCanvasUi.fitText(ctx, text, x, y, maxWidth, font, color, {
+      align,
+      measureText: (candidate) => measureTextWidth(candidate, font),
+    });
   }
 
   function drawBattle(battle = visibleBattle()) {
@@ -22388,41 +15577,30 @@
   }
 
   function battleUnitsInRenderOrder(battle) {
-    return [
-      ...sideUnitsInRenderOrder(battle.allies || []),
-      ...sideUnitsInRenderOrder(battle.enemies || []),
-    ];
+    return window.FoodAnimalsBattleCanvas.unitsInRenderOrder(battle, battleCanvasOptions());
   }
 
   function sideUnitsInRenderOrder(units) {
-    return units
-      .map((unit, index) => ({ unit, index }))
-      .sort((a, b) => {
-        const colDelta = battleUnitRenderLayer(b.unit) - battleUnitRenderLayer(a.unit);
-        return colDelta || a.index - b.index;
-      })
-      .map((entry) => entry.unit);
+    return window.FoodAnimalsBattleCanvas.sideUnitsInRenderOrder(units, battleCanvasOptions());
   }
 
   function battleUnitRenderLayer(unit) {
-    const col = battleUnitRenderColumn(unit);
-    if (unit?.typeId === FINAL_BOSS_TYPE_ID) return col + 0.5;
-    if (unit?.typeId === FINAL_BOSS_MINION_TYPE_ID && col === BACK_COL) {
-      const row = Number.isFinite(unit.row) ? unit.row : Number.isInteger(unit.slot) ? slotGrid(unit.slot).row : 1;
-      if (row === 0) return col + 1;
-      if (row === BOARD_ROWS - 1) return col;
-    }
-    if (unit?.typeId === FINAL_BOSS_MINION_TYPE_ID && col === 1) {
-      const row = Number.isFinite(unit.row) ? unit.row : Number.isInteger(unit.slot) ? slotGrid(unit.slot).row : 1;
-      if (row === BOARD_ROWS - 1) return 0.25;
-    }
-    return col;
+    return window.FoodAnimalsBattleCanvas.unitRenderLayer(unit, battleCanvasOptions());
   }
 
   function battleUnitRenderColumn(unit) {
-    if (Number.isFinite(unit?.col)) return unit.col;
-    if (Number.isInteger(unit?.slot)) return slotGrid(unit.slot).col;
-    return FRONT_COL;
+    return window.FoodAnimalsBattleCanvas.unitRenderColumn(unit, FRONT_COL, slotGrid);
+  }
+
+  function battleCanvasOptions() {
+    return {
+      backCol: BACK_COL,
+      boardRows: BOARD_ROWS,
+      finalBossMinionTypeId: FINAL_BOSS_MINION_TYPE_ID,
+      finalBossTypeId: FINAL_BOSS_TYPE_ID,
+      frontCol: FRONT_COL,
+      slotGrid,
+    };
   }
 
   function battleUnitByUid(battle, uid) {
@@ -22508,12 +15686,8 @@
     if (!from || !to) return;
 
     const duration = attack.duration || ATTACK_ANIMATION_SECONDS;
-    const progress = clamp01(1 - attack.t / duration);
-    const eased = 1 - (1 - progress) ** 2;
-    const x = from.x + (to.x - from.x) * eased;
-    const y = from.y + (to.y - from.y) * eased - Math.sin(progress * Math.PI) * 18;
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
+    const frame = window.FoodAnimalsBattleCanvas.projectileFrame(from, to, attack.t, duration, 18);
+    const { progress, x, y, dx, dy } = frame;
     const angle = Math.atan2(dy, dx);
     const mirrorLeft = dx < 0;
     const fallbackSpinDirection = (attack.sourceSide || from.side) === "enemy" ? -1 : 1;
@@ -22553,10 +15727,14 @@
     if (!to) return;
 
     const duration = toss.duration || DRINK_TOSS_ANIMATION_SECONDS;
-    const progress = clamp01(1 - toss.t / duration);
-    const eased = 1 - (1 - progress) ** 2;
-    const x = toss.fromX + (to.x - toss.fromX) * eased;
-    const y = toss.fromY + (to.y - toss.fromY) * eased - Math.sin(progress * Math.PI) * DRINK_TOSS_ARC_HEIGHT;
+    const frame = window.FoodAnimalsBattleCanvas.projectileFrame(
+      { x: toss.fromX, y: toss.fromY },
+      to,
+      toss.t,
+      duration,
+      DRINK_TOSS_ARC_HEIGHT,
+    );
+    const { progress, x, y } = frame;
     const scale = 0.88 + Math.sin(progress * Math.PI) * 0.12;
     const image = getDrinkThrowableSprite(toss.id);
     const size = DRINK_TOSS_PROJECTILE_SIZE * scale;
@@ -22628,20 +15806,7 @@
   }
 
   function battleDrinkSlotPosition(side, slot) {
-    if (slot.axis === "row") {
-      return {
-        x: side === "ally"
-          ? BATTLE_FORMATION.allyBaseX - BATTLE_FORMATION.colGap
-          : BATTLE_FORMATION.enemyBaseX + BATTLE_FORMATION.colGap,
-        y: BATTLE_FORMATION.topY + slot.targetIndex * BATTLE_FORMATION.rowGap,
-      };
-    }
-    return {
-      x: side === "ally"
-        ? BATTLE_FORMATION.allyBaseX + slot.targetIndex * BATTLE_FORMATION.colGap
-        : BATTLE_FORMATION.enemyBaseX - slot.targetIndex * BATTLE_FORMATION.colGap,
-      y: BATTLE_FORMATION.topY + BOARD_ROWS * BATTLE_FORMATION.rowGap,
-    };
+    return window.FoodAnimalsBattleCanvas.battleDrinkSlotPosition(side, slot, BATTLE_FORMATION, BOARD_ROWS);
   }
 
   function drawBattleDrinkSlots(side, drinks) {
@@ -22679,20 +15844,10 @@
   }
 
   function drinkPulseMotion(item, battle) {
-    const start = item?.drinkPulseAnimStart;
-    if (typeof start !== "number" || !battle) return { y: 0, scaleX: 1, scaleY: 1 };
-    const t = (battle.elapsed - start) / DRINK_PULSE_ANIMATION_SECONDS;
-    if (t < 0 || t >= 1) return { y: 0, scaleX: 1, scaleY: 1 };
-
-    const compress = Math.sin(clamp01(t / 0.26) * Math.PI);
-    const springT = clamp01((t - 0.18) / 0.82);
-    const hop = Math.sin(springT * Math.PI);
-    const rebound = Math.sin(springT * Math.PI * 3) * (1 - springT);
-    return {
-      y: compress * 2 - hop * DRINK_PULSE_HOP_PIXELS,
-      scaleX: 1 + compress * 0.1 - rebound * 0.035,
-      scaleY: 1 - compress * 0.12 + rebound * 0.055,
-    };
+    return window.FoodAnimalsBattleCanvas.drinkPulseMotion(item, battle, {
+      duration: DRINK_PULSE_ANIMATION_SECONDS,
+      hopPixels: DRINK_PULSE_HOP_PIXELS,
+    });
   }
 
   function drawBattleUnit(unit) {
@@ -22786,34 +15941,17 @@
   }
 
   function activeStatusEffects(unit) {
-    const effects = [];
-    if (unit.burn) effects.push({ id: "burn", ...STATUS_EFFECT_STYLES.burn });
-    if (unit.mark) effects.push({ id: "mark", ...STATUS_EFFECT_STYLES.mark });
-    if (unit.teamVulnerable) effects.push({ id: "teamVulnerable", ...STATUS_EFFECT_STYLES.teamVulnerable });
-    if (unit.taunt) effects.push({ id: "taunt", ...STATUS_EFFECT_STYLES.taunt });
-    if (unit.haste) effects.push({ id: "haste", ...STATUS_EFFECT_STYLES.haste });
-    if (unit.attackBoost) effects.push({ id: "attackBoost", ...STATUS_EFFECT_STYLES.attackBoost });
-    if (unit.attackSlow) effects.push({ id: "attackSlow", ...STATUS_EFFECT_STYLES.attackSlow });
-    if (unit.antiSupport) effects.push({ id: "antiSupport", ...STATUS_EFFECT_STYLES.antiSupport });
-    if (unit.slowed) effects.push({ id: "slowed", ...STATUS_EFFECT_STYLES.slowed });
-    if (unit.lateFightStacks > 0) effects.push({ id: "lateFightStacks", ...STATUS_EFFECT_STYLES.lateFightStacks });
-    if (unit.moldStacks > 0) {
-      const moldId = currentMoldStatusEffectId();
-      effects.push({ id: moldId, ...currentMoldStatusStyle() });
-    }
-    return effects;
+    const moldEffect = unit.moldStacks > 0 ? { id: currentMoldStatusEffectId(), ...currentMoldStatusStyle() } : null;
+    return window.FoodAnimalsStatusRuntime.activeEffects(unit, STATUS_EFFECT_STYLES, { moldEffect });
   }
 
   function drawUnitStatusGlyphs(unit, x, y, r) {
     const effects = activeStatusEffects(unit);
     if (!effects.length) return;
     const time = visibleBattle()?.elapsed || 0;
-    const count = effects.length;
     effects.forEach((effect, index) => {
-      const angle = -Math.PI / 4 + (index / count) * Math.PI * 2;
-      const pulse = 0.5 + Math.sin(time * 6.2 + index * 1.1) * 0.5;
-      const distance = r + 10 + pulse * 5;
-      drawStatusGlyph(effect, x + Math.cos(angle) * distance, y + Math.sin(angle) * (distance * 0.74), 13 + pulse * 2);
+      const layout = window.FoodAnimalsBattleCanvas.statusGlyphLayout(effects.length, x, y, r, time)[index];
+      drawStatusGlyph(effect, layout.x, layout.y, layout.size);
     });
   }
 
@@ -22994,11 +16132,12 @@
 
   function drawParticles() {
     state.particles.forEach((p) => {
-      const alpha = Math.max(0, p.life / (p.maxLife || 0.45));
+      const frame = window.FoodAnimalsParticleRuntime.frame(p);
+      const { alpha } = frame;
       ctx.globalAlpha = alpha;
       if (p.foodParticles) {
         const image = getParticleSprite(p.imageCacheKind || p.particleSprite || "attack", p.particleType, p.particleTier, p.imageSrc);
-        const size = (p.size || 24) * (0.75 + alpha * 0.35);
+        const { size } = frame;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation || 0);
@@ -23040,118 +16179,7 @@
   }
 
   function storyDialogueLayout() {
-    const stage = {
-      x: 0,
-      y: 0,
-      w: W,
-      h: H,
-    };
-    const panel = {
-      x: 155,
-      y: 463,
-      w: 713,
-      h: 158,
-    };
-    return {
-      stage,
-      panel,
-      player: {
-        x: -145,
-        y: 134,
-        w: 448,
-        h: 672,
-      },
-      tabs: {
-        x: 839,
-        y: 426,
-        w: 216,
-        h: 324,
-      },
-      horrorTabs: {
-        x: 790,
-        y: 372,
-        w: 292,
-        h: 292,
-      },
-      label: {
-        x: panel.x + 24,
-        y: panel.y - 16,
-        w: 138,
-        h: 37,
-      },
-      progress: {
-        x: panel.x + panel.w - 67,
-        y: panel.y + 25,
-        w: 46,
-        h: 21,
-      },
-      text: {
-        x: panel.x + 24,
-        y: panel.y + 66,
-        w: panel.w - 85,
-      },
-      button: {
-        x: panel.x + panel.w - 136,
-        y: panel.y + panel.h - 48,
-        w: 112,
-        h: 32,
-      },
-      backButton: {
-        x: panel.x + panel.w - 386,
-        y: panel.y + panel.h - 48,
-        w: 112,
-        h: 32,
-      },
-      skipButton: {
-        x: panel.x + panel.w - 261,
-        y: panel.y + panel.h - 48,
-        w: 112,
-        h: 32,
-      },
-    };
-  }
-
-  function drawStoryStandee(src, rect, active, fallbackLabel) {
-    const image = getUiSprite(src);
-    ctx.save();
-    ctx.imageSmoothingEnabled = false;
-    ctx.filter = `${active ? "saturate(1.04) brightness(1.03)" : "saturate(1) brightness(1)"} drop-shadow(0 12px 14px rgba(37, 51, 30, 0.3))`;
-    const breath = active ? (1 - Math.cos(state.idleTime * (Math.PI * 2) / 2.8)) * 0.5 : 0;
-    const bob = active ? -1.8 * breath : 0;
-    const scaleX = active ? 1 + 0.006 * breath : 1;
-    const scaleY = active ? 1 + 0.012 * breath : 1;
-    ctx.translate(rect.x + rect.w * 0.5, rect.y + rect.h);
-    ctx.scale(scaleX, scaleY);
-    const drawX = -rect.w * 0.5;
-    const drawY = -rect.h + bob;
-    if (image && image.complete && image.naturalWidth > 0) {
-      const imageAspect = image.naturalWidth / Math.max(1, image.naturalHeight);
-      const rectAspect = rect.w / Math.max(1, rect.h);
-      let drawW = rect.w;
-      let drawH = rect.h;
-      if (imageAspect > rectAspect) {
-        drawH = rect.w / imageAspect;
-      } else {
-        drawW = rect.h * imageAspect;
-      }
-      const imageX = -drawW * 0.5;
-      const imageY = -drawH + bob;
-      ctx.drawImage(image, imageX, imageY, drawW, drawH);
-    } else {
-      ctx.filter = "none";
-      roundedRect(drawX + rect.w * 0.24, drawY + rect.h * 0.16, rect.w * 0.52, rect.h * 0.36, 8);
-      ctx.fillStyle = "rgba(255, 248, 221, 0.9)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(49, 66, 38, 0.72)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.fillStyle = "#16392d";
-      ctx.font = "900 30px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(fallbackLabel, 0, drawY + rect.h * 0.34);
-    }
-    ctx.restore();
+    return window.FoodAnimalsStoryCanvas.layout({ width: W, height: H });
   }
 
   function storyAdvanceButtonRect() {
@@ -23166,22 +16194,6 @@
     return storyDialogueLayout().skipButton;
   }
 
-  function drawStoryProgressDots(story, x, y, horror = false) {
-    const total = story.beats?.length || 0;
-    const active = story.index || 0;
-    const visible = Math.min(total, 12);
-    const gap = 11;
-    for (let i = 0; i < visible; i++) {
-      const sourceIndex = total <= visible ? i : Math.round((i / Math.max(1, visible - 1)) * (total - 1));
-      ctx.beginPath();
-      ctx.arc(x + i * gap, y, sourceIndex <= active ? 3.4 : 2.3, 0, Math.PI * 2);
-      ctx.fillStyle = horror
-        ? sourceIndex <= active ? "rgba(92, 255, 111, 0.86)" : "rgba(92, 255, 111, 0.22)"
-        : sourceIndex <= active ? "rgba(255, 241, 176, 0.92)" : "rgba(255, 241, 176, 0.28)";
-      ctx.fill();
-    }
-  }
-
   function drawStoryConversationOverlay() {
     const story = state.activeStory;
     const beat = currentStoryBeat();
@@ -23192,193 +16204,409 @@
     const playerSpeaker = speakerKey === "you";
     const hostile = beat.speaker === "T.A.B.S." || beat.tone === "malignant" || beat.tone === "glitch";
     const horror = realityBroken();
-    const layout = storyDialogueLayout();
-    const { panel, button, backButton, skipButton } = layout;
-    const playerActive = playerSpeaker;
-    const tabsActive = tabsSpeaker;
     const tabsPortraitSrc = storySpeakerPortraitSrc("Tabs", story);
-    const tabsRect = storyUsesHorrorTabs(story)
-      ? layout.horrorTabs
-      : layout.tabs;
     const beatMotion = storyBeatTransitionVisual(story);
     const transitionAlpha = storyTransitionAlpha(story);
-    if (transitionAlpha <= 0) return;
-    const transitionPhase = storyTransitionPhase(story);
-    const transitionOffsetY = transitionPhase === "exit"
-      ? (1 - transitionAlpha) * -8
-      : (1 - transitionAlpha) * 12;
+    window.FoodAnimalsStoryCanvas.drawOverlay({
+      ctx,
+      story,
+      beat,
+      width: W,
+      height: H,
+      idleTime: state.idleTime,
+      playerPortraitSrc: PLAYER_STORY_PORTRAIT_SRC,
+      tabsPortraitSrc,
+      paperSrc: horror ? STORY_DIALOGUE_WAR_BG_SRC : STORY_DIALOGUE_PAPER_BG_SRC,
+      horror,
+      hostile,
+      playerSpeaker,
+      tabsSpeaker,
+      useHorrorTabs: storyUsesHorrorTabs(story),
+      transitionAlpha,
+      transitionPhase: storyTransitionPhase(story),
+      beatMotion,
+      canGoBack: storyCanGoBack(),
+      skipConfirm: story.skipConfirm,
+      getImage: getUiSprite,
+      roundedRect,
+      wrappedTextLines,
+      fitText,
+    });
+  }
+
+  function drawLevel10RevealCutsceneOverlay() {
+    const cutscene = state.level10RevealCutscene;
+    const shot = level10RevealCutsceneShot(cutscene);
+    if (!cutscene || !shot) return;
+    const local = clamp((cutscene.elapsed || 0) - shot.start, 0, shot.duration);
+    const progress = clamp01(local / Math.max(0.001, shot.duration));
+    const alpha = Math.min(clamp01(local / 0.45), clamp01((shot.duration - local) / 0.55));
+    const frame = Math.floor((state.idleTime + local) * 24);
+    const shotIndex = level10RevealCutsceneShotIndex(cutscene);
+
+    if (shot.mode === "panorama") {
+      drawLevel10RevealPanoramaShot(shot, shotIndex, progress, alpha, frame);
+      return;
+    }
 
     ctx.save();
-    ctx.globalAlpha *= transitionAlpha;
-    ctx.fillStyle = horror ? "rgba(0, 0, 0, 0.34)" : hostile ? "rgba(0, 0, 0, 0.2)" : "rgba(12, 31, 23, 0.12)";
-    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = alpha;
+    drawLevel10CutscenePlateBackground(shot, progress, frame);
+    drawLevel10CutsceneStatic(frame, 0.44 + progress * 0.22);
+    drawLevel10CutsceneScanlines(0.22);
+    ctx.globalAlpha = alpha * 0.96;
+    ctx.fillStyle = "#020506";
+    ctx.fillRect(0, 0, W, 52);
+    ctx.fillRect(0, H - 52, W, 52);
+    ctx.globalAlpha = alpha;
+    drawLevel10CutsceneVisual(shot, progress, frame);
+    drawLevel10CutsceneText(shot, shotIndex, progress);
     ctx.restore();
+  }
 
-    ctx.save();
-    ctx.globalAlpha *= transitionAlpha;
-    ctx.translate(0, transitionOffsetY);
-
-    drawStoryStandee(PLAYER_STORY_PORTRAIT_SRC, {
-      ...layout.player,
-      x: layout.player.x + (playerActive ? beatMotion.offsetX * 0.45 : 0),
-    }, playerActive, "Y");
-    drawStoryStandee(tabsPortraitSrc, {
-      ...tabsRect,
-      x: tabsRect.x + (tabsActive ? beatMotion.offsetX * 0.45 : 0),
-    }, tabsActive, "T");
-
-    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
-    ctx.save();
-    ctx.clip();
-    const paper = getUiSprite(horror ? STORY_DIALOGUE_WAR_BG_SRC : STORY_DIALOGUE_PAPER_BG_SRC);
-    ctx.fillStyle = horror ? "#071214" : "#fff7d7";
-    ctx.fill();
-    if (paper && paper.complete && paper.naturalWidth > 0) {
+  function drawLevel10CutscenePlateBackground(shot, progress, frame) {
+    const image = shot.imageSrc ? getUiSprite(shot.imageSrc) : null;
+    if (image?.complete && image.naturalWidth > 0) {
+      const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight) * (1 + progress * 0.018);
+      const drawW = image.naturalWidth * scale;
+      const drawH = image.naturalHeight * scale;
+      const travelX = Math.max(0, drawW - W);
+      const travelY = Math.max(0, drawH - H);
+      const focus = clamp01((shot.imageFocus ?? 0.5) + (progress - 0.5) * 0.045);
+      const bob = (glitchNoise(frame * 13 + shot.start * 17) - 0.5) * 2;
+      const drawX = -travelX * focus;
+      const drawY = -travelY * 0.5 + bob;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(paper, panel.x, panel.y, panel.w, panel.h);
-    }
-    const gloss = ctx.createLinearGradient(0, panel.y, 0, panel.y + panel.h);
-    if (horror) {
-      gloss.addColorStop(0, "rgba(92, 255, 111, 0.08)");
-      gloss.addColorStop(0.52, "rgba(0, 0, 0, 0)");
-      gloss.addColorStop(1, "rgba(0, 0, 0, 0.22)");
+      ctx.drawImage(image, Math.round(drawX), Math.round(drawY), Math.ceil(drawW), Math.ceil(drawH));
+      ctx.imageSmoothingEnabled = true;
     } else {
-      gloss.addColorStop(0, "rgba(255, 255, 255, 0.2)");
-      gloss.addColorStop(1, "rgba(255, 247, 215, 0.08)");
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, "#020506");
+      bg.addColorStop(0.46, "#061010");
+      bg.addColorStop(1, "#140509");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
     }
-    ctx.fillStyle = gloss;
-    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+
+    const readabilityWash = ctx.createLinearGradient(0, 0, W, 0);
+    readabilityWash.addColorStop(0, "rgba(1, 4, 5, 0.66)");
+    readabilityWash.addColorStop(0.36, "rgba(2, 8, 10, 0.34)");
+    readabilityWash.addColorStop(0.68, "rgba(2, 8, 10, 0.1)");
+    readabilityWash.addColorStop(1, "rgba(2, 4, 5, 0.44)");
+    ctx.fillStyle = readabilityWash;
+    ctx.fillRect(0, 0, W, H);
+
+    const vignette = ctx.createRadialGradient(W * 0.58, H * 0.48, H * 0.14, W * 0.55, H * 0.52, H * 0.78);
+    vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+    vignette.addColorStop(0.66, "rgba(0, 0, 0, 0.18)");
+    vignette.addColorStop(1, "rgba(0, 0, 0, 0.72)");
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawLevel10RevealPanoramaShot(shot, shotIndex, progress, alpha, frame) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const image = getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
+    if (image?.complete && image.naturalWidth > 0) {
+      const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight);
+      const drawW = image.naturalWidth * scale;
+      const drawH = image.naturalHeight * scale;
+      const panTravel = Math.max(0, drawW - W);
+      const pan = easeInOutCubic(clamp01(progress));
+      const drawX = -panTravel * pan;
+      const drawY = (H - drawH) / 2;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(image, Math.round(drawX), Math.round(drawY), Math.ceil(drawW), Math.ceil(drawH));
+      ctx.imageSmoothingEnabled = true;
+    } else {
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, "#020506");
+      bg.addColorStop(0.45, "#061010");
+      bg.addColorStop(1, "#160508");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+    }
+    drawLevel10CutsceneStatic(frame, 0.24);
+    drawLevel10CutsceneScanlines(0.16);
+
+    const vignette = ctx.createRadialGradient(W * 0.52, H * 0.47, H * 0.18, W * 0.52, H * 0.5, H * 0.75);
+    vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+    vignette.addColorStop(0.66, "rgba(0, 0, 0, 0.22)");
+    vignette.addColorStop(1, "rgba(0, 0, 0, 0.78)");
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, W, H);
+
+    const captionW = 640;
+    const captionX = 42;
+    const captionY = H - 164;
+    const captionAlpha = Math.min(clamp01(progress / 0.08), clamp01((1 - progress) / 0.18));
+    ctx.globalAlpha *= captionAlpha;
+    roundedRect(captionX, captionY, captionW, 106, 8);
+    ctx.fillStyle = "rgba(2, 8, 10, 0.84)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 89, 107, 0.48)";
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ff596b";
+    ctx.font = "900 11px Inter, sans-serif";
+    ctx.fillText(shot.label, captionX + 22, captionY + 28);
+    ctx.fillStyle = "#f0fff0";
+    ctx.font = "950 24px Inter, sans-serif";
+    fitText(shot.title, captionX + 22, captionY + 58, captionW - 44, "950 24px Inter, sans-serif", "#f0fff0");
+    ctx.fillStyle = "#b8f2c0";
+    ctx.font = "700 13px Inter, sans-serif";
+    wrapTextLimited(shot.body, captionX + 22, captionY + 80, captionW - 44, 18, 2);
+    ctx.globalAlpha = alpha;
+    drawLevel10CutsceneProgress(42, H - 34, W - 84, shotIndex, progress);
+    ctx.fillStyle = "rgba(240, 255, 240, 0.68)";
+    ctx.font = "800 11px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Click / Enter to advance   Escape to skip", W / 2, H - 14);
+    ctx.restore();
+  }
+
+  function drawLevel10CutsceneText(shot, shotIndex, progress) {
+    const panelX = 70;
+    const panelY = 84;
+    const panelW = 505;
+    const panelH = 358;
+    const pulse = 0.5 + Math.sin(state.idleTime * 7.5) * 0.5;
+    ctx.save();
+    ctx.globalAlpha = 0.82;
+    roundedRect(panelX, panelY, panelW, panelH, 10);
+    ctx.fillStyle = "rgba(3, 12, 14, 0.76)";
+    ctx.fill();
+    ctx.strokeStyle = `rgba(70, 255, 99, ${0.4 + pulse * 0.24})`;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
     ctx.restore();
 
-    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
-    ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.46)" : "#6f7546";
-    ctx.lineWidth = horror ? 1.5 : 3;
-    ctx.stroke();
-    roundedRect(panel.x + 4, panel.y + 4, panel.w - 8, panel.h - 8, 6);
-    ctx.strokeStyle = horror ? "rgba(20, 218, 231, 0.16)" : "rgba(255, 255, 255, 0.5)";
-    ctx.lineWidth = horror ? 1 : 3;
-    ctx.stroke();
-
-    ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.38)" : "rgba(111, 117, 70, 0.72)";
-    ctx.lineWidth = horror ? 1.5 : 3;
-    ctx.beginPath();
-    ctx.moveTo(panel.x + 12, panel.y + panel.h - 32);
-    ctx.lineTo(panel.x + 12, panel.y + panel.h - 12);
-    ctx.lineTo(panel.x + 32, panel.y + panel.h - 12);
-    ctx.moveTo(panel.x + panel.w - 12, panel.y + 32);
-    ctx.lineTo(panel.x + panel.w - 12, panel.y + 12);
-    ctx.lineTo(panel.x + panel.w - 32, panel.y + 12);
-    ctx.stroke();
-
-    roundedRect(layout.label.x, layout.label.y, layout.label.w, layout.label.h, 8);
-    ctx.fillStyle = horror
-      ? playerSpeaker ? "rgba(81, 12, 22, 0.94)" : "rgba(8, 25, 20, 0.94)"
-      : playerSpeaker ? "#8d2434" : "#314226";
-    ctx.fill();
-    ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.58)" : "#fff9d6";
-    ctx.lineWidth = horror ? 1.5 : 3;
-    ctx.stroke();
-    ctx.fillStyle = horror ? "#9effaa" : "#fff8d7";
-    ctx.font = "900 17px Inter, sans-serif";
     ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    fitText(speakerLabel, layout.label.x + 24, layout.label.y + layout.label.h / 2 + 1, layout.label.w - 44, "900 17px Inter, sans-serif", ctx.fillStyle);
+    ctx.fillStyle = "#46ff63";
+    ctx.font = "900 11px Inter, sans-serif";
+    ctx.fillText(shot.label, panelX + 24, panelY + 34);
 
-    roundedRect(layout.progress.x, layout.progress.y, layout.progress.w, layout.progress.h, 8);
-    ctx.fillStyle = horror ? "rgba(4, 15, 14, 0.86)" : "rgba(255, 251, 234, 0.72)";
+    ctx.fillStyle = "#f0fff0";
+    ctx.font = "950 30px Inter, sans-serif";
+    wrapTextLimited(shot.title, panelX + 24, panelY + 82, panelW - 48, 34, 2);
+
+    ctx.fillStyle = "#b8f2c0";
+    ctx.font = "700 15px Inter, sans-serif";
+    wrapTextLimited(shot.body, panelX + 24, panelY + 182, panelW - 48, 22, 5);
+
+    drawLevel10CutsceneProgress(panelX + 24, panelY + panelH - 46, panelW - 48, shotIndex, progress);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(240, 255, 240, 0.72)";
+    ctx.font = "800 11px Inter, sans-serif";
+    ctx.fillText("Click / Enter to advance   Escape to skip", W / 2, H - 25);
+  }
+
+  function drawLevel10CutsceneProgress(x, y, w, shotIndex, progress) {
+    ctx.fillStyle = "rgba(70, 255, 99, 0.14)";
+    ctx.fillRect(x, y, w, 5);
+    ctx.fillStyle = "#46ff63";
+    ctx.fillRect(x, y, w * progress, 5);
+    LEVEL10_REVEAL_CUTSCENE_SHOTS.forEach((_entry, index) => {
+      const markerX = x + index * 22;
+      ctx.fillStyle = index <= shotIndex ? "#ff596b" : "rgba(184, 242, 192, 0.25)";
+      ctx.fillRect(markerX, y + 18, 14, 4);
+    });
+  }
+
+  function drawLevel10CutsceneVisual(shot, progress, frame) {
+    const x = 625;
+    const y = 92;
+    const w = 320;
+    const h = 408;
+    ctx.save();
+    roundedRect(x, y, w, h, 12);
+    ctx.fillStyle = shot.imageSrc ? "rgba(2, 7, 9, 0.48)" : "rgba(2, 7, 9, 0.7)";
     ctx.fill();
-    ctx.strokeStyle = horror ? "rgba(20, 218, 231, 0.26)" : "rgba(111, 117, 70, 0.34)";
-    ctx.lineWidth = horror ? 1 : 2;
+    ctx.strokeStyle = "rgba(255, 89, 107, 0.55)";
+    ctx.lineWidth = 1.5;
     ctx.stroke();
-    ctx.fillStyle = horror ? "rgba(158, 255, 170, 0.82)" : "rgba(49, 66, 38, 0.82)";
+    drawHeavyStaticAroundRect({ x, y, w, h }, 3000 + frame + shot.start * 11, 0.36);
+    if (shot.id === "expired") drawLevel10ExpiredVisual(x, y, w, h, progress, frame);
+    if (shot.id === "shell") drawLevel10ShellVisual(x, y, w, h, progress, frame);
+    if (shot.id === "pilots") drawLevel10PilotsVisual(x, y, w, h, progress, frame);
+    if (shot.id === "pens") drawLevel10PensVisual(x, y, w, h, progress, frame);
+    if (shot.id === "defiance") drawLevel10DefianceVisual(x, y, w, h, progress, frame);
+    ctx.restore();
+  }
+
+  function drawLevel10ExpiredVisual(x, y, w, h, progress, frame) {
+    const cx = x + w / 2;
+    ctx.textAlign = "center";
+    ctx.font = "900 54px Inter, sans-serif";
+    ctx.fillStyle = `rgba(255, 89, 107, ${0.32 + progress * 0.52})`;
+    ctx.fillText("184", cx, y + 126);
+    ctx.font = "900 18px Inter, sans-serif";
+    ctx.fillText("YEARS", cx, y + 153);
+    ctx.strokeStyle = "rgba(70, 255, 99, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < 18; i++) {
+      const px = x + 40 + i * 14;
+      const py = y + 244 + Math.sin(frame * 0.5 + i * 0.9) * (i % 3 === 0 ? 24 : 8);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "rgba(240, 255, 240, 0.12)";
+    ctx.fillRect(x + 44, y + 276, w - 88, 34);
+    ctx.fillStyle = "rgba(255, 89, 107, 0.72)";
+    ctx.fillRect(x + 44, y + 289, (w - 88) * (0.12 + progress * 0.82), 8);
+  }
+
+  function drawLevel10ShellVisual(x, y, w, h, progress, frame) {
+    const gridX = x + 68;
+    const gridY = y + 72;
+    const cell = 54;
+    ctx.strokeStyle = "rgba(70, 255, 99, 0.34)";
+    ctx.lineWidth = 1.4;
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        const px = gridX + col * cell;
+        const py = gridY + row * cell;
+        ctx.beginPath();
+        if (progress < 0.45) ctx.ellipse(px, py, 23, 17, 0, 0, Math.PI * 2);
+        else ctx.rect(px - 24, py - 24, 48, 48);
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = "rgba(255, 89, 107, 0.76)";
     ctx.font = "900 12px Inter, sans-serif";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(`${(story.index || 0) + 1} / ${story.beats?.length || 1}`, layout.progress.x + layout.progress.w / 2, layout.progress.y + layout.progress.h / 2 + 1);
+    ["PLATE", "GRID", "RAIL", "FUEL"].forEach((label, i) => {
+      const px = x + 72 + i * 58;
+      const py = y + 284 + Math.sin(frame * 0.4 + i) * 3;
+      ctx.fillText(label, px, py);
+      ctx.fillStyle = i % 2 ? "rgba(70, 255, 99, 0.76)" : "rgba(255, 89, 107, 0.76)";
+    });
+  }
 
-    const textX = layout.text.x;
-    const textW = layout.text.w;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = horror ? (hostile ? "#ff9aa4" : "#d7ffe0") : hostile ? "#243f2f" : "#1b2617";
-    ctx.font = "900 17px Inter, sans-serif";
-    const lines = wrappedTextLines(beat.text, textW).slice(0, 4);
-    ctx.save();
-    ctx.globalAlpha *= beatMotion.alpha;
-    ctx.translate(beatMotion.offsetX, 0);
-    lines.forEach((line, index) => ctx.fillText(line, textX, layout.text.y + index * 23));
-    ctx.restore();
-
-    drawStoryProgressDots(story, textX, panel.y + panel.h - 22, horror);
-
-    if (story.skipConfirm) {
-      const confirmW = Math.min(340, panel.w - 56);
-      const confirmH = 40;
-      const confirmX = panel.x + panel.w - confirmW - 26;
-      const confirmY = panel.y - 50;
-      roundedRect(confirmX, confirmY, confirmW, confirmH, 8);
-      ctx.fillStyle = horror ? "rgba(5, 14, 15, 0.94)" : "rgba(255, 251, 234, 0.9)";
-      ctx.fill();
-      ctx.strokeStyle = horror ? "rgba(255, 102, 115, 0.52)" : "rgba(141, 36, 52, 0.42)";
-      ctx.lineWidth = horror ? 1.5 : 2;
+  function drawLevel10PilotsVisual(x, y, w, h, progress, frame) {
+    for (let i = 0; i < 3; i++) {
+      const cy = y + 96 + i * 92;
+      const jitter = Math.round((glitchNoise(frame * 53 + i * 19) - 0.5) * 8 * progress);
+      ctx.strokeStyle = "rgba(255, 89, 107, 0.64)";
+      ctx.lineWidth = 2;
+      roundedRect(x + 52 + jitter, cy - 32, w - 104, 58, 8);
       ctx.stroke();
-      ctx.fillStyle = horror ? "#ff9aa4" : "#8d2434";
-      ctx.font = "900 11px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("Skip this dialogue section?", confirmX + confirmW / 2, confirmY + 15);
-      ctx.fillText("Click Skip again to confirm.", confirmX + confirmW / 2, confirmY + 28);
-    }
-
-    const drawStoryButton = (rect, label, options = {}) => {
-      const enabled = options.enabled !== false;
-      roundedRect(rect.x, rect.y, rect.w, rect.h, 8);
-      ctx.fillStyle = horror
-        ? options.primary ? "rgba(15, 54, 34, 0.94)" : options.confirming ? "rgba(95, 16, 28, 0.94)" : "rgba(4, 15, 14, 0.88)"
-        : options.primary ? "#16392d" : options.confirming ? "#8d2434" : "rgba(255, 251, 234, 0.86)";
+      ctx.fillStyle = "rgba(70, 255, 99, 0.2)";
+      ctx.fillRect(x + 82 + jitter, cy - 9, w - 164, 18);
+      ctx.beginPath();
+      ctx.arc(x + w / 2 + jitter, cy, 16, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(240, 255, 240, 0.72)";
       ctx.fill();
-      ctx.strokeStyle = horror ? "rgba(92, 255, 111, 0.32)" : "rgba(111, 117, 70, 0.22)";
-      ctx.lineWidth = horror ? 1 : 0;
-      if (horror) ctx.stroke();
-      ctx.fillStyle = horror ? (options.confirming ? "#ffb0b8" : "#d7ffe0") : options.primary || options.confirming ? "#fff9df" : "#16392d";
-      ctx.globalAlpha = enabled ? 1 : 0.42;
-      ctx.font = "900 13px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      fitText(label, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1, rect.w - 18, "900 13px Inter, sans-serif", ctx.fillStyle, "center");
-      ctx.globalAlpha = 1;
-    };
+      ctx.fillStyle = "rgba(255, 89, 107, 0.82)";
+      ctx.fillRect(x + w / 2 - 20 + jitter, cy - 2, 40, 4);
+    }
+    ctx.fillStyle = "rgba(240, 255, 240, 0.55)";
+    ctx.font = "900 11px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("PILOT SIGNALS INSIDE ACTIVE FRAMES", x + w / 2, y + h - 46);
+  }
 
-    drawStoryButton(backButton, "Back", { enabled: storyCanGoBack() });
-    drawStoryButton(skipButton, story.skipConfirm ? "Confirm Skip" : "Skip", { confirming: story.skipConfirm });
-    const done = (story.index || 0) >= (story.beats?.length || 1) - 1;
-    drawStoryButton(button, done ? "Close" : "Next", { primary: true });
+  function drawLevel10PensVisual(x, y, w, h, progress, frame) {
+    const doorX = x + 96;
+    const doorY = y + 86;
+    ctx.strokeStyle = "rgba(70, 255, 99, 0.54)";
+    ctx.lineWidth = 2;
+    roundedRect(doorX, doorY, 128, 178, 10);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(70, 255, 99, 0.13)";
+    ctx.fillRect(doorX + 10, doorY + 12, 108, 154);
+    ctx.strokeStyle = "rgba(255, 89, 107, 0.72)";
+    ctx.beginPath();
+    ctx.moveTo(doorX + 32, doorY + 78);
+    ctx.lineTo(doorX + 96, doorY + 78);
+    ctx.lineTo(doorX + 96, doorY + 126);
+    ctx.lineTo(doorX + 32, doorY + 126);
+    ctx.closePath();
+    ctx.stroke();
+    for (let i = 0; i < 15; i++) {
+      const px = doorX + 24 + (i % 5) * 20 + Math.sin(frame * 0.2 + i) * 2;
+      const py = doorY + 136 + Math.floor(i / 5) * 14;
+      ctx.fillStyle = `rgba(240, 255, 240, ${0.3 + progress * 0.48})`;
+      ctx.fillRect(px, py, 4, 4);
+    }
+    ctx.fillStyle = "rgba(255, 89, 107, 0.82)";
+    ctx.font = "900 12px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("LOCKED SECTOR / ACCESS THROUGH RELAYS", x + w / 2, y + h - 50);
+  }
+
+  function drawLevel10DefianceVisual(x, y, w, h, progress, frame) {
+    const startX = x + 58;
+    const startY = y + h - 92;
+    const endX = x + w - 58;
+    const endY = y + 96;
+    ctx.strokeStyle = "rgba(70, 255, 99, 0.64)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.bezierCurveTo(x + 128, y + 278, x + 190, y + 166, endX, endY);
+    ctx.stroke();
+    for (let i = 0; i < 7; i++) {
+      const t = (progress + i * 0.14) % 1;
+      const px = startX + (endX - startX) * t + Math.sin(t * Math.PI * 2) * 22;
+      const py = startY + (endY - startY) * t - Math.sin(t * Math.PI) * 52;
+      ctx.fillStyle = i % 2 ? "rgba(255, 89, 107, 0.86)" : "rgba(70, 255, 99, 0.86)";
+      ctx.fillRect(px - 4, py - 4, 8, 8);
+    }
+    ctx.fillStyle = "rgba(240, 255, 240, 0.78)";
+    ctx.font = "900 13px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("SHOP LOOP", startX, startY + 34);
+    ctx.fillText("PENS", endX, endY - 24);
+    ctx.fillStyle = `rgba(255, 89, 107, ${0.28 + glitchNoise(frame * 29) * 0.44})`;
+    ctx.fillRect(x + 60, y + 286, w - 120, 10);
+  }
+
+  function drawLevel10CutsceneStatic(frame, intensity = 0.5) {
+    ctx.save();
+    for (let y = 0; y < H; y += 5) {
+      const roll = glitchNoise(frame * 83 + y * 17);
+      ctx.fillStyle = roll > 0.62
+        ? `rgba(255, 89, 107, ${0.018 * intensity})`
+        : `rgba(70, 255, 99, ${0.014 * intensity})`;
+      ctx.fillRect(0, y, W, 1);
+    }
+    for (let i = 0; i < 42; i++) {
+      if (glitchNoise(frame * 127 + i * 19) < 0.35) continue;
+      const yy = Math.floor(glitchNoise(frame * 139 + i * 23) * H);
+      const xx = Math.floor((glitchNoise(frame * 151 + i * 29) - 0.5) * 70);
+      const ww = Math.floor(30 + glitchNoise(frame * 163 + i * 31) * 210);
+      ctx.fillStyle = glitchNoise(frame * 181 + i * 37) > 0.5
+        ? `rgba(255, 89, 107, ${0.08 * intensity})`
+        : `rgba(70, 255, 99, ${0.07 * intensity})`;
+      ctx.fillRect(xx, yy, ww, 2 + Math.floor(glitchNoise(frame * 191 + i * 41) * 8));
+    }
+    ctx.restore();
+  }
+
+  function drawLevel10CutsceneScanlines(alpha = 0.2) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#000";
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
     ctx.restore();
   }
 
   function pointInRect(x, y, rect) {
-    return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+    return window.FoodAnimalsInteractionRuntime.pointInRect(x, y, rect);
   }
 
   function hitTestOptionsMenu(pos) {
-    const layout = optionsMenuLayout();
-    if (pointInRect(pos.x, pos.y, layout.close)) return { area: "optionsMenu", action: "close" };
-    for (const button of layout.buttons) {
-      if (pointInRect(pos.x, pos.y, button.rect)) return { area: "optionsMenu", action: button.id };
-    }
-    for (const slider of layout.sliders) {
-      const hitRect = { x: slider.rect.x - 16, y: slider.rect.y - 28, w: slider.rect.w + 32, h: slider.rect.h + 56 };
-      if (pointInRect(pos.x, pos.y, hitRect)) {
-        return { area: "optionsMenu", action: "slider", slider: slider.id, x: pos.x };
-      }
-    }
-    return pointInRect(pos.x, pos.y, layout.panel)
-      ? { area: "optionsMenu", action: "panel" }
-      : { area: "optionsMenu", action: "outside" };
+    return window.FoodAnimalsOptionsMenuRuntime.hitTest(pos, optionsMenuLayout());
   }
 
   function shopFreezeRect(x, y, w, h) {
-    return { x: x + w / 2 - 23, y: y - h / 2 + 6, w: 18, h: 20 };
+    return window.FoodAnimalsSlotCanvas.freezeRect(x, y, w, h);
   }
 
   function canvasPoint(event) {
@@ -23397,6 +16625,7 @@
       if (pointInRect(pos.x, pos.y, storyAdvanceButtonRect())) return { area: "story", action: "advance" };
       return { area: "story", action: "panel" };
     }
+    if (state.level10RevealCutscene) return { area: "level10RevealCutscene", action: "advance" };
     if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
@@ -23596,6 +16825,12 @@
     }
     if (state.activeStory) {
       applyStoryHit(hit);
+      state.selected = null;
+      event.preventDefault();
+      return;
+    }
+    if (state.level10RevealCutscene) {
+      advanceLevel10RevealCutscene(hit?.action === "skip");
       state.selected = null;
       event.preventDefault();
       return;
@@ -23849,19 +17084,15 @@
     }
     if (!(isTopping(unit) && equipmentTarget)) state.selected = null;
     state.drag = {
-      area: "shop",
-      index,
-      unit,
-      equipmentTarget,
-      startX: pos.x,
-      startY: pos.y,
-      x: pos.x,
-      y: pos.y,
-      moved: false,
-      over: null,
-      valid: false,
+      ...window.FoodAnimalsDragDropRuntime.createDrag("shop", index, unit, pos, { equipmentTarget }),
     };
-    state.message = isDrink(unit) ? `Drag to ${drinkTerm({ lower: true })} rail` : isItem(unit) ? (realityBroken() ? "Drag to machine" : "Drag to animal") : "Drag to grid";
+    state.message = window.FoodAnimalsDragDropRuntime.feedbackMessage(unit, {
+      drink: drinkTerm({ lower: true }),
+      horror: realityBroken(),
+      isDrink,
+      isItem,
+      kind: "shopStart",
+    });
     playGameSfx("pickup", { volume: 0.72 });
   }
 
@@ -23871,19 +17102,16 @@
     const equipmentTarget = selectedEquipmentTargetRef();
     if (!(isTopping(unit) && equipmentTarget)) state.selected = { area, index };
     state.drag = {
-      area,
-      index,
-      unit,
-      equipmentTarget,
-      startX: pos.x,
-      startY: pos.y,
-      x: pos.x,
-      y: pos.y,
-      moved: false,
-      over: null,
-      valid: false,
+      ...window.FoodAnimalsDragDropRuntime.createDrag(area, index, unit, pos, { equipmentTarget }),
     };
-    state.message = isDrink(unit) ? `Drag to ${drinkTerm({ lower: true })} rail` : isItem(unit) ? (realityBroken() ? "Arm a machine" : "Top an animal") : area === "bench" ? "Drag to board" : "Drag to slot";
+    state.message = window.FoodAnimalsDragDropRuntime.feedbackMessage(unit, {
+      area,
+      drink: drinkTerm({ lower: true }),
+      horror: realityBroken(),
+      isDrink,
+      isItem,
+      kind: "unitStart",
+    });
     playGameSfx("pickup", { volume: 0.72 });
   }
 
@@ -23895,30 +17123,19 @@
       return;
     }
     state.drag = {
-      area: "equipment",
-      index: 0,
-      unit: source.unit.item,
-      equipmentTarget: { area: source.area, index: source.index },
-      startX: pos.x,
-      startY: pos.y,
-      x: pos.x,
-      y: pos.y,
-      moved: false,
-      over: null,
-      valid: false,
+      ...window.FoodAnimalsDragDropRuntime.createDrag("equipment", 0, source.unit.item, pos, {
+        equipmentTarget: { area: source.area, index: source.index },
+      }),
     };
     state.message = `Drag ${toppingTerm({ lower: true })} out`;
     playGameSfx("pickup", { volume: 0.72 });
   }
 
   function updateDrag(pos, hit) {
-    const dx = pos.x - state.drag.startX;
-    const dy = pos.y - state.drag.startY;
-    state.drag.x = pos.x;
-    state.drag.y = pos.y;
-    state.drag.moved = state.drag.moved || dx * dx + dy * dy > 64;
-    state.drag.over = hit && isPotentialDropTarget(state.drag, hit.area, hit.index) ? hit : null;
-    state.drag.valid = Boolean(state.drag.over && canDropDrag(state.drag, state.drag.over.area, state.drag.over.index));
+    window.FoodAnimalsDragDropRuntime.updateDrag(state.drag, pos, hit, {
+      canDropDrag,
+      isPotentialDropTarget,
+    });
     state.hover = state.drag.over;
   }
 
@@ -23926,7 +17143,7 @@
     const drag = state.drag;
     state.drag = null;
     if (!drag) return;
-    if (!drag.moved && hit?.area === drag.area && hit.index === drag.index) {
+    if (window.FoodAnimalsDragDropRuntime.clickWithoutMove(drag, hit)) {
       if (drag.area === "equipment") {
         const source = selectedEquipmentTargetRef(drag);
         if (source?.unit?.item) {
@@ -23945,7 +17162,13 @@
     }
     if (drag.area === "shop") {
       if (!hit || !isPotentialDropTarget(drag, hit.area, hit.index)) {
-        state.message = isDrink(drag.unit) ? `Drop on ${drinkTerm({ lower: true })} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : "Drop on grid";
+        state.message = window.FoodAnimalsDragDropRuntime.feedbackMessage(drag.unit, {
+          drink: drinkTerm({ lower: true }),
+          horror: realityBroken(),
+          isDrink,
+          isItem,
+          kind: "shopDrop",
+        });
         return;
       }
       if (isItem(drag.unit) && isUnit(state[hit.area]?.[hit.index])) {
@@ -23964,15 +17187,17 @@
       return;
     }
     if (!hit || !isPotentialDropTarget(drag, hit.area, hit.index)) {
-      state.message = isDrink(drag.unit) ? `Drop on ${drinkTerm({ lower: true })} rail` : isItem(drag.unit) ? (realityBroken() ? "Drop on machine" : "Drop on animal") : drag.area === "bench" ? "Drop on board" : "Drop on slot";
+      state.message = window.FoodAnimalsDragDropRuntime.feedbackMessage(drag.unit, {
+        area: drag.area,
+        drink: drinkTerm({ lower: true }),
+        horror: realityBroken(),
+        isDrink,
+        isItem,
+      });
       return;
     }
     if (!canDropDrag(drag, hit.area, hit.index)) {
       state.message = isItem(drag.unit) ? "Target unavailable" : "Spot full";
-      return;
-    }
-    if (isItemStorageArea(drag.area) && isItemStorageArea(hit.area)) {
-      moveUnitToOpenSlot(drag.area, drag.index, hit.area, hit.index);
       return;
     }
     if (hit.area === "equipment") {
@@ -23987,8 +17212,12 @@
       moveEquippedItemToStorage(hit.area, hit.index);
       return;
     }
-    if (isItem(drag.unit) && isUnit(state[hit.area]?.[hit.index])) {
+    if (isTopping(drag.unit) && isUnit(state[hit.area]?.[hit.index])) {
       attachItemFromStorage(drag.area, drag.index, hit.area, hit.index);
+      return;
+    }
+    if (isItemStorageArea(drag.area) && isItemStorageArea(hit.area)) {
+      moveUnitToOpenSlot(drag.area, drag.index, hit.area, hit.index);
       return;
     }
     moveUnitToOpenSlot(drag.area, drag.index, hit.area, hit.index);
@@ -24006,7 +17235,8 @@
         const order = ["resume", "save", "exit", "music", "sfx"];
         const current = Math.max(0, order.indexOf(state.optionsMenu.selected));
         const delta = event.key === "ArrowUp" ? -1 : 1;
-        state.optionsMenu.selected = order[(current + delta + order.length) % order.length];
+        const nextSelected = order[(current + delta + order.length) % order.length];
+        state.optionsMenu.selected = nextSelected;
         playGameSfx("ui-hover", { volume: 0.24 });
         event.preventDefault();
         return;
@@ -24023,8 +17253,11 @@
       if (event.key === "Enter" || event.key === " ") {
         const selected = state.optionsMenu.selected || "resume";
         if (selected === "resume") closeOptionsMenu();
-        else if (selected === "save") saveCurrentRun();
-        else if (selected === "exit") exitToMainMenuWithSave();
+        else if (selected === "save") {
+          saveCurrentRun();
+        } else if (selected === "exit") {
+          exitToMainMenuWithSave();
+        }
         event.preventDefault();
         return;
       }
@@ -24042,6 +17275,18 @@
         applyStoryHit({ area: "story", action: "advance" });
         event.preventDefault();
       }
+      return;
+    }
+    if (state.level10RevealCutscene) {
+      if (key === "f") {
+        if (!document.fullscreenElement) canvas.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      } else if (event.key === "Escape") {
+        advanceLevel10RevealCutscene(true);
+      } else if (event.key === "Enter" || event.key === " ") {
+        advanceLevel10RevealCutscene(false);
+      }
+      event.preventDefault();
       return;
     }
     if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition || state.phase === "victoryCutscene") {
@@ -24204,6 +17449,31 @@
           progress: Number(clamp01((modalTransition("options").elapsed || 0) / Math.max(0.001, modalTransition("options").duration || MODAL_TRANSITION_SECONDS)).toFixed(2)),
         } : null,
       },
+      storageFlags: {
+        gameCompletedKey: GAME_COMPLETED_STORAGE_KEY,
+        gameCompleted: (() => {
+          try {
+            return window.localStorage.getItem(GAME_COMPLETED_STORAGE_KEY) === "1";
+          } catch {
+            return false;
+          }
+        })(),
+        horrorRevealedKey: HORROR_REVEALED_STORAGE_KEY,
+        horrorRevealed: (() => {
+          try {
+            return window.localStorage.getItem(HORROR_REVEALED_STORAGE_KEY) === "1";
+          } catch {
+            return false;
+          }
+        })(),
+        horrorMenuUnlocked: (() => {
+          try {
+            return window.localStorage.getItem(HORROR_MENU_UNLOCK_STORAGE_KEY) === "1";
+          } catch {
+            return false;
+          }
+        })(),
+      },
       story: state.activeStory ? {
         active: true,
         id: state.activeStory.id,
@@ -24231,6 +17501,15 @@
         active: false,
         seen: [...state.seenStoryMilestones],
       },
+      cutscene: state.level10RevealCutscene ? {
+        active: true,
+        id: state.level10RevealCutscene.id,
+        source: state.level10RevealCutscene.source || "level10Reveal",
+        elapsed: Number((state.level10RevealCutscene.elapsed || 0).toFixed(2)),
+        total: Number((state.level10RevealCutscene.total || LEVEL10_REVEAL_CUTSCENE_SECONDS).toFixed(2)),
+        shotIndex: level10RevealCutsceneShotIndex(state.level10RevealCutscene),
+        shot: level10RevealCutsceneShot(state.level10RevealCutscene),
+      } : { active: false },
       reality: {
         broken: realityBroken(),
         copyTheme: currentCopyThemeId(),
@@ -24815,26 +18094,15 @@
   }
 
   function initialSmokeScenario() {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return String(params.get("smoke") || "").trim().toLowerCase();
-    } catch (_err) {
-      return "";
-    }
+    return window.FoodAnimalsRouteHarness.smokeScenario();
   }
 
   function normalizeRunMode(value) {
-    const mode = String(value || "").trim().toLowerCase();
-    return ["infinite", "endless", "arcade", "freeplay", "free-play"].includes(mode) ? "infinite" : "story";
+    return window.FoodAnimalsRouteHarness.normalizeRunMode(value);
   }
 
   function initialRunMode() {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return normalizeRunMode(params.get("runMode") || params.get("run") || params.get("mode"));
-    } catch (_err) {
-      return "story";
-    }
+    return window.FoodAnimalsRouteHarness.initialRunMode();
   }
 
   function isInfiniteMode() {
@@ -24842,12 +18110,7 @@
   }
 
   function routeParam(name) {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return String(params.get(name) || "").trim().toLowerCase();
-    } catch (_err) {
-      return "";
-    }
+    return window.FoodAnimalsRouteHarness.param(name);
   }
 
   function victoryEpilogueRouteElapsed() {
@@ -24887,6 +18150,7 @@
     state.rebootTransition = null;
     state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
+    state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = {
@@ -24904,8 +18168,7 @@
   }
 
   function finalFightRouteShouldStartBattle() {
-    const phase = routeParam("phase") || routeParam("start") || routeParam("mode");
-    return ["battle", "start", "true", "1", "yes", "auto"].includes(phase);
+    return window.FoodAnimalsRouteHarness.shouldStartBattle();
   }
 
   function applyFinalFightRoute() {
@@ -24951,6 +18214,7 @@
     state.rebootTransition = null;
     state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
+    state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
@@ -24987,7 +18251,7 @@
     state.gold = 160;
     state.hearts = 10;
     state.shopLevel = 3;
-    state.message = "Level 10 ready";
+    state.message = "Wave 10 ready";
     state.shopFrozen = Array(shopSlots.length).fill(false);
     state.shopSales = Array(shopSlots.length).fill(false);
     state.shopUnlocked = shopSlots.map(() => true);
@@ -25024,6 +18288,7 @@
     state.rebootTransition = null;
     state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
+    state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
@@ -25048,7 +18313,24 @@
     ensureEnemyPreview();
     state.log = ["Review route: level 10 Banana Split Giraffe boss"];
     if (finalFightRouteShouldStartBattle()) startBattle();
-    if (state.phase === "prep") state.message = "Level 10 ready";
+    if (state.phase === "prep") state.message = "Wave 10 ready";
+    return true;
+  }
+
+  function applyLevel10RevealCutsceneRoute() {
+    applyLevel10Route();
+    state.phase = "prep";
+    state.round = REALITY_BREAK_ROUND;
+    state.realityOverride = true;
+    state.realityBroken = true;
+    state.realityBreakTimer = 0;
+    state.activeStory = null;
+    state.postGiraffeHorrorTransition = null;
+    state.shopReturnStaticTransition = null;
+    state.phaseTransition = null;
+    state.seenStoryMilestones = Object.keys(STORY_MILESTONES);
+    state.message = "Illusion failure";
+    startLevel10RevealCutscene({ force: true, source: "route" });
     return true;
   }
 
@@ -25095,6 +18377,7 @@
     state.rebootTransition = null;
     state.menuRebootTransition = null;
     state.postGiraffeHorrorTransition = null;
+    state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
@@ -25117,18 +18400,45 @@
     return true;
   }
 
+  function applyStoryCanvasSmokeRoute() {
+    applyOpeningTutorialShopRoute();
+    state.message = "Story canvas smoke";
+    startStoryConversation({
+      id: "storyCanvasSmoke",
+      title: "Story canvas smoke",
+      index: 0,
+      beats: [
+        {
+          speaker: "You",
+          text: "The shared canvas renderer keeps portraits, panels, text, and hit boxes aligned.",
+        },
+        {
+          speaker: "Tabs",
+          text: "One module now owns the story overlay rules for every canvas scene.",
+        },
+      ],
+    });
+    return true;
+  }
+
   function applyInitialRouteScreen() {
     const screen = routeParam("screen") || routeParam("scene");
-    if (screen === "opening-tutorial-shop" || screen === "tutorial-shop" || screen === "shop-tutorial") {
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["story-canvas-smoke", "story-smoke", "conversation-smoke"])) {
+      return applyStoryCanvasSmokeRoute();
+    }
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["opening-tutorial-shop", "tutorial-shop", "shop-tutorial"])) {
       return applyOpeningTutorialShopRoute();
     }
-    if (screen === "level-10" || screen === "level10" || screen === "wave-10" || screen === "wave10" || screen === "giraffe-boss") {
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["level-10", "level10", "wave-10", "wave10", "giraffe-boss"])) {
       return applyLevel10Route();
     }
-    if (screen === "final-fight" || screen === "final-boss" || screen === "overmind") {
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["level-10-cutscene", "level10-cutscene", "wave-10-cutscene", "reveal-cutscene"])) {
+      return applyLevel10RevealCutsceneRoute();
+    }
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["final-fight", "final-boss", "overmind"])) {
       return applyFinalFightRoute();
     }
-    if (screen === "victory-epilogue" || screen === "victory-cutscene" || screen === "final-victory") {
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["victory-epilogue", "victory-cutscene", "final-victory"])) {
       return applyVictoryEpilogueRoute();
     }
     return false;
@@ -25355,18 +18665,32 @@
   window.addEventListener("pagehide", saveCurrentRunSilently);
 
   refreshShop(true);
-  const restoredSavedRun = restoreSavedRunIfRequested();
+  const explicitRouteRequested = Boolean(routeParam("screen") || routeParam("scene") || window.FoodAnimalsRouteHarness.smokeScenario());
+  const restoredSavedRun = explicitRouteRequested ? false : restoreSavedRunIfRequested();
   if (!restoredSavedRun) {
     applySmokeScenario();
     applyInitialRouteScreen();
   }
   markActiveRunRoute();
   getUiSprite(COZY_AWNING_TRANSITION_SRC);
+  getUiSprite(COZY_BATTLE_DEPLOY_OVERLAY_SRC);
+  getUiSprite(REALITY_BATTLE_DEPLOY_OVERLAY_SRC);
+  getUiSprite(COZY_BATTLE_DEPLOY_TITLE_SRC);
+  getUiSprite(REALITY_BATTLE_DEPLOY_TITLE_SRC);
+  getUiSprite(COZY_BATTLE_RESULT_VICTORY_TITLE_SRC);
+  getUiSprite(COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
+  getUiSprite(REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC);
+  getUiSprite(REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
+  getUiSprite(BATTLE_RESULT_RUN_OVER_TITLE_SRC);
   getUiSprite(PLAYER_STORY_PORTRAIT_SRC);
   getUiSprite(TABS_STORY_PORTRAIT_SRC);
   getUiSprite(HORROR_TABS_STORY_PORTRAIT_SRC);
   getUiSprite(STORY_DIALOGUE_PAPER_BG_SRC);
   getUiSprite(STORY_DIALOGUE_WAR_BG_SRC);
+  LEVEL10_REVEAL_CUTSCENE_SHOTS.forEach((shot) => {
+    if (shot.imageSrc) getUiSprite(shot.imageSrc);
+    if (shot.mode === "panorama") getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
+  });
   ensureEnemyPreview();
   draw();
   requestAnimationFrame(gameLoop);

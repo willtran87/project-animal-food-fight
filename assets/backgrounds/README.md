@@ -40,6 +40,34 @@ Generated with the built-in image generation tool as the post-illusion war-torn 
 
 Generated with the built-in image generation tool as future-war, mechanical horror replacements for the six arena modifier backgrounds. In the horror/reality layer, `game.js` maps each cozy arena to its matching horror counterpart while preserving the same gameplay modifiers.
 
+## Level 10 Reveal War Yard Panorama V1
+
+- Runtime asset: `horror/level10-reveal-war-yard-panorama-v1.png`
+- Runtime ratio: `3:1`, drawn as a slow horizontal pan in the post-level-10 reveal cut-scene.
+- Status: `level-10-reveal-cutscene-pass`
+
+Generated with the built-in image generation tool using the ruined war-yard reference as mood/composition guidance. It shows broken future-war food-animal machines with exposed food-animal pilots spilling from ruptured frames, used as the first visual shock after the T.A.B.S. reveal.
+
+## Level 10 Reveal War Yard Panorama V2
+
+- Runtime asset: `horror/level10-reveal-war-yard-panorama-v2.png`
+- Runtime ratio: `3:1`, drawn as a slow horizontal pan in the post-level-10 reveal cut-scene.
+- Status: `level-10-reveal-cutscene-active`
+
+Generated with the built-in image generation tool as a darker, more pixel-art-forward cutscene pass. This version keeps the ruined war-yard composition but pushes the game-asset readability, grim emergency lighting, cracked table/plate/coaster language, and tragic food-animal pilot spillout for the active reveal shot.
+
+## Level 10 Reveal Scene Plates V1
+
+- `horror/level10-reveal-expired-archive-v1.png`
+- `horror/level10-reveal-breakfast-mask-v1.png`
+- `horror/level10-reveal-food-animal-pilots-v1.png`
+- `horror/level10-reveal-survivor-pens-v1.png`
+- `horror/level10-reveal-defiance-system-v1.png`
+- Runtime ratio: `16:9`, generated as cinematic cut-scene plates with left-side text-safe space.
+- Status: `level-10-reveal-cutscene-active`
+
+Generated with the built-in image generation tool as the five post-level-10 reveal plates after the active war-yard panorama. The set covers the expired humanity archive, the breakfast-mask collapse, the food-animal pilot reveal, the survivor pens, and the system-defiance planning beat. `game.js` draws each plate as a full-screen cinematic background behind the existing animated dossier overlays.
+
 ## Victory Sunset Cutscene V2
 
 - Runtime asset: `horror/victory-sunset-cutscene-v2.png`
