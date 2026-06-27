@@ -16332,7 +16332,7 @@
     ctx.fillRect(0, 0, W, H);
 
     drawLevel10CutsceneTexture(LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC, 0, 0, W, H, 0, {
-      alpha: 0.18 + glitchNoise(frame * 31 + shot.start * 13) * 0.05,
+      alpha: 0.09 + glitchNoise(frame * 31 + shot.start * 13) * 0.03,
       focusX: 0.18 + progress * 0.08,
     });
   }
@@ -16463,21 +16463,21 @@
     roundedRect(x, y, w, h, 12);
     ctx.fillStyle = shot.imageSrc ? "rgba(2, 7, 9, 0.48)" : "rgba(2, 7, 9, 0.7)";
     ctx.fill();
-    if (shot.insertSrc) {
-      drawLevel10CutsceneTexture(shot.insertSrc, x + 14, y + 16, w - 28, h - 32, 9, {
-        alpha: 0.76,
-        focusX: 0.5,
-        focusY: 0.5,
-      });
-      roundedRect(x + 14, y + 16, w - 28, h - 32, 9);
-      ctx.fillStyle = "rgba(2, 7, 9, 0.2)";
-      ctx.fill();
-    }
     const framed = drawLevel10CutsceneTexture(LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC, x, y, w, h, 12, {
       alpha: 0.82,
       focusX: 0.5,
       focusY: 0.5,
     });
+    if (shot.insertSrc) {
+      drawLevel10CutsceneTexture(shot.insertSrc, x + 38, y + 46, w - 76, h - 104, 6, {
+        alpha: 0.68,
+        focusX: 0.5,
+        focusY: 0.5,
+      });
+      roundedRect(x + 38, y + 46, w - 76, h - 104, 6);
+      ctx.fillStyle = "rgba(2, 7, 9, 0.08)";
+      ctx.fill();
+    }
     roundedRect(x, y, w, h, 12);
     ctx.strokeStyle = framed ? "rgba(255, 89, 107, 0.42)" : "rgba(255, 89, 107, 0.55)";
     ctx.lineWidth = 1.5;

@@ -67,6 +67,7 @@ http://127.0.0.1:8173/local-test-pages/game.html
 
 - `docs/ART_DIRECTION.md` defines the cozy sticker-sprite target, evolution-read rules, production pipeline, and current status of source-reference art.
 - `docs/HORROR_ARENA_MAPPING.md` maps cozy arena modifiers to their post-human automated food-infrastructure horror variants.
+- `assets/README.md` records root-level browser chrome and cross-entry asset provenance.
 - `assets/sprites/README.md` records the sprite-generation, chroma-key, slicing, manifest, attack-particle, and defeat-still pipeline.
 - `assets/items/README.md` records topping/drink art, horror weapon/fuel-source replacements, and item evolution slices.
 - `assets/ui/README.md` records UI atlas, HUD, command, shop, combat-ledger, manifest, and reality-break UI art.

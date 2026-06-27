@@ -89,12 +89,12 @@
   const LEVEL10_REVEAL_DEFIANCE_SYSTEM_SRC = "assets/backgrounds/horror/level10-reveal-defiance-system-v1.png?v=1";
   const LEVEL10_CUTSCENE_TEXT_PANEL_SRC = "assets/ui/runtime/level10-cutscene-text-panel-v1.png?v=1";
   const LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC = "assets/ui/runtime/level10-cutscene-evidence-frame-v1.png?v=1";
-  const LEVEL10_CUTSCENE_EXPIRED_DIAGNOSTIC_SRC = "assets/ui/runtime/level10-cutscene-expired-diagnostic-v1.png?v=1";
-  const LEVEL10_CUTSCENE_BREAKFAST_MASK_INSERT_SRC = "assets/ui/runtime/level10-cutscene-breakfast-mask-insert-v1.png?v=1";
-  const LEVEL10_CUTSCENE_PILOT_TELEMETRY_SRC = "assets/ui/runtime/level10-cutscene-pilot-telemetry-v1.png?v=1";
-  const LEVEL10_CUTSCENE_SURVIVOR_PENS_INSERT_SRC = "assets/ui/runtime/level10-cutscene-survivor-pens-insert-v1.png?v=1";
-  const LEVEL10_CUTSCENE_DEFIANCE_ROUTE_MAP_SRC = "assets/ui/runtime/level10-cutscene-defiance-route-map-v1.png?v=1";
-  const LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC = "assets/ui/runtime/level10-cutscene-glitch-overlay-v1.png?v=1";
+  const LEVEL10_CUTSCENE_EXPIRED_DIAGNOSTIC_SRC = "assets/ui/runtime/level10-cutscene-expired-diagnostic-v2.png?v=1";
+  const LEVEL10_CUTSCENE_BREAKFAST_MASK_INSERT_SRC = "assets/ui/runtime/level10-cutscene-breakfast-mask-insert-v2.png?v=1";
+  const LEVEL10_CUTSCENE_PILOT_TELEMETRY_SRC = "assets/ui/runtime/level10-cutscene-pilot-telemetry-v2.png?v=1";
+  const LEVEL10_CUTSCENE_SURVIVOR_PENS_INSERT_SRC = "assets/ui/runtime/level10-cutscene-survivor-pens-insert-v2.png?v=1";
+  const LEVEL10_CUTSCENE_DEFIANCE_ROUTE_MAP_SRC = "assets/ui/runtime/level10-cutscene-defiance-route-map-v2.png?v=1";
+  const LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC = "assets/ui/runtime/level10-cutscene-glitch-overlay-v2.png?v=1";
   const LEVEL10_REVEAL_CUTSCENE_ID = "level10RevealAftermath";
 
   const LEVEL10_REVEAL_CUTSCENE_SHOTS = [

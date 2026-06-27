@@ -56,7 +56,7 @@
       ["codex-canvas", "shared-modules-2"],
       ["transition-canvas", "shared-modules-2-deploy-result-art-1-pattern-terms-1"],
       ["story-canvas", "shared-story-canvas-1"],
-      ["presentation-data", "presentation-data-level10-ui-art-1"],
+      ["presentation-data", "presentation-data-level10-ui-art-clean-1"],
       ["copy-data", "copy-data-1"],
       ["story-data", "story-data-1"],
       ["trait-arena-data", "trait-arena-data-1"],
@@ -67,7 +67,7 @@
       ["status-effect-data", "status-effect-data-1"],
       [
         "game",
-        "transition-pass-1-pre-final-1-horror-tabs-lower-1-final-reboot-static-1-reveal-meter-language-1-level10-cutscene-ui-art-1-postgame-horror-lock-1-1600x1000-screens-1-infinite-mode-1-shared-story-canvas-1-random-enemy-formations-1-deploy-result-art-1-pattern-terms-1",
+        "transition-pass-1-pre-final-1-horror-tabs-lower-1-final-reboot-static-1-reveal-meter-language-1-level10-cutscene-ui-art-clean-1-postgame-horror-lock-1-1600x1000-screens-1-infinite-mode-1-shared-story-canvas-1-random-enemy-formations-1-deploy-result-art-1-pattern-terms-1",
       ],
     ],
   });

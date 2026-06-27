@@ -23,6 +23,14 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `runtime/transition-title-plates-up-v1.png` / `runtime/transition-title-course-cleared-v1.png` / `runtime/transition-title-service-lost-v1.png` / `runtime/transition-title-target-cleared-v1.png` / `runtime/transition-title-unit-loss-v1.png` / `runtime/transition-title-run-over-v1.png` - second title-art pass, retained as superseded drafts after the transition copy moved to tighter story terms.
 - `runtime/transition-title-setting-the-field-v1.png` / `runtime/transition-title-victory-v1.png` - first generic title-art pass, retained as superseded drafts after the transition copy moved to story-specific terms.
 - `runtime/transition-title-defeat-v1.png` - first defeat word-art pass, retained as a superseded draft because it read too gothic for the cozy game UI.
+- `runtime/level10-cutscene-text-panel-v1.png` - generated text-free green command-glass narrative panel for the Level 10 reveal dossier scenes.
+- `runtime/level10-cutscene-evidence-frame-v1.png` - generated text-free red damaged monitor frame for the Level 10 reveal evidence card.
+- `runtime/level10-cutscene-expired-diagnostic-v1.png` / `runtime/level10-cutscene-expired-diagnostic-v2.png` - archive diagnostic insert for the humanity-expired beat; v2 is the active lower-noise cleanup pass.
+- `runtime/level10-cutscene-breakfast-mask-insert-v1.png` / `runtime/level10-cutscene-breakfast-mask-insert-v2.png` - breakfast-to-war schematic insert for the mask-collapse beat; v2 is the active lower-noise cleanup pass.
+- `runtime/level10-cutscene-pilot-telemetry-v1.png` / `runtime/level10-cutscene-pilot-telemetry-v2.png` - cockpit telemetry insert for the food-animal pilot beat; v2 is the active lower-noise cleanup pass.
+- `runtime/level10-cutscene-survivor-pens-insert-v1.png` / `runtime/level10-cutscene-survivor-pens-insert-v2.png` - restricted-sector insert for the survivor-pens beat; v2 is the active lower-noise cleanup pass.
+- `runtime/level10-cutscene-defiance-route-map-v1.png` / `runtime/level10-cutscene-defiance-route-map-v2.png` - resistance route-map insert for the defiance beat; v2 is the active lower-noise cleanup pass.
+- `runtime/level10-cutscene-glitch-overlay-v1.png` / `runtime/level10-cutscene-glitch-overlay-v2.png` - sparse signal-tear overlay used in the Level 10 reveal dossier scenes; v2 is the active lower-noise cleanup pass.
 
 ## Source Pipeline
 
