@@ -113,18 +113,12 @@ Syntax-check the JavaScript entry points:
 npm run check:syntax
 ```
 
-Or run the entry checks directly:
+This runs `tools/check_syntax.mjs`, which discovers JavaScript modules in `src/` and `tools/` and runs `node --check` for each file.
+
+Or check an individual file directly:
 
 ```powershell
 node --check src/game.js
-node --check src/presentation-data.js
-node --check src/unit-data.js
-node --check src/item-data.js
-node --check src/economy-enemy-data.js
-node --check src/rarity-shop-data.js
-node --check src/status-effect-data.js
-node --check src/start-menu.js
-node --check src/opening-vn.js
 ```
 
 Check the opening tutorial iframe anchor after layout/refactor work:

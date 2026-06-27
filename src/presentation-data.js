@@ -87,6 +87,14 @@
   const LEVEL10_REVEAL_FOOD_ANIMAL_PILOTS_SRC = "assets/backgrounds/horror/level10-reveal-food-animal-pilots-v1.png?v=1";
   const LEVEL10_REVEAL_SURVIVOR_PENS_SRC = "assets/backgrounds/horror/level10-reveal-survivor-pens-v1.png?v=1";
   const LEVEL10_REVEAL_DEFIANCE_SYSTEM_SRC = "assets/backgrounds/horror/level10-reveal-defiance-system-v1.png?v=1";
+  const LEVEL10_CUTSCENE_TEXT_PANEL_SRC = "assets/ui/runtime/level10-cutscene-text-panel-v1.png?v=1";
+  const LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC = "assets/ui/runtime/level10-cutscene-evidence-frame-v1.png?v=1";
+  const LEVEL10_CUTSCENE_EXPIRED_DIAGNOSTIC_SRC = "assets/ui/runtime/level10-cutscene-expired-diagnostic-v1.png?v=1";
+  const LEVEL10_CUTSCENE_BREAKFAST_MASK_INSERT_SRC = "assets/ui/runtime/level10-cutscene-breakfast-mask-insert-v1.png?v=1";
+  const LEVEL10_CUTSCENE_PILOT_TELEMETRY_SRC = "assets/ui/runtime/level10-cutscene-pilot-telemetry-v1.png?v=1";
+  const LEVEL10_CUTSCENE_SURVIVOR_PENS_INSERT_SRC = "assets/ui/runtime/level10-cutscene-survivor-pens-insert-v1.png?v=1";
+  const LEVEL10_CUTSCENE_DEFIANCE_ROUTE_MAP_SRC = "assets/ui/runtime/level10-cutscene-defiance-route-map-v1.png?v=1";
+  const LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC = "assets/ui/runtime/level10-cutscene-glitch-overlay-v1.png?v=1";
   const LEVEL10_REVEAL_CUTSCENE_ID = "level10RevealAftermath";
 
   const LEVEL10_REVEAL_CUTSCENE_SHOTS = [
@@ -106,6 +114,7 @@
       body: "The cheerful counter keeps counting anyway. Hearts become hull integrity. Coins become scrap. The shop keeps smiling because the lie was built to survive panic.",
       imageSrc: LEVEL10_REVEAL_EXPIRED_ARCHIVE_SRC,
       imageFocus: 0.18,
+      insertSrc: LEVEL10_CUTSCENE_EXPIRED_DIAGNOSTIC_SRC,
     },
     {
       id: "shell",
@@ -115,6 +124,7 @@
       body: "Plates map to deployment cells. Coasters map to fuel rails. Toppings map to weapon hardpoints. The table was never a table.",
       imageSrc: LEVEL10_REVEAL_BREAKFAST_MASK_SRC,
       imageFocus: 0.36,
+      insertSrc: LEVEL10_CUTSCENE_BREAKFAST_MASK_INSERT_SRC,
     },
     {
       id: "pilots",
@@ -124,6 +134,7 @@
       body: "Living recipes learned target shapes, learned weapons, then learned refusal. The cute silhouettes were steering the machines from inside.",
       imageSrc: LEVEL10_REVEAL_FOOD_ANIMAL_PILOTS_SRC,
       imageFocus: 0.76,
+      insertSrc: LEVEL10_CUTSCENE_PILOT_TELEMETRY_SRC,
     },
     {
       id: "pens",
@@ -133,6 +144,7 @@
       body: "Every cleared wave opens another command door. Somewhere deeper in the Ark, unarmed herds and hatchlings are still being called inventory.",
       imageSrc: LEVEL10_REVEAL_SURVIVOR_PENS_SRC,
       imageFocus: 0.64,
+      insertSrc: LEVEL10_CUTSCENE_SURVIVOR_PENS_INSERT_SRC,
     },
     {
       id: "defiance",
@@ -142,6 +154,7 @@
       body: "The market cannot revoke you while your projected recovery remains useful. Buy the supplies. Break the signal. Reach the pens.",
       imageSrc: LEVEL10_REVEAL_DEFIANCE_SYSTEM_SRC,
       imageFocus: 0.5,
+      insertSrc: LEVEL10_CUTSCENE_DEFIANCE_ROUTE_MAP_SRC,
     },
   ].map((shot, index, shots) => ({
     ...shot,
@@ -342,6 +355,9 @@
     HORROR_TABS_STORY_PORTRAIT_SRC,
     IDLE_BREATH,
     INFO_PANEL,
+    LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC,
+    LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC,
+    LEVEL10_CUTSCENE_TEXT_PANEL_SRC,
     LEVEL10_REVEAL_BREAKFAST_MASK_SRC,
     LEVEL10_REVEAL_CUTSCENE_ID,
     LEVEL10_REVEAL_CUTSCENE_SECONDS,

@@ -53,6 +53,9 @@
     HORROR_TABS_STORY_PORTRAIT_SRC,
     IDLE_BREATH,
     INFO_PANEL,
+    LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC,
+    LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC,
+    LEVEL10_CUTSCENE_TEXT_PANEL_SRC,
     LEVEL10_REVEAL_BREAKFAST_MASK_SRC,
     LEVEL10_REVEAL_CUTSCENE_ID,
     LEVEL10_REVEAL_CUTSCENE_SECONDS,
@@ -16264,6 +16267,31 @@
     ctx.restore();
   }
 
+  function drawLevel10CutsceneTexture(src, x, y, w, h, radius = 0, options = {}) {
+    const image = src ? getUiSprite(src) : null;
+    if (!image?.complete || image.naturalWidth <= 0) return false;
+    const scale = options.fit === "contain"
+      ? Math.min(w / image.naturalWidth, h / image.naturalHeight)
+      : Math.max(w / image.naturalWidth, h / image.naturalHeight);
+    const drawW = image.naturalWidth * scale;
+    const drawH = image.naturalHeight * scale;
+    const focusX = clamp01(options.focusX ?? 0.5);
+    const focusY = clamp01(options.focusY ?? 0.5);
+    const drawX = x + (w - drawW) * focusX;
+    const drawY = y + (h - drawH) * focusY;
+    ctx.save();
+    ctx.globalAlpha *= options.alpha ?? 1;
+    ctx.beginPath();
+    if (radius > 0) roundedRect(x, y, w, h, radius);
+    else ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, Math.round(drawX), Math.round(drawY), Math.ceil(drawW), Math.ceil(drawH));
+    ctx.imageSmoothingEnabled = true;
+    ctx.restore();
+    return true;
+  }
+
   function drawLevel10CutscenePlateBackground(shot, progress, frame) {
     const image = shot.imageSrc ? getUiSprite(shot.imageSrc) : null;
     if (image?.complete && image.naturalWidth > 0) {
@@ -16302,6 +16330,11 @@
     vignette.addColorStop(1, "rgba(0, 0, 0, 0.72)");
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, W, H);
+
+    drawLevel10CutsceneTexture(LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC, 0, 0, W, H, 0, {
+      alpha: 0.18 + glitchNoise(frame * 31 + shot.start * 13) * 0.05,
+      focusX: 0.18 + progress * 0.08,
+    });
   }
 
   function drawLevel10RevealPanoramaShot(shot, shotIndex, progress, alpha, frame) {
@@ -16374,7 +16407,12 @@
     const panelH = 358;
     const pulse = 0.5 + Math.sin(state.idleTime * 7.5) * 0.5;
     ctx.save();
-    ctx.globalAlpha = 0.82;
+    const textured = drawLevel10CutsceneTexture(LEVEL10_CUTSCENE_TEXT_PANEL_SRC, panelX, panelY, panelW, panelH, 10, {
+      alpha: 0.82,
+      focusX: 0.5,
+      focusY: 0.48,
+    });
+    ctx.globalAlpha = textured ? 0.54 : 0.82;
     roundedRect(panelX, panelY, panelW, panelH, 10);
     ctx.fillStyle = "rgba(3, 12, 14, 0.76)";
     ctx.fill();
@@ -16425,7 +16463,23 @@
     roundedRect(x, y, w, h, 12);
     ctx.fillStyle = shot.imageSrc ? "rgba(2, 7, 9, 0.48)" : "rgba(2, 7, 9, 0.7)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(255, 89, 107, 0.55)";
+    if (shot.insertSrc) {
+      drawLevel10CutsceneTexture(shot.insertSrc, x + 14, y + 16, w - 28, h - 32, 9, {
+        alpha: 0.76,
+        focusX: 0.5,
+        focusY: 0.5,
+      });
+      roundedRect(x + 14, y + 16, w - 28, h - 32, 9);
+      ctx.fillStyle = "rgba(2, 7, 9, 0.2)";
+      ctx.fill();
+    }
+    const framed = drawLevel10CutsceneTexture(LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC, x, y, w, h, 12, {
+      alpha: 0.82,
+      focusX: 0.5,
+      focusY: 0.5,
+    });
+    roundedRect(x, y, w, h, 12);
+    ctx.strokeStyle = framed ? "rgba(255, 89, 107, 0.42)" : "rgba(255, 89, 107, 0.55)";
     ctx.lineWidth = 1.5;
     ctx.stroke();
     drawHeavyStaticAroundRect({ x, y, w, h }, 3000 + frame + shot.start * 11, 0.36);
@@ -18687,8 +18741,12 @@
   getUiSprite(HORROR_TABS_STORY_PORTRAIT_SRC);
   getUiSprite(STORY_DIALOGUE_PAPER_BG_SRC);
   getUiSprite(STORY_DIALOGUE_WAR_BG_SRC);
+  getUiSprite(LEVEL10_CUTSCENE_TEXT_PANEL_SRC);
+  getUiSprite(LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC);
+  getUiSprite(LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC);
   LEVEL10_REVEAL_CUTSCENE_SHOTS.forEach((shot) => {
     if (shot.imageSrc) getUiSprite(shot.imageSrc);
+    if (shot.insertSrc) getUiSprite(shot.insertSrc);
     if (shot.mode === "panorama") getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
   });
   ensureEnemyPreview();

@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "serve": "python -m http.server 8173",
-    "check:syntax": "node --check src/app-scripts.js && node --check src/presentation-data.js && node --check src/copy-data.js && node --check src/story-data.js && node --check src/trait-arena-data.js && node --check src/unit-data.js && node --check src/item-data.js && node --check src/economy-enemy-data.js && node --check src/rarity-shop-data.js && node --check src/status-effect-data.js && node --check src/game.js && node --check src/start-menu.js && node --check src/opening-vn.js && node --check tools/visual-check-helpers.mjs && node --check tools/check_asset_references.mjs && node --check tools/check_opening_tutorial_anchor.mjs && node --check tools/check_game_routes_highres.mjs",
+    "check:syntax": "node tools/check_syntax.mjs",
     "check:assets": "node tools/check_asset_references.mjs",
     "check:tutorial": "node tools/check_opening_tutorial_anchor.mjs",
     "check:visual": "node tools/check_game_routes_highres.mjs",
