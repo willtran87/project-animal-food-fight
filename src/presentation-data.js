@@ -193,7 +193,8 @@
   const COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-breaks-v1.png?v=1";
   const REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-relay-opened-v1.png?v=1";
   const REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-hull-breach-v1.png?v=1";
-  const BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-system-down-v1.png?v=1";
+  const COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-run-over-v1.png?v=1";
+  const REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-system-down-v1.png?v=1";
   const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
   const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";
   const REALITY_BANNER_BOARD_SRC = "assets/ui/runtime/reality-banner-war-v1.webp?v=1";
@@ -325,7 +326,6 @@
     BATTLE_FIELD,
     BATTLE_FIELD_BG_SRC,
     BATTLE_FORMATION,
-    BATTLE_RESULT_RUN_OVER_TITLE_SRC,
     BATTLE_SPEED_CHALK_SRC,
     BENCH_SLOT_BG_SRC,
     BOARD_PLATE_SLOT_SRC,
@@ -345,6 +345,7 @@
     COZY_BATTLE_DEPLOY_OVERLAY_SRC,
     COZY_BATTLE_DEPLOY_TITLE_SRC,
     COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
     COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
     DRINK_COASTER_SLOT_SRC,
     FINAL_VICTORY_CUTSCENE_SRC,
@@ -375,6 +376,7 @@
     REALITY_BATTLE_DEPLOY_TITLE_SRC,
     REALITY_BATTLE_FIELD_BG_SRC,
     REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
     REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC,
     REALITY_BENCH_SLOT_BG_SRC,
     REALITY_BOARD_PLATE_SLOT_SRC,

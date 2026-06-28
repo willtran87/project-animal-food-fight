@@ -23,7 +23,6 @@
     BATTLE_FIELD,
     BATTLE_FIELD_BG_SRC,
     BATTLE_FORMATION,
-    BATTLE_RESULT_RUN_OVER_TITLE_SRC,
     BATTLE_SPEED_CHALK_SRC,
     BENCH_SLOT_BG_SRC,
     BOARD_PLATE_SLOT_SRC,
@@ -43,6 +42,7 @@
     COZY_BATTLE_DEPLOY_OVERLAY_SRC,
     COZY_BATTLE_DEPLOY_TITLE_SRC,
     COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
     COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
     DRINK_COASTER_SLOT_SRC,
     FINAL_VICTORY_CUTSCENE_SRC,
@@ -73,6 +73,7 @@
     REALITY_BATTLE_DEPLOY_TITLE_SRC,
     REALITY_BATTLE_FIELD_BG_SRC,
     REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
     REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC,
     REALITY_BENCH_SLOT_BG_SRC,
     REALITY_BOARD_PLATE_SLOT_SRC,
@@ -5192,10 +5193,14 @@
   }
 
   function continueFromResult() {
-    if (state.phase === "result" && state.hearts <= 0 && !realityBroken()) {
+    if (window.FoodAnimalsResultRuntime.shouldReturnToMenuAfterResult({
+      phase: state.phase,
+      hearts: state.hearts,
+      realityBroken: realityBroken(),
+    })) {
       return startShopReturnTransitionOverlay({
         source: "cozyDefeatReturn",
-        message: "Market resetting",
+        message: "Returning to menu",
       });
     }
     continuePrep();
@@ -7351,6 +7356,17 @@
       return;
     }
     if (transition.resetDone && transition.elapsed >= transition.duration) {
+      if (window.FoodAnimalsResultRuntime.rebootTransitionNavigatesToMenu(transition)) {
+        clearActiveRunRoute();
+        markMenuRebootStaticReveal();
+        state.rebootTransition = {
+          ...transition,
+          elapsed: transition.duration,
+          navigated: true,
+        };
+        navigateToMainMenu();
+        return;
+      }
       state.rebootTransition = null;
       state.menuRebootTransition = null;
       state.message = "Prep";
@@ -7401,6 +7417,17 @@
   }
 
   function completeShopReturnStaticScreenChange(transition) {
+    if (window.FoodAnimalsResultRuntime.shopReturnTransitionNavigatesToMenu(transition)) {
+      clearActiveRunRoute();
+      markMenuReturnReveal();
+      state.shopReturnStaticTransition = {
+        ...transition,
+        screenChanged: true,
+        rewardParticles: [],
+      };
+      navigateToMainMenu();
+      return;
+    }
     const rewardParticles = Array.isArray(transition.rewardParticles) ? transition.rewardParticles : [];
     continuePrep();
     if (rewardParticles.length) state.particles.push(...rewardParticles);
@@ -7617,12 +7644,16 @@
     const won = transition.won;
     const gameOver = transition.gameOver;
     const horror = realityBroken();
-    const titleSrc = gameOver
-      ? BATTLE_RESULT_RUN_OVER_TITLE_SRC
-      : won
-        ? (horror ? REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC : COZY_BATTLE_RESULT_VICTORY_TITLE_SRC)
-        : (horror ? REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC : COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
-    const fallbackTitle = gameOver ? "SYSTEM DOWN" : won ? (horror ? "RELAY OPENED" : "PATTERN HOLDS") : (horror ? "HULL BREACH" : "PATTERN BREAKS");
+    const title = window.FoodAnimalsResultRuntime.battleResultTitle({ gameOver, horror, won }, {
+      cozyDefeat: COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+      cozyRunOver: COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
+      cozyVictory: COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
+      realityDefeat: REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+      realityRunOver: REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
+      realityVictory: REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC,
+    });
+    const titleSrc = title.src;
+    const fallbackTitle = title.fallback;
     ctx.save();
     ctx.globalAlpha = 0.34 * flash;
     ctx.fillStyle = won ? (horror ? "#46ff63" : "#fff5bf") : "#d9573c";
@@ -18685,6 +18716,7 @@
     advanceStoryConversation,
     goBackStoryConversation,
     startBattle,
+    continueFromResult,
     continuePrep,
     makeUnit,
     makeItem,
@@ -18735,7 +18767,8 @@
   getUiSprite(COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
   getUiSprite(REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC);
   getUiSprite(REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
-  getUiSprite(BATTLE_RESULT_RUN_OVER_TITLE_SRC);
+  getUiSprite(COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC);
+  getUiSprite(REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC);
   getUiSprite(PLAYER_STORY_PORTRAIT_SRC);
   getUiSprite(TABS_STORY_PORTRAIT_SRC);
   getUiSprite(HORROR_TABS_STORY_PORTRAIT_SRC);

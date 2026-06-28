@@ -21,6 +21,7 @@ const context = loadBrowserScripts(
     "src/battle-item-runtime.js",
     "src/shop-transaction-runtime.js",
     "src/particle-runtime.js",
+    "src/result-runtime.js",
   ],
   createBrowserLikeContext(),
 );
@@ -90,5 +91,26 @@ const particles = context.FoodAnimalsParticleRuntime.createBurst(
 assert.equal(particles.length, 2, "particle burst should create requested count");
 assert.equal(particles[0].x, 10);
 assert.equal(particles[0].y, 22.5);
+
+const resultRuntime = context.FoodAnimalsResultRuntime;
+assert.equal(
+  resultRuntime.shouldReturnToMenuAfterResult({ phase: "result", hearts: 0, realityBroken: false }),
+  true,
+  "cozy game-over result should return to menu",
+);
+assert.equal(
+  resultRuntime.shouldReturnToMenuAfterResult({ phase: "result", hearts: 0, realityBroken: true }),
+  false,
+  "horror game-over result should stay in game flow",
+);
+assert.equal(resultRuntime.rebootTransitionNavigatesToMenu({ source: "defeat" }), true);
+assert.equal(resultRuntime.shopReturnTransitionNavigatesToMenu({ source: "cozyDefeatReturn" }), true);
+assert.equal(
+  JSON.stringify(resultRuntime.battleResultTitle(
+    { gameOver: true, horror: false, won: false },
+    { cozyRunOver: "cozy-run-over", realityRunOver: "system-down" },
+  )),
+  JSON.stringify({ src: "cozy-run-over", fallback: "RUN OVER" }),
+);
 
 console.log("Runtime logic check passed.");
