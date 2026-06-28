@@ -27,7 +27,7 @@
       panel,
       player: scaledRect({ x: -145, y: 134, w: 448, h: 672 }, scale, offsetX, offsetY),
       tabs: scaledRect({ x: 839, y: 426, w: 216, h: 324 }, scale, offsetX, offsetY),
-      horrorTabs: scaledRect({ x: 790, y: 372, w: 292, h: 292 }, scale, offsetX, offsetY),
+      horrorTabs: scaledRect({ x: 790, y: 420, w: 292, h: 292 }, scale, offsetX, offsetY),
       label: {
         x: panel.x + 24 * scale,
         y: panel.y - 16 * scale,

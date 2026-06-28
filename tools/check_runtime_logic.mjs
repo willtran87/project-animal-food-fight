@@ -15,9 +15,14 @@ const context = loadBrowserScripts(
   repoRoot,
   [
     "src/shop-economy.js",
+    "src/shop-flow-runtime.js",
     "src/run-storage.js",
+    "src/slot-layout.js",
+    "src/transition-canvas.js",
+    "src/battle-canvas.js",
     "src/reward-runtime.js",
     "src/enemy-team-runtime.js",
+    "src/battle-flow-runtime.js",
     "src/battle-ability-runtime.js",
     "src/battle-item-runtime.js",
     "src/shop-transaction-runtime.js",
@@ -48,6 +53,34 @@ assert.equal(
   "weighted rarity choice should honor weights",
 );
 
+const shopFlow = context.FoodAnimalsShopFlowRuntime;
+const rerollState = { phase: "prep", gold: 25, freeRolls: 0, rollsThisRound: 1 };
+const rerollDecision = shopFlow.rerollDecision({ ...rerollState, cost: 14 });
+assert.equal(rerollDecision.spendGold, 14, "paid reroll should spend the current roll cost");
+assert.equal(rerollDecision.incrementRolls, true, "paid reroll should increment paid roll count");
+assert.equal(shopFlow.applyRerollCost(rerollState, rerollDecision), true, "reroll cost should apply to state");
+assert.deepEqual(
+  rerollState,
+  { phase: "prep", gold: 11, freeRolls: 0, rollsThisRound: 2 },
+  "reroll cost application should update gold and rolls",
+);
+assert.equal(shopFlow.unlockDecision({ phase: "prep", index: 2, slotCount: 8, unlocked: true, gold: 99, cost: 30 }).reason, "alreadyOpen");
+assert.equal(shopFlow.upgradeDecision({ phase: "prep", cost: null, gold: 999 }).reason, "maxed");
+assert.equal(shopFlow.freezeDecision({ phase: "prep", unlocked: true, hasEntry: false }).reason, "empty");
+assert.equal(
+  shopFlow.buyTargetDecision({
+    phase: "prep",
+    unlocked: true,
+    hasEntry: true,
+    gold: 30,
+    cost: 18,
+    entryType: "drink",
+    targetArea: "board",
+    targetInRange: true,
+  }).reason,
+  "drinkTarget",
+);
+
 const runStorage = context.FoodAnimalsRunStorage;
 const circular = { name: "root" };
 circular.self = circular;
@@ -57,11 +90,67 @@ assert.equal(cloned.name, "root", "run storage clone should keep plain fields");
 assert.equal(cloned.self, undefined, "run storage clone should drop direct ancestor cycles");
 assert.equal(JSON.stringify(cloned.child), "{}", "run storage clone should drop nested ancestor cycles");
 
+const slots = context.FoodAnimalsSlotLayout;
+assert.equal(JSON.stringify(slots.grid(5, 3)), JSON.stringify({ col: 2, row: 1 }), "slot layout grid should map index to row/col");
+assert.equal(
+  JSON.stringify(slots.gridPosition(5, { cols: 3, x: 10, y: 20, gapX: 7, gapY: 11 })),
+  JSON.stringify({ x: 24, y: 31, col: 2, row: 1 }),
+  "slot layout grid position should apply origin and gaps",
+);
+assert.equal(slots.itemBenchSlotKind(3, 4), "drink", "first item bench slots should accept drinks");
+assert.equal(slots.itemBenchSlotKind(4, 4), "topping", "later item bench slots should accept toppings");
+
+const transitionCanvas = context.FoodAnimalsTransitionCanvas;
+assert.equal(transitionCanvas.progress({ elapsed: 0.5, duration: 2 }), 0.25, "transition progress should normalize elapsed time");
+assert.equal(transitionCanvas.progress(null), 1, "missing transition should be complete");
+assert.equal(transitionCanvas.prepToBattleVisual({ elapsed: 1.45, duration: 1.45 }, 1.45).progress, 1);
+assert.equal(transitionCanvas.battleToResultVisual({ elapsed: 0, duration: 1.45 }, 1.45).reveal, 0);
+
+const battleCanvas = context.FoodAnimalsBattleCanvas;
+assert.equal(
+  JSON.stringify(battleCanvas.battleDrinkSlotPosition("ally", { axis: "row", targetIndex: 2 }, { allyBaseX: 300, enemyBaseX: 700, colGap: 80, topY: 100, rowGap: 50 }, 3)),
+  JSON.stringify({ x: 220, y: 200 }),
+  "ally row drink slot should sit left of ally board",
+);
+assert.equal(
+  battleCanvas.sideUnitsInRenderOrder([{ col: 0, id: "back" }, { col: 2, id: "front" }], { frontCol: 2, slotGrid: slots.grid }).map((unit) => unit.id).join(","),
+  "front,back",
+  "battle canvas should render front columns before back columns",
+);
+assert.equal(Math.round(battleCanvas.projectileFrame({ x: 0, y: 0 }, { x: 100, y: 0 }, 0.5, 1, 20).x), 75);
+
+const battleFlow = context.FoodAnimalsBattleFlowRuntime;
+assert.equal(battleFlow.battleStartDecision({ phase: "prep", allyCount: 0 }).reason, "emptyTeam");
+assert.equal(battleFlow.phaseTransitionBlocksBattle(battleFlow.phaseTransition("prepToBattle", 1)), true);
+assert.equal(battleFlow.updatePhaseTransition({ type: "battleToResult", elapsed: 0.2, duration: 1 }, 0.3).elapsed, 0.5);
+assert.equal(battleFlow.updatePhaseTransition({ type: "battleToResult", elapsed: 0.8, duration: 1 }, 0.3), null);
+assert.equal(battleFlow.shouldAdvanceRound({ retryGiraffeBoss: false, retryFinalBoss: false, finalDefeat: false }), true);
+assert.equal(battleFlow.shouldAdvanceRound({ retryGiraffeBoss: true, retryFinalBoss: false, finalDefeat: false }), false);
+assert.equal(
+  battleFlow.shouldAdvanceRound({ retryGiraffeBoss: false, retryFinalBoss: false, finalDefeat: false, defeatWithHealth: true }),
+  false,
+  "defeat with health or hull remaining should retry the same round",
+);
+
 const rewards = context.FoodAnimalsRewardRuntime;
 const rewardState = { gold: 90, freeRolls: 0 };
-assert.equal(rewards.claimReward(rewardState, { type: "arenaPurse", amount: 20, freeRolls: 1 }, { maxGold: 100 }), true);
+assert.equal(rewards.claimReward(rewardState, { type: "arenaPurse", amount: 20, freeRolls: 1 }, { maxGold: 100 }).claimed, true);
 assert.deepEqual(rewardState, { gold: 100, freeRolls: 1 }, "arena purse should cap gold and add free roll");
 assert.equal(rewards.rewardKey({ type: "copy", typeId: "toast_tortoise" }), "copy:toast_tortoise");
+const fullRewardState = { gold: 5, freeRolls: 0 };
+const fullRewardResult = rewards.claimReward(
+  fullRewardState,
+  { type: "item", itemId: "sunny_side_egg", tier: 1 },
+  {
+    fallbackGold: 15,
+    makeItem: () => ({ kind: "item", type: "topping" }),
+    maxGold: 100,
+    moveItemToBench: () => false,
+  },
+);
+assert.equal(fullRewardResult.fallback.reason, "storageFull", "full item storage should report fallback reason");
+assert.equal(fullRewardResult.fallback.goldAdded, 15, "full item storage should convert reward to fallback gold");
+assert.equal(fullRewardState.gold, 20, "fallback gold should be applied to state");
 
 const enemy = context.FoodAnimalsEnemyTeamRuntime;
 assert.equal(enemy.stochasticRound(2.75, () => 0.7), 3, "stochastic round should round up by fractional chance");

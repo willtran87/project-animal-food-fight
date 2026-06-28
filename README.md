@@ -37,6 +37,8 @@ The individual screens are also available at:
 http://127.0.0.1:8173/local-test-pages/start-menu.html
 http://127.0.0.1:8173/local-test-pages/opening-vn.html
 http://127.0.0.1:8173/local-test-pages/game.html
+http://127.0.0.1:8173/local-test-pages/conversation-cozy.html
+http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 ```
 
 ## Useful Routes
@@ -45,6 +47,7 @@ http://127.0.0.1:8173/local-test-pages/game.html
 - `/local-test-pages/game.html?smoke=basic` or `/local-test-pages/game.html?smoke=core-loop` seeds a deterministic smoke-test team.
 - `/local-test-pages/game.html?theme=cozy` starts in the cozy illusion layer but still allows the story reveal; use `/local-test-pages/game.html?reality=cozy` to force cozy.
 - `/local-test-pages/game.html?theme=horror` forces the horror/future-war layer.
+- `/local-test-pages/conversation-cozy.html` and `/local-test-pages/conversation-horror.html` jump straight into the real in-game conversation renderer.
 - `/local-test-pages/game.html?screen=level-10` opens the wave-10 Banana Split Giraffe boss setup.
 - `/local-test-pages/game.html?screen=level-10&start=battle` starts that boss route immediately.
 - `/local-test-pages/game.html?screen=final-fight` opens the wave-20 Neural Overmind setup.
@@ -157,6 +160,12 @@ Generate a non-failing balance snapshot for shop rarity, roll costs, item prices
 
 ```powershell
 npm run report:balance
+```
+
+Refresh static script cache keys from file-content hashes after changing browser-loaded scripts:
+
+```powershell
+npm run update:script-versions
 ```
 
 Run the full local safety suite:

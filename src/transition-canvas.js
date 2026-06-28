@@ -62,8 +62,8 @@
 
   function battleToResultVisual(transition, fallbackDuration) {
     const rawProgress = progress(transition, fallbackDuration);
-    const enter = easeOutCubic(clamp01(rawProgress / 0.2));
-    const exit = easeOutCubic(clamp01((rawProgress - 0.82) / 0.18));
+    const enter = easeOutCubic(clamp01(rawProgress / 0.22));
+    const exit = easeOutCubic(clamp01((rawProgress - 0.74) / 0.26));
     const reveal = clamp01(Math.min(enter, 1 - exit));
     const flash = 1 - easeOutCubic(clamp01(rawProgress / 0.5));
     return {

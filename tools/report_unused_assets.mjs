@@ -7,6 +7,7 @@ const toolsDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolsDir, "..");
 const outputDir = path.join(repoRoot, "output");
 const outputPath = path.join(outputDir, "unused-assets-report.json");
+const csvOutputPath = path.join(outputDir, "unused-assets-triage.csv");
 
 const scannedRoots = ["src", "styles", "local-test-pages", "docs", "assets"];
 const scannedFiles = ["README.md", "index.html", "package.json"];
@@ -102,29 +103,62 @@ for (const file of trackedAssets) {
   highestVersionBySeries.set(key, Math.max(highestVersionBySeries.get(key) || 0, parts.version));
 }
 
-function categoryFor(file) {
+const categoryInfo = {
+  "audio-sfx": { action: "review-wiring", risk: "medium", reason: "Tracked sound effects may be intended but are not directly referenced by scanned source." },
+  "background-draft": { action: "archive-candidate", risk: "low", reason: "Older or alternate background art that is not referenced by active routes." },
+  "defeat-still": { action: "review-wiring", risk: "medium", reason: "Defeat stills may be used through generated maps or retained for future unit states." },
+  "evolution-sheet": { action: "keep-retained", risk: "low", reason: "Sprite sheet/provenance files are commonly retained for slicing or regeneration." },
+  "field-guide-page": { action: "keep-retained", risk: "low", reason: "Field-guide pages are navigated dynamically and may not appear as literal references." },
+  "particle-runtime": { action: "review-wiring", risk: "medium", reason: "Runtime particles can be referenced indirectly through generated maps." },
+  "pipeline-source": { action: "keep-retained", risk: "low", reason: "Source/transparent pipeline files are provenance, not direct runtime references." },
+  "provenance-source": { action: "keep-retained", risk: "low", reason: "Root provenance assets are retained documentation for generated browser assets." },
+  "runtime-sprite-frame": { action: "review-wiring", risk: "medium", reason: "Individual runtime frames can be referenced through sprite maps rather than literal paths." },
+  "runtime-ui-draft": { action: "archive-candidate", risk: "low", reason: "Superseded/generated UI title art that is not referenced by active presentation data." },
+  "sprite-manifest": { action: "keep-retained", risk: "low", reason: "Manifest files document generated sprite groups even when not loaded at runtime." },
+  "superseded-version": { action: "archive-candidate", risk: "low", reason: "A higher-version sibling exists in the same asset series." },
+  uncategorized: { action: "manual-review", risk: "unknown", reason: "No known retention or supersession heuristic matched this asset." },
+};
+
+function triageFor(file) {
   const normalized = file.replaceAll("\\", "/");
   const parts = versionParts(normalized);
   if (parts) {
     const key = `${parts.dir}/${parts.base}${parts.ext}`;
-    if ((highestVersionBySeries.get(key) || 0) > parts.version) return "superseded-version";
+    if ((highestVersionBySeries.get(key) || 0) > parts.version) return { category: "superseded-version", ...categoryInfo["superseded-version"] };
   }
-  if (normalized.startsWith("assets/start-menu/field-guide/")) return "field-guide-page";
-  if (normalized.startsWith("assets/ui/runtime/")) return "runtime-ui-draft";
-  if (normalized.startsWith("assets/audio/sfx/")) return "audio-sfx";
-  if (normalized.startsWith("assets/backgrounds/")) return "background-draft";
-  if (normalized.includes("/source/") || normalized.includes("/transparent/")) return "pipeline-source";
-  if (normalized.includes("source") || normalized.includes("transparent")) return "provenance-source";
-  return "uncategorized";
+  if (normalized.startsWith("assets/start-menu/field-guide/")) return { category: "field-guide-page", ...categoryInfo["field-guide-page"] };
+  if (normalized.startsWith("assets/ui/runtime/")) return { category: "runtime-ui-draft", ...categoryInfo["runtime-ui-draft"] };
+  if (normalized.startsWith("assets/audio/sfx/")) return { category: "audio-sfx", ...categoryInfo["audio-sfx"] };
+  if (normalized.startsWith("assets/backgrounds/")) return { category: "background-draft", ...categoryInfo["background-draft"] };
+  if (normalized.startsWith("assets/sprites/runtime/defeat-stills/")) return { category: "defeat-still", ...categoryInfo["defeat-still"] };
+  if (normalized.startsWith("assets/particles/runtime/")) return { category: "particle-runtime", ...categoryInfo["particle-runtime"] };
+  if (normalized.endsWith(".sprite-manifest.json")) return { category: "sprite-manifest", ...categoryInfo["sprite-manifest"] };
+  if (/_evolution_[A-Z]+_sheet\.(png|webp)$/i.test(normalized) || normalized.includes("/final-forms-")) {
+    return { category: "evolution-sheet", ...categoryInfo["evolution-sheet"] };
+  }
+  if (normalized.startsWith("assets/sprites/runtime/") && /_idle_[A-Z]+_\d+\.(png|webp)$/i.test(normalized)) {
+    return { category: "runtime-sprite-frame", ...categoryInfo["runtime-sprite-frame"] };
+  }
+  if (normalized.includes("/source/") || normalized.includes("/transparent/")) return { category: "pipeline-source", ...categoryInfo["pipeline-source"] };
+  if (normalized.includes("source") || normalized.includes("transparent")) return { category: "provenance-source", ...categoryInfo["provenance-source"] };
+  return { category: "uncategorized", ...categoryInfo.uncategorized };
 }
 
 const categories = {};
+const triaged = [];
 for (const file of unused) {
-  const category = categoryFor(file);
-  const bucket = categories[category] || { count: 0, sample: [] };
+  const triage = triageFor(file);
+  const bucket = categories[triage.category] || {
+    count: 0,
+    action: triage.action,
+    risk: triage.risk,
+    reason: triage.reason,
+    sample: [],
+  };
   bucket.count += 1;
   if (bucket.sample.length < 12) bucket.sample.push(file);
-  categories[category] = bucket;
+  categories[triage.category] = bucket;
+  triaged.push({ file, ...triage });
 }
 
 const report = {
@@ -135,12 +169,26 @@ const report = {
   unusedCount: unused.length,
   byDirectory: Object.fromEntries(Object.entries(byDirectory).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
   categories: Object.fromEntries(Object.entries(categories).sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))),
+  triaged,
   unused,
 };
 
 fs.mkdirSync(outputDir, { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`);
+fs.writeFileSync(
+  csvOutputPath,
+  [
+    "category,action,risk,file,reason",
+    ...triaged.map((entry) => [
+      entry.category,
+      entry.action,
+      entry.risk,
+      entry.file,
+      entry.reason,
+    ].map((value) => `"${String(value).replaceAll('"', '""')}"`).join(",")),
+  ].join("\n") + "\n",
+);
 
 console.log(
-  `Unused asset report written: ${path.relative(repoRoot, outputPath)} (${unused.length} of ${trackedAssets.length} tracked asset files not referenced by scanned source/docs).`,
+  `Unused asset report written: ${path.relative(repoRoot, outputPath)} and ${path.relative(repoRoot, csvOutputPath)} (${unused.length} of ${trackedAssets.length} tracked asset files not referenced by scanned source/docs).`,
 );

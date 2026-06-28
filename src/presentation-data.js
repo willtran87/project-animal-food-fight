@@ -95,6 +95,7 @@
   const LEVEL10_CUTSCENE_SURVIVOR_PENS_INSERT_SRC = "assets/ui/runtime/level10-cutscene-survivor-pens-insert-v2.png?v=1";
   const LEVEL10_CUTSCENE_DEFIANCE_ROUTE_MAP_SRC = "assets/ui/runtime/level10-cutscene-defiance-route-map-v2.png?v=1";
   const LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC = "assets/ui/runtime/level10-cutscene-glitch-overlay-v2.png?v=1";
+  const LEVEL10_CUTSCENE_FX_ATLAS_SRC = "assets/ui/runtime/level10-cutscene-fx-atlas-v1.png?v=1";
   const LEVEL10_REVEAL_CUTSCENE_ID = "level10RevealAftermath";
 
   const LEVEL10_REVEAL_CUTSCENE_SHOTS = [
@@ -191,10 +192,10 @@
   const REALITY_BATTLE_DEPLOY_TITLE_SRC = "assets/ui/runtime/transition-title-deploying-wave-v1.png?v=1";
   const COZY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-holds-v1.png?v=1";
   const COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-breaks-v1.png?v=1";
-  const REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-relay-opened-v1.png?v=1";
-  const REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-hull-breach-v1.png?v=1";
-  const COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-run-over-v1.png?v=1";
-  const REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-system-down-v1.png?v=1";
+  const REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-relay-opened-v2.png?v=1";
+  const REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-hull-breach-v2.png?v=1";
+  const COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-run-over-v2.png?v=1";
+  const REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-system-down-v2.png?v=1";
   const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
   const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";
   const REALITY_BANNER_BOARD_SRC = "assets/ui/runtime/reality-banner-war-v1.webp?v=1";
@@ -357,6 +358,7 @@
     IDLE_BREATH,
     INFO_PANEL,
     LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC,
+    LEVEL10_CUTSCENE_FX_ATLAS_SRC,
     LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC,
     LEVEL10_CUTSCENE_TEXT_PANEL_SRC,
     LEVEL10_REVEAL_BREAKFAST_MASK_SRC,

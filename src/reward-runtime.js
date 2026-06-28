@@ -49,12 +49,29 @@
     return false;
   }
 
+  function addGold(state, amount, maxGold) {
+    const before = state.gold || 0;
+    state.gold = Math.min(maxGold, before + Math.max(0, amount || 0));
+    return Math.max(0, state.gold - before);
+  }
+
+  function goldFallback(state, amount, maxGold, reason) {
+    const fallbackAmount = Math.max(0, amount || 0);
+    return {
+      type: "gold",
+      amount: fallbackAmount,
+      goldAdded: addGold(state, fallbackAmount, maxGold),
+      reason,
+    };
+  }
+
   function claimReward(state, reward, helpers = {}) {
     if (!reward) return false;
     const maxGold = helpers.maxGold ?? Infinity;
     const fallbackGold = helpers.fallbackGold ?? 15;
+    const result = { claimed: true, type: reward.type, fallback: null };
     if (reward.type === "gold") {
-      state.gold = Math.min(maxGold, state.gold + reward.amount);
+      result.goldAdded = addGold(state, reward.amount, maxGold);
     } else if (reward.type === "freeRolls") {
       state.freeRolls += reward.amount;
     } else if (reward.type === "arenaScout") {
@@ -79,20 +96,26 @@
       state.keepArenaNextRound = true;
       state.freeRolls += reward.freeRolls || 0;
     } else if (reward.type === "arenaPurse") {
-      state.gold = Math.min(maxGold, state.gold + reward.amount);
+      result.goldAdded = addGold(state, reward.amount, maxGold);
       state.freeRolls += reward.freeRolls || 0;
     } else if (reward.type === "shopSlotUnlock") {
-      if (!helpers.openShopSlot?.(reward.slotIndex)) state.gold = Math.min(maxGold, state.gold + Math.min(25, reward.amount || 0));
+      if (!helpers.openShopSlot?.(reward.slotIndex)) result.fallback = goldFallback(state, Math.min(25, reward.amount || 0), maxGold, "shopSlotUnavailable");
     } else if (reward.type === "upgradeDiscount") {
       state.nextShopUpgradeDiscountGold = Math.max(0, (state.nextShopUpgradeDiscountGold || 0) + (reward.amount || 0));
     } else if (reward.type === "item") {
-      if (!helpers.moveItemToBench?.(helpers.makeItem?.(reward.itemId, reward.tier || 1))) state.gold = Math.min(maxGold, state.gold + fallbackGold);
-      helpers.resolveItemMerges?.();
+      if (helpers.moveItemToBench?.(helpers.makeItem?.(reward.itemId, reward.tier || 1))) {
+        helpers.resolveItemMerges?.();
+      } else {
+        result.fallback = goldFallback(state, fallbackGold, maxGold, "storageFull");
+      }
     } else if (reward.type === "copy") {
-      if (!helpers.moveItemToBench?.(helpers.makeUnit?.(reward.typeId, reward.tier || 1))) state.gold = Math.min(maxGold, state.gold + fallbackGold);
-      helpers.resolveMerges?.();
+      if (helpers.moveItemToBench?.(helpers.makeUnit?.(reward.typeId, reward.tier || 1))) {
+        helpers.resolveMerges?.();
+      } else {
+        result.fallback = goldFallback(state, fallbackGold, maxGold, "benchFull");
+      }
     }
-    return true;
+    return result;
   }
 
   window.FoodAnimalsRewardRuntime = {

@@ -54,6 +54,7 @@
     IDLE_BREATH,
     INFO_PANEL,
     LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC,
+    LEVEL10_CUTSCENE_FX_ATLAS_SRC,
     LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC,
     LEVEL10_CUTSCENE_TEXT_PANEL_SRC,
     LEVEL10_REVEAL_BREAKFAST_MASK_SRC,
@@ -123,6 +124,14 @@
     VICTORY_CRAWL_LINES,
     VICTORY_REBOOT_BUTTON,
   } = presentationData;
+  const LEVEL10_CUTSCENE_FX_CELLS = Object.freeze({
+    smoke: { sx: 0, sy: 0, sw: 512, sh: 512 },
+    sparks: { sx: 512, sy: 0, sw: 512, sh: 512 },
+    signal: { sx: 1024, sy: 0, sw: 512, sh: 512 },
+    pilots: { sx: 0, sy: 512, sw: 512, sh: 512 },
+    fluid: { sx: 512, sy: 512, sw: 512, sh: 512 },
+    warning: { sx: 1024, sy: 512, sw: 512, sh: 512 },
+  });
   const GAME_SFX_TRACKS = Object.fromEntries(
     ["cozy", "horror"].map((theme) => [
       theme,
@@ -170,9 +179,10 @@
   const VICTORY_IDEAL_FADE_SECONDS = 2.4;
   const STORY_TRANSITION_SECONDS = 0.36;
   const STORY_BEAT_TRANSITION_SECONDS = 0.18;
+  const LEVEL10_REVEAL_CUTSCENE_STATIC_TRANSITION_SECONDS = 0.46;
   const MODAL_TRANSITION_SECONDS = 0.22;
   const BATTLE_DEPLOY_TRANSITION_SECONDS = 1.45;
-  const BATTLE_RESULT_TRANSITION_SECONDS = 1.28;
+  const BATTLE_RESULT_TRANSITION_SECONDS = 1.45;
   const SHOP_SLOT_TRANSITION_SECONDS = 0.48;
   const storyData = window.FoodAnimalsStoryData;
   if (!storyData) throw new Error("FoodAnimalsStoryData must load before game.js");
@@ -2339,17 +2349,20 @@
 
   function refreshShop(free = false) {
     const cost = currentRollCost();
-    if (!free && state.gold < cost) {
+    const reroll = window.FoodAnimalsShopFlowRuntime.rerollDecision({
+      phase: state.phase,
+      free,
+      gold: state.gold,
+      cost,
+      freeRolls: state.freeRolls,
+      rollsThisRound: state.rollsThisRound,
+    });
+    if (!reroll.ok) {
       playGameSfx("invalid");
       return;
     }
     if (!free) {
-      if (state.freeRolls > 0) {
-        state.freeRolls -= 1;
-      } else {
-        state.gold -= cost;
-        state.rollsThisRound += 1;
-      }
+      window.FoodAnimalsShopFlowRuntime.applyRerollCost(state, reroll);
     }
     const previousSales = [...state.shopSales];
     state.shop = shopSlots.map((_, index) => shopEntryForSlot(index));
@@ -2369,15 +2382,22 @@
   }
 
   function purchaseShopSlot(index) {
-    if (state.phase !== "prep") return false;
-    if (index < 0 || index >= shopSlots.length) return false;
-    if (isShopSlotUnlocked(index)) {
+    const cost = shopSlotUnlockCost(index);
+    const decision = window.FoodAnimalsShopFlowRuntime.unlockDecision({
+      phase: state.phase,
+      index,
+      slotCount: shopSlots.length,
+      unlocked: isShopSlotUnlocked(index),
+      gold: state.gold,
+      cost,
+    });
+    if (decision.reason === "wrongPhase" || decision.reason === "invalidIndex") return false;
+    if (decision.reason === "alreadyOpen") {
       state.message = "Slot open";
       playGameSfx("invalid");
       return false;
     }
-    const cost = shopSlotUnlockCost(index);
-    if (state.gold < cost) {
+    if (decision.reason === "insufficientGold") {
       state.message = `Need ${cost} ${currencyTerm({ lower: true })}`;
       playGameSfx("invalid");
       return false;
@@ -2435,15 +2455,20 @@
   }
 
   function upgradeShop() {
-    if (state.phase !== "prep") return false;
     const cost = nextShopUpgradeCost();
-    if (cost === null) {
+    const decision = window.FoodAnimalsShopFlowRuntime.upgradeDecision({
+      phase: state.phase,
+      cost,
+      gold: state.gold,
+    });
+    if (decision.reason === "wrongPhase") return false;
+    if (decision.reason === "maxed") {
       state.nextShopUpgradeDiscountGold = 0;
       state.message = realityBroken() ? "Rig maxed" : "Shop maxed";
       playGameSfx("invalid");
       return false;
     }
-    if (state.gold < cost) {
+    if (decision.reason === "insufficientGold") {
       state.message = `Need ${currencyTerm({ lower: true })}`;
       playGameSfx("invalid");
       return false;
@@ -2861,49 +2886,33 @@
   }
 
   function buyShopToSlot(shopIndex, targetArea, targetIndex) {
-    if (state.phase !== "prep") return false;
-    if (!isShopSlotUnlocked(shopIndex)) {
-      state.message = "Open slot first";
-      playGameSfx("invalid");
-      return false;
-    }
     const entry = shopEntryAt(shopIndex);
-    if (!entry) {
-      state.message = "Empty shop";
-      playGameSfx("invalid");
-      return false;
-    }
-    const cost = purchaseCost(entry, shopIndex);
-    if (state.gold < cost) {
-      state.message = `Need ${currencyTerm({ lower: true })}`;
-      playGameSfx("invalid");
-      return false;
-    }
-    if (isItem(entry)) {
-      if (isDrink(entry)) {
-        if (targetArea !== "bench" && targetArea !== "drinks" && targetArea !== "itemBench") {
-          state.message = `Drop ${drinkPluralTerm({ lower: true })} on rails`;
-          playGameSfx("invalid");
-          return false;
-        }
-      } else if (targetArea !== "bench" && targetArea !== "itemBench") {
-        state.message = `Store ${toppingPluralTerm({ lower: true })} on bench`;
-        playGameSfx("invalid");
-        return false;
-      }
-      if (targetArea === "itemBench" && !itemBenchSlotAccepts(targetIndex, entry)) {
-        state.message = `${itemRailLabel(entry)} slots only`;
-        playGameSfx("invalid");
-        return false;
-      }
-    }
-    if (isUnit(entry) && targetArea !== "bench" && targetArea !== "board") {
-      state.message = "Drop on grid";
-      playGameSfx("invalid");
-      return false;
-    }
-    if (targetIndex < 0 || targetIndex >= state[targetArea].length) {
-      state.message = "Drop on grid";
+    const cost = entry ? purchaseCost(entry, shopIndex) : 0;
+    const decision = window.FoodAnimalsShopFlowRuntime.buyTargetDecision({
+      phase: state.phase,
+      unlocked: isShopSlotUnlocked(shopIndex),
+      hasEntry: Boolean(entry),
+      gold: state.gold,
+      cost,
+      entryType: isDrink(entry) ? "drink" : isTopping(entry) ? "topping" : isUnit(entry) ? "unit" : "unknown",
+      targetArea,
+      targetInRange: targetIndex >= 0 && targetIndex < (state[targetArea]?.length || 0),
+      itemBenchAccepts: targetArea === "itemBench" ? itemBenchSlotAccepts(targetIndex, entry) : true,
+    });
+    if (!decision.ok) {
+      state.message = decision.reason === "locked"
+        ? "Open slot first"
+        : decision.reason === "empty"
+        ? "Empty shop"
+        : decision.reason === "insufficientGold"
+        ? `Need ${currencyTerm({ lower: true })}`
+        : decision.reason === "drinkTarget"
+        ? `Drop ${drinkPluralTerm({ lower: true })} on rails`
+        : decision.reason === "toppingStorage"
+        ? `Store ${toppingPluralTerm({ lower: true })} on bench`
+        : decision.reason === "wrongItemBenchKind"
+        ? `${itemRailLabel(entry)} slots only`
+        : "Drop on grid";
       playGameSfx("invalid");
       return false;
     }
@@ -2993,14 +3002,19 @@
   }
 
   function toggleShopFreeze(index) {
-    if (state.phase !== "prep") return false;
-    if (!isShopSlotUnlocked(index)) {
+    const entry = shopEntryAt(index);
+    const decision = window.FoodAnimalsShopFlowRuntime.freezeDecision({
+      phase: state.phase,
+      unlocked: isShopSlotUnlocked(index),
+      hasEntry: Boolean(entry),
+    });
+    if (decision.reason === "wrongPhase") return false;
+    if (decision.reason === "locked") {
       state.message = "Open slot first";
       playGameSfx("invalid");
       return false;
     }
-    const entry = shopEntryAt(index);
-    if (!entry) {
+    if (decision.reason === "empty") {
       state.message = "Empty shop";
       playGameSfx("invalid");
       return false;
@@ -3187,14 +3201,20 @@
   }
 
   function sellOwnedUnit(area, index) {
-    if (state.phase !== "prep") return false;
     const unit = state[area]?.[index];
-    if (!isUnit(unit)) {
+    const decision = window.FoodAnimalsShopFlowRuntime.sellOwnedDecision({
+      phase: state.phase,
+      hasEntry: isUnit(unit),
+      needsItemStorage: Boolean(unit?.item && area !== "bench"),
+      itemStorageAvailable: unit?.item ? firstEmptyItemStorage(unit.item) !== null : true,
+    });
+    if (decision.reason === "wrongPhase") return false;
+    if (decision.reason === "wrongKind") {
       state.message = "Sell animals only";
       playGameSfx("invalid");
       return false;
     }
-    if (unit.item && area !== "bench" && firstEmptyItemStorage(unit.item) === null) {
+    if (decision.reason === "itemStorageFull") {
       state.message = itemStorageFullMessage(unit.item);
       playGameSfx("invalid");
       return false;
@@ -3212,9 +3232,13 @@
   }
 
   function sellOwnedItem(area, index) {
-    if (state.phase !== "prep") return false;
     const item = state[area]?.[index];
-    if (!isItem(item)) {
+    const decision = window.FoodAnimalsShopFlowRuntime.sellOwnedDecision({
+      phase: state.phase,
+      hasEntry: isItem(item),
+    });
+    if (decision.reason === "wrongPhase") return false;
+    if (decision.reason === "wrongKind") {
       state.message = "Sell items only";
       playGameSfx("invalid");
       return false;
@@ -3935,14 +3959,19 @@
   }
 
   function startBattle() {
-    if (state.phase !== "prep") return;
+    if (!window.FoodAnimalsBattleFlowRuntime.battleStartDecision({ phase: state.phase, allyCount: 1 }).ok) return;
     state.lastCombatLedger = null;
     state.postCombatBattle = null;
     resetCombatLedgerReview();
     const allies = state.board
       .map((unit, index) => (isUnit(unit) ? cloneForBattle(unit, "ally", index) : null))
       .filter(Boolean);
-    if (allies.length === 0) {
+    const startDecision = window.FoodAnimalsBattleFlowRuntime.battleStartDecision({
+      phase: state.phase,
+      allyCount: allies.length,
+    });
+    if (startDecision.reason === "wrongPhase") return;
+    if (startDecision.reason === "emptyTeam") {
       state.message = "Place a team";
       playGameSfx("invalid");
       return;
@@ -3997,11 +4026,7 @@
     state.selected = null;
     state.drag = null;
     state.message = realityBroken() ? "Simulation malfunction" : "Battle";
-    state.phaseTransition = {
-      type: "prepToBattle",
-      elapsed: 0,
-      duration: BATTLE_DEPLOY_TRANSITION_SECONDS,
-    };
+    state.phaseTransition = window.FoodAnimalsBattleFlowRuntime.phaseTransition("prepToBattle", BATTLE_DEPLOY_TRANSITION_SECONDS);
     saveCurrentRunSilently();
     playGameSfx("battle-start");
   }
@@ -4316,7 +4341,8 @@
     state.lastIncome = income;
     const retryFinalBoss = !isInfiniteMode() && !won && completedRound === FINAL_VICTORY_ROUND && realityBroken() && state.hearts > 0;
     const retryGiraffeBoss = !isInfiniteMode() && !won && completedRound === GIRAFFE_BOSS_ROUND;
-    if (!retryGiraffeBoss && !retryFinalBoss && !finalDefeat) state.round += 1;
+    const defeatWithHealth = !won && state.hearts > 0;
+    if (window.FoodAnimalsBattleFlowRuntime.shouldAdvanceRound({ retryGiraffeBoss, retryFinalBoss, finalDefeat, defeatWithHealth })) state.round += 1;
     const justBrokeReality = !isInfiniteMode() && !state.realityBroken && state.round >= REALITY_BREAK_ROUND;
     if (justBrokeReality) triggerRealityBreak();
     if (justBrokeReality && won && completedRound === GIRAFFE_BOSS_ROUND) {
@@ -4345,13 +4371,10 @@
     state.battle = null;
     combatEndExplosion(won);
     if (finalVictory) markGameCompleted();
-    state.phaseTransition = {
-      type: "battleToResult",
-      elapsed: 0,
-      duration: BATTLE_RESULT_TRANSITION_SECONDS,
+    state.phaseTransition = window.FoodAnimalsBattleFlowRuntime.phaseTransition("battleToResult", BATTLE_RESULT_TRANSITION_SECONDS, {
       won,
       gameOver: state.hearts <= 0,
-    };
+    });
     if (finalVictory) startFinalTabsStoryConversation();
     saveCurrentRunSilently();
     playGameSfx(won ? "victory" : "defeat");
@@ -4584,6 +4607,17 @@
 
   function pushFromRewardPool(choices, rewards) {
     return window.FoodAnimalsRewardRuntime.pushFromPool(choices, rewards);
+  }
+
+  function rewardFitsAvailableSlot(reward) {
+    if (!reward) return false;
+    if (reward.type === "copy") return firstEmptyBench() >= 0;
+    if (reward.type === "item") return Boolean(firstEmptyItemStorage(itemInfo(reward.itemId)));
+    return true;
+  }
+
+  function availableReward(reward) {
+    return rewardFitsAvailableSlot(reward) ? reward : null;
   }
 
   function traitRewardPriority() {
@@ -4838,13 +4872,13 @@
     const arenaTraits = arenaRewardTraits();
     if (hasBenchSpace || hasItemStorageSpace) {
       pushFromRewardPool(choices, [
-        hasItemStorageSpace ? favoriteToppingReward() : null,
-        hasBenchSpace ? copyRewardForTrait(traitIds[0], "trait") : null,
-        hasBenchSpace ? ownedCopyReward() : null,
+        availableReward(favoriteToppingReward()),
+        availableReward(copyRewardForTrait(traitIds[0], "trait")),
+        availableReward(ownedCopyReward()),
       ]);
       pushFromRewardPool(choices, [
-        hasBenchSpace ? copyRewardForTrait(arenaTraits[randInt(Math.max(1, arenaTraits.length))], "arena") : null,
-        hasItemStorageSpace ? arenaToppingReward() : null,
+        availableReward(copyRewardForTrait(arenaTraits[randInt(Math.max(1, arenaTraits.length))], "arena")),
+        availableReward(arenaToppingReward()),
         arenaScoutReward(),
         arenaPrepBuffReward(),
         arenaHoldReward(),
@@ -4855,8 +4889,8 @@
         shopSlotUnlockReward(),
         upgradeDiscountReward(),
         arenaPurseReward(won),
-        pivotCopyReward(),
-        hasItemStorageSpace ? freeItemReward() : null,
+        availableReward(pivotCopyReward()),
+        availableReward(freeItemReward()),
       ]);
     } else {
       pushFromRewardPool(choices, [
@@ -4873,6 +4907,29 @@
     return choices.slice(0, 3);
   }
 
+  function rewardFallbackLead(claimResult) {
+    if (claimResult?.fallback?.reason === "shopSlotUnavailable") return "Slot already open";
+    return realityBroken() ? "No bay" : "No room";
+  }
+
+  function rewardClaimMessage(reward, claimResult) {
+    if (claimResult?.fallback?.type === "gold") {
+      const gained = claimResult.fallback.goldAdded || 0;
+      if (gained > 0) return `${rewardFallbackLead(claimResult)}; ${reward.title} became +${gained} ${currencyTerm({ lower: true })}`;
+      return `${rewardFallbackLead(claimResult)}; ${reward.title} could not fit`;
+    }
+    return realityBroken() ? `Salvaged ${reward.title}` : `Claimed ${reward.title}`;
+  }
+
+  function rewardClaimLog(reward, claimResult) {
+    if (claimResult?.fallback?.type === "gold") {
+      const gained = claimResult.fallback.goldAdded || 0;
+      const suffix = gained > 0 ? ` for ${gained} ${currencyTerm({ lower: true })}` : " with no space";
+      return `${realityBroken() ? "Salvage fallback" : "Reward fallback"}: ${reward.title}${suffix}`;
+    }
+    return realityBroken() ? `Salvage: ${reward.title}` : `Reward: ${reward.title}`;
+  }
+
   function applyRewardChoice(index) {
     if (state.phase !== "result" || !state.rewardChoices?.length) {
       playGameSfx("invalid");
@@ -4883,7 +4940,7 @@
       playGameSfx("invalid");
       return false;
     }
-    window.FoodAnimalsRewardRuntime.claimReward(state, reward, {
+    const claimResult = window.FoodAnimalsRewardRuntime.claimReward(state, reward, {
       fallbackGold: 15,
       makeItem,
       makeUnit,
@@ -4893,8 +4950,8 @@
       resolveItemMerges,
       resolveMerges,
     });
-    state.message = realityBroken() ? `Salvaged ${reward.title}` : `Claimed ${reward.title}`;
-    state.log.unshift(realityBroken() ? `Salvage: ${reward.title}` : `Reward: ${reward.title}`);
+    const claimMessage = rewardClaimMessage(reward, claimResult);
+    const claimLog = rewardClaimLog(reward, claimResult);
     playGameSfx("reward");
     const clearResultParticlesForRetry = state.round === GIRAFFE_BOSS_ROUND && state.postCombatBattle?.result === "loss";
     const rewardParticles = clearResultParticlesForRetry ? [] : state.particles.slice();
@@ -4906,6 +4963,8 @@
       continuePrep();
       if (rewardParticles.length) state.particles.push(...rewardParticles);
     }
+    state.message = claimMessage;
+    state.log.unshift(claimLog);
     saveCurrentRunSilently();
     return true;
   }
@@ -5113,24 +5172,66 @@
     return true;
   }
 
+  function level10RevealCutsceneTransitioning(cutscene = state.level10RevealCutscene) {
+    return Boolean(cutscene?.transition);
+  }
+
+  function beginLevel10RevealCutsceneStaticTransition(cutscene, direction = 1, options = {}) {
+    if (!cutscene) return;
+    cutscene.transition = {
+      elapsed: 0,
+      duration: LEVEL10_REVEAL_CUTSCENE_STATIC_TRANSITION_SECONDS,
+      direction,
+      completeOnEnd: Boolean(options.completeOnEnd),
+      seed: Math.floor((cutscene.elapsed || 0) * 997) + Math.floor(state.idleTime * 61),
+    };
+  }
+
   function advanceLevel10RevealCutscene(skip = false) {
     const cutscene = state.level10RevealCutscene;
     if (!cutscene) return false;
     if (skip) return completeLevel10RevealCutscene();
+    if (level10RevealCutsceneTransitioning(cutscene)) return false;
     const shotIndex = level10RevealCutsceneShotIndex(cutscene);
     const nextShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[shotIndex + 1];
-    if (!nextShot) return completeLevel10RevealCutscene();
+    if (!nextShot) {
+      beginLevel10RevealCutsceneStaticTransition(cutscene, 1, { completeOnEnd: true });
+      return true;
+    }
     cutscene.elapsed = nextShot.start + 0.001;
+    beginLevel10RevealCutsceneStaticTransition(cutscene, 1);
+    return true;
+  }
+
+  function retreatLevel10RevealCutscene() {
+    const cutscene = state.level10RevealCutscene;
+    if (!cutscene) return false;
+    if (level10RevealCutsceneTransitioning(cutscene)) return false;
+    const shotIndex = level10RevealCutsceneShotIndex(cutscene);
+    const previousShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[Math.max(0, shotIndex - 1)];
+    if (!previousShot || shotIndex <= 0) return false;
+    cutscene.elapsed = previousShot.start + 0.001;
+    beginLevel10RevealCutsceneStaticTransition(cutscene, -1);
     return true;
   }
 
   function updateLevel10RevealCutscene(dt) {
     const cutscene = state.level10RevealCutscene;
     if (!cutscene) return;
-    cutscene.elapsed = Math.min(cutscene.total || LEVEL10_REVEAL_CUTSCENE_SECONDS, (cutscene.elapsed || 0) + dt);
-    if (cutscene.elapsed >= (cutscene.total || LEVEL10_REVEAL_CUTSCENE_SECONDS)) {
-      completeLevel10RevealCutscene();
+    const shot = level10RevealCutsceneShot(cutscene);
+    if (!shot) return;
+    if (cutscene.transition) {
+      cutscene.transition.elapsed = Math.min(cutscene.transition.duration, (cutscene.transition.elapsed || 0) + dt);
+      if (cutscene.transition.elapsed >= cutscene.transition.duration) {
+        if (cutscene.transition.completeOnEnd) {
+          completeLevel10RevealCutscene();
+          return;
+        }
+        cutscene.transition = null;
+      }
     }
+    const holdAt = Math.max(shot.start + 0.001, shot.start + shot.duration - 0.001);
+    cutscene.elapsed = Math.min(holdAt, (cutscene.elapsed || 0) + dt);
   }
 
   function updateStoryBeatTransition(dt) {
@@ -7272,16 +7373,11 @@
   }
 
   function updatePhaseTransition(dt) {
-    const transition = state.phaseTransition;
-    if (!transition) return;
-    transition.elapsed = Math.min(transition.duration || 0.001, (transition.elapsed || 0) + dt);
-    if (transition.elapsed >= (transition.duration || 0)) {
-      state.phaseTransition = null;
-    }
+    state.phaseTransition = window.FoodAnimalsBattleFlowRuntime.updatePhaseTransition(state.phaseTransition, dt);
   }
 
   function phaseTransitionBlocksBattle() {
-    return state.phaseTransition?.type === "prepToBattle";
+    return window.FoodAnimalsBattleFlowRuntime.phaseTransitionBlocksBattle(state.phaseTransition);
   }
 
   function startModalTransition(id, phase = "enter") {
@@ -7469,6 +7565,7 @@
       if (state.phase === "prep" && !state.codexOpen) drawCodexMenuButton();
       drawStoryConversationOverlay();
       drawLevel10RevealCutsceneOverlay();
+      if (state.level10RevealCutscene) state.tooltipTargets = [];
     }
     drawPhaseTransitionOverlay();
     drawRebootTransitionOverlay();
@@ -9367,7 +9464,7 @@
     if (button === buttons.shopUpgrade || label.startsWith("Lv ") || label === "Max Lv") {
       const tierNote = realityBroken()
         ? "Per slot: Mk 2 entries can appear at Lv 3; Mk 3 entries can appear at max level."
-        : "Per slot: 2-star entries can appear at Lv 3; 3-star entries can appear at max level.";
+        : "Per slot: 2-star entries can appear at Lv 3; 3-star entries can appear at Lv 5.";
       return {
         title: label === "Max Lv" ? (realityBroken() ? "Rig maxed" : "Shop maxed") : `${upgradeTerm()} ${realityBroken() ? "rig" : "shop"}`,
         body: enabled
@@ -9680,7 +9777,7 @@
     const stallFlash = stallBleed.phase === "flash";
     const keeper = getUiSprite(keeperFlash ? cozyShopkeeperSrc() : currentShopkeeperSrc());
     const stall = getUiSprite(currentShopkeeperStallSrc());
-    const keeperRect = SHOPKEEPER_DISPLAY.keeper;
+    const keeperRect = currentShopkeeperDisplayRect();
     const stallRect = SHOPKEEPER_DISPLAY.stall;
 
     if (keeper && keeper.complete && keeper.naturalWidth > 0) {
@@ -9690,7 +9787,7 @@
         ctx.filter = "blur(1.1px)";
         ctx.globalAlpha = 0.76;
       }
-      drawBreathingShopkeeper(keeper, keeperRect);
+      drawBreathingShopkeeper(keeper, keeperRect, { preserveAspect: keeperFlash });
       ctx.restore();
     }
     if (stall && stall.complete && stall.naturalWidth > 0) {
@@ -9710,6 +9807,18 @@
       drawBlueStaticAroundRect(stallRect, 3, 0.82);
     }
     drawShopkeeperSellTarget();
+  }
+
+  function currentShopkeeperDisplayRect() {
+    const rect = SHOPKEEPER_DISPLAY.keeper;
+    if (!realityBroken()) return rect;
+    const size = rect.h;
+    return {
+      ...rect,
+      x: rect.x + (rect.w - size) / 2,
+      y: rect.y + 8,
+      w: size,
+    };
   }
 
   function drawCodexMenuButton() {
@@ -9802,17 +9911,26 @@
     });
   }
 
-  function drawBreathingShopkeeper(image, rect) {
+  function drawBreathingShopkeeper(image, rect, options = {}) {
     const phase = state.idleTime * ((Math.PI * 2) / SHOPKEEPER_DISPLAY.breathPeriod);
     const wave = Math.sin(phase);
     const scaleX = 1 - wave * SHOPKEEPER_DISPLAY.breathScaleX;
     const scaleY = 1 + wave * SHOPKEEPER_DISPLAY.breathScaleY;
     const bob = -wave * SHOPKEEPER_DISPLAY.breathBob;
+    const aspect = options.preserveAspect && image.naturalWidth > 0 && image.naturalHeight > 0
+      ? image.naturalWidth / image.naturalHeight
+      : rect.w / rect.h;
+    let drawW = rect.w;
+    let drawH = drawW / aspect;
+    if (drawH > rect.h) {
+      drawH = rect.h;
+      drawW = drawH * aspect;
+    }
 
     ctx.save();
     ctx.translate(rect.x + rect.w / 2, rect.y + rect.h + bob);
     ctx.scale(scaleX, scaleY);
-    ctx.drawImage(image, -rect.w / 2, -rect.h, rect.w, rect.h);
+    ctx.drawImage(image, -drawW / 2, -drawH, drawW, drawH);
     ctx.restore();
   }
 
@@ -14301,6 +14419,13 @@
 
   function drawRewardPrompt() {
     const horror = realityBroken();
+    const won = state.lastIncome?.result === "win";
+    const rewardTooltipBody = won
+      ? copy("ui.result.rewardTooltipBody", "Pick one reward before the next course starts.")
+      : copy("ui.result.rewardRetryTooltipBody", "Pick one reward before retrying this course.");
+    const rewardPrompt = won
+      ? copy("ui.result.claimReward", "Claim one to start the next course")
+      : copy("ui.result.claimRetry", "Claim one to retry this course");
     roundedRect(710, 304, 286, 232, 8);
     ctx.fillStyle = horror ? "rgba(29, 55, 25, 0.42)" : "rgba(255, 241, 176, 0.5)";
     ctx.fill();
@@ -14308,13 +14433,13 @@
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.lineWidth = 1;
-    drawUiAtlasIcon("reward_gold", 730, 329, 22, { tooltip: { title: copy("ui.result.rewardTooltipTitle", "Post-battle reward"), body: copy("ui.result.rewardTooltipBody", "Pick one reward before the next course starts.") } });
+    drawUiAtlasIcon("reward_gold", 730, 329, 22, { tooltip: { title: copy("ui.result.rewardTooltipTitle", "Post-battle reward"), body: rewardTooltipBody } });
     ctx.fillStyle = themeColor("primary", "#16392d");
     ctx.font = "900 14px Inter, sans-serif";
     ctx.fillText(copy("ui.result.chooseReward", "Choose 1 Reward"), 748, 334);
     ctx.fillStyle = themeColor("muted", "#8a5223");
     ctx.font = "800 10px Inter, sans-serif";
-    ctx.fillText(copy("ui.result.claimReward", "Claim one to start the next course"), 748, 348);
+    ctx.fillText(rewardPrompt, 748, 348);
   }
 
   function drawCombatLedger(ledger, x, y, maxWidth) {
@@ -16266,12 +16391,19 @@
     if (!cutscene || !shot) return;
     const local = clamp((cutscene.elapsed || 0) - shot.start, 0, shot.duration);
     const progress = clamp01(local / Math.max(0.001, shot.duration));
-    const alpha = Math.min(clamp01(local / 0.45), clamp01((shot.duration - local) / 0.55));
+    const alpha = clamp01(local / 0.45);
     const frame = Math.floor((state.idleTime + local) * 24);
     const shotIndex = level10RevealCutsceneShotIndex(cutscene);
+    const transitioning = level10RevealCutsceneTransitioning(cutscene);
+
+    ctx.save();
+    ctx.fillStyle = "#020506";
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
 
     if (shot.mode === "panorama") {
       drawLevel10RevealPanoramaShot(shot, shotIndex, progress, alpha, frame);
+      if (transitioning) drawLevel10CutsceneStaticTransition(cutscene, frame);
       return;
     }
 
@@ -16280,6 +16412,7 @@
     drawLevel10CutscenePlateBackground(shot, progress, frame);
     drawLevel10CutsceneStatic(frame, 0.44 + progress * 0.22);
     drawLevel10CutsceneScanlines(0.22);
+    drawLevel10CutsceneAmbientFx(shot, progress, frame);
     ctx.globalAlpha = alpha * 0.96;
     ctx.fillStyle = "#020506";
     ctx.fillRect(0, 0, W, 52);
@@ -16287,7 +16420,12 @@
     ctx.globalAlpha = alpha;
     drawLevel10CutsceneVisual(shot, progress, frame);
     drawLevel10CutsceneText(shot, shotIndex, progress);
+    if (!transitioning) {
+      drawLevel10CutsceneProgress(shotIndex);
+      drawLevel10CutsceneNavButtons(shotIndex);
+    }
     ctx.restore();
+    if (transitioning) drawLevel10CutsceneStaticTransition(cutscene, frame);
   }
 
   function drawLevel10CutsceneTexture(src, x, y, w, h, radius = 0, options = {}) {
@@ -16315,7 +16453,139 @@
     return true;
   }
 
+  function drawLevel10CutsceneFxCell(cellKey, x, y, w, h, options = {}) {
+    const image = getUiSprite(LEVEL10_CUTSCENE_FX_ATLAS_SRC);
+    const cell = LEVEL10_CUTSCENE_FX_CELLS[cellKey];
+    if (!cell || !image?.complete || image.naturalWidth <= 0) return false;
+    ctx.save();
+    ctx.globalAlpha *= options.alpha ?? 1;
+    ctx.globalCompositeOperation = options.blend || "screen";
+    if (options.clipRadius) {
+      ctx.beginPath();
+      roundedRect(x, y, w, h, options.clipRadius);
+      ctx.clip();
+    }
+    ctx.translate(x + w / 2, y + h / 2);
+    if (options.rotate) ctx.rotate(options.rotate);
+    ctx.scale(options.flipX ? -1 : 1, options.flipY ? -1 : 1);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, cell.sx, cell.sy, cell.sw, cell.sh, -w / 2, -h / 2, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.restore();
+    return true;
+  }
+
+  function drawLevel10CutsceneAmbientFx(shot, progress, frame) {
+    const time = state.idleTime + shot.start * 0.17;
+    ctx.save();
+    if (shot.mode === "panorama") {
+      for (let i = 0; i < 4; i++) {
+        const drift = ((time * (6 + i) + i * 91) % 190) - 95;
+        drawLevel10CutsceneFxCell("smoke", -90 + i * 260 + drift, 56 + i * 78, 360, 224, {
+          alpha: 0.18 + i * 0.025,
+          blend: "screen",
+          rotate: Math.sin(time * 0.18 + i) * 0.08,
+          flipX: i % 2 === 1,
+        });
+      }
+      [[156, 178], [476, 300], [746, 206], [884, 392]].forEach(([px, py], i) => {
+        const blink = glitchNoise(frame * 19 + i * 71);
+        if (blink > 0.28) {
+          drawLevel10CutsceneFxCell("sparks", px - 72, py - 70, 142, 142, {
+            alpha: 0.18 + blink * 0.28,
+            blend: "lighter",
+            rotate: time * 0.3 + i,
+          });
+        }
+      });
+      drawLevel10CutsceneFxCell("warning", 690, 58, 245, 176, {
+        alpha: 0.22 + glitchNoise(frame * 11) * 0.16,
+        blend: "lighter",
+      });
+    } else {
+      const tearY = 64 + (frame % 160) * 0.62;
+      drawLevel10CutsceneFxCell("signal", -48, tearY - 92, 540, 178, {
+        alpha: 0.18 + glitchNoise(frame * 23 + shot.start) * 0.12,
+        blend: "screen",
+      });
+      drawLevel10CutsceneFxCell("smoke", 420 + Math.sin(time * 0.22) * 22, H - 210, 410, 220, {
+        alpha: 0.12,
+        blend: "screen",
+        rotate: -0.12,
+      });
+      drawLevel10CutsceneFxCell("warning", 818, 82, 164, 126, {
+        alpha: 0.16 + glitchNoise(frame * 37 + shot.duration) * 0.1,
+        blend: "lighter",
+      });
+    }
+    ctx.restore();
+  }
+
+  function drawLevel10CutsceneVisualArtFx(shot, x, y, w, h, progress, frame) {
+    const time = state.idleTime + shot.start * 0.11;
+    ctx.save();
+    if (shot.id === "expired") {
+      drawLevel10CutsceneFxCell("signal", x + 30, y + 88 + Math.sin(time * 0.8) * 8, w - 60, 122, {
+        alpha: 0.32,
+        blend: "screen",
+        clipRadius: 6,
+      });
+      drawLevel10CutsceneFxCell("warning", x + 184, y + 254, 108, 82, {
+        alpha: 0.28 + glitchNoise(frame * 17) * 0.18,
+        blend: "lighter",
+        clipRadius: 6,
+      });
+    } else if (shot.id === "shell") {
+      drawLevel10CutsceneFxCell("signal", x + 34, y + 118, w - 68, 112, {
+        alpha: 0.28,
+        blend: "screen",
+        clipRadius: 6,
+      });
+      drawLevel10CutsceneFxCell("fluid", x + 88 + Math.sin(time * 0.4) * 4, y + 220, 150, 132, {
+        alpha: 0.22,
+        blend: "screen",
+        clipRadius: 6,
+      });
+    } else if (shot.id === "pilots") {
+      drawLevel10CutsceneFxCell("pilots", x + 36, y + 58 + Math.sin(time * 0.8) * 2, w - 72, 250, {
+        alpha: 0.56,
+        blend: "screen",
+        clipRadius: 6,
+      });
+      drawLevel10CutsceneFxCell("signal", x + 84, y + 70 + (frame % 90) * 1.9, w - 120, 82, {
+        alpha: 0.34,
+        blend: "lighter",
+        clipRadius: 6,
+      });
+    } else if (shot.id === "pens") {
+      drawLevel10CutsceneFxCell("warning", x + 84, y + 70, 158, 132, {
+        alpha: 0.32 + Math.sin(time * 3.2) * 0.08,
+        blend: "lighter",
+        clipRadius: 6,
+      });
+      drawLevel10CutsceneFxCell("fluid", x + 68, y + 250, 178, 112, {
+        alpha: 0.3,
+        blend: "screen",
+        clipRadius: 6,
+      });
+    } else if (shot.id === "defiance") {
+      drawLevel10CutsceneFxCell("signal", x + 42, y + 84, w - 84, 224, {
+        alpha: 0.34,
+        blend: "lighter",
+        clipRadius: 6,
+      });
+      drawLevel10CutsceneFxCell("sparks", x + 170 + Math.sin(time * 0.6) * 8, y + 122, 118, 118, {
+        alpha: 0.26 + glitchNoise(frame * 29) * 0.18,
+        blend: "lighter",
+        rotate: time,
+      });
+    }
+    ctx.restore();
+  }
+
   function drawLevel10CutscenePlateBackground(shot, progress, frame) {
+    ctx.fillStyle = "#020506";
+    ctx.fillRect(0, 0, W, H);
     const image = shot.imageSrc ? getUiSprite(shot.imageSrc) : null;
     if (image?.complete && image.naturalWidth > 0) {
       const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight) * (1 + progress * 0.018);
@@ -16363,6 +16633,8 @@
   function drawLevel10RevealPanoramaShot(shot, shotIndex, progress, alpha, frame) {
     ctx.save();
     ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#020506";
+    ctx.fillRect(0, 0, W, H);
     const image = getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
     if (image?.complete && image.naturalWidth > 0) {
       const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight);
@@ -16392,11 +16664,12 @@
     vignette.addColorStop(1, "rgba(0, 0, 0, 0.78)");
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, W, H);
+    drawLevel10CutsceneAmbientFx(shot, progress, frame);
 
     const captionW = 640;
     const captionX = 42;
     const captionY = H - 164;
-    const captionAlpha = Math.min(clamp01(progress / 0.08), clamp01((1 - progress) / 0.18));
+    const captionAlpha = clamp01(progress / 0.08);
     ctx.globalAlpha *= captionAlpha;
     roundedRect(captionX, captionY, captionW, 106, 8);
     ctx.fillStyle = "rgba(2, 8, 10, 0.84)";
@@ -16415,11 +16688,8 @@
     ctx.font = "700 13px Inter, sans-serif";
     wrapTextLimited(shot.body, captionX + 22, captionY + 80, captionW - 44, 18, 2);
     ctx.globalAlpha = alpha;
-    drawLevel10CutsceneProgress(42, H - 34, W - 84, shotIndex, progress);
-    ctx.fillStyle = "rgba(240, 255, 240, 0.68)";
-    ctx.font = "800 11px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Click / Enter to advance   Escape to skip", W / 2, H - 14);
+    drawLevel10CutsceneProgress(shotIndex);
+    drawLevel10CutsceneNavButtons(shotIndex);
     ctx.restore();
   }
 
@@ -16457,23 +16727,61 @@
     ctx.font = "700 15px Inter, sans-serif";
     wrapTextLimited(shot.body, panelX + 24, panelY + 182, panelW - 48, 22, 5);
 
-    drawLevel10CutsceneProgress(panelX + 24, panelY + panelH - 46, panelW - 48, shotIndex, progress);
-
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(240, 255, 240, 0.72)";
+    ctx.fillStyle = "rgba(240, 255, 240, 0.56)";
     ctx.font = "800 11px Inter, sans-serif";
-    ctx.fillText("Click / Enter to advance   Escape to skip", W / 2, H - 25);
+    ctx.fillText("Escape skips", W / 2, H - 23);
   }
 
-  function drawLevel10CutsceneProgress(x, y, w, shotIndex, progress) {
-    ctx.fillStyle = "rgba(70, 255, 99, 0.14)";
-    ctx.fillRect(x, y, w, 5);
-    ctx.fillStyle = "#46ff63";
-    ctx.fillRect(x, y, w * progress, 5);
+  function drawLevel10CutsceneProgress(shotIndex) {
+    const markerW = 18;
+    const gap = 10;
+    const count = LEVEL10_REVEAL_CUTSCENE_SHOTS.length;
+    const totalW = count * markerW + (count - 1) * gap;
+    const startX = (W - totalW) / 2;
+    const y = H - 48;
     LEVEL10_REVEAL_CUTSCENE_SHOTS.forEach((_entry, index) => {
-      const markerX = x + index * 22;
-      ctx.fillStyle = index <= shotIndex ? "#ff596b" : "rgba(184, 242, 192, 0.25)";
-      ctx.fillRect(markerX, y + 18, 14, 4);
+      const markerX = startX + index * (markerW + gap);
+      ctx.fillStyle = index === shotIndex
+        ? "rgba(255, 89, 107, 0.92)"
+        : index < shotIndex
+        ? "rgba(255, 89, 107, 0.38)"
+        : "rgba(184, 242, 192, 0.18)";
+      ctx.fillRect(markerX, y, markerW, 4);
+    });
+  }
+
+  function level10CutsceneNavButtonRects() {
+    const y = H - 72;
+    return {
+      back: { x: W - 296, y, w: 112, h: 36 },
+      continue: { x: W - 172, y, w: 132, h: 36 },
+    };
+  }
+
+  function drawLevel10CutsceneNavButtons(shotIndex) {
+    const rects = level10CutsceneNavButtonRects();
+    const isFirst = shotIndex <= 0;
+    const isLast = shotIndex >= LEVEL10_REVEAL_CUTSCENE_SHOTS.length - 1;
+    [
+      { rect: rects.back, label: "BACK", enabled: !isFirst },
+      { rect: rects.continue, label: isLast ? "FINISH" : "CONTINUE", enabled: true },
+    ].forEach((button) => {
+      const hovered = Boolean(state.pointer && pointInRect(state.pointer.x, state.pointer.y, button.rect));
+      ctx.save();
+      ctx.globalAlpha *= button.enabled ? 1 : 0.38;
+      roundedRect(button.rect.x, button.rect.y, button.rect.w, button.rect.h, 7);
+      ctx.fillStyle = hovered && button.enabled ? "rgba(16, 35, 31, 0.94)" : "rgba(3, 12, 14, 0.88)";
+      ctx.fill();
+      ctx.strokeStyle = hovered && button.enabled ? "rgba(240, 255, 240, 0.66)" : "rgba(70, 255, 99, 0.44)";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.fillStyle = button.enabled ? "#f0fff0" : "rgba(184, 242, 192, 0.68)";
+      ctx.font = "950 12px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(button.label, button.rect.x + button.rect.w / 2, button.rect.y + button.rect.h / 2 + 1);
+      ctx.restore();
     });
   }
 
@@ -16501,16 +16809,12 @@
       ctx.fillStyle = "rgba(2, 7, 9, 0.08)";
       ctx.fill();
     }
+    drawLevel10CutsceneVisualArtFx(shot, x, y, w, h, progress, frame);
     roundedRect(x, y, w, h, 12);
     ctx.strokeStyle = framed ? "rgba(255, 89, 107, 0.42)" : "rgba(255, 89, 107, 0.55)";
     ctx.lineWidth = 1.5;
     ctx.stroke();
     drawHeavyStaticAroundRect({ x, y, w, h }, 3000 + frame + shot.start * 11, 0.36);
-    if (shot.id === "expired") drawLevel10ExpiredVisual(x, y, w, h, progress, frame);
-    if (shot.id === "shell") drawLevel10ShellVisual(x, y, w, h, progress, frame);
-    if (shot.id === "pilots") drawLevel10PilotsVisual(x, y, w, h, progress, frame);
-    if (shot.id === "pens") drawLevel10PensVisual(x, y, w, h, progress, frame);
-    if (shot.id === "defiance") drawLevel10DefianceVisual(x, y, w, h, progress, frame);
     ctx.restore();
   }
 
@@ -16568,19 +16872,29 @@
   function drawLevel10PilotsVisual(x, y, w, h, progress, frame) {
     for (let i = 0; i < 3; i++) {
       const cy = y + 96 + i * 92;
-      const jitter = Math.round((glitchNoise(frame * 53 + i * 19) - 0.5) * 8 * progress);
-      ctx.strokeStyle = "rgba(255, 89, 107, 0.64)";
-      ctx.lineWidth = 2;
+      const jitter = Math.round((glitchNoise(frame * 53 + i * 19) - 0.5) * 5 * progress);
+      const pulse = 0.45 + Math.sin(state.idleTime * 3.1 + i) * 0.24;
+      ctx.strokeStyle = `rgba(255, 89, 107, ${0.28 + pulse * 0.18})`;
+      ctx.lineWidth = 1.4;
       roundedRect(x + 52 + jitter, cy - 32, w - 104, 58, 8);
       ctx.stroke();
-      ctx.fillStyle = "rgba(70, 255, 99, 0.2)";
-      ctx.fillRect(x + 82 + jitter, cy - 9, w - 164, 18);
+      ctx.fillStyle = `rgba(70, 255, 99, ${0.08 + pulse * 0.05})`;
+      ctx.fillRect(x + 84 + jitter, cy - 9, w - 168, 16);
       ctx.beginPath();
-      ctx.arc(x + w / 2 + jitter, cy, 16, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(240, 255, 240, 0.72)";
-      ctx.fill();
-      ctx.fillStyle = "rgba(255, 89, 107, 0.82)";
-      ctx.fillRect(x + w / 2 - 20 + jitter, cy - 2, 40, 4);
+      for (let p = 0; p < 22; p++) {
+        const px = x + 84 + jitter + p * 7;
+        const wave = Math.sin(frame * 0.28 + p * 0.9 + i) * (p % 5 === 0 ? 12 : 4);
+        const py = cy + wave;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = `rgba(184, 242, 192, ${0.28 + pulse * 0.18})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.fillStyle = `rgba(255, 89, 107, ${0.2 + pulse * 0.18})`;
+      ctx.fillRect(x + w / 2 - 22 + jitter, cy - 2, 44, 3);
+      ctx.fillStyle = `rgba(70, 255, 99, ${0.12 + pulse * 0.16})`;
+      ctx.fillRect(x + w / 2 - 3 + jitter, cy - 19, 6, 38);
     }
     ctx.fillStyle = "rgba(240, 255, 240, 0.55)";
     ctx.font = "900 11px Inter, sans-serif";
@@ -16644,6 +16958,58 @@
     ctx.fillRect(x + 60, y + 286, w - 120, 10);
   }
 
+  function drawLevel10CutsceneStaticTransition(cutscene, frame) {
+    const transition = cutscene?.transition;
+    if (!transition) return;
+    const duration = Math.max(0.001, transition.duration || LEVEL10_REVEAL_CUTSCENE_STATIC_TRANSITION_SECONDS);
+    const t = clamp01((transition.elapsed || 0) / duration);
+    const pulse = Math.sin(t * Math.PI);
+    const seed = transition.seed || 0;
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#020506";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.globalAlpha = 1;
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(seed + frame * 97 + y * 13);
+      if (roll < 0.28) continue;
+      ctx.fillStyle = roll > 0.72
+        ? `rgba(255, 89, 107, ${0.12 + pulse * 0.08})`
+        : `rgba(70, 255, 99, ${0.08 + pulse * 0.06})`;
+      ctx.fillRect(0, y, W, roll > 0.88 ? 2 : 1);
+    }
+
+    for (let i = 0; i < 70; i++) {
+      const roll = glitchNoise(seed + frame * 131 + i * 23);
+      if (roll < 0.36) continue;
+      const yy = Math.floor(glitchNoise(seed + frame * 149 + i * 31) * H);
+      const xx = Math.floor((glitchNoise(seed + frame * 157 + i * 37) - 0.22) * W);
+      const ww = Math.floor(36 + glitchNoise(seed + frame * 163 + i * 41) * 430);
+      const hh = 2 + Math.floor(glitchNoise(seed + frame * 173 + i * 43) * 10);
+      ctx.fillStyle = roll > 0.66
+        ? `rgba(255, 89, 107, ${0.16 + pulse * 0.18})`
+        : `rgba(70, 255, 99, ${0.11 + pulse * 0.14})`;
+      ctx.fillRect(xx, yy, ww, hh);
+    }
+
+    ctx.globalAlpha = 0.24 + pulse * 0.18;
+    ctx.fillStyle = "#000";
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+
+    ctx.globalAlpha = 0.64 + pulse * 0.24;
+    ctx.textAlign = "center";
+    ctx.font = "950 15px Inter, sans-serif";
+    ctx.fillStyle = "#f0fff0";
+    const label = transition.completeOnEnd
+      ? "STORE LINK RESTORING"
+      : transition.direction < 0
+      ? "SIGNAL ROLLING BACK"
+      : "SIGNAL RECALIBRATING";
+    ctx.fillText(label, W / 2, H / 2 + 5);
+    ctx.restore();
+  }
+
   function drawLevel10CutsceneStatic(frame, intensity = 0.5) {
     ctx.save();
     for (let y = 0; y < H; y += 5) {
@@ -16702,7 +17068,12 @@
       if (pointInRect(pos.x, pos.y, storyAdvanceButtonRect())) return { area: "story", action: "advance" };
       return { area: "story", action: "panel" };
     }
-    if (state.level10RevealCutscene) return { area: "level10RevealCutscene", action: "advance" };
+    if (state.level10RevealCutscene) {
+      const rects = level10CutsceneNavButtonRects();
+      if (pointInRect(pos.x, pos.y, rects.back)) return { area: "level10RevealCutscene", action: "back" };
+      if (pointInRect(pos.x, pos.y, rects.continue)) return { area: "level10RevealCutscene", action: "advance" };
+      return { area: "level10RevealCutscene", action: "panel" };
+    }
     if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
@@ -16907,7 +17278,8 @@
       return;
     }
     if (state.level10RevealCutscene) {
-      advanceLevel10RevealCutscene(hit?.action === "skip");
+      if (hit?.action === "advance") advanceLevel10RevealCutscene(false);
+      if (hit?.action === "back") retreatLevel10RevealCutscene();
       state.selected = null;
       event.preventDefault();
       return;
@@ -17360,6 +17732,8 @@
         else document.exitFullscreen?.();
       } else if (event.key === "Escape") {
         advanceLevel10RevealCutscene(true);
+      } else if (event.key === "ArrowLeft" || event.key === "Backspace") {
+        retreatLevel10RevealCutscene();
       } else if (event.key === "Enter" || event.key === " ") {
         advanceLevel10RevealCutscene(false);
       }
@@ -17585,6 +17959,12 @@
         elapsed: Number((state.level10RevealCutscene.elapsed || 0).toFixed(2)),
         total: Number((state.level10RevealCutscene.total || LEVEL10_REVEAL_CUTSCENE_SECONDS).toFixed(2)),
         shotIndex: level10RevealCutsceneShotIndex(state.level10RevealCutscene),
+        transition: state.level10RevealCutscene.transition ? {
+          elapsed: Number((state.level10RevealCutscene.transition.elapsed || 0).toFixed(3)),
+          duration: Number((state.level10RevealCutscene.transition.duration || LEVEL10_REVEAL_CUTSCENE_STATIC_TRANSITION_SECONDS).toFixed(3)),
+          direction: state.level10RevealCutscene.transition.direction || 1,
+          completeOnEnd: Boolean(state.level10RevealCutscene.transition.completeOnEnd),
+        } : null,
         shot: level10RevealCutsceneShot(state.level10RevealCutscene),
       } : { active: false },
       reality: {
@@ -18498,8 +18878,43 @@
     return true;
   }
 
+  function applyConversationPreviewRoute(theme) {
+    const horror = theme === "horror";
+    applyOpeningTutorialShopRoute();
+    state.realityOverride = horror;
+    state.realityBroken = horror;
+    state.realityBreakTimer = 0;
+    state.message = horror ? "Horror conversation preview" : "Cozy conversation preview";
+    state.log = [state.message];
+    startStoryConversation({
+      id: horror ? "horrorConversationPreview" : "cozyConversationPreview",
+      title: state.message,
+      index: 0,
+      beats: [
+        {
+          speaker: horror ? "T.A.B.S." : "Tabs",
+          text: horror
+            ? "This preview uses the same conversation renderer, portrait art, and war panel wiring as the campaign layer."
+            : "This preview uses the same conversation renderer, portrait art, and paper panel wiring as the campaign layer.",
+          tone: horror ? "glitch" : undefined,
+        },
+        {
+          speaker: "You",
+          text: "Good. I can inspect the real in-game layout immediately.",
+        },
+      ],
+    });
+    return true;
+  }
+
   function applyInitialRouteScreen() {
     const screen = routeParam("screen") || routeParam("scene");
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["conversation-cozy", "cozy-conversation", "story-cozy"])) {
+      return applyConversationPreviewRoute("cozy");
+    }
+    if (window.FoodAnimalsRouteHarness.matches(screen, ["conversation-horror", "horror-conversation", "story-horror"])) {
+      return applyConversationPreviewRoute("horror");
+    }
     if (window.FoodAnimalsRouteHarness.matches(screen, ["story-canvas-smoke", "story-smoke", "conversation-smoke"])) {
       return applyStoryCanvasSmokeRoute();
     }
@@ -18768,6 +19183,7 @@
   getUiSprite(STORY_DIALOGUE_WAR_BG_SRC);
   getUiSprite(LEVEL10_CUTSCENE_TEXT_PANEL_SRC);
   getUiSprite(LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC);
+  getUiSprite(LEVEL10_CUTSCENE_FX_ATLAS_SRC);
   getUiSprite(LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC);
   LEVEL10_REVEAL_CUTSCENE_SHOTS.forEach((shot) => {
     if (shot.imageSrc) getUiSprite(shot.imageSrc);

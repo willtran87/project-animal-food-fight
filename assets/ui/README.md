@@ -19,8 +19,10 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `runtime/horror-battle-deploy-overlay-v1.png` - generated transparent command-console frame used behind live battle-start deploy text in horror/war mode.
 - `runtime/transition-title-pattern-set-v1.png` / `runtime/transition-title-deploying-wave-v1.png` - active generated transparent word art used by the centered deploy transition.
 - `runtime/transition-title-pattern-holds-v1.png` / `runtime/transition-title-pattern-breaks-v1.png` - active generated transparent cozy word art used by battle result transitions.
-- `runtime/transition-title-relay-opened-v1.png` / `runtime/transition-title-hull-breach-v1.png` / `runtime/transition-title-system-down-v1.png` - active generated transparent horror/war word art used by battle result transitions.
-- `runtime/transition-title-plates-up-v1.png` / `runtime/transition-title-course-cleared-v1.png` / `runtime/transition-title-service-lost-v1.png` / `runtime/transition-title-target-cleared-v1.png` / `runtime/transition-title-unit-loss-v1.png` / `runtime/transition-title-run-over-v1.png` - second title-art pass, retained as superseded drafts after the transition copy moved to tighter story terms.
+- `runtime/transition-title-run-over-v2.png` - active generated transparent cozy game-over word art, regenerated after v1 read as horror/war text.
+- `runtime/transition-title-relay-opened-v2.png` / `runtime/transition-title-hull-breach-v2.png` / `runtime/transition-title-system-down-v2.png` - active generated transparent horror/war result word art, restyled to match the acid-green `DEPLOYING WAVE` combat-start title.
+- `runtime/transition-title-relay-opened-v1.png` / `runtime/transition-title-hull-breach-v1.png` / `runtime/transition-title-system-down-v1.png` - first horror result title pass, retained as superseded drafts because the grey metal treatment did not match the combat-start alert style.
+- `runtime/transition-title-plates-up-v1.png` / `runtime/transition-title-course-cleared-v1.png` / `runtime/transition-title-service-lost-v1.png` / `runtime/transition-title-target-cleared-v1.png` / `runtime/transition-title-unit-loss-v1.png` / `runtime/transition-title-run-over-v1.png` - second title-art pass, retained as superseded drafts after the transition copy moved to tighter story terms and `RUN OVER` was regenerated in the cozy style.
 - `runtime/transition-title-setting-the-field-v1.png` / `runtime/transition-title-victory-v1.png` - first generic title-art pass, retained as superseded drafts after the transition copy moved to story-specific terms.
 - `runtime/transition-title-defeat-v1.png` - first defeat word-art pass, retained as a superseded draft because it read too gothic for the cozy game UI.
 - `runtime/level10-cutscene-text-panel-v1.png` - generated text-free green command-glass narrative panel for the Level 10 reveal dossier scenes.
@@ -31,6 +33,7 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `runtime/level10-cutscene-survivor-pens-insert-v1.png` / `runtime/level10-cutscene-survivor-pens-insert-v2.png` - restricted-sector insert for the survivor-pens beat; v2 is the active lower-noise cleanup pass.
 - `runtime/level10-cutscene-defiance-route-map-v1.png` / `runtime/level10-cutscene-defiance-route-map-v2.png` - resistance route-map insert for the defiance beat; v2 is the active lower-noise cleanup pass.
 - `runtime/level10-cutscene-glitch-overlay-v1.png` / `runtime/level10-cutscene-glitch-overlay-v2.png` - sparse signal-tear overlay used in the Level 10 reveal dossier scenes; v2 is the active lower-noise cleanup pass.
+- `runtime/level10-cutscene-fx-atlas-v1.png` - generated black-background screen-blend FX atlas for Level 10 cutscene animation accents: smoke, sparks, signal tears, pilot silhouettes, fluid drips, and warning lights. This is composited from black and is not a transparent/chroma-key extraction.
 
 ## Source Pipeline
 
