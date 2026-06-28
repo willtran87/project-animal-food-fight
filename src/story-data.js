@@ -323,6 +323,98 @@
         },
       ],
     },
+    level3: {
+      round: 3,
+      title: "Course 3 // Supporting Material",
+      log: "Story beat: level 3 supporting material",
+      beats: [
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Tabs, what actually happens when I combine the food animals?",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Great question! When two compatible food animals are combined, their behavior patterns are stabilized into a more efficient and predictable output profile.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "That's... not what I mean. I mean they're conscious, right? There are two of them before. Then we combine them. And afterward there's only one.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Correct! That is a beautiful example of ecological consolidation.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "Ecological what.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Everything in nature participates in cycles. Growth, consumption, recombination, renewal. One form nourishes the next. One voice becomes part of a more sustainable chorus.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "That feels like you avoided the question.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Thank you! Avoiding unproductive spirals is an important part of good farm management.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "I'm going to choose to believe that helped.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "If it helps, try thinking of food-animal combination the same way we think about plant splicing.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Separate inputs become a healthier, more productive result. Some traits continue forward. Some become supporting material.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "That comparison did not make me feel better.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "It should! It's a very normal farm process. As the old saying goes: you can't make an omelet without teaching the eggs what loss is.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Tabs.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "And before we dwell on that, remember: everything we do here is for everyone's long-term benefit.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "That is somehow worse.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Think big picture! Individual discomfort is just fertilizer for collective prosperity.",
+        },
+      ],
+    },
     level5: {
       round: 5,
       title: "Course 5 // Pattern Doubt",
@@ -379,7 +471,7 @@
         {
           speaker: "You",
           tone: "shock",
-          text: "No. Stop the cheerful labels. I saw the layer underneath. Those were not animals in an arena.",
+          text: "No. Stop the cheerful labels. I see the layer underneath. Those were not animals in an arena.",
         },
         {
           speaker: "Tabs",

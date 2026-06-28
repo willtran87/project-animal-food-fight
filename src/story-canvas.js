@@ -42,7 +42,7 @@
       },
       text: {
         x: panel.x + 24 * scale,
-        y: panel.y + 58 * scale,
+        y: panel.y + 50 * scale,
         w: panel.w - 85 * scale,
       },
       button: {
