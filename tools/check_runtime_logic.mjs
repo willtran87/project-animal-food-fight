@@ -15,6 +15,7 @@ const context = loadBrowserScripts(
   repoRoot,
   [
     "src/shop-economy.js",
+    "src/run-storage.js",
     "src/reward-runtime.js",
     "src/enemy-team-runtime.js",
     "src/battle-ability-runtime.js",
@@ -46,6 +47,15 @@ assert.equal(
   "rare",
   "weighted rarity choice should honor weights",
 );
+
+const runStorage = context.FoodAnimalsRunStorage;
+const circular = { name: "root" };
+circular.self = circular;
+circular.child = { owner: circular };
+const cloned = runStorage.cloneValue(circular);
+assert.equal(cloned.name, "root", "run storage clone should keep plain fields");
+assert.equal(cloned.self, undefined, "run storage clone should drop direct ancestor cycles");
+assert.equal(JSON.stringify(cloned.child), "{}", "run storage clone should drop nested ancestor cycles");
 
 const rewards = context.FoodAnimalsRewardRuntime;
 const rewardState = { gold: 90, freeRolls: 0 };

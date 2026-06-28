@@ -50,6 +50,18 @@
     }
   }
 
+  function cloneValue(value) {
+    if (value === undefined) return undefined;
+    const ancestors = [];
+    return JSON.parse(JSON.stringify(value, function (_key, entry) {
+      if (!entry || typeof entry !== "object") return entry;
+      while (ancestors.length && ancestors[ancestors.length - 1] !== this) ancestors.pop();
+      if (ancestors.includes(entry)) return undefined;
+      ancestors.push(entry);
+      return entry;
+    }));
+  }
+
   function buildRecord(options) {
     const now = options.now || new Date().toISOString();
     const previous = options.previous || null;
@@ -99,6 +111,7 @@
     buildRecord,
     canUseLocalStorage,
     clear,
+    cloneValue,
     read,
     targetUrl,
     write,

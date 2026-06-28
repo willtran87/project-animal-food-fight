@@ -82,6 +82,51 @@ for (const file of unused) {
   byDirectory[dir] = (byDirectory[dir] || 0) + 1;
 }
 
+function versionParts(file) {
+  const parsed = path.parse(file.replaceAll("\\", "/"));
+  const match = parsed.name.match(/^(.*)-v(\d+)$/);
+  if (!match) return null;
+  return {
+    dir: parsed.dir,
+    base: match[1],
+    version: Number(match[2]),
+    ext: parsed.ext,
+  };
+}
+
+const highestVersionBySeries = new Map();
+for (const file of trackedAssets) {
+  const parts = versionParts(file);
+  if (!parts) continue;
+  const key = `${parts.dir}/${parts.base}${parts.ext}`;
+  highestVersionBySeries.set(key, Math.max(highestVersionBySeries.get(key) || 0, parts.version));
+}
+
+function categoryFor(file) {
+  const normalized = file.replaceAll("\\", "/");
+  const parts = versionParts(normalized);
+  if (parts) {
+    const key = `${parts.dir}/${parts.base}${parts.ext}`;
+    if ((highestVersionBySeries.get(key) || 0) > parts.version) return "superseded-version";
+  }
+  if (normalized.startsWith("assets/start-menu/field-guide/")) return "field-guide-page";
+  if (normalized.startsWith("assets/ui/runtime/")) return "runtime-ui-draft";
+  if (normalized.startsWith("assets/audio/sfx/")) return "audio-sfx";
+  if (normalized.startsWith("assets/backgrounds/")) return "background-draft";
+  if (normalized.includes("/source/") || normalized.includes("/transparent/")) return "pipeline-source";
+  if (normalized.includes("source") || normalized.includes("transparent")) return "provenance-source";
+  return "uncategorized";
+}
+
+const categories = {};
+for (const file of unused) {
+  const category = categoryFor(file);
+  const bucket = categories[category] || { count: 0, sample: [] };
+  bucket.count += 1;
+  if (bucket.sample.length < 12) bucket.sample.push(file);
+  categories[category] = bucket;
+}
+
 const report = {
   generatedAt: new Date().toISOString(),
   scannedFiles: files.length,
@@ -89,6 +134,7 @@ const report = {
   referencedAssets: [...references.keys()].filter((file) => file.startsWith("assets/")).length,
   unusedCount: unused.length,
   byDirectory: Object.fromEntries(Object.entries(byDirectory).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
+  categories: Object.fromEntries(Object.entries(categories).sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))),
   unused,
 };
 

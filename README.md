@@ -153,6 +153,12 @@ Generate a non-failing report of tracked assets that are not referenced by scann
 npm run report:unused-assets
 ```
 
+Generate a non-failing balance snapshot for shop rarity, roll costs, item prices, and sampled enemy scaling:
+
+```powershell
+npm run report:balance
+```
+
 Run the full local safety suite:
 
 ```powershell
