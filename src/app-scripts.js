@@ -56,7 +56,7 @@
       ["combat-ledger-canvas", "h-396c58499a94"],
       ["codex-canvas", "h-9701f7127530"],
       ["transition-canvas", "h-d0b4c516281a"],
-      ["story-canvas", "h-28b78ded0e39"],
+      ["story-canvas", "h-b328e525d957"],
       ["presentation-data", "h-d2500330abef"],
       ["copy-data", "h-86f26eddcd59"],
       ["story-data", "h-63fd23aeb4c8"],
@@ -66,7 +66,7 @@
       ["economy-enemy-data", "h-8fd3c3963fc5"],
       ["rarity-shop-data", "h-6829c90dffeb"],
       ["status-effect-data", "h-93cdb2493911"],
-      ["game", "h-29c5e68e6d96"],
+      ["game", "h-5bf6414165b0"],
     ],
   });
 
