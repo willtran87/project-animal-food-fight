@@ -184,6 +184,7 @@
   const GIRAFFE_BOSS_ROUND = 10;
   const GIRAFFE_BOSS_TYPE_ID = "banana_split_giraffe_boss";
   const GIRAFFE_BOSS_SLOT = 3;
+  const FINAL_BOSS_HP_SCALE = 5;
   const GIRAFFE_BOSS_HIT_GLITCH_SECONDS = 0.62;
   const FINAL_BOSS_HIT_GLITCH_SECONDS = 0.52;
   const REALITY_BREAK_REVEAL_SECONDS = 5.5;
@@ -198,6 +199,8 @@
   const FINAL_VICTORY_HOLD_SECONDS = 3;
   const FINAL_VICTORY_STATIC_FADE_SECONDS = 3.4;
   const FINAL_VICTORY_STATIC_RESET_AT = 0.64;
+  const FINAL_TABS_STORY_STATIC_SECONDS = 3.35;
+  const FINAL_TABS_STORY_STATIC_SWITCH_AT = 2.05;
   const VICTORY_CRAWL_START_SECONDS = 3.6;
   const VICTORY_CRAWL_PIXELS_PER_SECOND = 18;
   const VICTORY_CRAWL_LINE_GAP = 42;
@@ -538,6 +541,7 @@
     postGiraffeHorrorTransition: null,
     level10RevealCutscene: null,
     shopReturnStaticTransition: null,
+    finalTabsStoryTransition: null,
     phaseTransition: null,
     modalTransitions: {},
     shopSlotTransitions: Array(shopSlots.length).fill(null),
@@ -1499,7 +1503,7 @@
     const tier = options.tier || (boss ? 4 : 2);
     const hpMultiplier = options.hpMultiplier || 1;
     const atkMultiplier = options.atkMultiplier || 1;
-    const maxHp = Math.round((boss ? 2100 : Math.round(340 + tier * 70)) * hpMultiplier);
+    const maxHp = Math.round((boss ? 2100 : Math.round(340 + tier * 70)) * hpMultiplier * FINAL_BOSS_HP_SCALE);
     const atk = Math.max(1, Math.round((boss ? 34 : Math.round(10 + tier * 3)) * atkMultiplier));
     const abilityPower = Math.max(1, Math.round((boss ? 38 : Math.round(10 + tier * 2)) * atkMultiplier));
     return {
@@ -5127,7 +5131,7 @@
       gameOver: state.hearts <= 0,
     });
     if (finalVictory) {
-      startFinalTabsStoryConversation();
+      startFinalTabsStoryTransition();
       clearActiveRunRoute();
     } else if (runEnded) {
       clearActiveRunRoute();
@@ -5783,6 +5787,25 @@
     return true;
   }
 
+  function startFinalTabsStoryTransition() {
+    if (state.finalTabsStoryTransition) return false;
+    state.finalTabsStoryTransition = {
+      elapsed: 0,
+      duration: FINAL_TABS_STORY_STATIC_SECONDS,
+      switchAt: FINAL_TABS_STORY_STATIC_SWITCH_AT,
+      screenChanged: false,
+      source: "finalCombatToConversation",
+      label: "SIGNAL HANDOFF",
+    };
+    state.pointer = null;
+    state.hover = null;
+    state.selected = null;
+    state.drag = null;
+    state.message = "Signal handoff";
+    playGameSfx("signal-static", { theme: "horror", volume: 0.68, rate: 0.86 });
+    return true;
+  }
+
   function startFinalTabsStoryConversation() {
     if (state.seenStoryMilestones.includes(FINAL_TABS_STORY_ID)) {
       return startFinalVictoryTransition();
@@ -6243,6 +6266,7 @@
     state.postGiraffeHorrorTransition = null;
     state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
+    state.finalTabsStoryTransition = null;
     state.phaseTransition = null;
     state.modalTransitions = {};
     state.shopSlotTransitions = Array(shopSlots.length).fill(null);
@@ -8356,6 +8380,7 @@
     updateMenuRebootTransition(dt);
     updateFinalVictoryTransition(dt);
     updateShopReturnStaticTransition(dt);
+    updateFinalTabsStoryTransition(dt);
     updatePostGiraffeHorrorTransition(dt);
     updateStoryConversationTransition(dt);
     updateStoryBeatTransition(dt);
@@ -8525,6 +8550,23 @@
     };
   }
 
+  function updateFinalTabsStoryTransition(dt) {
+    const transition = state.finalTabsStoryTransition;
+    if (!transition) return;
+    transition.elapsed = Math.min(transition.duration, (transition.elapsed || 0) + dt);
+    if (!transition.screenChanged && transition.elapsed >= (transition.switchAt || transition.duration * 0.6)) {
+      startFinalTabsStoryConversation();
+      state.finalTabsStoryTransition = {
+        ...transition,
+        screenChanged: true,
+      };
+      return;
+    }
+    if (transition.elapsed >= transition.duration) {
+      state.finalTabsStoryTransition = null;
+    }
+  }
+
   function updatePostGiraffeHorrorTransition(dt) {
     const transition = state.postGiraffeHorrorTransition;
     if (!transition) return;
@@ -8571,6 +8613,7 @@
     drawMenuRebootTransitionOverlay();
     drawFinalVictoryTransitionOverlay();
     drawShopReturnStaticTransitionOverlay();
+    drawFinalTabsStoryTransitionOverlay();
     drawOptionsMenuOverlay();
     drawTooltip();
   }
@@ -9509,6 +9552,64 @@
       return;
     }
     drawHorrorShopReturnStaticTransitionOverlay(transition);
+  }
+
+  function drawFinalTabsStoryTransitionOverlay() {
+    const transition = state.finalTabsStoryTransition;
+    if (!transition) return;
+    const visual = window.FoodAnimalsTransitionCanvas.shopReturnStaticVisual(transition, FINAL_TABS_STORY_STATIC_SECONDS);
+    const staticAlpha = visual.staticAlpha;
+    const fadeOut = visual.fadeOut;
+    const frame = Math.floor((state.idleTime + (transition.elapsed || 0)) * 42);
+    const labelAlpha = transition.screenChanged
+      ? Math.max(0, 1 - fadeOut * 1.4)
+      : clamp01(visual.fadeIn * 1.18);
+
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 3, 4, ${0.16 + staticAlpha * 0.58})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let y = 0; y < H; y += 3) {
+      const roll = glitchNoise(frame * 89 + y * 19);
+      const bandAlpha = (0.035 + roll * 0.12) * staticAlpha;
+      ctx.fillStyle = roll > 0.72
+        ? `rgba(255, 57, 86, ${bandAlpha * 0.76})`
+        : `rgba(70, 255, 99, ${bandAlpha})`;
+      ctx.fillRect(0, y, W, roll > 0.9 ? 2 : 1);
+    }
+    for (let i = 0; i < 520; i++) {
+      const x = Math.floor(glitchNoise(frame * 127 + i * 17) * W);
+      const y = Math.floor(glitchNoise(frame * 139 + i * 23) * H);
+      const size = glitchNoise(frame * 151 + i * 29) > 0.88 ? 2 : 1;
+      const speckAlpha = (0.07 + glitchNoise(frame * 163 + i * 31) * 0.28) * staticAlpha;
+      ctx.fillStyle = i % 6 === 0
+        ? `rgba(0, 229, 255, ${speckAlpha * 0.76})`
+        : `rgba(234, 255, 232, ${speckAlpha})`;
+      ctx.fillRect(x, y, size, size);
+    }
+    for (let i = 0; i < 8; i++) {
+      if (glitchNoise(frame * 181 + i * 37) < 0.22) continue;
+      const y = Math.floor(glitchNoise(frame * 193 + i * 41) * H);
+      const x = Math.floor((glitchNoise(frame * 211 + i * 43) - 0.44) * 68);
+      const h = 2 + Math.floor(glitchNoise(frame * 223 + i * 47) * 16);
+      ctx.fillStyle = `rgba(70, 255, 99, ${0.12 * staticAlpha})`;
+      ctx.fillRect(x, y, W + 136, h);
+    }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 0.22 + staticAlpha * 0.14;
+    ctx.fillStyle = "#000";
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+    if (labelAlpha > 0.01) {
+      ctx.globalAlpha = labelAlpha * 0.9;
+      ctx.textAlign = "center";
+      ctx.font = "950 15px Inter, sans-serif";
+      ctx.fillStyle = "#f0fff0";
+      ctx.fillText(transition.label || "SIGNAL HANDOFF", W / 2, H / 2 + 5);
+      ctx.font = "800 9px Inter, sans-serif";
+      ctx.fillStyle = "rgba(161, 255, 178, 0.72)";
+      ctx.fillText(transition.screenChanged ? "conversation link stabilizing" : "combat telemetry dissolving", W / 2, H / 2 + 24);
+    }
+    ctx.restore();
   }
 
   function drawHorrorShopReturnStaticTransitionOverlay(transition) {
@@ -18416,6 +18517,7 @@
 
   function hitTest(pos) {
     if (state.optionsMenu.open) return hitTestOptionsMenu(pos);
+    if (state.finalTabsStoryTransition) return null;
     if (state.activeStory) {
       if (pointInRect(pos.x, pos.y, storyBackButtonRect())) return { area: "story", action: "back" };
       if (pointInRect(pos.x, pos.y, storySkipButtonRect())) return { area: "story", action: "skip" };
@@ -18625,6 +18727,11 @@
       event.preventDefault();
       return;
     }
+    if (state.finalTabsStoryTransition) {
+      state.selected = null;
+      event.preventDefault();
+      return;
+    }
     if (state.activeStory) {
       applyStoryHit(hit);
       state.selected = null;
@@ -18794,6 +18901,11 @@
       event.preventDefault();
       return;
     }
+    if (state.finalTabsStoryTransition) {
+      state.hover = null;
+      event.preventDefault();
+      return;
+    }
     if (state.activeStory) {
       state.hover = null;
       event.preventDefault();
@@ -18844,6 +18956,10 @@
 
   function onWheel(event) {
     if (state.optionsMenu.open) {
+      event.preventDefault();
+      return;
+    }
+    if (state.finalTabsStoryTransition) {
       event.preventDefault();
       return;
     }
@@ -19068,6 +19184,14 @@
       event.preventDefault();
       return;
     }
+    if (state.finalTabsStoryTransition) {
+      if (event.key.toLowerCase() === "f") {
+        if (!document.fullscreenElement) canvas.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+      event.preventDefault();
+      return;
+    }
     if (state.activeStory) {
       if (event.key === "ArrowLeft" || event.key === "Backspace") {
         applyStoryHit({ area: "story", action: "back" });
@@ -19095,7 +19219,7 @@
       event.preventDefault();
       return;
     }
-    if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition || state.phase === "victoryCutscene") {
+    if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.finalTabsStoryTransition || state.phaseTransition || state.phase === "victoryCutscene") {
       if (event.key.toLowerCase() === "f") {
         if (!document.fullscreenElement) canvas.requestFullscreen?.();
         else document.exitFullscreen?.();
@@ -19358,6 +19482,16 @@
           style: state.shopReturnStaticTransition.theme === "cozy"
             ? "cozy-awning-food-particle-fade-out-switch-fade-in"
             : "fade-out-static-then-switch-to-shop-then-fade-in",
+        } : { active: false },
+        finalTabsStoryTransition: state.finalTabsStoryTransition ? {
+          active: true,
+          source: state.finalTabsStoryTransition.source || "finalCombatToConversation",
+          elapsed: Number((state.finalTabsStoryTransition.elapsed || 0).toFixed(2)),
+          duration: Number((state.finalTabsStoryTransition.duration || FINAL_TABS_STORY_STATIC_SECONDS).toFixed(2)),
+          switchAt: Number((state.finalTabsStoryTransition.switchAt || FINAL_TABS_STORY_STATIC_SWITCH_AT).toFixed(2)),
+          screenChanged: Boolean(state.finalTabsStoryTransition.screenChanged),
+          label: state.finalTabsStoryTransition.label || null,
+          style: "slow-static-handoff-from-final-combat-to-tabs-conversation",
         } : { active: false },
         phaseTransition: state.phaseTransition ? {
           active: true,
@@ -19987,6 +20121,7 @@
     state.postGiraffeHorrorTransition = null;
     state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
+    state.finalTabsStoryTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = {
       elapsed: victoryEpilogueRouteElapsed(),
@@ -20051,6 +20186,7 @@
     state.postGiraffeHorrorTransition = null;
     state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
+    state.finalTabsStoryTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
     state.activeStory = null;
@@ -20125,6 +20261,7 @@
     state.postGiraffeHorrorTransition = null;
     state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
+    state.finalTabsStoryTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
     state.activeStory = null;
@@ -20162,6 +20299,7 @@
     state.activeStory = null;
     state.postGiraffeHorrorTransition = null;
     state.shopReturnStaticTransition = null;
+    state.finalTabsStoryTransition = null;
     state.phaseTransition = null;
     state.seenStoryMilestones = Object.keys(STORY_MILESTONES);
     state.message = "Illusion failure";
@@ -20214,6 +20352,7 @@
     state.postGiraffeHorrorTransition = null;
     state.level10RevealCutscene = null;
     state.shopReturnStaticTransition = null;
+    state.finalTabsStoryTransition = null;
     state.finalVictoryTransition = null;
     state.victoryCutscene = null;
     state.activeStory = null;
