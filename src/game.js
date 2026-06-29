@@ -1070,6 +1070,20 @@
     return Math.max(0, baseCost - discount);
   }
 
+  function normalizedPurchaseGold(value) {
+    return window.FoodAnimalsShopEconomy.normalizedPurchaseGold(value);
+  }
+
+  function trackedPurchaseGold(entry) {
+    return normalizedPurchaseGold(entry?.purchaseGold);
+  }
+
+  function tagPurchasedEntry(entry, cost) {
+    const paid = normalizedPurchaseGold(cost);
+    if (entry && paid !== null) entry.purchaseGold = paid;
+    return entry;
+  }
+
   function availableItemDiscount() {
     if (state.itemDiscountUsed) return 0;
     return ownedItemMax("firstItemDiscountGold");
@@ -2599,6 +2613,7 @@
     const keeper = consumedRefs[0];
     consumedRefs.forEach((ref) => placeItemRef(ref, null));
     const evolved = makeItem(itemId, itemTier(tier) + 1);
+    evolved.purchaseGold = mergedItemPurchaseGold(consumedRefs.map((ref) => ref.item));
     placeItemRef(keeper, evolved);
     const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
     if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
@@ -2745,8 +2760,10 @@
 
     if (isItem(entry)) {
       const consumedRefs = itemMergeRefsWithIncoming(entry, targetArea, targetIndex);
+      const consumedItems = consumedRefs.map((ref) => ref.item);
       consumedRefs.forEach((ref) => placeItemRef(ref, null));
       const evolved = makeItem(entry.id, itemTier(entry.tier) + 1);
+      evolved.purchaseGold = mergedItemPurchaseGold(consumedItems, cost);
       const keeper = { area: targetArea, index: targetIndex };
       placeItemRef(keeper, evolved);
       const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
@@ -2762,6 +2779,7 @@
     }
 
     const consumedRefs = unitMergeRefsWithIncoming(entry, targetArea, targetIndex);
+    const consumedUnits = consumedRefs.map((ref) => ref.unit);
     const keeperUnit = state[targetArea][targetIndex];
     const keeperItem = mergeItemIsConsumed(keeperUnit.item) ? null : cloneItem(keeperUnit.item);
     const extraItems = consumedRefs
@@ -2771,6 +2789,7 @@
       .map((item) => cloneItem(item));
     consumedRefs.forEach((ref) => placeRef(ref, null));
     const evolved = makeUnit(entry.typeId, entry.tier + 1);
+    evolved.purchaseGold = mergedUnitPurchaseGold(consumedUnits, cost);
     evolved.item = keeperItem;
     refreshUnitItemStats(evolved);
     placeRef({ area: targetArea, index: targetIndex }, evolved);
@@ -2924,6 +2943,7 @@
     }
     state.gold -= cost;
     markItemDiscountUsed(entry, shopIndex, cost);
+    tagPurchasedEntry(entry, cost);
     state[targetArea][targetIndex] = entry;
     clearPurchasedShopSlot(shopIndex);
     state.message = isDrink(entry) && targetArea === "drinks" ? (realityBroken() ? `${displayItemShort(entry)} loaded` : `${entry.short} poured`) : `${entry.short} bought`;
@@ -2970,6 +2990,7 @@
     }
     state.gold -= cost;
     markItemDiscountUsed(item, shopIndex, cost);
+    tagPurchasedEntry(item, cost);
     unit.item = item;
     refreshUnitItemStats(unit);
     state.shop[shopIndex] = null;
@@ -3192,12 +3213,35 @@
   }
 
   function sellValue(unit) {
-    return (ECONOMY.sellValues[unit?.tier] || ECONOMY.sellValues[1]) + (unit?.item?.sellBonusGold || 0);
+    return window.FoodAnimalsShopEconomy.cappedSellValue(unitSellValueBase(unit), trackedPurchaseGold(unit));
   }
 
   function itemSellValue(item) {
-    const itemCopies = 3 ** (itemTier(item?.tier) - 1);
-    return Math.max(1, Math.floor((baseEntryCost(item) * itemCopies) / 2));
+    return window.FoodAnimalsShopEconomy.itemResaleValue(entryCost(item), trackedPurchaseGold(item));
+  }
+
+  function unitSellValueBase(unit) {
+    return (ECONOMY.sellValues[unit?.tier] || ECONOMY.sellValues[1]) + (unit?.item?.sellBonusGold || 0);
+  }
+
+  function unitMergePurchaseGoldContribution(unit) {
+    const paid = trackedPurchaseGold(unit);
+    return paid !== null ? paid : (ECONOMY.sellValues[unit?.tier] || ECONOMY.sellValues[1]);
+  }
+
+  function itemMergePurchaseGoldContribution(item, purchaseCostOverride = null) {
+    const paid = purchaseCostOverride !== null ? normalizedPurchaseGold(purchaseCostOverride) : trackedPurchaseGold(item);
+    return paid !== null ? paid : itemSellValue(item);
+  }
+
+  function mergedItemPurchaseGold(items, incomingCost = null) {
+    const storedTotal = items.reduce((total, item) => total + itemMergePurchaseGoldContribution(item), 0);
+    return storedTotal + (incomingCost === null ? 0 : itemMergePurchaseGoldContribution(null, incomingCost));
+  }
+
+  function mergedUnitPurchaseGold(units, incomingCost = null) {
+    const storedTotal = units.reduce((total, unit) => total + unitMergePurchaseGoldContribution(unit), 0);
+    return storedTotal + (incomingCost === null ? 0 : Math.max(0, Math.floor(Number(incomingCost) || 0)));
   }
 
   function sellOwnedUnit(area, index) {

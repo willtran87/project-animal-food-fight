@@ -23,7 +23,7 @@
       ["slot-layout", "h-76d58f44323e"],
       ["audio-settings", "h-38640bea81d8"],
       ["audio-runtime", "h-6aa53508d78a"],
-      ["shop-economy", "h-183f4f2df8b0"],
+      ["shop-economy", "h-664cf36bd87e"],
       ["shop-flow-runtime", "h-035a39a657cd"],
       ["card-canvas", "h-deef053d756b"],
       ["canvas-text", "h-178ce5053ce8"],
@@ -66,7 +66,7 @@
       ["economy-enemy-data", "h-8fd3c3963fc5"],
       ["rarity-shop-data", "h-6829c90dffeb"],
       ["status-effect-data", "h-93cdb2493911"],
-      ["game", "h-5bf6414165b0"],
+      ["game", "h-bed872fe0510"],
     ],
   });
 

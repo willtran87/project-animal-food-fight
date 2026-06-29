@@ -1,4 +1,25 @@
 (function () {
+  const ITEM_RESALE_RATE = 0.45;
+
+  function normalizedPurchaseGold(value) {
+    if (value === null || value === undefined || value === "") return null;
+    if (!Number.isFinite(Number(value))) return null;
+    return Math.max(0, Math.floor(Number(value)));
+  }
+
+  function cappedSellValue(baseValue, purchaseGold = null) {
+    const value = Math.max(0, Math.floor(Number(baseValue) || 0));
+    const paid = normalizedPurchaseGold(purchaseGold);
+    if (paid !== null) return Math.min(value, paid);
+    return Math.max(1, value);
+  }
+
+  function itemResaleValue(baseCost, purchaseGold = null, resaleRate = ITEM_RESALE_RATE) {
+    const cost = Math.max(0, Number(baseCost) || 0);
+    const rate = Math.max(0, Number(resaleRate) || 0);
+    return cappedSellValue(Math.floor(cost * rate), purchaseGold);
+  }
+
   function levelIndex(level, levels) {
     return Math.max(0, Math.min((levels?.length || 1) - 1, (level || 1) - 1));
   }
@@ -75,11 +96,14 @@
   }
 
   window.FoodAnimalsShopEconomy = {
+    cappedSellValue,
     chooseRarity,
     entryTierChances,
     itemChance,
+    itemResaleValue,
     levelChance,
     levelInfo,
+    normalizedPurchaseGold,
     rarityWeights,
     rollCost,
     rollEntryTier,

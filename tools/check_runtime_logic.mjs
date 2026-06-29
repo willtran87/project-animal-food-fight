@@ -35,6 +35,9 @@ const context = loadBrowserScripts(
 const shop = context.FoodAnimalsShopEconomy;
 assert.equal(shop.slotUnlockCost([0, 0, 30], 2), 30, "shop slot unlock cost should read by index");
 assert.equal(shop.upgradeCost([{ upgradeCost: 80 }], 1, 25), 55, "upgrade discount should reduce cost");
+assert.equal(shop.itemResaleValue(36), 16, "item resale should stay below the 50% sale floor");
+assert.equal(shop.itemResaleValue(18, 0), 0, "zero-cost sale purchases should not resell for profit");
+assert.equal(shop.cappedSellValue(45, 30), 30, "tracked purchases should cap resale at the paid cost");
 assert.equal(
   JSON.stringify(shop.entryTierChances(5)),
   JSON.stringify({ tier2: 0.25, tier3: 0.1 }),
