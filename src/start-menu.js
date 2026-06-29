@@ -15,6 +15,8 @@ const HORROR_MENU_UNLOCK_STORAGE_KEY = "harvest-friends:horror-menu-unlocked:v1"
 const HORROR_REVEALED_STORAGE_KEY = "harvest-friends:horror-revealed:v1";
 const GAME_COMPLETED_STORAGE_KEY = "harvest-friends:game-completed:v1";
 const DEFAULT_MENU_THEME = "cozy";
+const FINAL_VICTORY_ROUND = 20;
+const FINAL_TABS_STORY_ID = "level20FinalTabs";
 
 const state = {
   phase: "menu",
@@ -1417,12 +1419,34 @@ function activeRunTargetUrl(run) {
 }
 
 function getActiveRun() {
-  return window.FoodAnimalsRunStorage.activeRecord(ACTIVE_RUN_STORAGE_KEY);
+  const run = window.FoodAnimalsRunStorage.activeRecord(ACTIVE_RUN_STORAGE_KEY);
+  if (savedRunLooksCleared(run)) {
+    clearActiveRun();
+    return null;
+  }
+  return run;
 }
 
 function clearActiveRun() {
   window.FoodAnimalsRunStorage.clear(ACTIVE_RUN_STORAGE_KEY);
   state.activeRun = null;
+}
+
+function savedRunLooksCleared(run) {
+  const savedState = run?.snapshot?.state;
+  if (!savedState || typeof savedState !== "object") return false;
+  if (savedState.runConcluded === true || savedState.campaignCleared === true) return true;
+  if (Number(savedState.hearts) <= 0) return true;
+  if (savedState.phase === "victoryCutscene" || savedState.finalVictoryTransition || savedState.victoryCutscene) return true;
+  if (savedState.activeStory?.id === FINAL_TABS_STORY_ID) return true;
+  const clearedFinalResult =
+    savedState.runMode !== "infinite" &&
+    savedState.realityBroken === true &&
+    Number(savedState.round) >= FINAL_VICTORY_ROUND &&
+    Array.isArray(savedState.rewardChoices) &&
+    savedState.rewardChoices.length === 0 &&
+    (savedState.message === "Final objective secured" || savedState.message === "Hope returns");
+  return clearedFinalResult;
 }
 
 function purgeGameData() {

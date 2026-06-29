@@ -69,6 +69,12 @@ http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 ## Design Docs
 
 - `docs/RUNTIME_ARCHITECTURE.md` documents the static script-loading model, runtime module families, game-state flow, route harnesses, persistence notes, and verification map with Mermaid diagrams.
+- `docs/CONTENT_AUTHORING_GUIDE.md` is the practical checklist for adding units, items, stories, route harnesses, and browser-loaded scripts.
+- `docs/ROUTES_AND_TEST_HARNESSES.md` catalogs entry points, query params, route aliases, direct conversation pages, browser hooks, and route-check coverage.
+- `docs/SAVE_AND_PROGRESSION_CONTRACT.md` records local/session storage keys, active-run record shape, menu unlock flags, autosave behavior, and migration rules.
+- `docs/COMBAT_AND_ECONOMY_TUNING.md` maps economy, shop rarity, unit/item tuning, enemy generation, boss gates, and balance-report usage.
+- `docs/ASSET_NAMING_AND_VERSIONING.md` defines source/transparent/runtime directory roles, version suffix rules, sprite/particle/background naming, and validation expectations.
+- `docs/STORY_AND_CUTSCENE_PIPELINE.md` covers story milestone data, conversation routes, level 10 reveal cutscene wiring, and final victory epilogue routes.
 - `docs/ART_DIRECTION.md` defines the cozy sticker-sprite target, evolution-read rules, production pipeline, and current status of source-reference art.
 - `docs/HORROR_ARENA_MAPPING.md` maps cozy arena modifiers to their post-human automated food-infrastructure horror variants.
 - `assets/README.md` records root-level browser chrome and cross-entry asset provenance.
@@ -84,6 +90,10 @@ http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 - `src/app-scripts.js`
   - Static script loader and cache-token manifest for the `startMenu`, `openingVn`, and `game` script groups.
   - Keep dependency scripts before consumers, then run `npm run update:script-versions` after browser-loaded script edits.
+- `src/rng-runtime.js`
+  - Seed normalization and deterministic random stream helpers used by the game route; `?seed=<value>` reproduces shop/enemy/combat random choices.
+- `src/dynamic-asset-manifest.js`
+  - Explicit literal references for runtime-generated asset paths such as theme/id SFX, so asset audits can validate them.
 - `src/game.js`
   - Data: economy, UI constants, gameplay tuning, and runtime state setup.
   - State: prep, battle, result, reboot/static transitions, final victory transition, victory cutscene, codex, drag/drop, rewards, and combat ledger review state.

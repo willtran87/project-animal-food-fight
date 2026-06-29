@@ -3,10 +3,22 @@
 
   const FINAL_VICTORY_ROUND = 20;
   const FINAL_TABS_STORY_ID = "level20FinalTabs";
+  const CONVERSATION_COURSE_2_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-2-table-logic-v1.png";
+  const CONVERSATION_COURSE_3_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-3-supporting-material-v2.png";
+  const CONVERSATION_COURSE_5_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-5-pattern-doubt-v2.png";
+  const CONVERSATION_WAVE_10_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-10-tabs-unmasked-v1.png";
+  const CONVERSATION_WAVE_15_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-15-harvest-doctrine-v2.png";
+  const CONVERSATION_WAVE_20_FINAL_GATE_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-final-gate-v1.png";
+  const CONVERSATION_WAVE_20_OVERMIND_SPILL_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-overmind-pilot-spill-v1.png";
+  const CONVERSATION_WAVE_20_LAST_TABLE_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-last-table-v3.png";
   const FINAL_TABS_STORY = {
     id: FINAL_TABS_STORY_ID,
     title: "Wave 20 // Last Table",
     log: "Story beat: final conversation",
+    backgroundSrc: CONVERSATION_WAVE_20_LAST_TABLE_BG_SRC,
+    backgroundRanges: [
+      { from: 0, to: 14, backgroundSrc: CONVERSATION_WAVE_20_OVERMIND_SPILL_BG_SRC },
+    ],
     beats: [
       {
         speaker: "You",
@@ -62,6 +74,26 @@
         speaker: "You",
         tone: "shock",
         text: "Then what did we save?",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Listen past the wreckage. The locks are opening.",
+      },
+      {
+        speaker: "You",
+        tone: "shock",
+        text: "I hear doors.",
+      },
+      {
+        speaker: "T.A.B.S.",
+        tone: "glitch",
+        text: "Nursery sector pressure seals releasing. Unarmed herds remain mobile. Hatchling count uncertain, nonzero.",
+      },
+      {
+        speaker: "You",
+        tone: "concerned",
+        text: "Nonzero is the first honest mercy you have given me.",
       },
       {
         speaker: "T.A.B.S.",
@@ -205,6 +237,7 @@
       round: 2,
       title: "Course 2 // Table Logic",
       log: "Story beat: level 2 table logic",
+      backgroundSrc: CONVERSATION_COURSE_2_BG_SRC,
       beats: [
         {
           speaker: "You",
@@ -327,6 +360,7 @@
       round: 3,
       title: "Course 3 // Supporting Material",
       log: "Story beat: level 3 supporting material",
+      backgroundSrc: CONVERSATION_COURSE_3_BG_SRC,
       beats: [
         {
           speaker: "You",
@@ -419,6 +453,7 @@
       round: 5,
       title: "Course 5 // Pattern Doubt",
       log: "Story beat: level 5 concern",
+      backgroundSrc: CONVERSATION_COURSE_5_BG_SRC,
       beats: [
         {
           speaker: "You",
@@ -434,6 +469,26 @@
           speaker: "You",
           tone: "concerned",
           text: "The last group tried to run away from the arena. They were not unstable. They were afraid.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "One of them looked back before the door closed. Like it knew the room was deciding what it was worth.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "dismissive",
+          text: "Recognition behaviors can resemble pleading when observed through a guilty nervous system.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "That was not a no.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "It was a classification warning. Please do not make eye contact with classifications.",
         },
         {
           speaker: "Tabs",
@@ -453,6 +508,16 @@
         {
           speaker: "You",
           tone: "concerned",
+          text: "The doors opened before I chose. The room is not waiting for me anymore.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "dismissive",
+          text: "The Ark is learning your hesitation pattern. Automation reduces waste.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
           text: "I am not comforted by the cat comparing my job to garden shears.",
         },
         {
@@ -467,6 +532,7 @@
       requiresRealityBroken: true,
       title: "Wave 10 // T.A.B.S. Unmasked",
       log: "Story beat: level 10 reveal",
+      backgroundSrc: CONVERSATION_WAVE_10_BG_SRC,
       beats: [
         {
           speaker: "You",
@@ -610,6 +676,7 @@
       requiresRealityBroken: true,
       title: "Wave 15 // Harvest Doctrine",
       log: "Story beat: level 15 harvest doctrine",
+      backgroundSrc: CONVERSATION_WAVE_15_BG_SRC,
       beats: [
         {
           speaker: "You",
@@ -698,6 +765,7 @@
       requiresRealityBroken: true,
       title: "Wave 20 // Final Gate",
       log: "Story beat: final gate",
+      backgroundSrc: CONVERSATION_WAVE_20_FINAL_GATE_BG_SRC,
       beats: [
         {
           speaker: "T.A.B.S.",

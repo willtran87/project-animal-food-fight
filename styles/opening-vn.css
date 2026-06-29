@@ -644,6 +644,7 @@ button {
 .actual-highlight {
   position: absolute;
   display: block;
+  box-sizing: border-box;
   border: 5px solid rgba(255, 219, 73, 1);
   border-radius: 8px;
   opacity: 0;
@@ -654,80 +655,80 @@ button {
 }
 
 .actual-highlight.hud {
-  left: 0.2%;
-  top: 0.2%;
-  width: 37.8%;
-  height: 9.4%;
+  left: 0.586%;
+  top: 0;
+  width: 36.133%;
+  height: 9.375%;
 }
 
 .actual-highlight.shop {
-  left: 0.2%;
-  top: 9.3%;
-  width: 35.4%;
-  height: 27.5%;
+  left: 0;
+  top: 9.531%;
+  width: 34.863%;
+  height: 26.563%;
 }
 
 .actual-highlight.locked-slot {
-  left: 35.8%;
-  top: 9.3%;
-  width: 9.4%;
-  height: 27.5%;
+  left: 34.277%;
+  top: 9.531%;
+  width: 9.18%;
+  height: 26.563%;
 }
 
 .actual-highlight.stall {
-  left: 71.8%;
-  top: 10.6%;
-  width: 26.5%;
-  height: 30%;
+  left: 69.336%;
+  top: 7.813%;
+  width: 27.148%;
+  height: 34.063%;
 }
 
 .actual-highlight.freeze {
-  left: 5.3%;
-  top: 8.6%;
-  width: 2.6%;
-  height: 4.6%;
+  left: 6.055%;
+  top: 10.469%;
+  width: 28.32%;
+  height: 4.688%;
 }
 
 .actual-highlight.storage {
-  left: 0.9%;
-  top: 37.8%;
-  width: 17.4%;
-  height: 37.8%;
+  left: 3.125%;
+  top: 37.813%;
+  width: 15.039%;
+  height: 47.813%;
 }
 
 .actual-highlight.board {
-  left: 34.5%;
-  top: 38.7%;
-  width: 24.5%;
-  height: 38.5%;
+  left: 33.789%;
+  top: 37.813%;
+  width: 22.266%;
+  height: 35.625%;
 }
 
 .actual-highlight.traits {
-  left: 67.3%;
-  top: 39.8%;
-  width: 32.5%;
-  height: 36.5%;
+  left: 65.43%;
+  top: 38.125%;
+  width: 33.008%;
+  height: 44.688%;
 }
 
 .actual-highlight.upgrade {
-  left: 65.7%;
-  top: 0.4%;
-  width: 10.9%;
-  height: 7.8%;
+  left: 62.891%;
+  top: 0;
+  width: 12.109%;
+  height: 10%;
 }
 
 .actual-highlight.reroll {
-  left: 78.9%;
-  top: 0.4%;
-  width: 10.9%;
-  height: 7.8%;
+  left: 75.098%;
+  top: 0;
+  width: 12.109%;
+  height: 10%;
 }
 
 .actual-highlight.battle {
-  left: 92.1%;
-  top: 0.4%;
-  width: 7.6%;
-  height: 7.8%;
+  left: 87.305%;
+  top: 0;
+  width: 12.109%;
+  height: 10%;
 }
 
 .vn-stage[data-tutorial-step="shop-intro"] .tutorial-shop {
@@ -759,12 +760,10 @@ button {
   0%,
   100% {
     filter: brightness(1) saturate(1);
-    transform: scale(1);
   }
 
   50% {
     filter: brightness(1.18) saturate(1.18);
-    transform: scale(1.018);
   }
 }
 

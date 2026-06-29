@@ -87,7 +87,7 @@ The codebase uses classic script globals rather than imports. Most helper files 
 | Data | `unit-data.js`, `item-data.js`, `story-data.js`, `copy-data.js`, `presentation-data.js`, `trait-arena-data.js`, `economy-enemy-data.js`, `rarity-shop-data.js`, `status-effect-data.js` | Static catalogs, tuning, copy, sprite paths, story beats, and layout constants. |
 | Runtime rules | `shop-flow-runtime.js`, `shop-transaction-runtime.js`, `merge-runtime.js`, `battle-flow-runtime.js`, `battle-ability-runtime.js`, `battle-item-runtime.js`, `enemy-team-runtime.js`, `reward-runtime.js`, `status-runtime.js`, `run-storage.js` | Pure or mostly pure decisions used by `game.js` and unit-tested by `npm run check:logic`. |
 | Canvas drawing | `canvas-ui.js`, `canvas-text.js`, `card-canvas.js`, `battle-canvas.js`, `slot-canvas.js`, `codex-canvas.js`, `combat-ledger-canvas.js`, `transition-canvas.js`, `story-canvas.js`, `reality-fx-canvas.js`, `selected-panel-canvas.js` | Shared drawing, layout, hit geometry, and animation helpers for the single canvas game surface. |
-| Browser services | `audio-settings.js`, `audio-runtime.js`, `runtime-assets.js`, `route-harness.js`, `interaction-runtime.js`, `drag-drop-runtime.js`, `options-menu-runtime.js`, `food-lob-runtime.js`, `field-guide-runtime.js` | Local storage, audio, asset caching, route params, input helpers, DOM effects, and test harness support. |
+| Browser services | `audio-settings.js`, `audio-runtime.js`, `runtime-assets.js`, `rng-runtime.js`, `dynamic-asset-manifest.js`, `route-harness.js`, `interaction-runtime.js`, `drag-drop-runtime.js`, `options-menu-runtime.js`, `food-lob-runtime.js`, `field-guide-runtime.js` | Local storage, audio, seeded randomness, dynamic asset manifests, asset caching, route params, input helpers, DOM effects, and test harness support. |
 
 ## Game State Flow
 
@@ -209,6 +209,7 @@ Primary routes:
 Common query params:
 
 - `?smoke=basic` or `?smoke=core-loop` seeds deterministic game state.
+- `?seed=<value>` reproduces the same shop, reward, enemy, combat, and particle random stream for debugging.
 - `?theme=cozy` or `?theme=horror` requests a presentation theme.
 - `?reality=cozy` or `?reality=horror` forces the reality layer.
 - `?screen=conversation&story=level2|level3|level5|level10|level15|level20PreFinal|level20FinalTabs` opens specific in-game conversation milestones.

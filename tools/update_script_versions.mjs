@@ -12,6 +12,7 @@ const htmlPaths = [
   path.join(repoRoot, "local-test-pages", "opening-vn.html"),
   path.join(repoRoot, "local-test-pages", "start-menu.html"),
 ];
+const checkOnly = process.argv.includes("--check");
 
 function hashContent(content) {
   return `h-${crypto.createHash("sha256").update(content).digest("hex").slice(0, 12)}`;
@@ -35,12 +36,35 @@ function replaceLoaderVersions(source, loaderVersion) {
 
 const originalAppScripts = fs.readFileSync(appScriptsPath, "utf8");
 const updatedAppScripts = replaceScriptEntryVersions(originalAppScripts);
-fs.writeFileSync(appScriptsPath, updatedAppScripts);
-
 const loaderVersion = hashContent(updatedAppScripts);
-for (const htmlPath of htmlPaths) {
+
+const pendingUpdates = [];
+if (updatedAppScripts !== originalAppScripts) {
+  pendingUpdates.push(path.relative(repoRoot, appScriptsPath));
+}
+
+const htmlUpdates = htmlPaths.map((htmlPath) => {
   const originalHtml = fs.readFileSync(htmlPath, "utf8");
-  fs.writeFileSync(htmlPath, replaceLoaderVersions(originalHtml, loaderVersion));
+  const updatedHtml = replaceLoaderVersions(originalHtml, loaderVersion);
+  if (updatedHtml !== originalHtml) pendingUpdates.push(path.relative(repoRoot, htmlPath));
+  return { htmlPath, updatedHtml };
+});
+
+if (checkOnly) {
+  if (pendingUpdates.length) {
+    console.error("Script cache versions are stale:");
+    pendingUpdates.forEach((filePath) => console.error(`- ${filePath}`));
+    console.error("Run `npm run update:script-versions` to refresh them.");
+    process.exit(1);
+  }
+  console.log(`Script cache versions are current (${loaderVersion}).`);
+  process.exit(0);
+}
+
+fs.writeFileSync(appScriptsPath, updatedAppScripts);
+for (const htmlPath of htmlPaths) {
+  const update = htmlUpdates.find((entry) => entry.htmlPath === htmlPath);
+  fs.writeFileSync(htmlPath, update.updatedHtml);
 }
 
 console.log(`Updated script cache versions with ${loaderVersion}.`);

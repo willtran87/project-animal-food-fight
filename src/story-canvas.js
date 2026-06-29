@@ -36,7 +36,7 @@
       },
       progress: {
         x: panel.x + panel.w - 67 * scale,
-        y: panel.y + 25 * scale,
+        y: panel.y + 16 * scale,
         w: 46 * scale,
         h: 21 * scale,
       },

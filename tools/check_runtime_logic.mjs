@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createBrowserLikeContext, loadBrowserScripts } from "./browser_script_loader.mjs";
@@ -14,7 +15,11 @@ function sequenceRandom(values) {
 const context = loadBrowserScripts(
   repoRoot,
   [
+    "src/dynamic-asset-manifest.js",
+    "src/rng-runtime.js",
+    "src/presentation-data.js",
     "src/shop-economy.js",
+    "src/catalog-runtime.js",
     "src/shop-flow-runtime.js",
     "src/run-storage.js",
     "src/slot-layout.js",
@@ -33,6 +38,55 @@ const context = loadBrowserScripts(
 );
 
 const shop = context.FoodAnimalsShopEconomy;
+const rng = context.FoodAnimalsRngRuntime;
+const manifest = context.FoodAnimalsDynamicAssetManifest;
+const catalog = context.FoodAnimalsCatalogRuntime;
+const presentation = context.FoodAnimalsPresentationData;
+assert.ok(rng, "FoodAnimalsRngRuntime should load");
+assert.equal(rng.normalizeSeed("  abc  "), "abc", "rng seed normalization should trim explicit seeds");
+const firstRng = rng.createState("fixed-seed");
+const firstValues = [rng.next(firstRng), rng.next(firstRng), rng.next(firstRng)];
+const replayRng = rng.createState("fixed-seed");
+assert.deepEqual(
+  [rng.next(replayRng), rng.next(replayRng), rng.next(replayRng)],
+  firstValues,
+  "same seed should replay the same random stream",
+);
+const resumedRng = rng.createState("fixed-seed", 2);
+assert.equal(rng.next(resumedRng), firstValues[2], "rng call count should resume the stream exactly");
+assert.ok(manifest, "FoodAnimalsDynamicAssetManifest should load");
+assert.ok(catalog, "FoodAnimalsCatalogRuntime should load");
+assert.ok(presentation, "FoodAnimalsPresentationData should load");
+assert.equal(
+  manifest.audioSfx.length,
+  manifest.expectedAudioSfxCount,
+  "dynamic SFX manifest should enumerate each theme/id path once",
+);
+assert.deepEqual(
+  manifest.gameSfxIds,
+  presentation.GAME_SFX_IDS,
+  "dynamic SFX manifest should stay aligned with presentation game SFX ids",
+);
+for (const relPath of manifest.audioSfx) {
+  assert.ok(fs.existsSync(path.join(repoRoot, relPath)), `dynamic SFX manifest path should exist: ${relPath}`);
+}
+const seededUnit = catalog.makeUnitData(
+  {
+    id: "seed_test",
+    name: "Seed Test",
+    forms: [{ name: "Seed Test", short: "Seed" }],
+    hp: 10,
+    atk: 4,
+    speed: 1,
+  },
+  1,
+  99,
+  {
+    random: () => 0.5,
+    tierScaling: [{}, { hp: 1, atk: 1, ability: 1, speed: 1 }],
+  },
+);
+assert.equal(seededUnit.cooldown, 0.125, "unit creation should accept injected deterministic random");
 assert.equal(shop.slotUnlockCost([0, 0, 30], 2), 30, "shop slot unlock cost should read by index");
 assert.equal(shop.upgradeCost([{ upgradeCost: 80 }], 1, 25), 55, "upgrade discount should reduce cost");
 assert.equal(shop.itemResaleValue(36), 16, "item resale should stay below the 50% sale floor");
@@ -70,6 +124,27 @@ assert.deepEqual(
 assert.equal(shopFlow.unlockDecision({ phase: "prep", index: 2, slotCount: 8, unlocked: true, gold: 99, cost: 30 }).reason, "alreadyOpen");
 assert.equal(shopFlow.upgradeDecision({ phase: "prep", cost: null, gold: 999 }).reason, "maxed");
 assert.equal(shopFlow.freezeDecision({ phase: "prep", unlocked: true, hasEntry: false }).reason, "empty");
+let frozenSaleRolls = 0;
+assert.equal(
+  shopFlow.shopSaleState({
+    hasEntry: true,
+    frozen: true,
+    previousSale: false,
+    rollSale: () => {
+      frozenSaleRolls += 1;
+      return true;
+    },
+  }),
+  false,
+  "locked full-price shop entries should not become sale entries on refresh",
+);
+assert.equal(frozenSaleRolls, 0, "locked shop sale state should not roll while preserving price");
+assert.equal(
+  shopFlow.shopSaleState({ hasEntry: true, frozen: true, previousSale: true, rollSale: false }),
+  true,
+  "locked sale shop entries should keep their sale price on refresh",
+);
+assert.equal(shopFlow.shopSaleState({ hasEntry: true, frozen: false, rollSale: true }), true, "unlocked shop entries should roll sale state");
 assert.equal(
   shopFlow.buyTargetDecision({
     phase: "prep",

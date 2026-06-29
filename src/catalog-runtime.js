@@ -52,6 +52,7 @@
     const maxHp = Math.round((base?.hp || 1) * scaling.hp * hpScale);
     const atk = Math.round((base?.atk || 1) * scaling.atk);
     const abilityPower = Math.max(1, Math.round((base?.atk || 1) * scaling.ability));
+    const random = options.random || Math.random;
     return {
       kind: "unit",
       uid,
@@ -75,7 +76,7 @@
       atk,
       abilityPower,
       speed: Math.max(0.28, (base.speed || 1) * scaling.speed),
-      cooldown: Math.random() * 0.25,
+      cooldown: random() * 0.25,
       targetUid: null,
       shield: 0,
       x: 0,

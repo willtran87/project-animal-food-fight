@@ -46,6 +46,13 @@
     return { ok: true };
   }
 
+  function shopSaleState(options = {}) {
+    if (!options.hasEntry) return false;
+    if (options.frozen) return Boolean(options.previousSale);
+    if (typeof options.rollSale === "function") return Boolean(options.rollSale());
+    return Boolean(options.rollSale);
+  }
+
   function buyTargetDecision(options = {}) {
     if (options.phase !== "prep") return { ok: false, reason: "wrongPhase" };
     if (!options.unlocked) return { ok: false, reason: "locked" };
@@ -79,6 +86,7 @@
     buyTargetDecision,
     freezeDecision,
     rerollDecision,
+    shopSaleState,
     sellOwnedDecision,
     unlockDecision,
     upgradeDecision,

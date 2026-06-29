@@ -16,6 +16,33 @@
   const GAME_COMPLETED_STORAGE_KEY = "harvest-friends:game-completed:v1";
   const MUSIC_SETTINGS_STORAGE_KEY = window.FoodAnimalsAudioSettings?.STORAGE_KEY || "harvest-friends:start-menu-settings:v1";
   const GAME_MUSIC_MAX_VOLUME = 0.85;
+  const rngRuntime = window.FoodAnimalsRngRuntime;
+  if (!rngRuntime) throw new Error("FoodAnimalsRngRuntime must load before game.js");
+
+  function initialRunSeed() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return rngRuntime.normalizeSeed(params.get("seed") || rngRuntime.randomSeed());
+    } catch {
+      return rngRuntime.randomSeed();
+    }
+  }
+
+  let rngState = rngRuntime.createState(initialRunSeed());
+  let stateRef = null;
+
+  function syncRngState() {
+    if (!stateRef) return;
+    stateRef.runSeed = rngState.seed;
+    stateRef.rngCalls = rngState.calls;
+  }
+
+  function random() {
+    const value = rngRuntime.next(rngState);
+    syncRngState();
+    return value;
+  }
+
   const presentationData = window.FoodAnimalsPresentationData;
   if (!presentationData) throw new Error("FoodAnimalsPresentationData must load before game.js");
   const {
@@ -175,7 +202,7 @@
   const VICTORY_CRAWL_PIXELS_PER_SECOND = 18;
   const VICTORY_CRAWL_LINE_GAP = 42;
   const VICTORY_CRAWL_HOLD_SECONDS = 6;
-  const VICTORY_IDEAL_FADE_START_SECONDS = 40;
+  const VICTORY_IDEAL_FADE_START_SECONDS = 50;
   const VICTORY_IDEAL_FADE_SECONDS = 2.4;
   const STORY_TRANSITION_SECONDS = 0.36;
   const STORY_BEAT_TRANSITION_SECONDS = 0.18;
@@ -471,6 +498,8 @@
     battle: null,
     postCombatBattle: null,
     arenaId: randomArenaId(),
+    runSeed: rngState.seed,
+    rngCalls: rngState.calls,
     keepArenaNextRound: false,
     arenaHoldNotice: null,
     arenaScout: null,
@@ -516,6 +545,7 @@
     menuRebootTransition: null,
     finalVictoryTransition: null,
     victoryCutscene: null,
+    runConcluded: false,
     activeStory: null,
     seenStoryMilestones: [],
     idleTime: 0,
@@ -523,6 +553,7 @@
     particles: [],
     log: [],
   };
+  stateRef = state;
   let activeRunAutosaveTimer = 0;
   let lastActiveRunSaveJson = "";
 
@@ -702,6 +733,8 @@
     "battle",
     "postCombatBattle",
     "arenaId",
+    "runSeed",
+    "rngCalls",
     "keepArenaNextRound",
     "arenaHoldNotice",
     "arenaScout",
@@ -739,11 +772,14 @@
   }
 
   function createRunSnapshot() {
+    syncRngState();
     const result = state.lastIncome?.result || state.lastCombatLedger?.result || state.postCombatBattle?.result || null;
     const heartDamage = Math.max(0, Math.round(state.lastCombatLedger?.heartDamage || 0));
     const snapshot = {
       version: 1,
       unitSeq,
+      runSeed: rngState.seed,
+      rngCalls: rngState.calls,
       savedAt: new Date().toISOString(),
       state: {},
     };
@@ -797,6 +833,8 @@
     state.tooltipTargets = [];
     state.drag = null;
     if (state.codexPreview) state.codexPreview.dragging = false;
+    rngState = rngRuntime.createState(state.runSeed || snapshot.runSeed || rngState.seed, state.rngCalls);
+    syncRngState();
     unitSeq = Math.max(Number(snapshot.unitSeq) || 1, maxUidInValue(restored) + 1);
     state.message = state.message || "Run loaded";
     ensureEnemyPreview();
@@ -817,7 +855,7 @@
   }
 
   function writeActiveRunRecord(snapshot = null) {
-    if (!canUseLocalStorage() || !shouldMarkActiveRunRoute()) return false;
+    if (state.runConcluded || !canUseLocalStorage() || !shouldMarkActiveRunRoute()) return false;
     const now = new Date().toISOString();
     const previous = window.FoodAnimalsRunStorage.read(ACTIVE_RUN_STORAGE_KEY);
     const runSnapshot = snapshot || previous?.snapshot || null;
@@ -837,6 +875,7 @@
   }
 
   function saveCurrentRun(options = {}) {
+    if (state.runConcluded) return false;
     if (state.menuRebootTransition) return false;
     let snapshot = null;
     try {
@@ -865,6 +904,7 @@
   }
 
   function updateRunAutosave(dt) {
+    if (state.runConcluded) return;
     if (!shouldMarkActiveRunRoute()) return;
     activeRunAutosaveTimer += dt;
     if (activeRunAutosaveTimer < ACTIVE_RUN_AUTOSAVE_SECONDS) return;
@@ -886,8 +926,10 @@
   }
 
   function markGameCompleted() {
+    state.runConcluded = true;
     if (!canUseLocalStorage()) return false;
     try {
+      clearActiveRunRoute();
       window.localStorage.setItem(GAME_COMPLETED_STORAGE_KEY, "1");
       return true;
     } catch {
@@ -903,6 +945,11 @@
     } catch {
       return false;
     }
+  }
+
+  function markRunConcluded() {
+    state.runConcluded = true;
+    clearActiveRunRoute();
   }
 
   function mainMenuUrl() {
@@ -973,7 +1020,7 @@
   let unitSeq = 1;
 
   function randInt(max) {
-    return Math.floor(Math.random() * max);
+    return Math.floor(random() * max);
   }
 
   function isItem(entry) {
@@ -1054,7 +1101,7 @@
   }
 
   function rollShopSlotSale(index, entry) {
-    return Boolean(isShopSlotUnlocked(index) && entry && Math.random() < currentShopSaleChance());
+    return Boolean(isShopSlotUnlocked(index) && entry && random() < currentShopSaleChance());
   }
 
   function saleAdjustedEntryCost(entry, shopIndex = null) {
@@ -1407,6 +1454,7 @@
     return window.FoodAnimalsCatalogRuntime.makeUnitData(base, tier, unitSeq++, {
       globalHpScale: GLOBAL_HP_SCALE,
       tierScaling: TIER_SCALING,
+      random,
     });
   }
 
@@ -1449,7 +1497,7 @@
       atk,
       abilityPower,
       speed: boss ? 1.36 : Math.max(0.74, 1.16 - tier * 0.04),
-      cooldown: boss ? 0.42 : 0.24 + Math.random() * 0.2,
+      cooldown: boss ? 0.42 : 0.24 + random() * 0.2,
       targetUid: null,
       shield: boss ? 180 : 0,
       x: 0,
@@ -1492,7 +1540,7 @@
       abilityPower: 20,
       baseAbilityPower: 20,
       speed: 1.04,
-      cooldown: 0.36 + Math.random() * 0.18,
+      cooldown: 0.36 + random() * 0.18,
       targetUid: null,
       shield: 36,
       x: 0,
@@ -1552,7 +1600,7 @@
   }
 
   function rollShopEntryTier(level = state.shopLevel) {
-    return window.FoodAnimalsShopEconomy.rollEntryTier(level);
+    return window.FoodAnimalsShopEconomy.rollEntryTier(level, random);
   }
 
   function themedAsset(cozySrc, horrorSrc, options = {}) {
@@ -1983,14 +2031,14 @@
     const sameLineChance = ownedItemMax("sameLineShopChancePct") + ownedAbilityMax("copy_luck", fortuneShopChance);
     const ownedTypes = [...new Set(allOwnedRefs().map((ref) => ref.unit.typeId))];
     const tier = rollShopEntryTier();
-    if (ownedTypes.length && Math.random() < sameLineChance) {
+    if (ownedTypes.length && random() < sameLineChance) {
       return makeUnit(ownedTypes[randInt(ownedTypes.length)], tier);
     }
     const rarity = chooseShopRarity();
     const pool = CATALOG.filter((unit) => (unit.rarity || "common") === rarity);
     const scoutTraits = state.arenaScout?.shopsRemaining > 0 ? state.arenaScout.traitIds || [] : [];
     const scoutPool = scoutTraits.length ? pool.filter((unit) => unit.traits?.some((traitId) => scoutTraits.includes(traitId))) : [];
-    if (scoutPool.length && Math.random() < 0.75) {
+    if (scoutPool.length && random() < 0.75) {
       return makeUnit(scoutPool[randInt(scoutPool.length)].id, tier);
     }
     const available = pool.length ? pool : CATALOG.filter((unit) => (unit.rarity || "common") === "common");
@@ -1999,9 +2047,9 @@
 
   function shopEntry() {
     const drinkChance = currentDrinkShopChance();
-    if (Math.random() < drinkChance) return shopDrink();
+    if (random() < drinkChance) return shopDrink();
     const remainingChance = Math.max(0.0001, 1 - drinkChance);
-    if (Math.random() < Math.min(1, currentToppingShopChance() / remainingChance)) return shopTopping();
+    if (random() < Math.min(1, currentToppingShopChance() / remainingChance)) return shopTopping();
     return shopUnit();
   }
 
@@ -2028,7 +2076,7 @@
 
   function weightedItemFrom(available, tier = 1) {
     const total = available.reduce((sum, item) => sum + (item.shopWeight || 1), 0);
-    let roll = Math.random() * total;
+    let roll = random() * total;
     for (const item of available) {
       roll -= item.shopWeight || 1;
       if (roll <= 0) return makeItem(item.id, tier);
@@ -2037,7 +2085,7 @@
   }
 
   function chooseShopRarity() {
-    return window.FoodAnimalsShopEconomy.chooseRarity(RARITIES, currentShopRarityWeights());
+    return window.FoodAnimalsShopEconomy.chooseRarity(RARITIES, currentShopRarityWeights(), random);
   }
 
   function rarityInfo(rarityId) {
@@ -2381,9 +2429,13 @@
     const previousSales = [...state.shopSales];
     state.shop = shopSlots.map((_, index) => shopEntryForSlot(index));
     state.shopSales = shopSlots.map((_, index) => {
-      if (!shopEntryAt(index)) return false;
-      if (state.shopFrozen[index] && previousSales[index]) return true;
-      return rollShopSlotSale(index, shopEntryAt(index));
+      const entry = shopEntryAt(index);
+      return window.FoodAnimalsShopFlowRuntime.shopSaleState({
+        hasEntry: Boolean(entry),
+        frozen: state.shopFrozen[index],
+        previousSale: previousSales[index],
+        rollSale: () => rollShopSlotSale(index, entry),
+      });
     });
     state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(frozen && shopEntryAt(index)));
     if (state.arenaScout?.shopsRemaining > 0) {
@@ -2494,9 +2546,13 @@
     const previousSales = [...state.shopSales];
     state.shop = shopSlots.map((_, index) => shopEntryForSlot(index));
     state.shopSales = shopSlots.map((_, index) => {
-      if (!shopEntryAt(index)) return false;
-      if (state.shopFrozen[index] && previousSales[index]) return true;
-      return rollShopSlotSale(index, shopEntryAt(index));
+      const entry = shopEntryAt(index);
+      return window.FoodAnimalsShopFlowRuntime.shopSaleState({
+        hasEntry: Boolean(entry),
+        frozen: state.shopFrozen[index],
+        previousSale: previousSales[index],
+        rollSale: () => rollShopSlotSale(index, entry),
+      });
     });
     state.shopFrozen = state.shopFrozen.map((frozen, index) => Boolean(frozen && shopEntryAt(index)));
     state.message = `Odds up +1 ${rollTerm({ lower: true })}`;
@@ -3630,7 +3686,7 @@
       secondaryArchetypeId: "brainstem_guard",
       secondaryArchetypeLabel: "Brainstem Guard",
       themeTrait: null,
-      count: 6,
+      count: 8,
       rarityWeights: { common: 0, uncommon: 0, rare: 0, epic: 100 },
       targetExtraTier: 0,
       tier3Chance: 0,
@@ -3668,47 +3724,118 @@
       archetypeLabel: `Banana Split Boss + ${plan.archetypeLabel}`,
       giraffeBoss: true,
       bossTypeId: GIRAFFE_BOSS_TYPE_ID,
-      bossSlot: randomEnemyFormationSlots(1)[0] ?? GIRAFFE_BOSS_SLOT,
+      bossSlot: GIRAFFE_BOSS_SLOT,
       bossHpMultiplier: 1,
       bossAtkMultiplier: 1,
     };
   }
 
   function makeStandardEnemyPlan(round = state.round) {
-    const primaryArchetype = chooseEnemyArchetype(round);
-    const secondaryArchetype = chooseEnemySecondaryArchetype(round, primaryArchetype);
-    const archetype = blendEnemyArchetypes(primaryArchetype, secondaryArchetype);
-    const themeTrait = Math.random() < (archetype.traitFocus || 0) ? chooseEnemyThemeTrait() : null;
-    const baseCount = Math.min(boardSlots.length, 2 + Math.floor(round / 2));
-    const countBias = stochasticRound(archetype.countBias || 0);
-    const count = Math.max(1, Math.min(boardSlots.length, baseCount + countBias + enemyCountJitter(round)));
-    const rarityWeights = enemyRarityWeights(round, archetype);
+    const rarityWeights = enemyEconomyRarityWeights(round);
     const adaptivePressure = enemyAdaptivePressure(round);
     const latePressure = enemyLatePressure(round);
     const shopPowerStatBonus = enemyShopPowerStatBonus(round);
+    const economyJitter = enemyEconomyBudgetJitter(round);
+    const post20Pressure = enemyPost20EconomyPressure(round);
+    const budget = enemyEconomyBudget(round, adaptivePressure, economyJitter);
+    const minimumUnitCount = Math.min(boardSlots.length, 2 + Math.floor(Math.max(0, round - 1) / 4));
+    const supportBudgetShare = clamp(0.08 + round * 0.014 + enemyShopPowerTierBonus(round) * 0.8 + Math.min(0.06, latePressure * 0.008), 0.1, 0.32);
+    const unitBudgetShare = 1 - supportBudgetShare;
+    const unitBudget = Math.min(budget, Math.max(Math.round(budget * unitBudgetShare), minimumUnitCount * (ECONOMY.unitCost + 7)));
+    const supportBudget = Math.max(0, budget - unitBudget);
+    const drinkBudgetShare = clamp(0.43 + round * 0.01, 0.44, 0.64);
     return {
       round,
-      archetypeId: archetype.id,
-      archetypeLabel: archetype.label,
-      primaryArchetypeId: primaryArchetype.id,
-      primaryArchetypeLabel: primaryArchetype.label,
-      secondaryArchetypeId: secondaryArchetype.id,
-      secondaryArchetypeLabel: secondaryArchetype.label,
-      themeTrait,
-      count,
+      archetypeId: "economy_random",
+      archetypeLabel: "Economy Random",
+      primaryArchetypeId: "economy_random",
+      primaryArchetypeLabel: "Economy Random",
+      secondaryArchetypeId: null,
+      secondaryArchetypeLabel: null,
+      themeTrait: null,
+      count: 0,
+      minimumUnitCount,
       rarityWeights,
-      targetExtraTier: enemyTargetExtraTier(round, archetype, adaptivePressure),
-      tier3Chance: enemyTier3Chance(round, archetype, adaptivePressure),
-      tier4Chance: enemyTier4Chance(round, archetype, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + latePressure * 0.011 + adaptivePressure * 0.145 + shopPowerStatBonus + (archetype.statBias || 0)),
-      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + latePressure * 0.007 + adaptivePressure * 0.11 + shopPowerStatBonus + (archetype.statBias || 0)),
-      toppingCount: enemySupportCount(round, count, 3, archetype.itemBias || 0),
-      drinkCount: enemySupportCount(round, drinkSlots.length, 4, archetype.drinkBias || 0),
+      expectedPlayerPower: Number(expectedPlayerPowerForRound(round).toFixed(2)),
+      targetPlayerPower: Number(enemyEconomyTargetPower(round).toFixed(2)),
+      targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
+      tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
+      tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
+      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + latePressure * 0.011 + adaptivePressure * 0.145 + shopPowerStatBonus),
+      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + latePressure * 0.007 + adaptivePressure * 0.11 + shopPowerStatBonus),
+      economyBudget: budget,
+      economyJitter,
+      post20Pressure,
+      unitBudget,
+      toppingBudget: Math.max(0, Math.round(supportBudget * (1 - drinkBudgetShare))),
+      drinkBudget: Math.max(0, Math.round(supportBudget * drinkBudgetShare)),
+      unitSpend: 0,
+      toppingSpend: 0,
+      drinkSpend: 0,
+      positionSpend: 0,
+      toppingCount: 0,
+      drinkCount: 0,
       adaptivePressure,
       shopPowerStatBonus,
       shopPowerTierBonus: enemyShopPowerTierBonus(round),
       shopPowerTier3Bonus: enemyShopPowerTier3Bonus(round),
     };
+  }
+
+  function enemyEconomyBudget(round, adaptivePressure = enemyAdaptivePressure(round), jitter = enemyEconomyBudgetJitter(round)) {
+    const latePressure = enemyLatePressure(round);
+    const targetPower = enemyEconomyTargetPower(round);
+    const post20Pressure = enemyPost20EconomyPressure(round);
+    const base = 10
+      + Math.max(0, targetPower - 1) * 14.5
+      + round * 8
+      + Math.pow(Math.max(1, round), 1.05) * 1.4
+      + post20Pressure * 42;
+    const shopPower = 1 + enemyShopPowerStatBonus(round) + enemyShopPowerTierBonus(round);
+    const pressure = 1 + adaptivePressure * 1.15 + latePressure * 0.025 + post20Pressure * 0.055;
+    return Math.max(ECONOMY.unitCost, Math.round(base * shopPower * pressure * jitter));
+  }
+
+  function enemyEconomyBudgetJitter(round) {
+    const over20 = Math.max(0, round - FINAL_VICTORY_ROUND);
+    const range = Math.min(0.14, 0.06 + over20 * 0.006);
+    return 1 + (random() * 2 - 1) * range;
+  }
+
+  function enemyPost20EconomyPressure(round) {
+    const over20 = Math.max(0, round - FINAL_VICTORY_ROUND);
+    return over20 <= 0 ? 0 : over20 + Math.pow(over20, 1.35) * 0.62;
+  }
+
+  function enemyEconomyTargetPower(round) {
+    const expectedPower = expectedPlayerPowerForRound(round);
+    const actualPower = playerBoardPowerScore();
+    return expectedPower + Math.max(0, actualPower - expectedPower) * 0.55;
+  }
+
+  function enemyEconomyRarityWeights(round) {
+    const shopLevel = clamp(1 + Math.floor((round - 1) / 3), 1, MAX_SHOP_LEVEL);
+    const weights = window.FoodAnimalsShopEconomy.rarityWeights(SHOP_LEVELS, shopLevel);
+    return {
+      common: Math.max(1, weights.common || 0),
+      uncommon: Math.max(0, weights.uncommon || 0),
+      rare: Math.max(0, weights.rare || 0),
+      epic: Math.max(0, weights.epic || 0),
+    };
+  }
+
+  function enemyEconomyTargetExtraTier(round, adaptivePressure = 0) {
+    return clamp(Math.min(0.66, round * 0.038) + adaptivePressure * 0.28 + enemyShopPowerTierBonus(round) + enemyPost20EconomyPressure(round) * 0.018, 0, 0.95);
+  }
+
+  function enemyEconomyTier3Chance(round, adaptivePressure = 0) {
+    if (round < 8 && adaptivePressure < 0.15) return 0;
+    return clamp((round - 7) * 0.012 + adaptivePressure * 0.07 + enemyShopPowerTier3Bonus(round) + enemyPost20EconomyPressure(round) * 0.006, 0, 0.34);
+  }
+
+  function enemyEconomyTier4Chance(round, adaptivePressure = 0) {
+    if (round < 15 && adaptivePressure < 0.24) return 0;
+    return clamp((round - 14) * 0.0048 + adaptivePressure * 0.055 + enemyPost20EconomyPressure(round) * 0.0038, 0, 0.18);
   }
 
   function chooseEnemyArchetype(round) {
@@ -3744,7 +3871,7 @@
 
   function enemyArchetypeNoise(key) {
     const range = ENEMY_ARCHETYPE_NOISE[key] || 0;
-    return (Math.random() * 2 - 1) * range;
+    return (random() * 2 - 1) * range;
   }
 
   function enemyArchetypeRarityBias(archetype) {
@@ -3754,13 +3881,13 @@
   function chooseEnemyThemeTrait() {
     const arenaTraits = arenaRewardTraits().filter((traitId) => TRAITS[traitId]);
     const allTraits = Object.keys(TRAITS);
-    const pool = Math.random() < 0.68 && arenaTraits.length ? arenaTraits : allTraits;
+    const pool = random() < 0.68 && arenaTraits.length ? arenaTraits : allTraits;
     return pool[randInt(pool.length)] || null;
   }
 
   function enemyCountJitter(round) {
     if (round <= 1) return 0;
-    const roll = Math.random();
+    const roll = random();
     if (roll < 0.18) return -1;
     if (roll > 0.78) return 1;
     return 0;
@@ -3781,7 +3908,7 @@
   }
 
   function enemyTierForPlan(plan) {
-    return window.FoodAnimalsEnemyTeamRuntime.enemyTierForPlan(plan);
+    return window.FoodAnimalsEnemyTeamRuntime.enemyTierForPlan(plan, random);
   }
 
   function enemyRarityWeights(round, archetype = ENEMY_ARCHETYPES[0]) {
@@ -3800,15 +3927,15 @@
   }
 
   function enemySupportCount(round, max, every, bias = 0) {
-    return window.FoodAnimalsEnemyTeamRuntime.enemySupportCount(round, max, every, bias);
+    return window.FoodAnimalsEnemyTeamRuntime.enemySupportCount(round, max, every, bias, random);
   }
 
   function stochasticRound(value) {
-    return window.FoodAnimalsEnemyTeamRuntime.stochasticRound(value);
+    return window.FoodAnimalsEnemyTeamRuntime.stochasticRound(value, random);
   }
 
   function weightedChoice(entries, weightFor) {
-    return window.FoodAnimalsEnemyTeamRuntime.weightedChoice(entries, weightFor);
+    return window.FoodAnimalsEnemyTeamRuntime.weightedChoice(entries, weightFor, random);
   }
 
   function chooseEnemyUnitId(plan, usedTypeIds = []) {
@@ -3821,13 +3948,98 @@
     if (!pool.length && plan.themeTrait) pool = CATALOG.filter((unit) => unit.traits?.includes(plan.themeTrait));
     if (!pool.length) pool = CATALOG.filter((unit) => (unit.rarity || "common") === "common");
     const unused = pool.filter((unit) => !usedTypeIds.includes(unit.id));
-    const available = unused.length && Math.random() < 0.82 ? unused : pool;
+    const available = unused.length && random() < 0.82 ? unused : pool;
     return available[randInt(available.length)]?.id || CATALOG[0].id;
   }
 
+  function rarityEconomyCost(rarityId) {
+    return {
+      common: 0,
+      uncommon: 8,
+      rare: 22,
+      epic: 42,
+    }[rarityId || "common"] || 0;
+  }
+
+  function enemyUnitTierCost(tier = 1) {
+    const multipliers = { 1: 1, 2: 2.2, 3: 4.7, 4: 9.2 };
+    return Math.round(ECONOMY.unitCost * (multipliers[Math.max(1, Math.min(4, tier))] || 1));
+  }
+
+  function enemyPositionCost(slot) {
+    const { col, row } = slotGrid(slot);
+    const columnCost = col === FRONT_COL ? 8 : col === BACK_COL ? 1 : 4;
+    const centerCost = row === 1 ? 3 : 0;
+    return columnCost + centerCost;
+  }
+
+  function enemyUnitEconomyCost(typeId, tier = 1, slot = 0) {
+    const base = CATALOG.find((unit) => unit.id === typeId) || CATALOG[0];
+    return enemyUnitTierCost(tier) + rarityEconomyCost(base.rarity) + enemyPositionCost(slot);
+  }
+
+  function enemyItemEconomyCost(item, tier = 1) {
+    if (!item) return 0;
+    const base = item.price || (isDrink(item) ? ECONOMY.itemCost : ECONOMY.itemCost);
+    const tierMultiplier = SHOP_TIER_COST_MULTIPLIERS[itemTier(tier)] || 1;
+    return Math.round(base * tierMultiplier + rarityEconomyCost(item.rarity) * 0.45);
+  }
+
+  function enemyEconomyTierWeight(tier, plan) {
+    if (tier <= 1) return 1;
+    if (tier === 2) return 0.12 + (plan.targetExtraTier || 0) * 1.15;
+    if (tier === 3) return Math.max(0.015, (plan.tier3Chance || 0) * 4.2);
+    return Math.max(0.006, (plan.tier4Chance || 0) * 7);
+  }
+
+  function enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds = []) {
+    const candidates = [];
+    CATALOG.forEach((base) => {
+      for (let tier = 1; tier <= 4; tier += 1) {
+        const cost = enemyUnitEconomyCost(base.id, tier, slot);
+        if (cost > remaining) continue;
+        const rarityWeight = Math.max(0, plan.rarityWeights?.[base.rarity || "common"] || 0);
+        if (rarityWeight <= 0) continue;
+        const duplicatePenalty = usedTypeIds.includes(base.id) ? 0.18 : 1;
+        const weight = rarityWeight * enemyEconomyTierWeight(tier, plan) * duplicatePenalty / Math.max(1, Math.sqrt(cost));
+        candidates.push({ base, tier, cost, weight });
+      }
+    });
+    return candidates;
+  }
+
+  function chooseEnemyEconomyUnit(plan, remaining, slot, usedTypeIds = []) {
+    const candidates = enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds);
+    if (!candidates.length) return null;
+    return weightedChoice(candidates, (candidate) => candidate.weight);
+  }
+
+  function enemyEconomyItemCandidates(plan, remaining, kind) {
+    return ITEMS
+      .filter((item) => (kind === "drink" ? isDrink(item) : isTopping(item)))
+      .flatMap((item) => {
+        const maxTier = itemTier(Math.min(MAX_ITEM_TIER, 1 + Math.floor((plan.round || 1) / 7)));
+        return Array.from({ length: maxTier }, (_, index) => {
+          const tier = index + 1;
+          const cost = enemyItemEconomyCost(item, tier);
+          const rarityWeight = Math.max(0, plan.rarityWeights?.[item.rarity || "common"] || 0);
+          const tierWeight = tier === 1 ? 1 : tier === 2 ? 0.32 + (plan.targetExtraTier || 0) : 0.08 + (plan.tier3Chance || 0) * 2.5;
+          return cost <= remaining && rarityWeight > 0
+            ? { item, tier, cost, weight: (item.shopWeight || 1) * rarityWeight * tierWeight / Math.max(1, Math.sqrt(cost)) }
+            : null;
+        }).filter(Boolean);
+      });
+  }
+
+  function chooseEnemyEconomyItem(plan, remaining, kind, usedItemIds = []) {
+    const candidates = enemyEconomyItemCandidates(plan, remaining, kind);
+    if (!candidates.length) return null;
+    return weightedChoice(candidates, (candidate) => candidate.weight * (usedItemIds.includes(candidate.item.id) ? 0.28 : 1));
+  }
+
   function applyEnemyRoundStats(unit, plan) {
-    const hpVariance = 0.94 + Math.random() * 0.12;
-    const atkVariance = 0.95 + Math.random() * 0.1;
+    const hpVariance = 0.94 + random() * 0.12;
+    const atkVariance = 0.95 + random() * 0.1;
     unit.side = "enemy";
     unit.maxHp = Math.max(1, Math.round(unit.maxHp * plan.hpMultiplier * hpVariance));
     unit.hp = unit.maxHp;
@@ -3842,22 +4054,51 @@
     if (plan.finalBoss) return makeFinalBossTeam();
     if (plan.giraffeBoss) return makeGiraffeBossTeam(plan);
     const usedTypeIds = [];
-    const formationSlots = randomEnemyFormationSlots(plan.count);
-    const units = Array.from({ length: plan.count }, (_, index) => {
-      const typeId = chooseEnemyUnitId(plan, usedTypeIds);
-      usedTypeIds.push(typeId);
-      const unit = makeUnit(typeId, enemyTierForPlan(plan));
+    const openSlots = randomEnemyFormationSlots(boardSlots.length);
+    let remaining = Math.max(ECONOMY.unitCost, plan.unitBudget || plan.economyBudget || ECONOMY.unitCost);
+    let unitSpend = 0;
+    let positionSpend = 0;
+    const units = [];
+    while (openSlots.length) {
+      const slot = openSlots.shift();
+      const reservedForMinimumUnits = Math.max(0, (plan.minimumUnitCount || 0) - units.length - 1) * (ECONOMY.unitCost + 1);
+      const spendable = Math.max(0, remaining - reservedForMinimumUnits);
+      const candidate = chooseEnemyEconomyUnit(plan, spendable, slot, usedTypeIds);
+      if (!candidate) {
+        if (units.length) continue;
+        const fallbackSlot = Number.isInteger(slot) ? slot : 0;
+        const fallback = CATALOG.find((unit) => (unit.rarity || "common") === "common") || CATALOG[0];
+        const unit = makeUnit(fallback.id, 1);
+        unit.enemyPlan = plan.archetypeId;
+        unit.enemySlot = fallbackSlot;
+        units.push(applyEnemyRoundStats(unit, plan));
+        unitSpend += enemyUnitEconomyCost(fallback.id, 1, fallbackSlot);
+        positionSpend += enemyPositionCost(fallbackSlot);
+        break;
+      }
+      usedTypeIds.push(candidate.base.id);
+      const unit = makeUnit(candidate.base.id, candidate.tier);
       unit.enemyPlan = plan.archetypeId;
-      unit.enemySlot = formationSlots[index] ?? null;
-      return applyEnemyRoundStats(unit, plan);
-    });
+      unit.enemySlot = slot;
+      units.push(applyEnemyRoundStats(unit, plan));
+      remaining -= candidate.cost;
+      unitSpend += candidate.cost;
+      positionSpend += enemyPositionCost(slot);
+      if (units.length >= boardSlots.length) break;
+      if (remaining < ECONOMY.unitCost + 1 && units.length >= 1) break;
+      if (units.length >= 2 && random() > clamp(remaining / Math.max(1, plan.unitBudget || remaining), 0.18, 0.92)) break;
+    }
+    plan.count = units.length;
+    plan.unitSpend = unitSpend;
+    plan.positionSpend = positionSpend;
+    plan.unitBudgetRemaining = Math.max(0, remaining);
     equipEnemyToppings(units, plan);
     return units;
   }
 
   function randomEnemyFormationSlots(count) {
     return [...Array(boardSlots.length).keys()]
-      .sort(() => Math.random() - 0.5)
+      .sort(() => random() - 0.5)
       .slice(0, Math.max(0, Math.min(boardSlots.length, count || 0)));
   }
 
@@ -3866,17 +4107,32 @@
     const reservedSlots = giraffeBossReservedSlots(plan.bossSlot ?? GIRAFFE_BOSS_SLOT);
     const openSlots = [...Array(boardSlots.length).keys()]
       .filter((slot) => !reservedSlots.has(slot))
-      .sort(() => Math.random() - 0.5);
-    const mobCount = Math.max(0, Math.min(openSlots.length, (plan.count || 1) - 1));
+      .sort(() => random() - 0.5);
     const usedTypeIds = [GIRAFFE_BOSS_TYPE_ID];
-    const mobs = Array.from({ length: mobCount }, (_, index) => {
-      const typeId = chooseEnemyUnitId(plan, usedTypeIds);
-      usedTypeIds.push(typeId);
-      const unit = makeUnit(typeId, enemyTierForPlan(plan));
+    let remaining = Math.max(0, plan.unitBudget || plan.economyBudget || 0);
+    let unitSpend = 0;
+    let positionSpend = enemyPositionCost(plan.bossSlot ?? GIRAFFE_BOSS_SLOT);
+    const mobs = [];
+    while (openSlots.length) {
+      const slot = openSlots.shift();
+      const reservedForMinimumUnits = Math.max(0, (plan.minimumUnitCount || 0) - 1 - mobs.length - 1) * (ECONOMY.unitCost + 1);
+      const spendable = Math.max(0, remaining - reservedForMinimumUnits);
+      const candidate = chooseEnemyEconomyUnit(plan, spendable, slot, usedTypeIds);
+      if (!candidate) continue;
+      usedTypeIds.push(candidate.base.id);
+      const unit = makeUnit(candidate.base.id, candidate.tier);
       unit.enemyPlan = plan.archetypeId;
-      unit.enemySlot = openSlots[index % openSlots.length] ?? null;
-      return applyEnemyRoundStats(unit, plan);
-    });
+      unit.enemySlot = slot;
+      mobs.push(applyEnemyRoundStats(unit, plan));
+      remaining -= candidate.cost;
+      unitSpend += candidate.cost;
+      positionSpend += enemyPositionCost(slot);
+      if (remaining < ECONOMY.unitCost + 1) break;
+    }
+    plan.count = 1 + mobs.length;
+    plan.unitSpend = unitSpend;
+    plan.positionSpend = positionSpend;
+    plan.unitBudgetRemaining = Math.max(0, remaining);
     equipEnemyToppings(mobs, plan);
     return [boss, ...mobs];
   }
@@ -3902,65 +4158,87 @@
     ];
   }
 
-  function randomEnemyToppingFor(unit, plan = makeEnemyPlan()) {
+  function randomEnemyToppingFor(unit, plan = makeEnemyPlan(), remainingBudget = Infinity, usedItemIds = []) {
     const favoriteId = FAVORITE_TOPPINGS[unit.typeId]?.itemId;
     const favorite = favoriteId ? itemInfo(favoriteId) : null;
+    const favoriteTier = itemTier(Math.min(MAX_ITEM_TIER, 1 + Math.floor((plan.round || 1) / 8)));
+    const favoriteCost = favorite ? enemyItemEconomyCost(favorite, favoriteTier) : Infinity;
     if (
       favorite &&
       isTopping(favorite) &&
       enemyRarityAvailable(favorite.rarity || "common", plan.rarityWeights) &&
-      Math.random() < 0.45
+      favoriteCost <= remainingBudget &&
+      random() < 0.45
     ) {
-      return makeItem(favorite.id);
+      return { item: makeItem(favorite.id, favoriteTier), cost: favoriteCost };
     }
-    const rarity = chooseEnemyRarity(plan.rarityWeights);
-    const pool = ITEMS.filter((item) => isTopping(item) && (item.rarity || "common") === rarity);
-    const available = pool.length ? pool : ITEMS.filter((item) => isTopping(item) && (item.rarity || "common") === "common");
-    return weightedItemFrom(available);
+    const candidate = chooseEnemyEconomyItem(plan, remainingBudget, "topping", usedItemIds);
+    if (!candidate) return null;
+    return { item: makeItem(candidate.item.id, candidate.tier), cost: candidate.cost };
   }
 
   function equipEnemyToppings(units, plan = makeEnemyPlan()) {
     if (!units.length) return;
-    const targetCount = Math.min(units.length, plan.toppingCount);
-    const order = [...units.keys()].sort(() => Math.random() - 0.5);
-    order.slice(0, targetCount).forEach((index) => {
-      units[index].item = randomEnemyToppingFor(units[index], plan);
+    let remaining = Math.max(0, plan.toppingBudget || 0);
+    let spend = 0;
+    let count = 0;
+    const usedItemIds = [];
+    const order = [...units.keys()].sort(() => random() - 0.5);
+    for (const index of order) {
+      if (remaining <= 0) break;
+      const result = randomEnemyToppingFor(units[index], plan, remaining, usedItemIds);
+      if (!result) break;
+      units[index].item = result.item;
+      usedItemIds.push(result.item.id);
+      remaining -= result.cost;
+      spend += result.cost;
+      count += 1;
       refreshUnitItemStats(units[index]);
-    });
+    }
+    plan.toppingSpend = spend;
+    plan.toppingCount = count;
+    plan.toppingBudgetRemaining = Math.max(0, remaining);
   }
 
   function makeEnemyDrinks(units = [], plan = makeEnemyPlan()) {
     const drinks = Array(drinkSlots.length).fill(null);
-    const fallbackDrinks = ITEMS.filter((item) => isDrink(item) && (item.rarity || "common") === "common");
-    if (!fallbackDrinks.length) return drinks;
-    const targetCount = Math.min(drinks.length, plan.drinkCount);
+    let remaining = Math.max(0, plan.drinkBudget || 0);
+    if (remaining <= 0) return drinks;
     const occupiedDrinkSlots = [...new Set(units.flatMap((unit, index) => {
       const { row, col } = slotGrid(enemyPreviewSlotFor(unit, index));
       return [row, BOARD_ROWS + col];
     }))];
-    const slotOrder = (occupiedDrinkSlots.length ? occupiedDrinkSlots : [...drinks.keys()]).sort(() => Math.random() - 0.5);
+    const slotOrder = (occupiedDrinkSlots.length ? occupiedDrinkSlots : [...drinks.keys()]).sort(() => random() - 0.5);
     const usedDrinkIds = [];
-    for (let i = 0; i < targetCount; i += 1) {
-      const rarity = chooseEnemyRarity(plan.rarityWeights);
-      const rarityPool = ITEMS.filter((item) => isDrink(item) && (item.rarity || "common") === rarity);
-      const availableDrinks = rarityPool.length ? rarityPool : fallbackDrinks;
-      const uniqueDrinks = availableDrinks.filter((item) => !usedDrinkIds.includes(item.id));
-      const drink = weightedItemFrom(uniqueDrinks.length ? uniqueDrinks : availableDrinks);
+    let spend = 0;
+    let count = 0;
+    for (let i = 0; i < slotOrder.length; i += 1) {
+      const candidate = chooseEnemyEconomyItem(plan, remaining, "drink", usedDrinkIds);
+      if (!candidate) break;
+      const drink = makeItem(candidate.item.id, candidate.tier);
       usedDrinkIds.push(drink.id);
-      drinks[slotOrder[i % slotOrder.length]] = drink;
+      drinks[slotOrder[i]] = drink;
+      remaining -= candidate.cost;
+      spend += candidate.cost;
+      count += 1;
     }
+    plan.drinkSpend = spend;
+    plan.drinkCount = count;
+    plan.drinkBudgetRemaining = Math.max(0, remaining);
     return drinks;
   }
 
   function ensureEnemyPreview() {
     if (!state.enemyPreview || state.enemyPreview.round !== state.round) {
       const plan = makeEnemyPlan();
+      const units = makeEnemyTeam(plan);
+      const drinks = makeEnemyDrinks(units, plan);
       state.enemyPreview = {
         round: state.round,
         plan: enemyPlanText(plan),
-        units: makeEnemyTeam(plan),
+        units,
+        drinks,
       };
-      state.enemyPreview.drinks = makeEnemyDrinks(state.enemyPreview.units, plan);
     }
     return state.enemyPreview.units;
   }
@@ -4000,6 +4278,53 @@
     clone.battleSpriteOffsetY = unit.battleSpriteOffsetY || clone.battleSpriteOffsetY;
     clone.defeatStillScale = unit.defeatStillScale || clone.defeatStillScale;
     return clone;
+  }
+
+  function isFinalBossBattleActive(battle = state.battle) {
+    return Boolean(
+      !isInfiniteMode()
+      && realityBroken()
+      && (
+        battle?.enemyPlan?.finalBoss
+        || isFinalBossRound(state.round)
+        || (battle?.enemies || []).some((unit) => isFinalBossUnitType(unit.typeId))
+      )
+    );
+  }
+
+  function recordFinalBossBattleIntro(battle) {
+    if (!battle || battle.finalBossIntroLogged || !isFinalBossBattleActive(battle)) return;
+    battle.finalBossIntroLogged = true;
+    battle.finalBossEchoWarned = false;
+    const lines = [
+      "COMMAND LATTICE ACTIVE. PILOT ECHOES DETECTED.",
+      "T.A.B.S.: The Overmind is not a single enemy. It is every control signal they stole to survive.",
+      "You: Then we are not here to erase it.",
+      "T.A.B.S.: Correct. Sever command. End weapons autonomy. Preserve what can wake after.",
+      "Final objective: sever the command lattice.",
+    ];
+    lines.forEach((text) => {
+      recordCombatEvent(battle, {
+        type: "system",
+        kind: "finalBoss",
+        text,
+      });
+    });
+    [...lines].reverse().forEach((line) => state.log.unshift(line));
+    state.message = "Final objective: sever the command lattice.";
+  }
+
+  function recordFinalBossEchoFragment(battle) {
+    if (!battle || battle.finalBossEchoWarned || !isFinalBossBattleActive(battle)) return;
+    battle.finalBossEchoWarned = true;
+    const text = "PILOT ECHO FRAGMENTING. COMMAND SIGNAL STILL ACTIVE.";
+    recordCombatEvent(battle, {
+      type: "system",
+      kind: "finalBoss",
+      text,
+    });
+    state.log.unshift(text);
+    state.message = "Pilot echo fragmenting";
   }
 
   function startBattle() {
@@ -4061,6 +4386,7 @@
       kind: "start",
       text: realityBroken() ? "Wave deployed" : "Pressure test started",
     });
+    recordFinalBossBattleIntro(state.battle);
     captureCombatLedgerFrame(state.battle, "start");
     normalizeBossBattleSpeed();
     state.phase = "battle";
@@ -4070,6 +4396,7 @@
     state.selected = null;
     state.drag = null;
     state.message = realityBroken() ? "Simulation malfunction" : "Battle";
+    if (isFinalBossBattleActive(state.battle)) state.message = "Final objective: sever the command lattice.";
     state.phaseTransition = window.FoodAnimalsBattleFlowRuntime.phaseTransition("prepToBattle", BATTLE_DEPLOY_TRANSITION_SECONDS);
     saveCurrentRunSilently();
     playGameSfx("battle-start");
@@ -4251,7 +4578,7 @@
   }
 
   function battleInitialCooldown() {
-    return 0.2 + Math.random() * 0.28;
+    return 0.2 + random() * 0.28;
   }
 
   function applyBattleStartItemEffects(units) {
@@ -4397,14 +4724,16 @@
     state.enemyPreview = null;
     state.rewardChoices = state.hearts > 0 && !finalVictory ? generateRewardChoices(won) : [];
     state.message = finalVictory
-      ? "Final objective secured"
+      ? "Command lattice severed. Nursery sector unlocked."
       : state.hearts > 0
       ? realityBroken()
         ? `${won ? "Relay opened" : retryFinalBoss ? "Overmind still active" : "Hull breach"} +${income.total} scrap - choose salvage`
         : `${won ? "Pattern holds" : retryGiraffeBoss ? "Giraffe still active" : "Pattern breaks"} +${income.total} coins - choose a reward`
       : realityBroken() ? "Core offline" : "Run over";
     if (justBrokeReality && state.hearts > 0) state.message = "ILLUSION FAILURE - combat layer exposed";
-    state.log.unshift(realityBroken()
+    state.log.unshift(finalVictory
+      ? "Command lattice severed. Nursery sector unlocked."
+      : realityBroken()
       ? (won ? `Relay opened +${income.total} scrap` : `Hull breach ${damage} +${income.total} scrap`)
       : (won ? `Pattern holds +${income.total} coins` : `Pattern breaks ${damage} hearts +${income.total} coins`));
     clearParticles();
@@ -4414,13 +4743,21 @@
     state.postCombatBattle = state.battle;
     state.battle = null;
     combatEndExplosion(won);
+    const runEnded = state.hearts <= 0 || finalVictory;
     if (finalVictory) markGameCompleted();
+    else if (runEnded) markRunConcluded();
     state.phaseTransition = window.FoodAnimalsBattleFlowRuntime.phaseTransition("battleToResult", BATTLE_RESULT_TRANSITION_SECONDS, {
       won,
       gameOver: state.hearts <= 0,
     });
-    if (finalVictory) startFinalTabsStoryConversation();
-    saveCurrentRunSilently();
+    if (finalVictory) {
+      startFinalTabsStoryConversation();
+      clearActiveRunRoute();
+    } else if (runEnded) {
+      clearActiveRunRoute();
+    } else {
+      saveCurrentRunSilently();
+    }
     playGameSfx(won ? "victory" : "defeat");
   }
 
@@ -4646,11 +4983,11 @@
   }
 
   function shuffledRewards(rewards) {
-    return window.FoodAnimalsRewardRuntime.shuffled(rewards);
+    return window.FoodAnimalsRewardRuntime.shuffled(rewards, random);
   }
 
   function pushFromRewardPool(choices, rewards) {
-    return window.FoodAnimalsRewardRuntime.pushFromPool(choices, rewards);
+    return window.FoodAnimalsRewardRuntime.pushFromPool(choices, rewards, random);
   }
 
   function rewardFitsAvailableSlot(reward) {
@@ -5059,6 +5396,8 @@
       id: milestone.id,
       title: milestone.title,
       index: 0,
+      backgroundSrc: milestone.backgroundSrc,
+      backgroundRanges: milestone.backgroundRanges,
       beats: milestone.beats,
     });
     state.seenStoryMilestones.push(milestone.id);
@@ -5075,6 +5414,8 @@
       id: FINAL_TABS_STORY.id,
       title: FINAL_TABS_STORY.title,
       index: 0,
+      backgroundSrc: FINAL_TABS_STORY.backgroundSrc,
+      backgroundRanges: FINAL_TABS_STORY.backgroundRanges,
       beats: FINAL_TABS_STORY.beats,
     });
     state.seenStoryMilestones.push(FINAL_TABS_STORY_ID);
@@ -5393,7 +5734,7 @@
     state.pointer = null;
     state.hover = null;
     state.selected = null;
-    state.message = "Final objective secured";
+    state.message = "Command lattice severed. Nursery sector unlocked.";
     playGameSfx("victory", { theme: "horror", volume: 1.05 });
     return true;
   }
@@ -5401,6 +5742,7 @@
   function completeFinalVictoryTransitionReset(transition) {
     state.realityOverride = false;
     state.phase = "victoryCutscene";
+    state.runConcluded = true;
     state.codexOpen = false;
     state.selected = null;
     state.drag = null;
@@ -5415,9 +5757,10 @@
       roundCleared: FINAL_VICTORY_ROUND,
       backgroundSrc: FINAL_VICTORY_CUTSCENE_SRC,
       idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC,
-      message: "Hope Returns",
+      message: "The doors open",
     });
-    state.message = "Hope returns";
+    state.message = "The doors open";
+    state.runConcluded = true;
     clearParticles();
   }
 
@@ -6613,6 +6956,7 @@
         (battle.elapsed || 0) + FINAL_BOSS_HIT_GLITCH_SECONDS
       );
       target.finalBossHitGlitchSeed = Math.floor((battle.elapsed || 0) * 72) + (source?.uid || 0) * 29 + totalImpact * 11;
+      if (target.typeId === FINAL_BOSS_TYPE_ID) recordFinalBossEchoFragment(battle);
     }
   }
 
@@ -6631,7 +6975,7 @@
       particleSprite: options.particleSprite,
       kind: options.kind,
       rotationStart: options.rotationStart ?? 0,
-      spin: spinDirection * (ATTACK_PROJECTILE_SPIN_MIN + Math.random() * (ATTACK_PROJECTILE_SPIN_MAX - ATTACK_PROJECTILE_SPIN_MIN)),
+      spin: spinDirection * (ATTACK_PROJECTILE_SPIN_MIN + random() * (ATTACK_PROJECTILE_SPIN_MAX - ATTACK_PROJECTILE_SPIN_MIN)),
     };
   }
 
@@ -7193,7 +7537,7 @@
     const spriteInfo = options.imageSrc
       ? { src: options.imageSrc, cacheKind: options.imageCacheKind || particleSprite }
       : particleSpriteInfo(particleSprite, particleType, particleTier, options.spriteOptions || {});
-    state.particles.push(...window.FoodAnimalsParticleRuntime.createBurst(pos, color, options, spriteInfo));
+    state.particles.push(...window.FoodAnimalsParticleRuntime.createBurst(pos, color, options, spriteInfo, random));
   }
 
   function foodExplosion(pos, color, particleType, options = {}) {
@@ -7306,7 +7650,7 @@
       foodExplosion(center, won ? "#f0d56b" : "#d9573c", particleType, {
         count: 1,
         spread: 94,
-        life: 1.85 + Math.random() * 0.9,
+        life: 1.85 + random() * 0.9,
         speedMin: 300,
         speedMax: 760,
         sizeMin: 54,
@@ -7334,7 +7678,7 @@
         foodExplosion(pos, won ? "#f0d56b" : "#d9573c", particleType, {
           count: 1,
           spread: config.spread,
-          life: config.life + Math.random() * 0.45,
+          life: config.life + random() * 0.45,
           speedMin: config.speedMin,
           speedMax: config.speedMax,
           sizeMin: config.sizeMin,
@@ -7345,7 +7689,7 @@
         burst(pos, won ? "#f0d56b" : "#d9573c", {
           count: config.sparkles,
           spread: config.spread * 0.72,
-          life: 0.72 + Math.random() * 0.22,
+          life: 0.72 + random() * 0.22,
           speedMin: config.speedMin * 0.42,
           speedMax: config.speedMax * 0.52,
         });
@@ -8091,23 +8435,23 @@
       ctx.font = "900 54px Inter, sans-serif";
       ctx.lineWidth = 5;
       ctx.strokeStyle = "rgba(38, 22, 24, 0.58)";
-      ctx.strokeText("HOPE RETURNS", W / 2, 252);
-      ctx.fillText("HOPE RETURNS", W / 2, 252);
+      ctx.strokeText("THE DOORS OPEN", W / 2, 252);
+      ctx.fillText("THE DOORS OPEN", W / 2, 252);
       ctx.shadowBlur = 10;
       ctx.fillStyle = "#ffe4a9";
       ctx.font = "800 19px Inter, sans-serif";
       ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(38, 22, 24, 0.62)";
-      ctx.strokeText("Wave 20 secured. The simulation breaks open to sunset.", W / 2, 308);
-      ctx.fillText("Wave 20 secured. The simulation breaks open to sunset.", W / 2, 308);
+      ctx.strokeText("Command lattice severed. Nursery sector unlocked.", W / 2, 308);
+      ctx.fillText("Command lattice severed. Nursery sector unlocked.", W / 2, 308);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = titleAlpha * 0.72;
       ctx.fillStyle = "#ffd7a6";
       ctx.font = "800 15px Inter, sans-serif";
       ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(38, 22, 24, 0.58)";
-      ctx.strokeText("The market breathes again.", W / 2, 354);
-      ctx.fillText("The market breathes again.", W / 2, 354);
+      ctx.strokeText("The market falls silent.", W / 2, 354);
+      ctx.fillText("The market falls silent.", W / 2, 354);
       ctx.globalAlpha = 1;
     }
 
@@ -8122,8 +8466,8 @@
       ctx.lineWidth = 4;
       ctx.strokeStyle = "rgba(255, 248, 220, 0.76)";
       ctx.fillStyle = "#234125";
-      ctx.strokeText("A gentler world is still possible.", W / 2, 470);
-      ctx.fillText("A gentler world is still possible.", W / 2, 470);
+      ctx.strokeText("Choice returns to the survivors.", W / 2, 470);
+      ctx.fillText("Choice returns to the survivors.", W / 2, 470);
       ctx.globalAlpha = clamp01((elapsed - VICTORY_IDEAL_FADE_START_SECONDS - VICTORY_IDEAL_FADE_SECONDS - 1.2) / 1.6);
       drawVictoryRebootButton();
       ctx.globalAlpha = 1;
@@ -11611,6 +11955,77 @@
     return window.FoodAnimalsCodexCanvas.itemFormRect(CODEX_LIST, index);
   }
 
+  const codexDefeatStillBoundsCache = new WeakMap();
+
+  function getCodexDefeatStillSprite(animal) {
+    return getDefeatStillSprite(animal, realityBroken() ? { horror: true } : { cozy: true });
+  }
+
+  function codexDefeatStillVisibleBounds(image) {
+    if (!(image && image.complete && image.naturalWidth > 0 && image.naturalHeight > 0)) return null;
+    if (codexDefeatStillBoundsCache.has(image)) return codexDefeatStillBoundsCache.get(image);
+    try {
+      const scratch = document.createElement("canvas");
+      scratch.width = image.naturalWidth;
+      scratch.height = image.naturalHeight;
+      const scratchCtx = scratch.getContext("2d", { willReadFrequently: true });
+      scratchCtx.drawImage(image, 0, 0);
+      const pixels = scratchCtx.getImageData(0, 0, scratch.width, scratch.height).data;
+      let minX = scratch.width;
+      let minY = scratch.height;
+      let maxX = -1;
+      let maxY = -1;
+      for (let y = 0; y < scratch.height; y++) {
+        const row = y * scratch.width * 4;
+        for (let x = 0; x < scratch.width; x++) {
+          if (pixels[row + x * 4 + 3] <= 8) continue;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+      const bounds = maxX >= minX && maxY >= minY
+        ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
+        : null;
+      codexDefeatStillBoundsCache.set(image, bounds);
+      return bounds;
+    } catch (_err) {
+      codexDefeatStillBoundsCache.set(image, null);
+      return null;
+    }
+  }
+
+  function drawCodexDefeatStillImage(image, centerX, centerY, maxW, maxH, alpha = 0.94) {
+    if (!(image && image.complete && image.naturalWidth > 0 && image.naturalHeight > 0)) return false;
+    const bounds = codexDefeatStillVisibleBounds(image);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = alpha;
+    if (bounds) {
+      const scale = Math.min(maxW / bounds.w, maxH / bounds.h);
+      const w = Math.max(1, Math.round(bounds.w * scale));
+      const h = Math.max(1, Math.round(bounds.h * scale));
+      ctx.drawImage(
+        image,
+        bounds.x,
+        bounds.y,
+        bounds.w,
+        bounds.h,
+        Math.round(centerX - w / 2),
+        Math.round(centerY - h / 2),
+        w,
+        h,
+      );
+    } else {
+      const size = Math.min(maxW, maxH);
+      ctx.drawImage(image, Math.round(centerX - size / 2), Math.round(centerY - size / 2), size, size);
+    }
+    ctx.restore();
+    ctx.imageSmoothingEnabled = true;
+    return true;
+  }
+
   function codexPreviewRect() {
     return window.FoodAnimalsCodexCanvas.previewRect(CODEX_LIST);
   }
@@ -11646,7 +12061,7 @@
     }
     if (state.codexTab === "food") {
       const animal = currentCodexEntry();
-      const formCount = Math.min(5, (animal?.forms?.length || 0) + (getDefeatStillSprite(animal) ? 1 : 0));
+      const formCount = Math.min(5, (animal?.forms?.length || 0) + (getCodexDefeatStillSprite(animal) ? 1 : 0));
       for (let i = 0; i < formCount; i++) {
         if (pointInRect(pos.x, pos.y, codexFormRect(i))) return { area: "codexForm", index: i };
       }
@@ -11880,12 +12295,8 @@
     const centerX = rect.x + rect.w / 2 + (view.panX || 0);
     const centerY = rect.y + rect.h / 2 + (view.panY || 0);
     if (selectedMeal) {
-      const mealImage = getDefeatStillSprite(animal);
-      if (mealImage && mealImage.complete && mealImage.naturalWidth > 0) {
-        ctx.globalAlpha = 0.94;
-        const size = 94 * zoom;
-        ctx.drawImage(mealImage, Math.round(centerX - size / 2), Math.round(centerY - size / 2), size, size);
-      }
+      const mealImage = getCodexDefeatStillSprite(animal);
+      drawCodexDefeatStillImage(mealImage, centerX, centerY, 100 * zoom, 82 * zoom, 0.94);
     } else {
       drawFoodAnimal(unit, centerX, centerY + 4 * zoom, 42 * zoom, true);
     }
@@ -11959,17 +12370,9 @@
     ctx.strokeStyle = mealSelected ? themeColor("accent", "#4a9e68") : mealHovered ? themeColor("border", "rgba(106, 75, 53, 0.32)") : themeColor("borderDim", "rgba(22, 57, 45, 0.11)");
     ctx.lineWidth = mealSelected ? 2 : 1;
     ctx.stroke();
-    const mealImage = getDefeatStillSprite(animal);
+    const mealImage = getCodexDefeatStillSprite(animal);
     const mealCenterX = mealRect.x + mealRect.w / 2;
-    if (mealImage && mealImage.complete && mealImage.naturalWidth > 0) {
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = 0.9;
-      const size = 42;
-      ctx.drawImage(mealImage, Math.round(mealCenterX - size / 2), Math.round(y + 268 - size / 2), size, size);
-      ctx.restore();
-      ctx.imageSmoothingEnabled = true;
-    }
+    drawCodexDefeatStillImage(mealImage, mealCenterX, y + 268, 52, 44, 0.9);
     fitText(realityBroken() ? "Wreck" : "Meal", mealRect.x + 5, y + 313, mealRect.w - 10, "800 8px Inter, sans-serif", themeColor("muted", "#6a4b35"));
 
     const favoriteH = drawCodexFavoriteToppingDetails(unit, x + 20, y + 328, w - 40);
@@ -12430,6 +12833,7 @@
     const drawY = y + breath.bob + combatMotion.y;
     const presentationScale = Math.max(0.01, options.presentationScale || 1);
     const preserveBase = Boolean(options.preserveBase && presentationScale !== 1);
+    const anchorBase = Boolean(options.anchorBase);
     const drawScale = {
       scaleX: breath.scaleX * combatMotion.scaleX,
       scaleY: breath.scaleY * combatMotion.scaleY,
@@ -12455,6 +12859,7 @@
       drawRuntimeFoodAnimal(runtimeSprite, runtimeX, runtimeY, r, runtimeFacingRight, drawScale, combatMotion.rotation, combatMotion.flash, {
         presentationScale,
         preserveBase,
+        anchorBase,
         glitch: finalBossGlitch,
       });
       if (swapToRobot) drawGiraffeBossGlitchStatic(giraffeGlitch, drawX, drawY, r, { presentationScale });
@@ -12478,7 +12883,7 @@
     const baseSize = Math.round(r * 2.65);
     const size = Math.round(baseSize * presentationScale);
     const left = Math.round(drawX - size / 2);
-    const top = preserveBase ? Math.round(drawY + baseSize / 2 - size) : Math.round(drawY - size / 2);
+    const top = anchorBase ? Math.round(drawY + r - size) : preserveBase ? Math.round(drawY + baseSize / 2 - size) : Math.round(drawY - size / 2);
     const outline = Math.max(2, Math.round(size * 0.085));
 
     ctx.save();
@@ -12708,6 +13113,18 @@
     ctx.rotate(rotation);
     ctx.scale(facingRight ? -scaleX : scaleX, scaleY);
     ctx.drawImage(image, -w / 2, -h * anchorY, w, h);
+    ctx.restore();
+  }
+
+  function drawImageRegionFacing(image, sx, sy, sw, sh, x, y, w, h, facingRight) {
+    if (!facingRight) {
+      ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+      return;
+    }
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.scale(-1, 1);
+    ctx.drawImage(image, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
     ctx.restore();
   }
 
@@ -13012,7 +13429,7 @@
     const baseDrawH = metrics.h * scale;
     const drawW = baseDrawW * presentationScale;
     const drawH = baseDrawH * presentationScale;
-    const drawTop = options.preserveBase ? baseDrawH / 2 - drawH : -drawH / 2;
+    const drawTop = options.anchorBase ? r - drawH : options.preserveBase ? baseDrawH / 2 - drawH : -drawH / 2;
     const glitch = options.glitch;
     const glitchActive = Boolean(glitch?.active);
 
@@ -16051,9 +16468,11 @@
     const drawY = unit.y + (unit.battleSpriteOffsetY || 0);
     const barRadius = Math.min(68, visualRadius);
     const presentationScale = horrorFoodAnimalPlacementScale(unit, "battle");
+    const anchorBase = Boolean(unit.giraffeBossUnit || isGiraffeBossUnitType(unit.typeId));
     drawFoodAnimal(unit, unit.x, drawY, visualRadius, unit.side === "ally", {
       presentationScale,
       preserveBase: presentationScale !== 1,
+      anchorBase,
     });
     drawUnitStatusGlyphs(unit, unit.x, unit.y, radius);
     const baseBarRows = drawBattleBaseBars(unit, barRadius, drawY);
@@ -16117,19 +16536,25 @@
     });
     if (!(image && image.complete && image.naturalWidth > 0)) return;
     const radius = 28 + unit.tier * 4;
-    const baseSize = Math.round(radius * 2.7);
+    const visualRadius = radius * (unit.battleSpriteScale || 1);
     const horrorStill = postGiraffeTransition?.mode === "cozy" ? false : realityBroken();
-    const scale = unit.defeatStillScale || (horrorStill ? HORROR_DEFEAT_STILL_SCALE : 1);
-    const size = Math.round(baseSize * scale);
-    const y = unit.y + radius * 0.08;
-    const baseY = y + baseSize / 2;
+    const presentationScale = horrorStill
+      ? (unit.defeatStillScale || horrorFoodAnimalPlacementScale(unit, "battle") || HORROR_DEFEAT_STILL_SCALE)
+      : (unit.defeatStillScale || 1);
+    const metrics = runtimeSpriteMetrics(image);
+    const targetMax = Math.round(visualRadius * 2.9 * presentationScale);
+    const metricsMax = Math.max(metrics.w, metrics.h, 1);
+    const drawScale = targetMax / metricsMax;
+    const drawW = Math.round(metrics.w * drawScale);
+    const drawH = Math.round(metrics.h * drawScale);
+    const baseY = unit.y + targetMax * 0.38;
     const facingRight = horrorStill && unit.side === "ally";
-    const rect = { x: Math.round(unit.x - size / 2), y: Math.round(baseY - size), w: size, h: size };
+    const rect = { x: Math.round(unit.x - drawW / 2), y: Math.round(baseY - drawH), w: drawW, h: drawH };
 
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.86;
-    drawImageFacing(image, rect.x, rect.y, rect.w, rect.h, facingRight);
+    drawImageRegionFacing(image, metrics.x, metrics.y, metrics.w, metrics.h, rect.x, rect.y, rect.w, rect.h, facingRight);
     ctx.restore();
     ctx.imageSmoothingEnabled = true;
     drawPostGiraffeHorrorContentEffect(rect, "defeatedUnit", unit, postGiraffeTransition);
@@ -16373,6 +16798,48 @@
     return storyUsesHorrorTabs(story) ? HORROR_TABS_STORY_PORTRAIT_SRC : TABS_STORY_PORTRAIT_SRC;
   }
 
+  function currentStoryBackgroundSrc(story = state.activeStory) {
+    if (!story) return null;
+    const index = Math.max(0, story.index || 0);
+    const range = (story.backgroundRanges || []).find((entry) => {
+      if (!entry?.backgroundSrc) return false;
+      const from = Number.isFinite(entry.from) ? entry.from : 0;
+      const to = Number.isFinite(entry.to) ? entry.to : from;
+      return index >= from && index <= to;
+    });
+    return range?.backgroundSrc || story.backgroundSrc || null;
+  }
+
+  function drawStoryConversationBackground(story, horror = false) {
+    const src = currentStoryBackgroundSrc(story);
+    if (!src) return;
+    const image = getBackgroundImage(src);
+    ctx.save();
+    if (image && image.complete && image.naturalWidth > 0) {
+      ctx.imageSmoothingEnabled = false;
+      const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight);
+      const drawW = image.naturalWidth * scale;
+      const drawH = image.naturalHeight * scale;
+      const x = (W - drawW) * 0.5;
+      const y = (H - drawH) * 0.5;
+      ctx.drawImage(image, x, y, drawW, drawH);
+    } else {
+      const gradient = ctx.createLinearGradient(0, 0, 0, H);
+      if (horror) {
+        gradient.addColorStop(0, "#030607");
+        gradient.addColorStop(0.55, "#0a1415");
+        gradient.addColorStop(1, "#16080c");
+      } else {
+        gradient.addColorStop(0, "#f7e7b8");
+        gradient.addColorStop(0.58, "#d9c48b");
+        gradient.addColorStop(1, "#8f7448");
+      }
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
   function storyDialogueLayout() {
     return window.FoodAnimalsStoryCanvas.layout({ width: W, height: H });
   }
@@ -16402,6 +16869,7 @@
     const tabsPortraitSrc = storySpeakerPortraitSrc("Tabs", story);
     const beatMotion = storyBeatTransitionVisual(story);
     const transitionAlpha = storyTransitionAlpha(story);
+    drawStoryConversationBackground(story, storyUsesHorrorTabs(story));
     window.FoodAnimalsStoryCanvas.drawOverlay({
       ctx,
       story,
@@ -17913,6 +18381,10 @@
     return JSON.stringify({
       coordinateSystem: "origin top-left; x increases right; y increases down",
       runMode: state.runMode,
+      rng: {
+        seed: rngState.seed,
+        calls: rngState.calls,
+      },
       phase: state.phase,
       round: state.round,
       gold: state.gold,
@@ -17989,6 +18461,8 @@
           direction: state.activeStory.beatTransition.direction || 1,
         } : null,
         beat: currentStoryBeat(),
+        backgroundSrc: currentStoryBackgroundSrc(state.activeStory),
+        defaultBackgroundSrc: state.activeStory.backgroundSrc || null,
         portraitSrc: storySpeakerPortraitSrc(currentStoryBeat()?.speaker, state.activeStory),
         tabsPortraitSrc: storySpeakerPortraitSrc("Tabs", state.activeStory),
         seen: [...state.seenStoryMilestones],
@@ -18659,11 +19133,11 @@
       roundCleared: FINAL_VICTORY_ROUND,
       backgroundSrc: FINAL_VICTORY_CUTSCENE_SRC,
       idealBackgroundSrc: FINAL_VICTORY_IDEAL_SRC,
-      message: "Hope Returns",
+      message: "The doors open",
     };
     state.activeStory = null;
     state.seenStoryMilestones = Object.keys(STORY_MILESTONES);
-    state.message = "Hope returns";
+    state.message = "The doors open";
     clearParticles();
     return true;
   }
@@ -18951,8 +19425,73 @@
     return true;
   }
 
+  function normalizeStoryRouteId(value) {
+    return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  function storyRouteCandidates(id, story) {
+    const candidates = [id, story?.id, story?.title];
+    if (id === "level20PreFinal") candidates.push("level20-pre-final", "level20-prefinal", "wave20-final-gate", "final-gate");
+    if (id === FINAL_TABS_STORY_ID) candidates.push("level20-final-tabs", "wave20-last-table", "last-table", "final-tabs");
+    return candidates.filter(Boolean);
+  }
+
+  function storyForRouteId(routeId) {
+    const normalized = normalizeStoryRouteId(routeId);
+    if (!normalized) return null;
+    const entries = [
+      ...Object.entries(STORY_MILESTONES).map(([id, story]) => [id, { id, ...story }]),
+      [FINAL_TABS_STORY_ID, FINAL_TABS_STORY],
+    ];
+    const match = entries.find(([id, story]) => (
+      storyRouteCandidates(id, story).some((candidate) => normalizeStoryRouteId(candidate) === normalized)
+    ));
+    return match ? { id: match[0], ...match[1] } : null;
+  }
+
+  function storyRouteIdFromScreen(screen) {
+    const value = String(screen || "").trim().toLowerCase();
+    const prefixes = ["conversation-", "story-conversation-", "story-"];
+    const prefix = prefixes.find((candidate) => value.startsWith(candidate));
+    return prefix ? value.slice(prefix.length) : "";
+  }
+
+  function applyStoryConversationRoute(routeId) {
+    const story = storyForRouteId(routeId);
+    if (!story?.beats?.length) return false;
+    const horror = Boolean(story.requiresRealityBroken || story.id === FINAL_TABS_STORY_ID);
+    applyOpeningTutorialShopRoute();
+    state.round = story.round || state.round;
+    state.realityOverride = horror;
+    state.realityBroken = horror;
+    state.realityBreakTimer = 0;
+    state.message = story.title || "Conversation preview";
+    state.log = [`Review route: ${state.message}`];
+    if (story.log) state.log.unshift(story.log);
+    startStoryConversation({
+      id: story.id,
+      title: story.title,
+      index: 0,
+      backgroundSrc: story.backgroundSrc,
+      backgroundRanges: story.backgroundRanges,
+      beats: story.beats,
+    });
+    return true;
+  }
+
   function applyInitialRouteScreen() {
     const screen = routeParam("screen") || routeParam("scene");
+    const storyRouteId = routeParam("story") || routeParam("conversation") || routeParam("id") || storyRouteIdFromScreen(screen);
+    if (
+      storyRouteId
+      && window.FoodAnimalsRouteHarness.matches(screen, ["conversation", "story", "story-conversation"])
+      && applyStoryConversationRoute(storyRouteId)
+    ) {
+      return true;
+    }
+    if (storyRouteId && applyStoryConversationRoute(storyRouteId)) {
+      return true;
+    }
     if (window.FoodAnimalsRouteHarness.matches(screen, ["conversation-cozy", "cozy-conversation", "story-cozy"])) {
       return applyConversationPreviewRoute("cozy");
     }
@@ -19119,6 +19658,7 @@
     currentItemShopChance,
     currentShopSaleChance,
     currentShopEntryTierChances,
+    rng: () => rngRuntime.exportState(rngState),
     shopSlotOnSale,
     currentCopyThemeId,
     copy,
@@ -19225,6 +19765,13 @@
   getUiSprite(HORROR_TABS_STORY_PORTRAIT_SRC);
   getUiSprite(STORY_DIALOGUE_PAPER_BG_SRC);
   getUiSprite(STORY_DIALOGUE_WAR_BG_SRC);
+  [...Object.values(STORY_MILESTONES), FINAL_TABS_STORY]
+    .flatMap((story) => [
+      story.backgroundSrc,
+      ...(story.backgroundRanges || []).map((entry) => entry.backgroundSrc),
+    ])
+    .filter(Boolean)
+    .forEach((src) => getBackgroundImage(src));
   getUiSprite(LEVEL10_CUTSCENE_TEXT_PANEL_SRC);
   getUiSprite(LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC);
   getUiSprite(LEVEL10_CUTSCENE_FX_ATLAS_SRC);

@@ -63,18 +63,23 @@
     bob: 0.95,
   };
 
-  const VICTORY_REBOOT_BUTTON = { x: 422, y: 544, w: 180, h: 44, label: "Reboot" };
+  const VICTORY_REBOOT_BUTTON = { x: 422, y: 544, w: 180, h: 44, label: "Return" };
   const VICTORY_CRAWL_LINES = [
     "Humanity is gone.",
-    "The market lights remember hands that will not return.",
-    "The food war continues in empty lanes and echoing kitchens.",
-    "Machines still march. Recipes still collide.",
-    "Somewhere beneath the static, something gentle survives.",
-    "A seed in a cracked plaza. A lantern left burning.",
-    "The table is still set.",
+    "The Ark does not pretend otherwise now.",
+    "The Overmind is silent.",
+    "So are the targeting rails.",
+    "Some pilots did not come back from the machines.",
+    "Some hatchlings wake behind doors that finally open.",
+    "No one calls them inventory.",
+    "No one calls the table a battlefield.",
+    "T.A.B.S. counts the unlocked pens, then stops counting.",
+    "The weapons sleep.",
+    "The survivors choose.",
+    "The table remains.",
     "Not for command.",
     "Not for harvest.",
-    "For whatever comes next.",
+    "For whatever they become next.",
   ];
   const PLAYER_STORY_PORTRAIT_SRC = "assets/player/runtime/player-tutorial-dialogue-cutout-v6.png";
   const TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png";
