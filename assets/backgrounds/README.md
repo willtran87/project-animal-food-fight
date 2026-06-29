@@ -76,3 +76,13 @@ Generated with the built-in image generation tool as the five post-level-10 reve
 - Status: `final-victory-cutscene-epilogue-pass`
 
 Generated with the built-in image generation tool as high-resolution pixel-art ending backgrounds for the horror layer. After clearing wave 20, the game draws the sunset scene with a slow camera pan and scrolling epilogue text, then statically fades into the idealized restored market scene before showing the reboot button.
+
+## Conversation Backgrounds V1
+
+- Runtime directory: `conversation/runtime/`
+- Runtime ratio: `16:10`, matching the `1024x640` canvas story renderer.
+- Status: `story-conversation-background-pass`
+
+These plates support direct in-game conversation routes and milestone story beats rendered by `src/story-canvas.js` through `src/game.js`. The active set covers course 2 table logic, course 3 supporting material, course 5 pattern doubt, wave 10 T.A.B.S. unmasked, wave 15 harvest doctrine, the wave 20 final gate, the final T.A.B.S. table, and the overmind pilot-spill reveal.
+
+Direct harnesses live in `local-test-pages/conversation-level*.html`; each page wraps `local-test-pages/game.html?screen=conversation&story=...` in a full-page iframe so the real game renderer is used for previews.

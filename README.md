@@ -68,6 +68,7 @@ http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 
 ## Design Docs
 
+- `docs/RUNTIME_ARCHITECTURE.md` documents the static script-loading model, runtime module families, game-state flow, route harnesses, persistence notes, and verification map with Mermaid diagrams.
 - `docs/ART_DIRECTION.md` defines the cozy sticker-sprite target, evolution-read rules, production pipeline, and current status of source-reference art.
 - `docs/HORROR_ARENA_MAPPING.md` maps cozy arena modifiers to their post-human automated food-infrastructure horror variants.
 - `assets/README.md` records root-level browser chrome and cross-entry asset provenance.
@@ -80,6 +81,9 @@ http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 
 ## Code Map
 
+- `src/app-scripts.js`
+  - Static script loader and cache-token manifest for the `startMenu`, `openingVn`, and `game` script groups.
+  - Keep dependency scripts before consumers, then run `npm run update:script-versions` after browser-loaded script edits.
 - `src/game.js`
   - Data: economy, UI constants, gameplay tuning, and runtime state setup.
   - State: prep, battle, result, reboot/static transitions, final victory transition, victory cutscene, codex, drag/drop, rewards, and combat ledger review state.
@@ -108,6 +112,10 @@ http://127.0.0.1:8173/local-test-pages/conversation-horror.html
   - DOM menu navigation, persisted audio settings, music-track selection, animated food lobs, click explosions, and `render_game_to_text()`.
 - `src/opening-vn.js`
   - Dialogue beat data, speaker/inner-monologue state, paddock preview reveal, completion event, and `render_game_to_text()`.
+- `src/*-runtime.js`
+  - Focused reusable decisions for audio, storage, shop flow, shop transactions, merging, battle abilities/items/phase transitions, rewards, enemy plans, status effects, route params, interactions, drag/drop, options, field guide, and menu food-lob effects.
+- `src/*-canvas.js`, `src/canvas-*.js`, and `src/card-canvas.js`
+  - Shared canvas drawing, text measurement/wrapping, layout geometry, status glyphs, battle overlays, story panels, transitions, ledger panels, and Codex/War Manifest surfaces.
 
 ## Verification
 
@@ -180,6 +188,18 @@ Common browser smoke targets:
 http://127.0.0.1:8173/local-test-pages/game.html?smoke=basic
 http://127.0.0.1:8173/local-test-pages/game.html?screen=level-10&start=battle
 http://127.0.0.1:8173/local-test-pages/game.html?screen=final-fight&start=battle
+```
+
+Conversation/story preview targets:
+
+```text
+http://127.0.0.1:8173/local-test-pages/conversation-level2.html
+http://127.0.0.1:8173/local-test-pages/conversation-level3.html
+http://127.0.0.1:8173/local-test-pages/conversation-level5.html
+http://127.0.0.1:8173/local-test-pages/conversation-level10.html
+http://127.0.0.1:8173/local-test-pages/conversation-level15.html
+http://127.0.0.1:8173/local-test-pages/conversation-level20-prefinal.html
+http://127.0.0.1:8173/local-test-pages/conversation-level20-final-tabs.html
 ```
 
 When changing asset wiring, prefer checking both cozy and horror themes because most runtime sprite, item, status, UI, and copy paths have theme-specific mappings.
