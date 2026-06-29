@@ -4656,6 +4656,18 @@
     return unit;
   }
 
+  function battleSlotOccupied(units, side, index, ignoreUid = null) {
+    const { col, row } = slotGrid(index);
+    return units.some((unit) => (
+      unit
+      && !unit.dead
+      && unit.side === side
+      && unit.uid !== ignoreUid
+      && unit.col === col
+      && unit.row === row
+    ));
+  }
+
   function battleSlotPosition(side, index) {
     const { col, row } = slotGrid(index);
     return {
@@ -6764,6 +6776,7 @@
     if (!target) return;
     const nextCol = Math.min(FRONT_COL, (target.col ?? BACK_COL) + 1);
     const newSlot = (target.row ?? 0) * BOARD_COLS + nextCol;
+    if (battleSlotOccupied(foes, target.side, newSlot, target.uid)) return;
     positionBattleUnit(target, target.side, newSlot);
     if (applyCooldownDelay(target, krakenPullDelay(unit), unit) > 0) {
       target.slowed = { remaining: statusDuration(unit, 1.6) };
