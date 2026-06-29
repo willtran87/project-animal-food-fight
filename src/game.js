@@ -1552,7 +1552,7 @@
       enemySlot: plan.bossSlot ?? GIRAFFE_BOSS_SLOT,
       battleSpriteScale: 1.7,
       battleSpriteOffsetY: -24,
-      defeatStillScale: 1.45,
+      defeatStillScale: HORROR_PLATE_BENCH_UNIT_SCALE,
       giraffeBossUnit: true,
       glitchToRobot: true,
       forceRealityDefeatStill: true,
@@ -16560,7 +16560,10 @@
     const drawScale = targetMax / metricsMax;
     const drawW = Math.round(metrics.w * drawScale);
     const drawH = Math.round(metrics.h * drawScale);
-    const baseY = unit.y + targetMax * 0.38;
+    const anchorBase = Boolean(unit.giraffeBossUnit || isGiraffeBossUnitType(unit.typeId));
+    const baseY = anchorBase
+      ? unit.y + (unit.battleSpriteOffsetY || 0) + visualRadius
+      : unit.y + targetMax * 0.38;
     const facingRight = horrorStill && unit.side === "ally";
     const rect = { x: Math.round(unit.x - drawW / 2), y: Math.round(baseY - drawH), w: drawW, h: drawH };
 
