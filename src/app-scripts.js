@@ -11,7 +11,7 @@
       ["field-guide-runtime", "h-3ccbcafe2cf9"],
       ["run-storage", "h-207527d426cf"],
       ["food-lob-runtime", "h-1ca912fa3197"],
-      ["start-menu", "h-bb111003b7f1"],
+      ["start-menu", "h-7b433f36a9b0"],
     ],
     openingVn: [
       ["dynamic-asset-manifest", "h-0bdcc5b2e185"],
@@ -51,7 +51,7 @@
       ["victory-reboot-runtime", "h-a1ec28cff1c5"],
       ["catalog-runtime", "h-9da4977b7ab9"],
       ["shop-transaction-runtime", "h-a0898420c24c"],
-      ["enemy-team-runtime", "h-4a6fe15de86b"],
+      ["enemy-team-runtime", "h-66b5aead4e02"],
       ["battle-item-runtime", "h-447bb8d85d7a"],
       ["battle-canvas", "h-456e0c7c41c5"],
       ["reality-fx-canvas", "h-acfa7c0423b5"],
@@ -66,11 +66,11 @@
       ["story-data", "h-b70e8344d60c"],
       ["trait-arena-data", "h-2e5155bd22b2"],
       ["unit-data", "h-497c02680e0e"],
-      ["item-data", "h-fc327ab729c1"],
-      ["economy-enemy-data", "h-8fd3c3963fc5"],
+      ["item-data", "h-3f524ddf7c81"],
+      ["economy-enemy-data", "h-b8919d5f4612"],
       ["rarity-shop-data", "h-6829c90dffeb"],
       ["status-effect-data", "h-93cdb2493911"],
-      ["game", "h-7ba865476ae4"],
+      ["game", "h-be5d47fd52d0"],
     ],
   });
 

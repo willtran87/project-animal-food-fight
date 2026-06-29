@@ -65,9 +65,9 @@
   const TIER_SCALING = [
     null,
     { hp: 1, atk: 1, speed: 1, ability: 1 },
-    { hp: 2.35, atk: 2.15, speed: 0.92, ability: 1.45 },
-    { hp: 4.9, atk: 4.35, speed: 0.84, ability: 2.1 },
-    { hp: 9.2, atk: 8.15, speed: 0.76, ability: 3.15 },
+    { hp: 2.35, atk: 2.15, speed: 0.92, ability: 1.5 },
+    { hp: 4.9, atk: 4.35, speed: 0.84, ability: 2.28 },
+    { hp: 9.2, atk: 8.15, speed: 0.76, ability: 3.55 },
   ];
   const GLOBAL_HP_SCALE = 7.4;
   const MERGE_GOLD_REWARD = {

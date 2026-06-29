@@ -129,6 +129,17 @@
       playerBoardPower: plan.playerBoardPower || 0,
       playerEconomyPower: plan.playerEconomyPower || 0,
       playerTotalPower: plan.playerTotalPower || 0,
+      economyComparison: plan.playerEconomyComparison
+        ? {
+            expected: Number((plan.playerEconomyComparison.expected || 0).toFixed(1)),
+            market: Number((plan.playerEconomyComparison.market || 0).toFixed(1)),
+            dealSurplus: Number((plan.playerEconomyComparison.dealSurplus || 0).toFixed(1)),
+            totalValue: Number((plan.playerEconomyComparison.totalValue || 0).toFixed(1)),
+            surplusValue: Number((plan.playerEconomyComparison.surplusValue || 0).toFixed(1)),
+            ratio: Number((plan.playerEconomyComparison.ratio || 0).toFixed(3)),
+            outOfControl: Boolean(plan.playerEconomyComparison.outOfControl),
+          }
+        : null,
       hpMultiplier: Number(plan.hpMultiplier.toFixed(2)),
       atkMultiplier: Number(plan.atkMultiplier.toFixed(2)),
       targetExtraTier: Number(plan.targetExtraTier.toFixed(2)),
@@ -137,6 +148,7 @@
       adaptivePressurePct: Number(((plan.adaptivePressure || 0) * 100).toFixed(1)),
       catchupStatBonusPct: Number(((plan.catchupStatBonus || 0) * 100).toFixed(1)),
       storyRewardPressurePct: Number(((plan.storyRewardPressure || 0) * 100).toFixed(1)),
+      economyRunawayPressurePct: Number(((plan.economyRunawayPressure || 0) * 100).toFixed(1)),
       bossAdaptiveStatBonusPct: Number(((plan.bossAdaptiveStatBonus || 0) * 100).toFixed(1)),
       infiniteStatBonusPct: Number(((plan.infiniteStatBonus || 0) * 100).toFixed(1)),
       shopPowerStatBonusPct: Number(((plan.shopPowerStatBonus || 0) * 100).toFixed(1)),

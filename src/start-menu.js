@@ -1188,6 +1188,7 @@ function beginMenuRebootStaticReveal() {
   clearRebootStaticTimer();
   consumeMenuReturnReveal();
   state.rebootStaticReveal = true;
+  playMenuSfx("transition", { force: true, volume: 0.78, rate: 0.86 });
   rebootStaticTimer = window.setTimeout(() => {
     rebootStaticTimer = null;
     state.rebootStaticReveal = false;
@@ -1200,6 +1201,9 @@ function beginMenuLoadReveal() {
   clearMenuLoadRevealTimer();
   state.menuLoadRevealKind = consumeMenuReturnReveal() ? "return" : "load";
   state.menuLoadReveal = true;
+  if (state.menuLoadRevealKind === "return") {
+    playMenuSfx("transition", { force: true, volume: 0.45, rate: 1.08 });
+  }
   const duration = state.menuLoadRevealKind === "return" ? 1100 : 900;
   menuLoadRevealTimer = window.setTimeout(() => {
     menuLoadRevealTimer = null;

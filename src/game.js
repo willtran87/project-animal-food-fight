@@ -570,6 +570,7 @@
     volumeSetting: null,
     pools: new Map(),
     next: new Map(),
+    lastPlayedAt: new Map(),
   };
 
   function savedGameMusicSetting() {
@@ -667,6 +668,14 @@
       rate: options.rate,
       poolSize: 4,
     });
+  }
+
+  function playThrottledGameSfx(key, id, options = {}, interval = 0.08) {
+    const now = state.idleTime || 0;
+    const last = gameSfx.lastPlayedAt.get(key) ?? -Infinity;
+    if (now - last < interval) return null;
+    gameSfx.lastPlayedAt.set(key, now);
+    return playGameSfx(id, options);
   }
 
   function armGameSfx() {
@@ -1323,11 +1332,19 @@
     if (item.backRowTargeting) lines.push(`Back-row holder targets enemy back row`);
     if (item.adjacentStartShieldPct) lines.push(`Battle start: adjacent allies gain ${percentText(item.adjacentStartShieldPct)} max HP shield`);
     if (item.adjacentStartAttackBuffPct) lines.push(`Battle start: adjacent allies gain +${percentText(item.adjacentStartAttackBuffPct)} damage for ${item.adjacentStartBuffDuration || 4}s`);
+    if (item.adjacentPulseShieldPct) lines.push(`Every ${item.adjacentPulseInterval || 7}s: adjacent allies gain ${percentText(item.adjacentPulseShieldPct)} max HP shield`);
+    if (item.adjacentPulseAttackBuffPct) lines.push(`Every ${item.adjacentPulseInterval || 7}s: adjacent allies gain +${percentText(item.adjacentPulseAttackBuffPct)} damage for ${item.adjacentPulseDuration || 2.5}s`);
     if (item.pierceDamagePct) lines.push(`Attacks pierce behind target for ${percentText(item.pierceDamagePct)} ATK`);
-    if (item.lowHpBurnDamagePct) lines.push(`At low HP once: nearby burn for ${percentText(item.lowHpBurnDamagePct)} ATK (${item.lowHpBurnDuration || 3}s)`);
+    if (item.lowHpBurnDamagePct) {
+      const repeat = item.lowHpBurnInterval ? `, repeats every ${item.lowHpBurnInterval}s while low` : "";
+      lines.push(`At low HP: nearby burn for ${percentText(item.lowHpBurnDamagePct)} ATK (${item.lowHpBurnDuration || 3}s)${repeat}`);
+    }
     if (item.deathSaveShieldPct) lines.push(`Once per battle: survive fatal hit with ${percentText(item.deathSaveShieldPct)} max HP shield`);
     if (item.firstDebuffCleanseHealPct) lines.push(`First debuff: cleanse and heal ${percentText(item.firstDebuffCleanseHealPct)} max HP`);
-    if (item.timedHastePct) lines.push(`At ${item.timedHasteAt || 10}s: +${percentText(item.timedHastePct)} speed for ${item.timedHasteDuration || 4}s`);
+    if (item.timedHastePct) {
+      const repeat = item.timedHasteInterval ? `, repeats every ${item.timedHasteInterval}s` : "";
+      lines.push(`At ${item.timedHasteAt || 10}s: +${percentText(item.timedHastePct)} speed for ${item.timedHasteDuration || 4}s${repeat}`);
+    }
     if (item.shieldedTargetDamagePct) lines.push(`Vs shielded targets: damage +${percentText(item.shieldedTargetDamagePct)}`);
     if (item.attackSlowPct) lines.push(`Attacks slow enemy speed by ${percentText(item.attackSlowPct)} for ${item.attackSlowDuration || 3}s`);
     if (item.statusDurationReductionPct) lines.push(`Negative statuses and cooldown delays fade ${percentText(item.statusDurationReductionPct)} faster`);
@@ -1391,13 +1408,14 @@
     if (item.mergeProgressBonus) return `bench merge +${item.mergeProgressBonus}`;
     if (item.frontRowDamageReductionPct) return `front damage -${percentText(item.frontRowDamageReductionPct)}`;
     if (item.backRowTargeting) return `back row targets back row`;
+    if (item.adjacentPulseShieldPct || item.adjacentPulseAttackBuffPct) return `adjacent pulse every ${item.adjacentPulseInterval || 7}s`;
     if (item.adjacentStartShieldPct && item.adjacentStartAttackBuffPct) return `adjacent shield +${percentText(item.adjacentStartShieldPct)}, dmg +${percentText(item.adjacentStartAttackBuffPct)}`;
     if (item.adjacentStartShieldPct) return `adjacent shield ${percentText(item.adjacentStartShieldPct)} max HP`;
     if (item.pierceDamagePct) return `pierce ${percentText(item.pierceDamagePct)} ATK`;
     if (item.lowHpBurnDamagePct) return `low HP burn ${percentText(item.lowHpBurnDamagePct)} ATK`;
     if (item.deathSaveShieldPct) return `fatal save +${percentText(item.deathSaveShieldPct)} shield`;
     if (item.firstDebuffCleanseHealPct) return `first debuff cleanse/heal`;
-    if (item.timedHastePct) return `${item.timedHasteAt || 10}s haste +${percentText(item.timedHastePct)}`;
+    if (item.timedHastePct) return item.timedHasteInterval ? `late haste every ${item.timedHasteInterval}s` : `${item.timedHasteAt || 10}s haste +${percentText(item.timedHastePct)}`;
     if (item.shieldedTargetDamagePct) return `vs shields +${percentText(item.shieldedTargetDamagePct)} dmg`;
     if (item.attackSlowPct) return `attack slow ${percentText(item.attackSlowPct)}`;
     if (item.statusDurationReductionPct) return `statuses/delays fade ${percentText(item.statusDurationReductionPct)} faster`;
@@ -3658,11 +3676,105 @@
     const bankScore = clamp((state?.gold || 0) / 115, 0, 3.2);
     const freeRollScore = clamp((state?.freeRolls || 0) * 0.18, 0, 1.25);
     const arenaPrepScore = state?.arenaPrepBuff ? 0.95 : 0;
-    return economyGate * (benchTierScore + storedItemScore + shopLevelScore + unlockedSlotScore + bankScore + freeRollScore + arenaPrepScore);
+    const economyRunawayScore = enemyEconomyRunawayPressure(round) * 2.7;
+    return economyGate * (benchTierScore + storedItemScore + shopLevelScore + unlockedSlotScore + bankScore + freeRollScore + arenaPrepScore + economyRunawayScore);
   }
 
   function playerTotalPowerScore(round = state.round) {
     return playerBoardPowerScore() + playerEconomyPowerScore(round);
+  }
+
+  function purchasedValueSurplus(entry, marketValue) {
+    const paid = trackedPurchaseGold(entry);
+    if (paid === null) return 0;
+    return clamp((marketValue || 0) - paid, 0, Math.max(0, marketValue || 0));
+  }
+
+  function playerItemEconomyValue(item, options = {}) {
+    if (!isItem(item)) return { market: 0, surplus: 0 };
+    const market = enemyItemEconomyCost(item, itemTier(item.tier)) * (options.weight ?? 1);
+    return {
+      market,
+      surplus: purchasedValueSurplus(item, market),
+    };
+  }
+
+  function playerUnitEconomyValue(unit, slot = 0, options = {}) {
+    if (!isUnit(unit)) return { market: 0, surplus: 0 };
+    const unitMarket = enemyUnitEconomyCost(unit.typeId, unit.tier || 1, slot) * (options.weight ?? 1);
+    const itemValue = playerItemEconomyValue(unit.item, { weight: options.itemWeight ?? options.weight ?? 1 });
+    return {
+      market: unitMarket + itemValue.market,
+      surplus: purchasedValueSurplus(unit, unitMarket) + itemValue.surplus,
+    };
+  }
+
+  function playerOwnedEconomyValue() {
+    let market = 0;
+    let surplus = 0;
+    (state?.board || []).forEach((unit, index) => {
+      const value = playerUnitEconomyValue(unit, index, { weight: 1, itemWeight: 0.9 });
+      market += value.market;
+      surplus += value.surplus;
+    });
+    (state?.bench || []).forEach((entry, index) => {
+      const value = isUnit(entry)
+        ? playerUnitEconomyValue(entry, index, { weight: 0.58, itemWeight: 0.42 })
+        : playerItemEconomyValue(entry, { weight: 0.5 });
+      market += value.market;
+      surplus += value.surplus;
+    });
+    (state?.itemBench || []).forEach((item) => {
+      const value = playerItemEconomyValue(item, { weight: 0.58 });
+      market += value.market;
+      surplus += value.surplus;
+    });
+    (state?.drinks || []).forEach((drink) => {
+      const value = playerItemEconomyValue(drink, { weight: 0.82 });
+      market += value.market;
+      surplus += value.surplus;
+    });
+    const shopInvestment = Math.max(0, (state?.shopLevel || 1) - 1) * 56
+      + Math.max(0, (state?.shopUnlocked || []).filter(Boolean).length - SHOP_STARTING_UNLOCKED_SLOTS) * 24;
+    const liquidValue = clamp(state?.gold || 0, 0, ECONOMY.maxGold) * 0.55
+      + clamp(state?.freeRolls || 0, 0, 12) * Math.max(ECONOMY.rollCost || 0, 1) * 0.65
+      + (state?.arenaPrepBuff ? 72 : 0);
+    return {
+      market: market + shopInvestment + liquidValue,
+      surplus,
+    };
+  }
+
+  function expectedPlayerEconomyValueForRound(round) {
+    const completedRounds = Math.max(0, round - 1);
+    const averageIncome = ((ECONOMY.winGold || 0) + (ECONOMY.lossGold || 0)) / 2;
+    const rewardValue = isInfiniteMode() ? 28 : 24;
+    const shopTempo = Math.max(0, round - 4) * 9;
+    const post20Tempo = Math.max(0, round - FINAL_VICTORY_ROUND) * 72;
+    return (ECONOMY.startingGold || 0) + completedRounds * (averageIncome + rewardValue) + shopTempo + post20Tempo;
+  }
+
+  function playerEconomyComparison(round = state.round) {
+    const value = playerOwnedEconomyValue();
+    const expected = expectedPlayerEconomyValueForRound(round);
+    const totalValue = value.market + value.surplus * 0.55;
+    const surplusValue = Math.max(0, totalValue - expected);
+    const ratio = expected > 0 ? totalValue / expected : 1;
+    const pressure = clamp(Math.max(0, ratio - 1.2) * 0.32 + Math.max(0, surplusValue - 260) / 3600, 0, isInfiniteMode() ? 0.44 : 0.22);
+    return {
+      expected,
+      market: value.market,
+      dealSurplus: value.surplus,
+      totalValue,
+      surplusValue,
+      ratio,
+      pressure,
+      outOfControl: ratio >= 1.25 || surplusValue >= 340,
+    };
+  }
+
+  function enemyEconomyRunawayPressure(round = state.round) {
+    return playerEconomyComparison(round).pressure;
   }
 
   function expectedPlayerPowerForRound(round) {
@@ -3675,19 +3787,30 @@
   function enemyAdaptivePressure(round) {
     const overage = playerTotalPowerScore(round) - expectedPlayerPowerForRound(round);
     const infinitePressure = enemyInfinitePost20Pressure(round);
+    const economyRunawayPressure = enemyEconomyRunawayPressure(round);
     const cap = infinitePressure > 0
-      ? clamp(0.22 + infinitePressure * 0.012, 0.22, 0.78)
+      ? clamp(0.22 + infinitePressure * 0.009, 0.22, 0.7)
       : enemyPreFinalAdaptiveCap(round);
     const divisor = infinitePressure > 0 ? 20 : enemyPreFinalAdaptiveDivisor(round);
-    return clamp(overage / divisor, 0, cap);
+    return clamp(overage / divisor + economyRunawayPressure * 0.42, 0, clamp(cap + economyRunawayPressure * 0.28, cap, isInfiniteMode() ? 0.84 : 0.48));
   }
 
   function enemyPreFinalAdaptiveCap(round) {
-    return clamp(0.2 + Math.max(0, round - 4) * 0.01, 0.2, 0.36);
+    const lateRelief = enemyPreFinalLateRelief(round);
+    return clamp((0.2 + Math.max(0, round - 4) * 0.01) - lateRelief * 0.035, 0.2, 0.36);
   }
 
   function enemyPreFinalAdaptiveDivisor(round) {
     return clamp(28 - Math.max(0, round - 4) * 0.38, 22, 28);
+  }
+
+  function enemyPreFinalLateRelief(round) {
+    if (isInfiniteMode() || round <= 14 || round > FINAL_VICTORY_ROUND) return 0;
+    return clamp((round - 14) / Math.max(1, FINAL_VICTORY_ROUND - 14), 0, 1);
+  }
+
+  function enemyPreFinalLateScale(round, maxRelief = 0.12) {
+    return 1 - enemyPreFinalLateRelief(round) * maxRelief;
   }
 
   function enemyPreFinalCatchupShare(round) {
@@ -3702,11 +3825,14 @@
 
   function enemyStoryRewardPressure(round) {
     if (isInfiniteMode()) return 0;
-    return clamp(Math.max(0, round - 3) * 0.012 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.01, 0, 0.24);
+    return clamp(Math.max(0, round - 3) * 0.009 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.005, 0, 0.17);
   }
 
   function enemyBossAdaptiveStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
-    return adaptivePressure * 0.58 + enemyPreFinalCatchupStatBonus(round, adaptivePressure) * 0.85 + enemyStoryRewardPressure(round) * 0.95;
+    return adaptivePressure * 0.42
+      + enemyPreFinalCatchupStatBonus(round, adaptivePressure) * 0.55
+      + enemyStoryRewardPressure(round) * 0.58
+      + enemyEconomyRunawayPressure(round) * 0.5;
   }
 
   function enemyLatePressure(round) {
@@ -3737,9 +3863,11 @@
     const adaptivePressure = enemyAdaptivePressure(round);
     const catchupStatBonus = enemyPreFinalCatchupStatBonus(round, adaptivePressure);
     const storyRewardPressure = enemyStoryRewardPressure(round);
+    const economyComparison = playerEconomyComparison(round);
+    const lateScale = enemyPreFinalLateScale(round, 0.14);
     const bossAdaptiveStatBonus = enemyBossAdaptiveStatBonus(round, adaptivePressure);
     const hpMultiplier = FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER + bossAdaptiveStatBonus;
-    const atkMultiplier = FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER + bossAdaptiveStatBonus * 0.72;
+    const atkMultiplier = FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER + bossAdaptiveStatBonus * 0.62 * lateScale;
     return {
       round,
       finalBoss: true,
@@ -3757,6 +3885,7 @@
       playerBoardPower: Number(playerBoardPowerScore().toFixed(2)),
       playerEconomyPower: Number(playerEconomyPowerScore(round).toFixed(2)),
       playerTotalPower: Number(playerTotalPowerScore(round).toFixed(2)),
+      playerEconomyComparison: economyComparison,
       targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
       tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
       tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
@@ -3767,6 +3896,7 @@
       adaptivePressure,
       catchupStatBonus,
       storyRewardPressure,
+      economyRunawayPressure: economyComparison.pressure,
       bossAdaptiveStatBonus,
       shopPowerStatBonus: hpMultiplier - 1,
       shopPowerTierBonus: 0,
@@ -3814,6 +3944,9 @@
     const infiniteStatBonus = enemyInfiniteStatBonus(round, adaptivePressure);
     const catchupStatBonus = enemyPreFinalCatchupStatBonus(round, adaptivePressure);
     const storyRewardPressure = enemyStoryRewardPressure(round);
+    const economyComparison = playerEconomyComparison(round);
+    const economyRunawayPressure = economyComparison.pressure;
+    const lateScale = enemyPreFinalLateScale(round, 0.12);
     const budget = enemyEconomyBudget(round, adaptivePressure, economyJitter);
     const minimumUnitCount = boardSlots.length;
     return {
@@ -3833,11 +3966,13 @@
       playerBoardPower: Number(playerBoardPowerScore().toFixed(2)),
       playerEconomyPower: Number(playerEconomyPowerScore(round).toFixed(2)),
       playerTotalPower: Number(playerTotalPowerScore(round).toFixed(2)),
+      playerEconomyComparison: economyComparison,
+      economyRunawayPressure,
       targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
       tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
       tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + latePressure * 0.011 + adaptivePressure * 0.145 + shopPowerStatBonus + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.34),
-      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + latePressure * 0.007 + adaptivePressure * 0.11 + shopPowerStatBonus + infiniteStatBonus * 0.78 + catchupStatBonus * 0.75 + storyRewardPressure * 0.22),
+      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + (latePressure * 0.008 + adaptivePressure * 0.145 + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.2 + economyRunawayPressure * 0.24) * lateScale + shopPowerStatBonus),
+      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + (latePressure * 0.005 + adaptivePressure * 0.11 + infiniteStatBonus * 0.68 + catchupStatBonus * 0.68 + storyRewardPressure * 0.12 + economyRunawayPressure * 0.16) * lateScale + shopPowerStatBonus),
       economyBudget: budget,
       economyJitter,
       post20Pressure,
@@ -3854,6 +3989,7 @@
       infiniteStatBonus,
       catchupStatBonus,
       storyRewardPressure,
+      economyRunawayPressure,
       shopPowerStatBonus,
       shopPowerTierBonus: enemyShopPowerTierBonus(round),
       shopPowerTier3Bonus: enemyShopPowerTier3Bonus(round),
@@ -3867,15 +4003,18 @@
     const post20Pressure = enemyPost20EconomyPressure(round);
     const infinitePressure = enemyInfinitePost20Pressure(round);
     const storyRewardPressure = enemyStoryRewardPressure(round);
+    const economyRunawayPressure = enemyEconomyRunawayPressure(round);
+    const lateScale = enemyPreFinalLateScale(round, 0.12);
     const base = 10
       + Math.max(0, targetPower - 1) * 14.5
       + round * 8
       + Math.pow(Math.max(1, round), 1.05) * 1.4
-      + post20Pressure * 42
-      + infinitePressure * 18
-      + storyRewardPressure * 95;
+      + post20Pressure * 34
+      + infinitePressure * 12
+      + storyRewardPressure * 64 * lateScale
+      + economyRunawayPressure * 135 * lateScale;
     const shopPower = 1 + enemyShopPowerStatBonus(round) + enemyShopPowerTierBonus(round);
-    const pressure = 1 + adaptivePressure * 1.15 + latePressure * 0.025 + post20Pressure * 0.055 + infinitePressure * 0.018 + storyRewardPressure * 0.45;
+    const pressure = 1 + (adaptivePressure * 1.15 + latePressure * 0.018 + storyRewardPressure * 0.26 + economyRunawayPressure * 0.52) * lateScale + post20Pressure * 0.04 + infinitePressure * 0.012;
     return Math.max(ECONOMY.unitCost, Math.round(base * shopPower * pressure * jitter));
   }
 
@@ -3924,7 +4063,8 @@
     const cap = infinitePressure > 0 ? clamp(0.95 + infinitePressure * 0.018, 0.95, 2.25) : 0.95;
     const roundBase = Math.min(infinitePressure > 0 ? 1.12 : 0.66, round * 0.038);
     const adaptiveTierPressure = adaptivePressure * (infinitePressure > 0 ? 0.46 : 0.42);
-    return clamp(roundBase + adaptiveTierPressure + enemyShopPowerTierBonus(round) + enemyStoryRewardPressure(round) * 0.38 + infinitePressure * 0.018, 0, cap);
+    const lateScale = enemyPreFinalLateScale(round, 0.14);
+    return clamp(roundBase + (adaptiveTierPressure + enemyStoryRewardPressure(round) * 0.2 + enemyEconomyRunawayPressure(round) * 0.3) * lateScale + enemyShopPowerTierBonus(round) + infinitePressure * 0.012, 0, cap);
   }
 
   function enemyEconomyTier3Chance(round, adaptivePressure = 0) {
@@ -3932,7 +4072,8 @@
     const infinitePressure = enemyInfinitePost20Pressure(round);
     const cap = infinitePressure > 0 ? clamp(0.34 + infinitePressure * 0.006, 0.34, 0.72) : 0.34;
     const adaptiveTier3Pressure = adaptivePressure * (infinitePressure > 0 ? 0.07 : 0.1);
-    return clamp((round - 7) * 0.012 + adaptiveTier3Pressure + enemyShopPowerTier3Bonus(round) + enemyStoryRewardPressure(round) * 0.16 + infinitePressure * 0.006, 0, cap);
+    const lateScale = enemyPreFinalLateScale(round, 0.14);
+    return clamp((round - 7) * 0.012 + (adaptiveTier3Pressure + enemyStoryRewardPressure(round) * 0.085 + enemyEconomyRunawayPressure(round) * 0.12) * lateScale + enemyShopPowerTier3Bonus(round) + infinitePressure * 0.0045, 0, cap);
   }
 
   function enemyEconomyTier4Chance(round, adaptivePressure = 0) {
@@ -3940,7 +4081,8 @@
     const infinitePressure = enemyInfinitePost20Pressure(round);
     const cap = infinitePressure > 0 ? clamp(0.18 + infinitePressure * 0.0032, 0.18, 0.46) : 0.18;
     const adaptiveTier4Pressure = adaptivePressure * (infinitePressure > 0 ? 0.055 : 0.075);
-    return clamp((round - 14) * 0.0048 + adaptiveTier4Pressure + enemyStoryRewardPressure(round) * 0.08 + infinitePressure * 0.0038, 0, cap);
+    const lateScale = enemyPreFinalLateScale(round, 0.16);
+    return clamp((round - 14) * 0.0038 + (adaptiveTier4Pressure + enemyStoryRewardPressure(round) * 0.035 + enemyEconomyRunawayPressure(round) * 0.07) * lateScale + infinitePressure * 0.0028, 0, cap);
   }
 
   function chooseEnemyArchetype(round) {
@@ -4093,9 +4235,9 @@
   function enemyEconomyTierWeight(tier, plan) {
     const storyRewardPressure = plan.storyRewardPressure || 0;
     if (tier <= 1) return 1;
-    if (tier === 2) return 0.12 + (plan.targetExtraTier || 0) * 1.15 + storyRewardPressure * 0.75;
-    if (tier === 3) return Math.max(0.015, (plan.tier3Chance || 0) * 4.2 + storyRewardPressure * 1.55);
-    return Math.max(0.006, (plan.tier4Chance || 0) * 7 + storyRewardPressure * 1.15);
+    if (tier === 2) return 0.12 + (plan.targetExtraTier || 0) * 1.15 + storyRewardPressure * 0.45;
+    if (tier === 3) return Math.max(0.015, (plan.tier3Chance || 0) * 4.2 + storyRewardPressure * 0.95);
+    return Math.max(0.006, (plan.tier4Chance || 0) * 7 + storyRewardPressure * 0.7);
   }
 
   function enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds = [], options = {}) {
@@ -5016,9 +5158,10 @@
     window.FoodAnimalsCombatLedgerCapture.captureDueFrames(battle, combatLedgerCaptureOptions());
   }
 
-  function recordCombatDamage(battle, source, target, hpDamage, shieldDamage = 0) {
+  function recordCombatDamage(battle, source, target, hpDamage, shieldDamage = 0, options = {}) {
     const impact = window.FoodAnimalsCombatLedgerCapture.recordDamage(battle, source, target, hpDamage, shieldDamage, combatLedgerCaptureOptions());
     if (impact <= 0) return;
+    if (options.silentSfx) return;
     playGameSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
   }
 
@@ -5627,6 +5770,10 @@
         duration: STORY_TRANSITION_SECONDS,
       },
     };
+    playGameSfx(realityBroken() ? "transition" : "ui-confirm", {
+      volume: realityBroken() ? 0.46 : 0.28,
+      rate: realityBroken() ? 0.88 : 1,
+    });
     return state.activeStory;
   }
 
@@ -5723,13 +5870,14 @@
       source: options.source || "level10Reveal",
     };
     if (options.entryTransition) {
-      beginLevel10RevealCutsceneStaticTransition(state.level10RevealCutscene, 1, { label: "SIGNAL ACQUIRING" });
+      beginLevel10RevealCutsceneStaticTransition(state.level10RevealCutscene, 1, { label: "SIGNAL ACQUIRING", silentSfx: true });
     }
     if (!state.seenStoryMilestones.includes(LEVEL10_REVEAL_CUTSCENE_ID)) {
       state.seenStoryMilestones.push(LEVEL10_REVEAL_CUTSCENE_ID);
     }
     state.message = "Illusion failure";
     state.log.unshift("Cutscene: level 10 reveal aftermath");
+    playGameSfx("reality-break", { theme: "horror", volume: 1.05, rate: 0.92 });
     return true;
   }
 
@@ -5767,17 +5915,27 @@
       label: options.label || null,
       seed: Math.floor((cutscene.elapsed || 0) * 997) + Math.floor(state.idleTime * 61),
     };
+    if (!options.silentSfx) {
+      playGameSfx(options.sfxId || "transition", {
+        theme: "horror",
+        volume: options.volume ?? (options.completeOnEnd ? 0.74 : 0.58),
+        rate: options.rate ?? (direction < 0 ? 0.88 : 1),
+      });
+    }
   }
 
   function advanceLevel10RevealCutscene(skip = false) {
     const cutscene = state.level10RevealCutscene;
     if (!cutscene) return false;
-    if (skip) return completeLevel10RevealCutscene();
+    if (skip) {
+      playGameSfx("ui-back", { theme: "horror", volume: 0.52, rate: 0.9 });
+      return completeLevel10RevealCutscene();
+    }
     if (level10RevealCutsceneTransitioning(cutscene)) return false;
     const shotIndex = level10RevealCutsceneShotIndex(cutscene);
     const nextShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[shotIndex + 1];
     if (!nextShot) {
-      beginLevel10RevealCutsceneStaticTransition(cutscene, 1, { completeOnEnd: true });
+      beginLevel10RevealCutsceneStaticTransition(cutscene, 1, { completeOnEnd: true, volume: 0.82, rate: 0.86 });
       return true;
     }
     cutscene.elapsed = nextShot.start + 0.001;
@@ -6086,12 +6244,16 @@
     const damagePct = moldDamagePct(battle.moldStacks);
     const moldStyle = currentMoldStatusStyle();
     const units = [...battle.allies, ...battle.enemies].filter((unit) => !unit.dead);
+    playGameSfx(realityBroken() ? "reality-break" : "control", {
+      volume: realityBroken() ? 0.42 : 0.28,
+      rate: Math.max(0.72, 1.04 - battle.moldStacks * 0.035),
+    });
     units.forEach((unit) => {
       unit.moldStacks = battle.moldStacks;
       const damage = Math.max(1, Math.round(unit.maxHp * damagePct));
       unit.hp = Math.max(0, unit.hp - damage);
       battle.moldTotalDamage = (battle.moldTotalDamage || 0) + damage;
-      recordCombatDamage(battle, null, unit, damage, 0);
+      recordCombatDamage(battle, null, unit, damage, 0, { silentSfx: true });
       burst({ x: unit.x, y: unit.y }, moldStyle.color);
       if (unit.hp <= 0 && !unit.dead) {
         unit.dead = true;
@@ -6211,14 +6373,7 @@
         unit.slowed.remaining -= negativeDt;
         if (unit.slowed.remaining <= 0) unit.slowed = null;
       }
-      if (unit.item?.timedHastePct && !unit.timedHasteUsed && battle.elapsed >= (unit.item.timedHasteAt || 10)) {
-        unit.timedHasteUsed = true;
-        unit.haste = {
-          remaining: unit.item.timedHasteDuration || 4,
-          pct: unit.item.timedHastePct,
-        };
-        burst({ x: unit.x, y: unit.y }, unit.item.accent || "#f4efe2");
-      }
+      updateLongFightUnitPulses(unit, battle, dt);
       if (unit.item?.periodicDamage) {
         unit.periodicItemTick = (unit.periodicItemTick ?? (unit.item.periodicInterval || 3)) - dt;
         if (unit.periodicItemTick <= 0) {
@@ -6267,6 +6422,80 @@
         const maxStacks = unit.item.lateFightMaxStacks || 4;
         unit.lateFightStacks = battle.elapsed >= start ? Math.min(maxStacks, 1 + Math.floor((battle.elapsed - start) / interval)) : 0;
       }
+    });
+  }
+
+  function updateLongFightUnitPulses(unit, battle, dt) {
+    updateTimedHastePulse(unit, battle);
+    updateAdjacentItemPulse(unit, battle, dt);
+    updateLowHpBurnPulse(unit, battle, dt);
+    updateSyrupStartPulse(unit, battle, dt);
+  }
+
+  function updateTimedHastePulse(unit, battle) {
+    if (!unit.item?.timedHastePct) return;
+    const firstAt = unit.item.timedHasteAt || 10;
+    if (unit.timedHasteNextAt == null) unit.timedHasteNextAt = firstAt;
+    if (battle.elapsed < unit.timedHasteNextAt) return;
+    setTimedPctStatus(unit, "haste", unit.item.timedHastePct, unit.item.timedHasteDuration || 4);
+    burst({ x: unit.x, y: unit.y }, unit.item.accent || "#f4efe2");
+    unit.timedHasteUsed = true;
+    unit.timedHasteNextAt = unit.item.timedHasteInterval
+      ? battle.elapsed + unit.item.timedHasteInterval
+      : Number.POSITIVE_INFINITY;
+  }
+
+  function adjacentLivingAllies(unit, battle) {
+    const allies = unit.side === "enemy" ? battle.enemies : battle.allies;
+    return allies.filter((ally) => !ally.dead && isAdjacentSlot(unit, ally));
+  }
+
+  function updateAdjacentItemPulse(unit, battle, dt) {
+    if (!unit.item?.adjacentPulseShieldPct && !unit.item?.adjacentPulseAttackBuffPct) return;
+    const interval = unit.item.adjacentPulseInterval || 7;
+    unit.adjacentItemPulseTick = (unit.adjacentItemPulseTick ?? interval) - dt;
+    if (unit.adjacentItemPulseTick > 0) return;
+    unit.adjacentItemPulseTick += interval;
+    const targets = adjacentLivingAllies(unit, battle);
+    targets.forEach((ally) => {
+      let supported = false;
+      if (unit.item.adjacentPulseShieldPct) {
+        const shield = Math.max(1, Math.round(ally.maxHp * unit.item.adjacentPulseShieldPct));
+        supported = grantShield(ally, shield, { source: unit }) > 0 || supported;
+      }
+      if (unit.item.adjacentPulseAttackBuffPct) {
+        setTimedPctStatus(ally, "attackBoost", unit.item.adjacentPulseAttackBuffPct, unit.item.adjacentPulseDuration || 2.5);
+        supported = true;
+      }
+      if (supported) emitSupportFeedback(unit, ally, battle, unit.item.accent || "#d6b88a");
+    });
+  }
+
+  function updateLowHpBurnPulse(unit, battle, dt) {
+    if (!unit.item?.lowHpBurnDamagePct || !unit.item.lowHpBurnInterval) return;
+    const threshold = unit.item.lowHpBurnThreshold || 0.4;
+    if (unit.hp / unit.maxHp > threshold) {
+      unit.lowHpBurnTick = 0;
+      return;
+    }
+    unit.lowHpBurnTick = (unit.lowHpBurnTick ?? 0) - dt;
+    if (unit.lowHpBurnTick > 0) return;
+    unit.lowHpBurnTick += unit.item.lowHpBurnInterval;
+    triggerLowHpBurn(unit, battle, { force: true });
+  }
+
+  function updateSyrupStartPulse(unit, battle, dt) {
+    if (unit.ability !== "syrup_start") return;
+    const interval = syrupPulseInterval(unit);
+    unit.syrupPulseTick = (unit.syrupPulseTick ?? interval) - dt;
+    if (unit.syrupPulseTick > 0) return;
+    unit.syrupPulseTick += interval;
+    const targets = adjacentLivingAllies(unit, battle);
+    targets.forEach((ally) => {
+      const shielded = grantShield(ally, supportAmount(unit, syrupPulseShield(unit)), { source: unit });
+      setTimedPctStatus(ally, "haste", syrupPulseHaste(unit), 2.2);
+      applySupportItem(unit, ally);
+      if (shielded > 0 || ally.uid === unit.uid) emitSupportFeedback(unit, ally, battle, "#e8b765");
     });
   }
 
@@ -6540,6 +6769,19 @@
       return;
     }
 
+    if (unit.ability === "pull_start") {
+      unit.krakenAttackCount = (unit.krakenAttackCount || 0) + 1;
+      applyDamage(target, unit.atk, unit, battle, { color: unit.accent });
+      if (!target.dead && unit.krakenAttackCount % krakenCombatPullEvery(unit) === 0) {
+        if (applyCooldownDelay(target, Math.max(0.08, krakenPullDelay(unit) * 0.45), unit) > 0) {
+          target.slowed = { remaining: statusDuration(unit, 1.4) };
+        }
+        applyKrakenPull(unit, foes);
+      }
+      applyOnAttackItem(unit, target, battle, foes);
+      return;
+    }
+
     if (unit.ability === "sticky_lane") {
       applyDamage(target, unit.atk, unit, battle, { color: "#d8a64a" });
       foes
@@ -6751,9 +6993,11 @@
     }
   }
 
-  function triggerLowHpBurn(unit, battle) {
-    if (!window.FoodAnimalsBattleItemRuntime.lowHpBurnReady(unit)) return;
+  function triggerLowHpBurn(unit, battle, options = {}) {
+    if (!options.force && !window.FoodAnimalsBattleItemRuntime.lowHpBurnReady(unit)) return;
+    if (options.force && (!unit?.item?.lowHpBurnDamagePct || unit.dead || unit.hp / unit.maxHp > (unit.item.lowHpBurnThreshold || 0.4))) return;
     unit.lowHpBurnUsed = true;
+    if (unit.item.lowHpBurnInterval) unit.lowHpBurnTick = unit.item.lowHpBurnInterval;
     const foes = window.FoodAnimalsBattleItemRuntime.splashTargets(unit, unit.side === "ally" ? battle.enemies : battle.allies);
     foes.forEach((foe) => {
       foe.burn = {
@@ -7480,6 +7724,18 @@
     return Number(Math.min(0.18, 0.1 + unit.abilityPower * 0.004).toFixed(2));
   }
 
+  function syrupPulseInterval(unit) {
+    return Math.max(5.2, 7.2 - unit.tier * 0.35);
+  }
+
+  function syrupPulseShield(unit) {
+    return Math.max(2, Math.round(syrupShield(unit) * 0.42));
+  }
+
+  function syrupPulseHaste(unit) {
+    return Number(Math.max(0.05, syrupHaste(unit) * 0.55).toFixed(2));
+  }
+
   function executeBonus(unit) {
     return Math.round(unit.abilityPower * 1.35);
   }
@@ -7630,6 +7886,10 @@
 
   function krakenPullDamage(unit) {
     return Math.max(1, Math.round(unit.abilityPower * 0.45));
+  }
+
+  function krakenCombatPullEvery(unit) {
+    return unit.tier >= 3 ? 3 : 4;
   }
 
   function fortuneShopChance(unit) {
@@ -10116,6 +10376,7 @@
     if (!state.lastCombatLedger) return false;
     state.combatLedgerReview.open = true;
     startModalTransition("ledger", "enter");
+    playGameSfx("ui-confirm", { volume: 0.45 });
     return true;
   }
 
@@ -10123,7 +10384,17 @@
     if (!state.combatLedgerReview?.open) return false;
     if (modalTransitionClosing("ledger")) return true;
     startModalTransition("ledger", "exit");
+    playGameSfx("ui-back", { volume: 0.42 });
     return true;
+  }
+
+  function playCombatLedgerReviewActionSfx(action) {
+    if (action === "openDetails" || action === "closeDetails" || action === "panel") return;
+    if (action === "prevFrame" || action === "nextFrame" || action === "scrubFrame" || action === "selectEvent") {
+      playThrottledGameSfx("ledger-frame", "ui-hover", { volume: 0.14, rate: action === "prevFrame" ? 0.92 : 1.06 }, 0.07);
+      return;
+    }
+    playGameSfx("ui-confirm", { volume: 0.34 });
   }
 
   function optionsMenuCanOpen() {
@@ -16273,7 +16544,7 @@
     if (unit.ability === "cleave") return `Hit: column splash ${cleaveDamage(unit)} dmg`;
     if (unit.ability === "back_row") return `Targets back column; ${Math.max(0, unit.tier - 1)} extra x ${volleyDamage(unit)} dmg`;
     if (unit.ability === "heal") return `Heal ${supportAmount(unit, healAmount(unit))}; fallback shield ${supportAmount(unit, noodleFallbackShield(unit))}`;
-    if (unit.ability === "syrup_start") return `Start adj: ${supportAmount(unit, syrupShield(unit))} shield, +${percentText(syrupHaste(unit))} spd`;
+    if (unit.ability === "syrup_start") return `Start adj: ${supportAmount(unit, syrupShield(unit))} shield; every ${syrupPulseInterval(unit).toFixed(1)}s pulses ${supportAmount(unit, syrupPulseShield(unit))}`;
     if (unit.ability === "slow") return `Hit: target CD +${pretzelDelay(unit)}s`;
     if (unit.ability === "pepper_dash") return `Hit: burn ${pepperBurnDamage(unit)}/s ${statusDuration(unit, pepperBurnDuration(unit)).toFixed(1)}s`;
     if (unit.ability === "armor_break") return `+${armorBreakBonus(unit)} dmg vs front/shield/high-HP`;
@@ -16288,7 +16559,7 @@
     if (unit.ability === "formation_captain") return `Row/col shield ${supportAmount(unit, formationShield(unit))}, +${percentText(formationAttackBoost(unit))} dmg`;
     if (unit.ability === "cleanse") return `Cleanse: heal ${supportAmount(unit, lemonCleanseHeal(unit))}, shield ${supportAmount(unit, lemonCleanseShield(unit))}`;
     if (unit.ability === "shakshuka_burn") return `Hit: burn ${shakshukaBurnDamage(unit)}/s, splash ${shakshukaSplashDamage(unit)}`;
-    if (unit.ability === "pull_start") return `Start: pull back-row, ${krakenPullDamage(unit)} dmg, CD +${krakenPullDelay(unit)}s`;
+    if (unit.ability === "pull_start") return `Start pull; every ${krakenCombatPullEvery(unit)} hits repeats pressure, CD +${krakenPullDelay(unit)}s`;
     if (unit.ability === "copy_luck") return `Shop owned-line odds +${percentText(fortuneShopChance(unit))}`;
     if (unit.ability === "survive_scale") return `Survive battle: permanent +${mochiHpGain(unit)} HP`;
     if (unit.ability === "ginger_decoy") return `Start: decoy ${gingerDecoyHp(unit)} HP; death ${gingerCrumbleDamage(unit)} dmg`;
@@ -18245,8 +18516,8 @@
       return;
     }
     if (hit.area === "combatLedger") {
-      playGameSfx("ui-confirm", { volume: 0.45 });
       applyCombatLedgerReviewHit(hit);
+      playCombatLedgerReviewActionSfx(hit.action);
       state.selected = null;
       event.preventDefault();
       return;
@@ -18438,6 +18709,7 @@
     const rects = combatLedgerReviewRects(state.lastCombatLedger);
     if (!pointInRect(pos.x, pos.y, rects.log)) return;
     scrollCombatLedgerLog(event.deltaY < 0 ? 3 : -3);
+    playThrottledGameSfx("ledger-scroll", "ui-hover", { volume: 0.08, rate: event.deltaY < 0 ? 1.06 : 0.94 }, 0.12);
     event.preventDefault();
   }
 
@@ -18729,6 +19001,7 @@
       const frames = state.lastCombatLedger.frames || [];
       state.combatLedgerReview.frameIndex = clamp(currentCombatLedgerFrameIndex(state.lastCombatLedger) + delta, 0, Math.max(0, frames.length - 1));
       syncCombatLedgerFocusedEventToFrame(state.lastCombatLedger);
+      playThrottledGameSfx("ledger-frame", "ui-hover", { volume: 0.14, rate: delta < 0 ? 0.92 : 1.06 }, 0.07);
       event.preventDefault();
       return;
     }
@@ -18740,6 +19013,7 @@
       if (event.key === "PageDown") scrollCombatLedgerLog(-visibleRows);
       if (event.key === "Home") setCombatLedgerLogScrollOffset(Math.max(0, events.length - visibleRows));
       if (event.key === "End") setCombatLedgerLogScrollOffset(0);
+      playThrottledGameSfx("ledger-scroll", "ui-hover", { volume: 0.1, rate: event.key === "PageUp" || event.key === "Home" ? 1.06 : 0.94 }, 0.1);
       event.preventDefault();
       return;
     }
@@ -19326,15 +19600,21 @@
       frontRowDamageReductionPct: item.frontRowDamageReductionPct,
       backRowTargeting: item.backRowTargeting,
       adjacentStartShieldPct: item.adjacentStartShieldPct,
+      adjacentPulseShieldPct: item.adjacentPulseShieldPct,
+      adjacentPulseAttackBuffPct: item.adjacentPulseAttackBuffPct,
+      adjacentPulseInterval: item.adjacentPulseInterval,
+      adjacentPulseDuration: item.adjacentPulseDuration,
       pierceDamagePct: item.pierceDamagePct,
       lowHpBurnThreshold: item.lowHpBurnThreshold,
       lowHpBurnDamagePct: item.lowHpBurnDamagePct,
       lowHpBurnDuration: item.lowHpBurnDuration,
+      lowHpBurnInterval: item.lowHpBurnInterval,
       deathSaveShieldPct: item.deathSaveShieldPct,
       firstDebuffCleanseHealPct: item.firstDebuffCleanseHealPct,
       timedHasteAt: item.timedHasteAt,
       timedHastePct: item.timedHastePct,
       timedHasteDuration: item.timedHasteDuration,
+      timedHasteInterval: item.timedHasteInterval,
       shieldedTargetDamagePct: item.shieldedTargetDamagePct,
       attackSlowPct: item.attackSlowPct,
       attackSlowDuration: item.attackSlowDuration,
