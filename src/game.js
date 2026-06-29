@@ -1219,22 +1219,28 @@
     const duration = drink.drinkPulseDuration || 2.4;
     const scale = unlockedText ? drinkPulseTierScale(drink) : 1;
     const prefix = "Pulse";
+    const suffix = drinkPulseLongFightText(drink);
     if (drink.drinkPulseType === "shield") {
-      return `${prefix}: every ${interval}s, line gains ${percentText((drink.drinkPulseShieldPct || 0) * scale)} max HP shield`;
+      return `${prefix}: every ${interval}s, line gains ${percentText((drink.drinkPulseShieldPct || 0) * scale)} max HP shield${suffix}`;
     }
     if (drink.drinkPulseType === "haste") {
-      return `${prefix}: every ${interval}s, line gains +${percentText((drink.drinkPulseHastePct || 0) * scale)} speed for ${duration}s`;
+      return `${prefix}: every ${interval}s, line gains +${percentText((drink.drinkPulseHastePct || 0) * scale)} speed for ${duration}s${suffix}`;
     }
     if (drink.drinkPulseType === "heal") {
-      return `${prefix}: every ${interval}s, weakest line ally heals ${percentText((drink.drinkPulseHealPct || 0) * scale)} max HP`;
+      return `${prefix}: every ${interval}s, weakest line ally heals ${percentText((drink.drinkPulseHealPct || 0) * scale)} max HP${suffix}`;
     }
     if (drink.drinkPulseType === "brine") {
-      return `${prefix}: every ${interval}s, enemy line takes ${percentText((drink.drinkPulseEnemyDamagePct || 0) * scale)} max HP and slows`;
+      return `${prefix}: every ${interval}s, enemy line takes ${percentText((drink.drinkPulseEnemyDamagePct || 0) * scale)} max HP and slows${suffix}`;
     }
     if (drink.drinkPulseType === "attack_boost") {
-      return `${prefix}: every ${interval}s, line gains +${percentText((drink.drinkPulseAttackBoostPct || 0) * scale)} damage for ${duration}s`;
+      return `${prefix}: every ${interval}s, line gains +${percentText((drink.drinkPulseAttackBoostPct || 0) * scale)} damage for ${duration}s${suffix}`;
     }
     return `${prefix}: every ${interval}s, line surges`;
+  }
+
+  function drinkPulseLongFightText(drink) {
+    if (!["uncommon", "rare", "epic"].includes(drink?.rarity)) return "";
+    return "; scales in long fights";
   }
 
   function drinkTechnicalDescriptionLines(item) {
@@ -1328,6 +1334,8 @@
     if (item.shieldedAttackBonusPct) lines.push(`While shielded: damage +${percentText(item.shieldedAttackBonusPct)}`);
     if (item.overhealShieldPct) lines.push(`Overheal converts to shield at ${percentText(item.overhealShieldPct)}`);
     if (item.mergeProgressBonus) lines.push(`Bench holder counts as +${item.mergeProgressBonus} merge copy`);
+    if (item.economyPulseShieldPct) lines.push(`Every ${item.economyPulseInterval || 8}s: holder and nearby allies gain ${percentText(item.economyPulseShieldPct)} max HP shield`);
+    if (item.economyPulseAttackBoostPct) lines.push(`Every ${item.economyPulseInterval || 8}s: holder and nearby allies gain +${percentText(item.economyPulseAttackBoostPct)} damage for ${item.economyPulseDuration || 2.2}s`);
     if (item.frontRowDamageReductionPct) lines.push(`Front row: damage taken -${percentText(item.frontRowDamageReductionPct)}`);
     if (item.backRowTargeting) lines.push(`Back-row holder targets enemy back row`);
     if (item.adjacentStartShieldPct) lines.push(`Battle start: adjacent allies gain ${percentText(item.adjacentStartShieldPct)} max HP shield`);
@@ -1339,8 +1347,8 @@
       const repeat = item.lowHpBurnInterval ? `, repeats every ${item.lowHpBurnInterval}s while low` : "";
       lines.push(`At low HP: nearby burn for ${percentText(item.lowHpBurnDamagePct)} ATK (${item.lowHpBurnDuration || 3}s)${repeat}`);
     }
-    if (item.deathSaveShieldPct) lines.push(`Once per battle: survive fatal hit with ${percentText(item.deathSaveShieldPct)} max HP shield`);
-    if (item.firstDebuffCleanseHealPct) lines.push(`First debuff: cleanse and heal ${percentText(item.firstDebuffCleanseHealPct)} max HP`);
+    if (item.deathSaveShieldPct) lines.push(`Once per battle: survive fatal hit with ${percentText(item.deathSaveShieldPct)} max HP shield${item.deathSaveRechargeAt ? `; recharges once at ${item.deathSaveRechargeAt}s` : ""}`);
+    if (item.firstDebuffCleanseHealPct) lines.push(`First debuff: cleanse and heal ${percentText(item.firstDebuffCleanseHealPct)} max HP${item.firstDebuffCleanseRechargeAt ? `; recharges once at ${item.firstDebuffCleanseRechargeAt}s` : ""}`);
     if (item.timedHastePct) {
       const repeat = item.timedHasteInterval ? `, repeats every ${item.timedHasteInterval}s` : "";
       lines.push(`At ${item.timedHasteAt || 10}s: +${percentText(item.timedHastePct)} speed for ${item.timedHasteDuration || 4}s${repeat}`);
@@ -1349,8 +1357,8 @@
     if (item.attackSlowPct) lines.push(`Attacks slow enemy speed by ${percentText(item.attackSlowPct)} for ${item.attackSlowDuration || 3}s`);
     if (item.statusDurationReductionPct) lines.push(`Negative statuses and cooldown delays fade ${percentText(item.statusDurationReductionPct)} faster`);
     if (item.statusDamageReductionPct) lines.push(`Splash/status damage taken -${percentText(item.statusDamageReductionPct)}`);
-    if (item.decoyHpPct) lines.push(`Battle start: summon decoy with ${percentText(item.decoyHpPct)} max HP`);
-    if (item.firstHitRedirect) lines.push(`First direct hit is redirected once`);
+    if (item.decoyHpPct) lines.push(`Battle start: summon decoy with ${percentText(item.decoyHpPct)} max HP${item.decoyRebuildInterval ? `; rebuilds after ${item.decoyRebuildInterval}s if gone` : ""}`);
+    if (item.firstHitRedirect) lines.push(`First direct hit is redirected once${item.firstHitRedirectRechargeAt ? `; resets once at ${item.firstHitRedirectRechargeAt}s` : ""}`);
     if (item.periodicDamage) lines.push(`Every ${item.periodicInterval || 3}s: random chip damage scales from ${item.periodicDamage} + ${percentText(item.periodicDamagePct || 0)} PWR`);
     if (item.sellBonusGold) lines.push(`Sell value +${item.sellBonusGold} ${currencyTerm({ lower: true })}`);
     if (item.surviveGold) lines.push(`Survive battle: +${item.surviveGold} ${currencyTerm({ lower: true })}`);
@@ -1406,6 +1414,7 @@
     if (item.shieldedAttackBonusPct) return `shielded dmg +${percentText(item.shieldedAttackBonusPct)}`;
     if (item.overhealShieldPct) return `overheal to shield ${percentText(item.overhealShieldPct)}`;
     if (item.mergeProgressBonus) return `bench merge +${item.mergeProgressBonus}`;
+    if (item.economyPulseShieldPct || item.economyPulseAttackBoostPct) return `economy pulse every ${item.economyPulseInterval || 8}s`;
     if (item.frontRowDamageReductionPct) return `front damage -${percentText(item.frontRowDamageReductionPct)}`;
     if (item.backRowTargeting) return `back row targets back row`;
     if (item.adjacentPulseShieldPct || item.adjacentPulseAttackBuffPct) return `adjacent pulse every ${item.adjacentPulseInterval || 7}s`;
@@ -1413,15 +1422,15 @@
     if (item.adjacentStartShieldPct) return `adjacent shield ${percentText(item.adjacentStartShieldPct)} max HP`;
     if (item.pierceDamagePct) return `pierce ${percentText(item.pierceDamagePct)} ATK`;
     if (item.lowHpBurnDamagePct) return `low HP burn ${percentText(item.lowHpBurnDamagePct)} ATK`;
-    if (item.deathSaveShieldPct) return `fatal save +${percentText(item.deathSaveShieldPct)} shield`;
-    if (item.firstDebuffCleanseHealPct) return `first debuff cleanse/heal`;
+    if (item.deathSaveShieldPct) return item.deathSaveRechargeAt ? `fatal save recharges` : `fatal save +${percentText(item.deathSaveShieldPct)} shield`;
+    if (item.firstDebuffCleanseHealPct) return item.firstDebuffCleanseRechargeAt ? `cleanse recharges` : `first debuff cleanse/heal`;
     if (item.timedHastePct) return item.timedHasteInterval ? `late haste every ${item.timedHasteInterval}s` : `${item.timedHasteAt || 10}s haste +${percentText(item.timedHastePct)}`;
     if (item.shieldedTargetDamagePct) return `vs shields +${percentText(item.shieldedTargetDamagePct)} dmg`;
     if (item.attackSlowPct) return `attack slow ${percentText(item.attackSlowPct)}`;
     if (item.statusDurationReductionPct) return `statuses/delays fade ${percentText(item.statusDurationReductionPct)} faster`;
     if (item.statusDamageReductionPct) return `splash/status dmg -${percentText(item.statusDamageReductionPct)}`;
-    if (item.decoyHpPct) return `start decoy ${percentText(item.decoyHpPct)} HP`;
-    if (item.firstHitRedirect) return `redirect first hit`;
+    if (item.decoyHpPct) return item.decoyRebuildInterval ? `rebuild decoy ${item.decoyRebuildInterval}s` : `start decoy ${percentText(item.decoyHpPct)} HP`;
+    if (item.firstHitRedirect) return item.firstHitRedirectRechargeAt ? `redirect recharges` : `redirect first hit`;
     if (item.periodicDamage) return `pop damage every ${item.periodicInterval || 3}s`;
     if (item.sellBonusGold) return `sell value +${item.sellBonusGold} ${currencyTerm({ lower: true })}`;
     if (item.surviveGold) return `survive +${item.surviveGold} ${currencyTerm({ lower: true })}`;
@@ -3755,7 +3764,7 @@
   }
 
   function playerEconomyComparison(round = state.round) {
-    const value = playerOwnedEconomyValue();
+    const value = playerDeployedEconomyValue();
     const expected = expectedPlayerEconomyValueForRound(round);
     const totalValue = value.market + value.surplus * 0.55;
     const surplusValue = Math.max(0, totalValue - expected);
@@ -3771,6 +3780,23 @@
       pressure,
       outOfControl: ratio >= 1.25 || surplusValue >= 340,
     };
+  }
+
+  function playerDeployedEconomyValue() {
+    let market = 0;
+    let surplus = 0;
+    (state?.board || []).forEach((unit, index) => {
+      const value = playerUnitEconomyValue(unit, index, { weight: 1, itemWeight: 0.9 });
+      market += value.market;
+      surplus += value.surplus;
+    });
+    (state?.drinks || []).forEach((drink) => {
+      const value = playerItemEconomyValue(drink, { weight: 0.82 });
+      market += value.market;
+      surplus += value.surplus;
+    });
+    if (state?.arenaPrepBuff) market += 72;
+    return { market, surplus };
   }
 
   function enemyEconomyRunawayPressure(round = state.round) {
@@ -3813,6 +3839,15 @@
     return 1 - enemyPreFinalLateRelief(round) * maxRelief;
   }
 
+  function enemyStoryBackHalfRelief(round) {
+    if (isInfiniteMode() || round <= GIRAFFE_BOSS_ROUND || round > FINAL_VICTORY_ROUND) return 0;
+    return clamp((round - GIRAFFE_BOSS_ROUND) / Math.max(1, FINAL_VICTORY_ROUND - GIRAFFE_BOSS_ROUND), 0, 1);
+  }
+
+  function enemyStoryBackHalfScale(round, maxRelief = 0.08) {
+    return 1 - enemyStoryBackHalfRelief(round) * maxRelief;
+  }
+
   function enemyPreFinalCatchupShare(round) {
     return clamp(0.55 + Math.max(0, round - 4) * 0.01, 0.55, 0.72);
   }
@@ -3820,12 +3855,12 @@
   function enemyPreFinalCatchupStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
     if (round > FINAL_VICTORY_ROUND || adaptivePressure <= 0) return 0;
     const roundWeight = clamp((round - 4) / 16, 0, 1);
-    return adaptivePressure * roundWeight * 0.28;
+    return adaptivePressure * roundWeight * 0.28 * enemyStoryBackHalfScale(round, 0.08);
   }
 
   function enemyStoryRewardPressure(round) {
     if (isInfiniteMode()) return 0;
-    return clamp(Math.max(0, round - 3) * 0.009 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.005, 0, 0.17);
+    return clamp(Math.max(0, round - 3) * 0.008 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.0035, 0, 0.145);
   }
 
   function enemyBossAdaptiveStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
@@ -3971,8 +4006,8 @@
       targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
       tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
       tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + (latePressure * 0.008 + adaptivePressure * 0.145 + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.2 + economyRunawayPressure * 0.24) * lateScale + shopPowerStatBonus),
-      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + (latePressure * 0.005 + adaptivePressure * 0.11 + infiniteStatBonus * 0.68 + catchupStatBonus * 0.68 + storyRewardPressure * 0.12 + economyRunawayPressure * 0.16) * lateScale + shopPowerStatBonus),
+      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + (latePressure * 0.008 + adaptivePressure * 0.145 + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.2 + economyRunawayPressure * 0.24) * lateScale * enemyStoryBackHalfScale(round, 0.07) + shopPowerStatBonus),
+      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + (latePressure * 0.005 + adaptivePressure * 0.11 + infiniteStatBonus * 0.68 + catchupStatBonus * 0.68 + storyRewardPressure * 0.12 + economyRunawayPressure * 0.16) * lateScale * enemyStoryBackHalfScale(round, 0.08) + shopPowerStatBonus),
       economyBudget: budget,
       economyJitter,
       post20Pressure,
@@ -4005,16 +4040,17 @@
     const storyRewardPressure = enemyStoryRewardPressure(round);
     const economyRunawayPressure = enemyEconomyRunawayPressure(round);
     const lateScale = enemyPreFinalLateScale(round, 0.12);
+    const backHalfScale = enemyStoryBackHalfScale(round, 0.08);
     const base = 10
       + Math.max(0, targetPower - 1) * 14.5
       + round * 8
       + Math.pow(Math.max(1, round), 1.05) * 1.4
       + post20Pressure * 34
       + infinitePressure * 12
-      + storyRewardPressure * 64 * lateScale
-      + economyRunawayPressure * 135 * lateScale;
+      + storyRewardPressure * 64 * lateScale * backHalfScale
+      + economyRunawayPressure * 135 * lateScale * backHalfScale;
     const shopPower = 1 + enemyShopPowerStatBonus(round) + enemyShopPowerTierBonus(round);
-    const pressure = 1 + (adaptivePressure * 1.15 + latePressure * 0.018 + storyRewardPressure * 0.26 + economyRunawayPressure * 0.52) * lateScale + post20Pressure * 0.04 + infinitePressure * 0.012;
+    const pressure = 1 + (adaptivePressure * 1.15 + latePressure * 0.018 + storyRewardPressure * 0.26 + economyRunawayPressure * 0.52) * lateScale * backHalfScale + post20Pressure * 0.04 + infinitePressure * 0.012;
     return Math.max(ECONOMY.unitCost, Math.round(base * shopPower * pressure * jitter));
   }
 
@@ -4064,7 +4100,7 @@
     const roundBase = Math.min(infinitePressure > 0 ? 1.12 : 0.66, round * 0.038);
     const adaptiveTierPressure = adaptivePressure * (infinitePressure > 0 ? 0.46 : 0.42);
     const lateScale = enemyPreFinalLateScale(round, 0.14);
-    return clamp(roundBase + (adaptiveTierPressure + enemyStoryRewardPressure(round) * 0.2 + enemyEconomyRunawayPressure(round) * 0.3) * lateScale + enemyShopPowerTierBonus(round) + infinitePressure * 0.012, 0, cap);
+    return clamp(roundBase + (adaptiveTierPressure + enemyStoryRewardPressure(round) * 0.2 + enemyEconomyRunawayPressure(round) * 0.3) * lateScale * enemyStoryBackHalfScale(round, 0.08) + enemyShopPowerTierBonus(round) + infinitePressure * 0.012, 0, cap);
   }
 
   function enemyEconomyTier3Chance(round, adaptivePressure = 0) {
@@ -4073,7 +4109,7 @@
     const cap = infinitePressure > 0 ? clamp(0.34 + infinitePressure * 0.006, 0.34, 0.72) : 0.34;
     const adaptiveTier3Pressure = adaptivePressure * (infinitePressure > 0 ? 0.07 : 0.1);
     const lateScale = enemyPreFinalLateScale(round, 0.14);
-    return clamp((round - 7) * 0.012 + (adaptiveTier3Pressure + enemyStoryRewardPressure(round) * 0.085 + enemyEconomyRunawayPressure(round) * 0.12) * lateScale + enemyShopPowerTier3Bonus(round) + infinitePressure * 0.0045, 0, cap);
+    return clamp((round - 7) * 0.012 + (adaptiveTier3Pressure + enemyStoryRewardPressure(round) * 0.085 + enemyEconomyRunawayPressure(round) * 0.12) * lateScale * enemyStoryBackHalfScale(round, 0.08) + enemyShopPowerTier3Bonus(round) + infinitePressure * 0.0045, 0, cap);
   }
 
   function enemyEconomyTier4Chance(round, adaptivePressure = 0) {
@@ -4799,7 +4835,8 @@
     const lineAllies = drinkLaneUnits(allies, slot);
     if (!lineAllies.length) return;
     const lineEnemies = drinkLaneUnits(enemies, slot);
-    const scale = drinkPulseTierScale(drink);
+    drink.drinkPulseCount = (drink.drinkPulseCount || 0) + 1;
+    const scale = drinkPulseTierScale(drink) * drinkPulseLongFightScale(drink, battle);
     const color = drink.accent || drink.color || "#7ec7e8";
     const duration = drink.drinkPulseDuration || 2.4;
     if (drink.drinkPulseType === "shield") {
@@ -4963,6 +5000,10 @@
       y: source.y + 28,
       dead: false,
       ignoreTraits: true,
+      itemDecoySourceUid: source.uid,
+      crumbleDamage: source.item.decoyCrumbleDamagePct
+        ? Math.max(1, Math.round(source.abilityPower * source.item.decoyCrumbleDamagePct))
+        : 0,
     };
     return decoy;
   }
@@ -5924,6 +5965,14 @@
     }
   }
 
+  function drinkPulseLongFightScale(drink, battle) {
+    const rarityBonus = drink.rarity === "epic" ? 0.2 : drink.rarity === "rare" ? 0.14 : drink.rarity === "uncommon" ? 0.08 : 0;
+    if (!rarityBonus) return 1;
+    const lateBonus = battle.elapsed >= 15 ? rarityBonus : 0;
+    const thirdPulseBonus = drink.drinkPulseCount % 3 === 0 ? rarityBonus * 0.9 : 0;
+    return 1 + lateBonus + thirdPulseBonus;
+  }
+
   function advanceLevel10RevealCutscene(skip = false) {
     const cutscene = state.level10RevealCutscene;
     if (!cutscene) return false;
@@ -6426,10 +6475,32 @@
   }
 
   function updateLongFightUnitPulses(unit, battle, dt) {
+    updatePanicRecharge(unit, battle);
     updateTimedHastePulse(unit, battle);
     updateAdjacentItemPulse(unit, battle, dt);
+    updateEconomyItemPulse(unit, battle, dt);
+    updateEconomyUnitPulse(unit, battle, dt);
+    updateDecoyRebuildPulse(unit, battle, dt);
     updateLowHpBurnPulse(unit, battle, dt);
     updateSyrupStartPulse(unit, battle, dt);
+  }
+
+  function updatePanicRecharge(unit, battle) {
+    if (unit.item?.deathSaveRechargeAt && unit.deathSaveUsed && !unit.deathSaveRecharged && battle.elapsed >= unit.item.deathSaveRechargeAt) {
+      unit.deathSaveUsed = false;
+      unit.deathSaveRecharged = true;
+      burst({ x: unit.x, y: unit.y }, unit.item.accent || "#d6b88a");
+    }
+    if (unit.item?.firstHitRedirectRechargeAt && unit.firstHitRedirectUsed && !unit.firstHitRedirectRecharged && battle.elapsed >= unit.item.firstHitRedirectRechargeAt) {
+      unit.firstHitRedirectUsed = false;
+      unit.firstHitRedirectRecharged = true;
+      burst({ x: unit.x, y: unit.y }, unit.item.accent || "#6f9231");
+    }
+    if (unit.item?.firstDebuffCleanseRechargeAt && unit.firstDebuffCleanseUsed && !unit.firstDebuffCleanseRecharged && battle.elapsed >= unit.item.firstDebuffCleanseRechargeAt) {
+      unit.firstDebuffCleanseUsed = false;
+      unit.firstDebuffCleanseRecharged = true;
+      burst({ x: unit.x, y: unit.y }, unit.item.accent || "#2e6f2b");
+    }
   }
 
   function updateTimedHastePulse(unit, battle) {
@@ -6469,6 +6540,78 @@
       }
       if (supported) emitSupportFeedback(unit, ally, battle, unit.item.accent || "#d6b88a");
     });
+  }
+
+  function updateEconomyItemPulse(unit, battle, dt) {
+    if (!unit.item?.economyPulseShieldPct && !unit.item?.economyPulseAttackBoostPct) return;
+    const interval = unit.item.economyPulseInterval || 8;
+    unit.economyItemPulseTick = (unit.economyItemPulseTick ?? interval) - dt;
+    if (unit.economyItemPulseTick > 0) return;
+    unit.economyItemPulseTick += interval;
+    adjacentLivingAllies(unit, battle).forEach((ally) => {
+      let supported = false;
+      if (unit.item.economyPulseShieldPct) {
+        const shield = Math.max(1, Math.round(ally.maxHp * unit.item.economyPulseShieldPct + unit.abilityPower * 0.08));
+        supported = grantShield(ally, shield, { source: unit }) > 0 || supported;
+      }
+      if (unit.item.economyPulseAttackBoostPct) {
+        setTimedPctStatus(ally, "attackBoost", unit.item.economyPulseAttackBoostPct, unit.item.economyPulseDuration || 2.2);
+        supported = true;
+      }
+      if (supported) emitSupportFeedback(unit, ally, battle, unit.item.accent || "#d6b88a");
+    });
+  }
+
+  function updateEconomyUnitPulse(unit, battle, dt) {
+    if (unit.ability !== "treat_income" && unit.ability !== "copy_luck") return;
+    const interval = unit.ability === "treat_income" ? 7 : 8;
+    unit.economyAbilityPulseTick = (unit.economyAbilityPulseTick ?? interval) - dt;
+    if (unit.economyAbilityPulseTick > 0) return;
+    unit.economyAbilityPulseTick += interval;
+    const allies = adjacentLivingAllies(unit, battle);
+    if (unit.ability === "treat_income") {
+      allies.forEach((ally) => {
+        const shield = Math.max(2, Math.round(ally.maxHp * 0.022 + unit.abilityPower * 0.16));
+        if (grantShield(ally, shield, { source: unit }) > 0) emitSupportFeedback(unit, ally, battle, unit.accent || "#d88b2f");
+      });
+      return;
+    }
+    const target = allies
+      .filter((ally) => !ally.dead)
+      .sort((a, b) => (a.attackBoost?.pct || 0) - (b.attackBoost?.pct || 0) || a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    if (!target) return;
+    setTimedPctStatus(target, "attackBoost", Math.min(0.12, 0.04 + unit.tier * 0.015), 2.8);
+    emitSupportFeedback(unit, target, battle, unit.accent || "#f0d79d");
+  }
+
+  function updateDecoyRebuildPulse(unit, battle, dt) {
+    const allies = unit.side === "enemy" ? battle.enemies : battle.allies;
+    if (unit.ability === "ginger_decoy") {
+      const hasDecoy = allies.some((ally) => !ally.dead && ally.decoySourceUid === unit.uid);
+      if (hasDecoy) {
+        unit.gingerDecoyRebuildTick = gingerDecoyRebuildInterval(unit);
+        return;
+      }
+      unit.gingerDecoyRebuildTick = (unit.gingerDecoyRebuildTick ?? gingerDecoyRebuildInterval(unit)) - dt;
+      if (unit.gingerDecoyRebuildTick > 0) return;
+      unit.gingerDecoyRebuildTick = gingerDecoyRebuildInterval(unit);
+      const decoy = makeGingerDecoy(unit);
+      allies.push(decoy);
+      emitSupportFeedback(unit, decoy, battle, "#f5f0df");
+      return;
+    }
+    if (!unit.item?.decoyHpPct || !unit.item.decoyRebuildInterval) return;
+    const hasItemDecoy = allies.some((ally) => !ally.dead && ally.itemDecoySourceUid === unit.uid);
+    if (hasItemDecoy) {
+      unit.itemDecoyRebuildTick = unit.item.decoyRebuildInterval;
+      return;
+    }
+    unit.itemDecoyRebuildTick = (unit.itemDecoyRebuildTick ?? unit.item.decoyRebuildInterval) - dt;
+    if (unit.itemDecoyRebuildTick > 0) return;
+    unit.itemDecoyRebuildTick = unit.item.decoyRebuildInterval;
+    const decoy = makeItemDecoy(unit);
+    allies.push(decoy);
+    emitSupportFeedback(unit, decoy, battle, unit.item.accent || "#d6b88a");
   }
 
   function updateLowHpBurnPulse(unit, battle, dt) {
@@ -7587,11 +7730,11 @@
       target.dead = true;
       target.shield = 0;
       recordCombatKo(battle, source, target);
-      if (target.ability === "ginger_decoy_summon" && target.crumbleDamage && battle) {
+      if ((target.ability === "ginger_decoy_summon" || target.itemDecoySourceUid) && target.crumbleDamage && battle) {
         const foes = (target.side === "ally" ? battle.enemies : battle.allies).filter((foe) => !foe.dead && isAdjacentSlot(target, foe));
         foes.forEach((foe) => applyDamage(foe, target.crumbleDamage, target, battle, {
           color: target.accent,
-          particleType: "gingerbread_golem",
+          particleType: target.ability === "ginger_decoy_summon" ? "gingerbread_golem" : target.typeId,
           status: true,
           noItemTriggers: true,
         }));
@@ -7907,6 +8050,10 @@
 
   function gingerDecoyHp(unit) {
     return Math.max(5, Math.round(unit.maxHp * (0.18 + unit.tier * 0.03)));
+  }
+
+  function gingerDecoyRebuildInterval(unit) {
+    return Math.max(10, 15 - unit.tier);
   }
 
   function gingerCrumbleDamage(unit) {
@@ -16550,7 +16697,7 @@
     if (unit.ability === "armor_break") return `+${armorBreakBonus(unit)} dmg vs front/shield/high-HP`;
     if (unit.ability === "shield_breaker") return `Steal up to ${shieldBreakSteal(unit)} shield; +${shieldBreakBonus(unit)} dmg`;
     if (unit.ability === "bagel_build") return `Hit: 2 allies get ${supportAmount(unit, bagelBuildShield(unit))} shield`;
-    if (unit.ability === "treat_income") return `Survive battle: +${donutTreatGold(unit)} ${currencyTerm({ lower: true })}`;
+    if (unit.ability === "treat_income") return `Survive: +${donutTreatGold(unit)} ${currencyTerm({ lower: true })}; every 7s nearby shield`;
     if (unit.ability === "status_spread") return `Hit: burn ${kimchiBurnDamage(unit)}/s; mark +${percentText(kimchiMarkPct(unit))} dmg`;
     if (unit.ability === "sticky_lane") return `Hit: target column CD +${waffleLaneDelay(unit)}s`;
     if (unit.ability === "kernel_combo") return `Stack: +${popcornDamagePerStack(unit)} dmg, +${percentText(popcornStackHaste(unit))} spd`;
@@ -16560,9 +16707,9 @@
     if (unit.ability === "cleanse") return `Cleanse: heal ${supportAmount(unit, lemonCleanseHeal(unit))}, shield ${supportAmount(unit, lemonCleanseShield(unit))}`;
     if (unit.ability === "shakshuka_burn") return `Hit: burn ${shakshukaBurnDamage(unit)}/s, splash ${shakshukaSplashDamage(unit)}`;
     if (unit.ability === "pull_start") return `Start pull; every ${krakenCombatPullEvery(unit)} hits repeats pressure, CD +${krakenPullDelay(unit)}s`;
-    if (unit.ability === "copy_luck") return `Shop owned-line odds +${percentText(fortuneShopChance(unit))}`;
+    if (unit.ability === "copy_luck") return `Shop odds +${percentText(fortuneShopChance(unit))}; every 8s ally damage pulse`;
     if (unit.ability === "survive_scale") return `Survive battle: permanent +${mochiHpGain(unit)} HP`;
-    if (unit.ability === "ginger_decoy") return `Start: decoy ${gingerDecoyHp(unit)} HP; death ${gingerCrumbleDamage(unit)} dmg`;
+    if (unit.ability === "ginger_decoy") return `Start: decoy ${gingerDecoyHp(unit)} HP; rebuilds every ${gingerDecoyRebuildInterval(unit)}s if gone`;
     if (unit.ability === "iceberg_lock") return `Hit: CD +${oysterLockDelay(unit)}s, -${percentText(oysterSlowPct(unit))} spd`;
     if (unit.ability === "pearl_stun") return `Every ${bobaStunEvery(unit)} hits: CD +${bobaStunDelay(unit)}s`;
     return "Targets front occupied enemy column";
@@ -19597,6 +19744,10 @@
       shieldedAttackBonusPct: item.shieldedAttackBonusPct,
       overhealShieldPct: item.overhealShieldPct,
       mergeProgressBonus: item.mergeProgressBonus,
+      economyPulseShieldPct: item.economyPulseShieldPct,
+      economyPulseAttackBoostPct: item.economyPulseAttackBoostPct,
+      economyPulseInterval: item.economyPulseInterval,
+      economyPulseDuration: item.economyPulseDuration,
       frontRowDamageReductionPct: item.frontRowDamageReductionPct,
       backRowTargeting: item.backRowTargeting,
       adjacentStartShieldPct: item.adjacentStartShieldPct,
@@ -19610,7 +19761,9 @@
       lowHpBurnDuration: item.lowHpBurnDuration,
       lowHpBurnInterval: item.lowHpBurnInterval,
       deathSaveShieldPct: item.deathSaveShieldPct,
+      deathSaveRechargeAt: item.deathSaveRechargeAt,
       firstDebuffCleanseHealPct: item.firstDebuffCleanseHealPct,
+      firstDebuffCleanseRechargeAt: item.firstDebuffCleanseRechargeAt,
       timedHasteAt: item.timedHasteAt,
       timedHastePct: item.timedHastePct,
       timedHasteDuration: item.timedHasteDuration,
@@ -19621,7 +19774,9 @@
       statusDurationReductionPct: item.statusDurationReductionPct,
       statusDamageReductionPct: item.statusDamageReductionPct,
       decoyHpPct: item.decoyHpPct,
+      decoyRebuildInterval: item.decoyRebuildInterval,
       firstHitRedirect: item.firstHitRedirect,
+      firstHitRedirectRechargeAt: item.firstHitRedirectRechargeAt,
       periodicDamage: item.periodicDamage,
       periodicDamagePct: item.periodicDamagePct,
       periodicInterval: item.periodicInterval,

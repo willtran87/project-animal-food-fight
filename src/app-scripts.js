@@ -66,11 +66,11 @@
       ["story-data", "h-b70e8344d60c"],
       ["trait-arena-data", "h-2e5155bd22b2"],
       ["unit-data", "h-497c02680e0e"],
-      ["item-data", "h-3f524ddf7c81"],
+      ["item-data", "h-0058eeab957d"],
       ["economy-enemy-data", "h-b8919d5f4612"],
       ["rarity-shop-data", "h-6829c90dffeb"],
       ["status-effect-data", "h-93cdb2493911"],
-      ["game", "h-daf611a513db"],
+      ["game", "h-d9b354a7bcb0"],
     ],
   });
 
