@@ -17003,10 +17003,12 @@
     return true;
   }
 
-  function drawLevel10CutsceneAmbientFx(shot, progress, frame) {
+  function drawLevel10CutsceneAmbientFx(shot, progress, frame, options = {}) {
     const time = state.idleTime + shot.start * 0.17;
     ctx.save();
     if (shot.mode === "panorama") {
+      const panOffsetX = Number.isFinite(options.panOffsetX) ? options.panOffsetX : 0;
+      ctx.translate(panOffsetX, 0);
       for (let i = 0; i < 4; i++) {
         const drift = ((time * (6 + i) + i * 91) % 190) - 95;
         drawLevel10CutsceneFxCell("smoke", -90 + i * 260 + drift, 56 + i * 78, 360, 224, {
@@ -17164,6 +17166,7 @@
     ctx.fillStyle = "#020506";
     ctx.fillRect(0, 0, W, H);
     const image = getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
+    let panoramaPanOffsetX = 0;
     if (image?.complete && image.naturalWidth > 0) {
       const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight);
       const drawW = image.naturalWidth * scale;
@@ -17172,6 +17175,7 @@
       const pan = easeInOutCubic(clamp01(progress));
       const drawX = -panTravel * pan;
       const drawY = (H - drawH) / 2;
+      panoramaPanOffsetX = drawX;
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(image, Math.round(drawX), Math.round(drawY), Math.ceil(drawW), Math.ceil(drawH));
       ctx.imageSmoothingEnabled = true;
@@ -17192,7 +17196,7 @@
     vignette.addColorStop(1, "rgba(0, 0, 0, 0.78)");
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, W, H);
-    drawLevel10CutsceneAmbientFx(shot, progress, frame);
+    drawLevel10CutsceneAmbientFx(shot, progress, frame, { panOffsetX: panoramaPanOffsetX });
 
     const captionW = 640;
     const captionX = 42;
@@ -17218,6 +17222,16 @@
     ctx.globalAlpha = alpha;
     drawLevel10CutsceneProgress(shotIndex);
     drawLevel10CutsceneNavButtons(shotIndex);
+    drawLevel10CutsceneSkipNote();
+    ctx.restore();
+  }
+
+  function drawLevel10CutsceneSkipNote() {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(240, 255, 240, 0.56)";
+    ctx.font = "800 11px Inter, sans-serif";
+    ctx.fillText("Escape skips", W / 2, H - 23);
     ctx.restore();
   }
 
@@ -17255,10 +17269,7 @@
     ctx.font = "700 15px Inter, sans-serif";
     wrapTextLimited(shot.body, panelX + 24, panelY + 182, panelW - 48, 22, 5);
 
-    ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(240, 255, 240, 0.56)";
-    ctx.font = "800 11px Inter, sans-serif";
-    ctx.fillText("Escape skips", W / 2, H - 23);
+    drawLevel10CutsceneSkipNote();
   }
 
   function drawLevel10CutsceneProgress(shotIndex) {
