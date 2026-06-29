@@ -3844,7 +3844,7 @@
     return clamp((round - GIRAFFE_BOSS_ROUND) / Math.max(1, FINAL_VICTORY_ROUND - GIRAFFE_BOSS_ROUND), 0, 1);
   }
 
-  function enemyStoryBackHalfScale(round, maxRelief = 0.08) {
+  function enemyStoryBackHalfScale(round, maxRelief = 0.06) {
     return 1 - enemyStoryBackHalfRelief(round) * maxRelief;
   }
 
@@ -3855,12 +3855,12 @@
   function enemyPreFinalCatchupStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
     if (round > FINAL_VICTORY_ROUND || adaptivePressure <= 0) return 0;
     const roundWeight = clamp((round - 4) / 16, 0, 1);
-    return adaptivePressure * roundWeight * 0.28 * enemyStoryBackHalfScale(round, 0.08);
+    return adaptivePressure * roundWeight * 0.28 * enemyStoryBackHalfScale(round, 0.05);
   }
 
   function enemyStoryRewardPressure(round) {
     if (isInfiniteMode()) return 0;
-    return clamp(Math.max(0, round - 3) * 0.008 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.0035, 0, 0.145);
+    return clamp(Math.max(0, round - 3) * 0.0086 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.0042, 0, 0.158);
   }
 
   function enemyBossAdaptiveStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
@@ -4006,8 +4006,8 @@
       targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
       tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
       tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + (latePressure * 0.008 + adaptivePressure * 0.145 + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.2 + economyRunawayPressure * 0.24) * lateScale * enemyStoryBackHalfScale(round, 0.07) + shopPowerStatBonus),
-      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + (latePressure * 0.005 + adaptivePressure * 0.11 + infiniteStatBonus * 0.68 + catchupStatBonus * 0.68 + storyRewardPressure * 0.12 + economyRunawayPressure * 0.16) * lateScale * enemyStoryBackHalfScale(round, 0.08) + shopPowerStatBonus),
+      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + (latePressure * 0.008 + adaptivePressure * 0.145 + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.2 + economyRunawayPressure * 0.24) * lateScale * enemyStoryBackHalfScale(round, 0.045) + shopPowerStatBonus),
+      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + (latePressure * 0.005 + adaptivePressure * 0.11 + infiniteStatBonus * 0.68 + catchupStatBonus * 0.68 + storyRewardPressure * 0.12 + economyRunawayPressure * 0.16) * lateScale * enemyStoryBackHalfScale(round, 0.055) + shopPowerStatBonus),
       economyBudget: budget,
       economyJitter,
       post20Pressure,
@@ -4040,7 +4040,7 @@
     const storyRewardPressure = enemyStoryRewardPressure(round);
     const economyRunawayPressure = enemyEconomyRunawayPressure(round);
     const lateScale = enemyPreFinalLateScale(round, 0.12);
-    const backHalfScale = enemyStoryBackHalfScale(round, 0.08);
+    const backHalfScale = enemyStoryBackHalfScale(round, 0.05);
     const base = 10
       + Math.max(0, targetPower - 1) * 14.5
       + round * 8
@@ -4100,7 +4100,7 @@
     const roundBase = Math.min(infinitePressure > 0 ? 1.12 : 0.66, round * 0.038);
     const adaptiveTierPressure = adaptivePressure * (infinitePressure > 0 ? 0.46 : 0.42);
     const lateScale = enemyPreFinalLateScale(round, 0.14);
-    return clamp(roundBase + (adaptiveTierPressure + enemyStoryRewardPressure(round) * 0.2 + enemyEconomyRunawayPressure(round) * 0.3) * lateScale * enemyStoryBackHalfScale(round, 0.08) + enemyShopPowerTierBonus(round) + infinitePressure * 0.012, 0, cap);
+    return clamp(roundBase + (adaptiveTierPressure + enemyStoryRewardPressure(round) * 0.2 + enemyEconomyRunawayPressure(round) * 0.3) * lateScale * enemyStoryBackHalfScale(round, 0.05) + enemyShopPowerTierBonus(round) + infinitePressure * 0.012, 0, cap);
   }
 
   function enemyEconomyTier3Chance(round, adaptivePressure = 0) {
@@ -4109,7 +4109,7 @@
     const cap = infinitePressure > 0 ? clamp(0.34 + infinitePressure * 0.006, 0.34, 0.72) : 0.34;
     const adaptiveTier3Pressure = adaptivePressure * (infinitePressure > 0 ? 0.07 : 0.1);
     const lateScale = enemyPreFinalLateScale(round, 0.14);
-    return clamp((round - 7) * 0.012 + (adaptiveTier3Pressure + enemyStoryRewardPressure(round) * 0.085 + enemyEconomyRunawayPressure(round) * 0.12) * lateScale * enemyStoryBackHalfScale(round, 0.08) + enemyShopPowerTier3Bonus(round) + infinitePressure * 0.0045, 0, cap);
+    return clamp((round - 7) * 0.012 + (adaptiveTier3Pressure + enemyStoryRewardPressure(round) * 0.085 + enemyEconomyRunawayPressure(round) * 0.12) * lateScale * enemyStoryBackHalfScale(round, 0.05) + enemyShopPowerTier3Bonus(round) + infinitePressure * 0.0045, 0, cap);
   }
 
   function enemyEconomyTier4Chance(round, adaptivePressure = 0) {

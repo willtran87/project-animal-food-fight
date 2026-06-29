@@ -70,7 +70,7 @@
       ["economy-enemy-data", "h-1fc098d5a701"],
       ["rarity-shop-data", "h-e12dbb56e12f"],
       ["status-effect-data", "h-dc183b7afdae"],
-      ["game", "h-3900fb17078e"],
+      ["game", "h-6ef4d72751f9"],
     ],
   });
 
