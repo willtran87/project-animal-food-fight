@@ -80,52 +80,52 @@ const MUSIC_TRACKS = [
   {
     id: "market",
     label: "Sunny Market",
-    src: "assets/audio/cozy-market-menu-loop-v1.wav",
+    src: "assets/audio/cozy-market-menu-loop-v1.mp3",
   },
   {
     id: "prep",
     label: "Prep Counter",
-    src: "assets/audio/cozy-prep-counter-loop-v1.wav",
+    src: "assets/audio/cozy-prep-counter-loop-v1.mp3",
   },
   {
     id: "battle",
     label: "Picnic Skirmish",
-    src: "assets/audio/cozy-picnic-skirmish-loop-v1.wav",
+    src: "assets/audio/cozy-picnic-skirmish-loop-v1.mp3",
   },
   {
     id: "victory",
     label: "Little Victory",
-    src: "assets/audio/cozy-little-victory-loop-v1.wav",
+    src: "assets/audio/cozy-little-victory-loop-v1.mp3",
   },
   {
     id: "defeat",
     label: "Soft Defeat",
-    src: "assets/audio/cozy-soft-defeat-loop-v1.wav",
+    src: "assets/audio/cozy-soft-defeat-loop-v1.mp3",
   },
   {
     id: "horror-market",
     label: "Ruined Market",
-    src: "assets/audio/horror-ruined-market-loop-v1.wav",
+    src: "assets/audio/horror-ruined-market-loop-v1.mp3",
   },
   {
     id: "horror-prep",
     label: "Cold Prep Table",
-    src: "assets/audio/horror-cold-prep-table-loop-v1.wav",
+    src: "assets/audio/horror-cold-prep-table-loop-v1.mp3",
   },
   {
     id: "horror-battle",
     label: "Midnight Skirmish",
-    src: "assets/audio/horror-midnight-skirmish-loop-v1.wav",
+    src: "assets/audio/horror-midnight-skirmish-loop-v1.mp3",
   },
   {
     id: "horror-victory",
     label: "False Victory",
-    src: "assets/audio/horror-false-victory-loop-v1.wav",
+    src: "assets/audio/horror-false-victory-loop-v1.mp3",
   },
   {
     id: "horror-defeat",
     label: "Last Defeat",
-    src: "assets/audio/horror-last-defeat-loop-v1.wav",
+    src: "assets/audio/horror-last-defeat-loop-v1.mp3",
   },
 ];
 
@@ -135,22 +135,22 @@ if (!hasSavedSettings) {
 }
 
 const FOOD_LOB_PARTICLES = [
-  "assets/start-menu/runtime/food-lobs-v1/toast-square-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/taco-chip-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/sushi-bite-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/noodle-bundle-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/grape-cluster-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/pancake-bite-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/dumpling-v1.png",
-  "assets/start-menu/runtime/food-lobs-v1/popcorn-cluster-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-01-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-02-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-03-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-04-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-05-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-06-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-07-v1.png",
-  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-08-v1.png",
+  "assets/start-menu/runtime/food-lobs-v1/toast-square-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/taco-chip-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/sushi-bite-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/noodle-bundle-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/grape-cluster-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/pancake-bite-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/dumpling-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v1/popcorn-cluster-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-01-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-02-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-03-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-04-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-05-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-06-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-07-v1.webp",
+  "assets/start-menu/runtime/food-lobs-v2/food-lob-extra-08-v1.webp",
 ];
 
 const FIELD_GUIDE_ASSET_BASE = "assets/start-menu/field-guide";
@@ -206,7 +206,7 @@ const FIELD_GUIDE_PAGES = [
     slug: "field-guide-cover",
     plate: null,
     label: "Field Guide",
-    src: "assets/start-menu/field-guide-cover-v4.png",
+    src: "assets/start-menu/field-guide-cover-v4.webp",
     alt: "Field Guide journal cover",
     isCover: true,
   },
@@ -216,8 +216,8 @@ const FIELD_GUIDE_PAGES = [
     label: slug === "banana-split-giraffe-boss" ? "Banana Split Giraffe" : titleCaseSlug(slug),
     src:
       slug === "bao-bun-badger"
-        ? `${FIELD_GUIDE_ASSET_BASE}/cozy/bao-bun-badger-anatomy-journal-v2-hd-pixel-transparent.png`
-        : `${FIELD_GUIDE_ASSET_BASE}/cozy/${slug}-anatomy-journal-v1-hd-pixel-transparent.png`,
+        ? `${FIELD_GUIDE_ASSET_BASE}/cozy/bao-bun-badger-anatomy-journal-v2-hd-pixel-transparent.webp`
+        : `${FIELD_GUIDE_ASSET_BASE}/cozy/${slug}-anatomy-journal-v1-hd-pixel-transparent.webp`,
   })),
 ];
 
@@ -226,7 +226,7 @@ const SPECIFICATIONS_PAGES = [
     slug: "specifications-cover",
     plate: null,
     label: "Specifications",
-    src: "assets/start-menu/specifications-cover-v5.png",
+    src: "assets/start-menu/specifications-cover-v5.webp",
     alt: "Specifications engineering dossier cover",
     isCover: true,
   },
@@ -278,7 +278,7 @@ const GAME_TARGET_BASE_URL = `${LOCAL_TEST_PAGE_DIR}/game.html`;
 function appUrl(path) {
   return new URL(path, document.baseURI || window.location.href);
 }
-const HORROR_START_BG_SRC = "assets/start-menu/horror-start-bg-v1.png";
+const HORROR_START_BG_SRC = "assets/start-menu/horror-start-bg-v1.webp";
 const FIELD_GUIDE_ZOOM_MIN = 1;
 const FIELD_GUIDE_ZOOM_MAX = 2.75;
 const FIELD_GUIDE_ZOOM_STEP = 1.14;
@@ -287,14 +287,14 @@ const FIELD_GUIDE_SWIPE_MIN_PX = 46;
 const FIELD_GUIDE_SWIPE_AXIS_BIAS = 1.25;
 const FIELD_GUIDE_CONTROL_ICONS = {
   cozy: {
-    close: "assets/start-menu/runtime/field-guide-icon-close-v1.png",
-    prev: "assets/start-menu/runtime/field-guide-icon-prev-v1.png",
-    next: "assets/start-menu/runtime/field-guide-icon-next-v1.png",
+    close: "assets/start-menu/runtime/field-guide-icon-close-v1.webp",
+    prev: "assets/start-menu/runtime/field-guide-icon-prev-v1.webp",
+    next: "assets/start-menu/runtime/field-guide-icon-next-v1.webp",
   },
   horror: {
-    close: "assets/start-menu/runtime/field-guide-icon-close-horror-v1.png",
-    prev: "assets/start-menu/runtime/field-guide-icon-prev-horror-v1.png",
-    next: "assets/start-menu/runtime/field-guide-icon-next-horror-v1.png",
+    close: "assets/start-menu/runtime/field-guide-icon-close-horror-v1.webp",
+    prev: "assets/start-menu/runtime/field-guide-icon-prev-horror-v1.webp",
+    next: "assets/start-menu/runtime/field-guide-icon-next-horror-v1.webp",
   },
 };
 
@@ -897,9 +897,9 @@ window.render_game_to_text = () =>
               "overhead-cable-flicker",
             ],
             overlays: {
-              overhead: "assets/start-menu/runtime/horror-overhead-cables-v1.png",
-              brokenRelics: "assets/start-menu/runtime/horror-broken-relics-v1.png",
-              transitionPlaque: "assets/start-menu/runtime/horror-transition-plaque-v1.png",
+              overhead: "assets/start-menu/runtime/horror-overhead-cables-v1.webp",
+              brokenRelics: "assets/start-menu/runtime/horror-broken-relics-v1.webp",
+              transitionPlaque: "assets/start-menu/runtime/horror-transition-plaque-v1.webp",
             },
           }
         : null,
@@ -910,8 +910,8 @@ window.render_game_to_text = () =>
       title: fieldGuideDisplayName(),
       backgroundSrc:
         state.theme === "horror"
-          ? "assets/start-menu/horror-field-guide-bg-v1.png"
-          : "assets/start-menu/field-guide-bg-v1.png",
+          ? "assets/start-menu/horror-field-guide-bg-v1.webp"
+          : "assets/start-menu/field-guide-bg-v1.webp",
       pageCount: currentFieldGuidePages().length,
       selectedIndex: state.fieldGuideIndex,
       selectedSlug: currentFieldGuidePage().slug,
@@ -982,15 +982,15 @@ function titleCaseSlug(slug) {
 
 function horrorFieldGuideSrc(slug, plate) {
   if (slug === "toast-tortoise") {
-    return `${FIELD_GUIDE_ASSET_BASE}/horror/toast-tortoise-invasive-pilot-brain-war-machine-journal-v3-hd-pixel-chromakey-clean.png`;
+    return `${FIELD_GUIDE_ASSET_BASE}/horror/toast-tortoise-invasive-pilot-brain-war-machine-journal-v3-hd-pixel-chromakey-clean.webp`;
   }
   if (slug === "sushi-seal") {
-    return `${FIELD_GUIDE_ASSET_BASE}/horror/sushi-seal-invasive-pilot-brain-war-machine-journal-v1-hd-pixel-chromakey-clean.png`;
+    return `${FIELD_GUIDE_ASSET_BASE}/horror/sushi-seal-invasive-pilot-brain-war-machine-journal-v1-hd-pixel-chromakey-clean.webp`;
   }
   if (slug === "cucumber-cobra") {
-    return `${FIELD_GUIDE_ASSET_BASE}/horror/cucumber-cobra-horror-engineering-field-journal-plate-32-v2-hd-pixel-transparent.png`;
+    return `${FIELD_GUIDE_ASSET_BASE}/horror/cucumber-cobra-horror-engineering-field-journal-plate-32-v2-hd-pixel-transparent.webp`;
   }
-  return `${FIELD_GUIDE_ASSET_BASE}/horror/${slug}-horror-engineering-field-journal-plate-${plate}-v1-hd-pixel-chromakey.png`;
+  return `${FIELD_GUIDE_ASSET_BASE}/horror/${slug}-horror-engineering-field-journal-plate-${plate}-v1-hd-pixel-chromakey.webp`;
 }
 
 function currentFieldGuidePages() {

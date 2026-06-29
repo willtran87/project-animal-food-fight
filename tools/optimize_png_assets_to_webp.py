@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -42,7 +43,26 @@ def visible_pixels_equal(original: Image.Image, converted: Image.Image) -> bool:
     return left.tobytes() == right.tobytes()
 
 
-def convert_one(path: Path, min_savings_ratio: float, min_savings_bytes: int, dry_run: bool) -> tuple[bool, int]:
+def archive_original(path: Path, archive_root: Path | None) -> None:
+    if not path.exists():
+        return
+    if not archive_root:
+        path.unlink()
+        return
+    destination = archive_root / path
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        destination.unlink()
+    shutil.move(str(path), str(destination))
+
+
+def convert_one(
+    path: Path,
+    min_savings_ratio: float,
+    min_savings_bytes: int,
+    dry_run: bool,
+    archive_root: Path | None = None,
+) -> tuple[bool, int]:
     out_path = path.with_suffix(".webp")
     original_size = path.stat().st_size
     with Image.open(path) as img:
@@ -60,7 +80,7 @@ def convert_one(path: Path, min_savings_ratio: float, min_savings_bytes: int, dr
         if not visible_pixels_equal(rgba, converted):
             out_path.unlink(missing_ok=True)
             return False, 0
-    path.unlink()
+    archive_original(path, archive_root)
     return True, savings
 
 
@@ -75,8 +95,12 @@ def rewrite_references(mapping: dict[str, str], files: list[Path]) -> int:
             continue
         updated = text
         for old, new in mapping.items():
+            old_windows = old.replace("/", "\\")
+            new_windows = new.replace("/", "\\")
             updated = updated.replace(old, new)
-            updated = updated.replace(old.replace("/", "\\"), new.replace("/", "\\"))
+            updated = updated.replace(old_windows, new_windows)
+            updated = updated.replace(f"../{old}", f"../{new}")
+            updated = updated.replace(f"..\\{old_windows}", f"..\\{new_windows}")
         if updated != text:
             path.write_text(updated, encoding="utf-8", newline="")
             changed += 1
@@ -91,6 +115,7 @@ def main() -> None:
     parser.add_argument("--min-size-bytes", type=int, default=0)
     parser.add_argument("--max-count", type=int, default=0)
     parser.add_argument("--rewrite-existing", action="store_true")
+    parser.add_argument("--archive-originals-root", default="", help="Move converted PNG originals under this root instead of deleting them.")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -118,8 +143,9 @@ def main() -> None:
     total_savings = 0
     converted_count = 0
     skipped_count = 0
+    archive_root = Path(args.archive_originals_root) if args.archive_originals_root else None
     for path in pngs:
-        converted, savings = convert_one(path, args.min_savings_ratio, args.min_savings_bytes, args.dry_run)
+        converted, savings = convert_one(path, args.min_savings_ratio, args.min_savings_bytes, args.dry_run, archive_root)
         if converted:
             converted_count += 1
             total_savings += savings

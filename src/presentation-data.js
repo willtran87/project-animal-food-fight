@@ -3,18 +3,18 @@
 
   const GAME_MUSIC_TRACKS = {
     cozy: {
-      menu: { id: "market", label: "Sunny Market", src: "assets/audio/cozy-market-menu-loop-v1.wav" },
-      prep: { id: "prep", label: "Prep Counter", src: "assets/audio/cozy-prep-counter-loop-v1.wav" },
-      battle: { id: "battle", label: "Picnic Skirmish", src: "assets/audio/cozy-picnic-skirmish-loop-v1.wav" },
-      victory: { id: "victory", label: "Little Victory", src: "assets/audio/cozy-little-victory-loop-v1.wav" },
-      defeat: { id: "defeat", label: "Soft Defeat", src: "assets/audio/cozy-soft-defeat-loop-v1.wav" },
+      menu: { id: "market", label: "Sunny Market", src: "assets/audio/cozy-market-menu-loop-v1.mp3" },
+      prep: { id: "prep", label: "Prep Counter", src: "assets/audio/cozy-prep-counter-loop-v1.mp3" },
+      battle: { id: "battle", label: "Picnic Skirmish", src: "assets/audio/cozy-picnic-skirmish-loop-v1.mp3" },
+      victory: { id: "victory", label: "Little Victory", src: "assets/audio/cozy-little-victory-loop-v1.mp3" },
+      defeat: { id: "defeat", label: "Soft Defeat", src: "assets/audio/cozy-soft-defeat-loop-v1.mp3" },
     },
     horror: {
-      menu: { id: "horror-market", label: "Ruined Market", src: "assets/audio/horror-ruined-market-loop-v1.wav" },
-      prep: { id: "horror-prep", label: "Cold Prep Table", src: "assets/audio/horror-cold-prep-table-loop-v1.wav" },
-      battle: { id: "horror-battle", label: "Midnight Skirmish", src: "assets/audio/horror-midnight-skirmish-loop-v1.wav" },
-      victory: { id: "horror-victory", label: "False Victory", src: "assets/audio/horror-false-victory-loop-v1.wav" },
-      defeat: { id: "horror-defeat", label: "Last Defeat", src: "assets/audio/horror-last-defeat-loop-v1.wav" },
+      menu: { id: "horror-market", label: "Ruined Market", src: "assets/audio/horror-ruined-market-loop-v1.mp3" },
+      prep: { id: "horror-prep", label: "Cold Prep Table", src: "assets/audio/horror-cold-prep-table-loop-v1.mp3" },
+      battle: { id: "horror-battle", label: "Midnight Skirmish", src: "assets/audio/horror-midnight-skirmish-loop-v1.mp3" },
+      victory: { id: "horror-victory", label: "False Victory", src: "assets/audio/horror-false-victory-loop-v1.mp3" },
+      defeat: { id: "horror-defeat", label: "Last Defeat", src: "assets/audio/horror-last-defeat-loop-v1.mp3" },
     },
   };
   const OPTIONS_MENU = {
@@ -89,7 +89,7 @@
   const HORROR_TABS_STORY_PORTRAIT_SRC = "assets/shopkeeper/runtime/horror-robot-shopkeeper-v4-transparent-edge1.png?v=1";
   const STORY_DIALOGUE_PAPER_BG_SRC = "assets/ui/runtime/conversation-paper-bg-v1.webp";
   const STORY_DIALOGUE_WAR_BG_SRC = "assets/ui/runtime/conversation-panel-war-v1.webp?v=1";
-  const LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC = "assets/backgrounds/horror/level10-reveal-war-yard-panorama-v2.png?v=1";
+  const LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC = "assets/backgrounds/horror/level10-reveal-war-yard-panorama-v2.webp?v=1";
   const LEVEL10_REVEAL_EXPIRED_ARCHIVE_SRC = "assets/backgrounds/horror/level10-reveal-expired-archive-v1.png?v=1";
   const LEVEL10_REVEAL_BREAKFAST_MASK_SRC = "assets/backgrounds/horror/level10-reveal-breakfast-mask-v1.png?v=1";
   const LEVEL10_REVEAL_FOOD_ANIMAL_PILOTS_SRC = "assets/backgrounds/horror/level10-reveal-food-animal-pilots-v1.png?v=1";

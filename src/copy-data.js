@@ -177,7 +177,7 @@
           name: "Ember Spice Foundry",
           short: "Foundry",
           mood: "Furnace dust makes hostile statuses linger.",
-          backgroundSrc: "assets/backgrounds/horror/arena-ember-spice-foundry-v1.png?v=1",
+          backgroundSrc: "assets/backgrounds/horror/arena-ember-spice-foundry-v1.webp?v=1",
           effects: [
             { tag: "HELP", text: "Thermal/Convoy damage rises." },
             { tag: "HELP", text: "Their statuses last longer." },

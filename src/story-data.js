@@ -10,7 +10,7 @@
   const CONVERSATION_WAVE_10_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-10-tabs-unmasked-v1.png";
   const CONVERSATION_WAVE_15_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-15-harvest-doctrine-v2.png";
   const CONVERSATION_WAVE_20_FINAL_GATE_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-final-gate-v1.png";
-  const CONVERSATION_WAVE_20_OVERMIND_SPILL_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-overmind-pilot-spill-v1.png";
+  const CONVERSATION_WAVE_20_OVERMIND_SPILL_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-overmind-pilot-spill-v1.webp";
   const CONVERSATION_WAVE_20_LAST_TABLE_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-20-last-table-v3.png";
   const FINAL_TABS_STORY = {
     id: FINAL_TABS_STORY_ID,
