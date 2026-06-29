@@ -167,7 +167,10 @@
   );
   const DISPLAY_SCALE = 1.5625;
   const MAX_BACKING_SCALE = 2.5;
-  const BACKING_SCALE = Math.max(1.5, Math.min(MAX_BACKING_SCALE, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
+  const TOUCH_BACKING_SCALE = 2;
+  const isTouchFirstDevice = Boolean(window.navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)")?.matches);
+  const backingScaleCeiling = isTouchFirstDevice ? TOUCH_BACKING_SCALE : MAX_BACKING_SCALE;
+  const BACKING_SCALE = Math.max(1.5, Math.min(backingScaleCeiling, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
   const COMBAT_ATTACK_MOTION_SECONDS = 0.38;
   const COMBAT_SUPPORT_MOTION_SECONDS = 0.42;
   const COMBAT_HIT_MOTION_SECONDS = 0.3;
@@ -700,6 +703,19 @@
   const drinkThrowableSpriteCache = new Map();
   const statusEffectSpriteCache = new Map();
   const uiSpriteCache = new Map();
+
+  function uniqueAssetSources(sources) {
+    return [...new Set((sources || []).filter(Boolean))];
+  }
+
+  function warmUiSprites(sources) {
+    uniqueAssetSources(sources).forEach((src) => getUiSprite(src));
+  }
+
+  function warmBackgrounds(sources) {
+    uniqueAssetSources(sources).forEach((src) => getBackgroundImage(src));
+  }
+
   function canUseLocalStorage() {
     return window.FoodAnimalsRunStorage.canUseLocalStorage(ACTIVE_RUN_STORAGE_KEY);
   }
@@ -2205,6 +2221,327 @@
 
   function activePlayerTraits() {
     return compactTraitSnapshotForUnits(state.board.filter(isUnit));
+  }
+
+  function teamStatNumber(value, digits = 0) {
+    const safe = Number.isFinite(value) ? value : 0;
+    return Number(safe.toFixed(digits));
+  }
+
+  function teamStatSigned(value) {
+    const rounded = Math.round(value || 0);
+    return `${rounded >= 0 ? "+" : ""}${rounded}`;
+  }
+
+  function teamStatRate(unit) {
+    return Math.max(0.05, attackClockMultiplier(unit) / Math.max(0.2, unit.speed || 1));
+  }
+
+  function projectedTeamUnit(unit, side, slot) {
+    const grid = slotGrid(slot);
+    const pos = battleSlotPosition(side, slot);
+    return {
+      ...unit,
+      side,
+      slot,
+      col: grid.col,
+      row: grid.row,
+      x: pos.x,
+      y: pos.y,
+    };
+  }
+
+  function planningTeamUnits() {
+    return state.board
+      .map((unit, index) => (isUnit(unit) ? projectedTeamUnit(unit, "ally", index) : null))
+      .filter(Boolean);
+  }
+
+  function planningEnemyUnits() {
+    const units = state.enemyPreview?.units || [];
+    return units.map((unit, index) => projectedTeamUnit(unit, "enemy", enemyPreviewSlotFor(unit, index)));
+  }
+
+  function projectedUnitDirectDamage(unit, target = null) {
+    if (!unit || unit.dead) return 0;
+    if (unit.ability === "heal" || unit.ability === "cleanse") return 0;
+    let damage = unit.atk || 0;
+    if (unit.ability === "execute") damage += Math.round(executeBonus(unit) * 0.45);
+    if (unit.ability === "cleave") damage += cleaveDamage(unit) * 0.75;
+    if (unit.ability === "back_row") damage += Math.max(0, unit.tier - 1) * volleyDamage(unit) * 0.8;
+    if (unit.ability === "pepper_dash") damage += Math.round(pepperPokeBonus(unit) * 0.45);
+    if (unit.ability === "armor_break") damage += Math.round(armorBreakBonus(unit) * 0.55);
+    if (unit.ability === "shield_breaker") damage += Math.round(shieldBreakBonus(unit) * (target?.shield > 0 ? 1 : 0.45));
+    if (unit.ability === "shakshuka_burn") damage += Math.round(shakshukaSplashDamage(unit) * 0.7);
+    if (unit.ability === "neural_overmind") damage += Math.round(unit.atk * 0.28);
+    if (unit.ability === "brainstem_probe") damage += Math.round(unit.atk * 0.08);
+    if (unit.item?.splashDamagePct) damage += Math.round(unit.atk * unit.item.splashDamagePct);
+    if (unit.item?.bounceDamagePct) damage += Math.round(unit.atk * unit.item.bounceDamagePct * 0.75);
+    if (unit.item?.pierceDamagePct) damage += Math.round(unit.atk * unit.item.pierceDamagePct * 0.75);
+    if (unit.item?.executeSplashDamagePct) damage += Math.round(unit.atk * unit.item.executeSplashDamagePct * 0.35);
+    if (unit.item?.damageBonusPct) damage *= 1 + unit.item.damageBonusPct;
+    return Math.max(0, damage);
+  }
+
+  function projectedEffectiveHitDamage(unit, target = null) {
+    const rawDamage = projectedUnitDirectDamage(unit, target);
+    if (rawDamage <= 0) return 0;
+    let amount = rawDamage;
+    if (hasFavoriteTopping(unit)) amount *= 1.06;
+    const spicyStage = activeTraitStage(unit, "spicy");
+    if (spicyStage > 0) amount *= 1 + (spicyStage >= 2 ? 0.16 : 0.08);
+    if (unit.item?.firstAttacksBonusPct) amount *= 1 + unit.item.firstAttacksBonusPct * 0.65;
+    if (unit.item?.shieldedAttackBonusPct) amount *= 1 + unit.item.shieldedAttackBonusPct * 0.35;
+    if (unit.item?.shieldedTargetDamagePct && target?.shield > 0) amount *= 1 + unit.item.shieldedTargetDamagePct;
+    if (target?.item?.frontRowDamageReductionPct && target.col === FRONT_COL) amount *= 1 - target.item.frontRowDamageReductionPct;
+    if (target?.item?.damageTakenPct) amount *= 1 + target.item.damageTakenPct;
+    amount *= arenaDamageMultiplier(unit, target || { col: FRONT_COL, side: "enemy", maxHp: 1, hp: 1 }, {});
+    return Math.max(1, Math.round(amount));
+  }
+
+  function projectedUnitDotPerTick(unit) {
+    if (!unit || unit.dead) return 0;
+    let dot = 0;
+    if (unit.ability === "pepper_dash") dot += pepperBurnDamage(unit);
+    if (unit.ability === "status_spread") dot += kimchiBurnDamage(unit);
+    if (unit.ability === "shakshuka_burn") dot += shakshukaBurnDamage(unit) * (unit.tier >= 3 ? 1.65 : 1.35);
+    if (unit.item?.burnDamagePct) dot += Math.max(1, Math.round(unit.atk * unit.item.burnDamagePct));
+    if (activeTraitStage(unit, "spicy") >= 2) dot += Math.max(1, Math.round(unit.atk * 0.16));
+    return dot;
+  }
+
+  function projectedTeamStartShield(units) {
+    let shield = 0;
+    const breakfastStage = traitStageForUnits(units, "breakfast");
+    if (breakfastStage > 0) {
+      const pct = breakfastStage >= 2 ? 0.09 : 0.055;
+      shield += units.reduce((total, unit) => total + Math.max(2, Math.round(unit.maxHp * pct)), 0);
+    }
+    const freshStage = traitStageForUnits(units, "fresh");
+    if (freshStage >= 3) {
+      shield += units
+        .filter((unit) => unitHasTrait(unit, "fresh"))
+        .reduce((total, unit) => total + Math.max(2, Math.round(unit.maxHp * 0.08)), 0);
+    }
+    const arena = currentArena();
+    if (arena.id === "sunny_breakfast_patio") {
+      shield += units
+        .filter((unit) => unitHasTrait(unit, "bakery"))
+        .reduce((total, unit) => total + Math.max(2, Math.round(unit.maxHp * 0.08)), 0);
+    }
+    if (arena.id === "frozen_parfait_peak") {
+      shield += units
+        .filter((unit) => unitHasTrait(unit, "sweet"))
+        .reduce((total, unit) => total + Math.max(2, Math.round(unit.maxHp * 0.1)), 0);
+    }
+    units.forEach((unit) => {
+      if (unit.item?.adjacentStartShieldPct) {
+        shield += units
+          .filter((ally) => ally.uid !== unit.uid && isAdjacentSlot(unit, ally))
+          .reduce((total, ally) => total + Math.max(1, Math.round(unit.maxHp * unit.item.adjacentStartShieldPct)), 0);
+      }
+      if (unit.item?.deathSaveShieldPct) shield += Math.max(1, Math.round(unit.maxHp * unit.item.deathSaveShieldPct * 0.35));
+      if (unit.item?.decoyHpPct) shield += Math.max(1, Math.round(unit.maxHp * unit.item.decoyHpPct));
+      if (unit.ability === "taunt_guard") shield += supportAmount(unit, Math.round(tauntGuardShield(unit) * 1.15));
+      if (unit.ability === "syrup_start") {
+        shield += units
+          .filter((ally) => ally.uid !== unit.uid && isAdjacentSlot(unit, ally))
+          .reduce((total) => total + supportAmount(unit, syrupShield(unit)), 0);
+      }
+      if (unit.ability === "bagel_build") {
+        shield += units
+          .filter((ally) => ally.uid !== unit.uid && isAdjacentSlot(unit, ally))
+          .reduce((total) => total + supportAmount(unit, Math.round(bagelBuildShield(unit) * 0.85)), 0);
+      }
+      if (unit.ability === "row_shield") {
+        shield += units
+          .filter((ally) => ally.row === unit.row)
+          .reduce((total) => total + supportAmount(unit, Math.round(dumplingRowShield(unit) * 0.8)), 0);
+      }
+      if (unit.ability === "formation_captain") {
+        shield += formationAllies(unit, units).reduce((total) => total + supportAmount(unit, Math.round(formationShield(unit) * 1.2)), 0);
+      }
+      if (unit.ability === "survive_scale" && unit.tier >= 2 && (unit.permanentHpBonus || 0) > 0) {
+        shield += units
+          .filter((ally) => ally.uid !== unit.uid && isAdjacentSlot(unit, ally))
+          .reduce((total) => total + supportAmount(unit, mochiAdjacentShield(unit)), 0);
+      }
+      if (unit.ability === "iceberg_lock") shield += supportAmount(unit, oysterLockShield(unit));
+    });
+    const buff = state.arenaPrepBuff;
+    if (buff && units.length) {
+      const target = units.find((unit) => hasAnyTrait(unit, buff.traitIds || [])) || units[0];
+      shield += Math.max(2, Math.round(target.maxHp * (buff.shieldPct || 0.12)));
+    }
+    return Math.round(shield);
+  }
+
+  function projectedUnitSustainPerSecond(unit, units) {
+    if (!unit || unit.dead) return 0;
+    const rate = teamStatRate(unit);
+    let sustain = 0;
+    if (unit.ability === "heal") sustain += (supportAmount(unit, healAmount(unit)) + supportAmount(unit, noodleFallbackShield(unit)) * 0.45) * rate;
+    if (unit.ability === "cleanse") sustain += (supportAmount(unit, lemonCleanseHeal(unit)) + supportAmount(unit, lemonCleanseShield(unit))) * rate * 0.75;
+    if (unit.ability === "guard") sustain += supportAmount(unit, guardShield(unit)) * rate;
+    if (unit.ability === "taunt_guard") sustain += supportAmount(unit, tauntGuardShield(unit)) * rate * 0.45;
+    if (unit.ability === "bagel_build") sustain += supportAmount(unit, bagelBuildShield(unit)) * Math.min(2, units.length) * rate;
+    if (unit.ability === "row_shield") sustain += supportAmount(unit, dumplingRowShield(unit)) * Math.min(3, units.filter((ally) => ally.row === unit.row).length) * rate;
+    if (unit.ability === "formation_captain") sustain += supportAmount(unit, formationShield(unit)) * Math.min(4, formationAllies(unit, units).length) * rate;
+    if (unit.ability === "iceberg_lock") sustain += supportAmount(unit, oysterLockShield(unit)) * rate;
+    if (unit.ability === "syrup_start") sustain += supportAmount(unit, syrupPulseShield(unit)) * Math.max(1, units.filter((ally) => isAdjacentSlot(unit, ally)).length) / syrupPulseInterval(unit);
+    if (unit.item?.onAttackShieldPct) sustain += Math.max(1, Math.round(unit.maxHp * unit.item.onAttackShieldPct + unit.abilityPower * 0.16)) * rate;
+    if (unit.item?.selfHealPct) sustain += Math.max(1, Math.round(unit.maxHp * unit.item.selfHealPct)) / Math.max(1, (unit.item.everyNAttacks || 3) / rate);
+    if (unit.item?.adjacentPulseShieldPct) sustain += Math.max(1, Math.round(unit.maxHp * unit.item.adjacentPulseShieldPct)) * Math.max(1, units.filter((ally) => isAdjacentSlot(unit, ally)).length) / (unit.item.adjacentPulseInterval || 7);
+    if (unit.item?.economyPulseShieldPct) sustain += Math.max(1, Math.round(unit.maxHp * unit.item.economyPulseShieldPct)) / (unit.item.economyPulseInterval || 8);
+    return sustain;
+  }
+
+  function projectedDrinkSustainPerSecond(units) {
+    return state.drinks.reduce((total, drink, index) => {
+      if (!drinkPulseUnlocked(drink)) return total;
+      const slot = drinkSlots[index];
+      const lineUnits = drinkLaneUnits(units, slot);
+      if (!lineUnits.length) return total;
+      const interval = drink.drinkPulseInterval || 5;
+      const scale = drinkPulseTierScale(drink);
+      if (drink.drinkPulseType === "shield") {
+        return total + lineUnits.reduce((sum, unit) => sum + Math.max(1, Math.round(unit.maxHp * (drink.drinkPulseShieldPct || 0.08) * scale)), 0) / interval;
+      }
+      if (drink.drinkPulseType === "heal") {
+        const weakest = lineUnits.reduce((best, unit) => (unit.maxHp > best.maxHp ? unit : best), lineUnits[0]);
+        return total + Math.max(1, Math.round(weakest.maxHp * (drink.drinkPulseHealPct || 0.08) * scale)) / interval;
+      }
+      return total;
+    }, 0);
+  }
+
+  function projectedTeamControlScore(units) {
+    let score = 0;
+    units.forEach((unit) => {
+      if (["slow", "sticky_lane", "pull_start", "iceberg_lock", "pearl_stun", "sour_aura", "neural_overmind", "brainstem_probe"].includes(unit.ability)) score += 1;
+      if (unit.item?.cooldownDelay || unit.item?.attackSlowPct || unit.item?.antiSupportPct || unit.item?.teamVulnerabilityPct || unit.item?.markDamagePct) score += 1;
+      if (unit.ability === "status_spread") score += 1;
+    });
+    if (traitStageForUnits(units, "ocean") > 0) score += 1;
+    if (currentArena().id === "rainy_fish_market" && units.some((unit) => unitHasTrait(unit, "ocean"))) score += 1;
+    return score;
+  }
+
+  function projectedTeamStats() {
+    const units = planningTeamUnits();
+    const enemies = planningEnemyUnits();
+    const hp = units.reduce((total, unit) => total + (unit.maxHp || unit.hp || 0), 0);
+    const atk = units.reduce((total, unit) => total + (unit.atk || 0), 0);
+    const dps = units.reduce((total, unit) => total + projectedUnitDirectDamage(unit, null) * teamStatRate(unit), 0);
+    const effectiveDps = units.reduce((total, unit) => {
+      const target = enemies.length ? chooseTarget(unit, enemies) : null;
+      return total + projectedEffectiveHitDamage(unit, target) * teamStatRate(unit);
+    }, 0);
+    const dotPerTick = units.reduce((total, unit) => total + projectedUnitDotPerTick(unit), 0);
+    const startShield = projectedTeamStartShield(units);
+    const sustainPerSecond = units.reduce((total, unit) => total + projectedUnitSustainPerSecond(unit, units), 0) + projectedDrinkSustainPerSecond(units);
+    return {
+      mode: "projected",
+      units: units.length,
+      hp: Math.round(hp),
+      atk: Math.round(atk),
+      dps: teamStatNumber(dps, 1),
+      effectiveDps: teamStatNumber(effectiveDps, 1),
+      dotPerTick: teamStatNumber(dotPerTick, 1),
+      startShield,
+      sustainPerSecond: teamStatNumber(sustainPerSecond, 1),
+      control: projectedTeamControlScore(units),
+      enemyPreviewUnits: enemies.length,
+      note: enemies.length ? "effectiveDps estimates current preview targets" : "effectiveDps uses current team only",
+    };
+  }
+
+  function ledgerUnitsArray(ledger) {
+    return Array.isArray(ledger?.units) ? ledger.units : Object.values(ledger?.units || {});
+  }
+
+  function ledgerUnitSide(ledger, uid) {
+    if (uid == null) return null;
+    return ledgerUnitsArray(ledger).find((unit) => unit.uid === uid)?.side || null;
+  }
+
+  function combatLedgerTeamStats(ledger) {
+    if (!ledger) return null;
+    const duration = Math.max(0.1, ledger.duration || 0.1);
+    const events = ledger.events || [];
+    const allyStatusDamage = events.reduce((total, event) => (
+      event.type === "damage" && event.kind === "status" && ledgerUnitSide(ledger, event.sourceUid) === "ally"
+        ? total + (event.amount || 0)
+        : total
+    ), 0);
+    const shieldAbsorbed = events.reduce((total, event) => (
+      event.type === "damage" && ledgerUnitSide(ledger, event.targetUid) === "ally"
+        ? total + (event.shieldDamage || 0)
+        : total
+    ), 0);
+    const sustain = (ledger.ally?.healingReceived || 0) + (ledger.ally?.shieldingReceived || 0);
+    const damageTaken = ledger.ally?.damageTaken || 0;
+    return {
+      mode: "actual",
+      result: ledger.result,
+      duration,
+      damageDealt: ledger.ally?.damageDealt || 0,
+      damageTaken,
+      dps: teamStatNumber((ledger.ally?.damageDealt || 0) / duration, 1),
+      incomingPerSecond: teamStatNumber(damageTaken / duration, 1),
+      statusDamage: Math.round(allyStatusDamage),
+      healingReceived: ledger.ally?.healingReceived || 0,
+      shieldingReceived: ledger.ally?.shieldingReceived || 0,
+      sustain,
+      sustainPerSecond: teamStatNumber(sustain / duration, 1),
+      shieldAbsorbed,
+      netSurvival: sustain - damageTaken,
+      kos: ledger.ally?.kos || 0,
+      losses: ledger.ally?.losses || 0,
+    };
+  }
+
+  function combatLedgerFrameTeamStats(ledger, frameIndex = -1) {
+    if (!ledger) return null;
+    const frames = ledger.frames || [];
+    if (!frames.length) return null;
+    const index = clamp(Number.isInteger(frameIndex) && frameIndex >= 0 ? frameIndex : frames.length - 1, 0, frames.length - 1);
+    const frame = frames[index];
+    const prev = frames[index - 1] || null;
+    const from = prev ? prev.t : -0.001;
+    const to = frame.t ?? 0;
+    const events = (ledger.events || []).filter((event) => (event.t || 0) > from && (event.t || 0) <= to);
+    const stats = {
+      index,
+      t: frame.t,
+      damageDealt: 0,
+      damageTaken: 0,
+      statusDamage: 0,
+      healing: 0,
+      shielding: 0,
+      kos: 0,
+      losses: 0,
+    };
+    events.forEach((event) => {
+      const sourceSide = ledgerUnitSide(ledger, event.sourceUid);
+      const targetSide = ledgerUnitSide(ledger, event.targetUid);
+      if (event.type === "damage") {
+        if (sourceSide === "ally") {
+          stats.damageDealt += event.amount || 0;
+          if (event.kind === "status") stats.statusDamage += event.amount || 0;
+        }
+        if (targetSide === "ally") stats.damageTaken += event.amount || 0;
+      } else if (event.type === "support" && targetSide === "ally") {
+        if (event.kind === "heal") stats.healing += event.amount || 0;
+        else stats.shielding += event.amount || 0;
+      } else if (event.type === "ko") {
+        if (sourceSide === "ally") stats.kos += 1;
+        if (targetSide === "ally") stats.losses += 1;
+      }
+    });
+    stats.sustain = stats.healing + stats.shielding;
+    stats.netSurvival = stats.sustain - stats.damageTaken;
+    return stats;
   }
 
   function visibleBattle() {
@@ -5207,7 +5544,10 @@
   }
 
   function recordCombatDamage(battle, source, target, hpDamage, shieldDamage = 0, options = {}) {
-    const impact = window.FoodAnimalsCombatLedgerCapture.recordDamage(battle, source, target, hpDamage, shieldDamage, combatLedgerCaptureOptions());
+    const impact = window.FoodAnimalsCombatLedgerCapture.recordDamage(battle, source, target, hpDamage, shieldDamage, combatLedgerCaptureOptions({
+      kind: options.kind,
+      status: options.status,
+    }));
     if (impact <= 0) return;
     if (options.silentSfx) return;
     playGameSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
@@ -5827,7 +6167,21 @@
     return true;
   }
 
+  function warmStoryConversationAssets(story) {
+    warmBackgrounds([
+      story?.backgroundSrc,
+      ...(story?.backgroundRanges || []).map((entry) => entry.backgroundSrc),
+    ]);
+    warmUiSprites([
+      PLAYER_STORY_PORTRAIT_SRC,
+      TABS_STORY_PORTRAIT_SRC,
+      storyUsesHorrorTabs(story) ? HORROR_TABS_STORY_PORTRAIT_SRC : null,
+      storyUsesHorrorTabs(story) ? STORY_DIALOGUE_WAR_BG_SRC : STORY_DIALOGUE_PAPER_BG_SRC,
+    ]);
+  }
+
   function startStoryConversation(story) {
+    warmStoryConversationAssets(story);
     state.activeStory = {
       ...story,
       skipConfirm: false,
@@ -5930,6 +6284,7 @@
   function startLevel10RevealCutscene(options = {}) {
     if (isInfiniteMode() && !options.force) return false;
     if (!options.force && state.seenStoryMilestones.includes(LEVEL10_REVEAL_CUTSCENE_ID)) return false;
+    warmLevel10RevealCutsceneAssets(0);
     state.level10RevealCutscene = {
       id: LEVEL10_REVEAL_CUTSCENE_ID,
       elapsed: 0,
@@ -5946,6 +6301,23 @@
     state.log.unshift("Cutscene: level 10 reveal aftermath");
     playGameSfx("reality-break", { theme: "horror", volume: 1.05, rate: 0.92 });
     return true;
+  }
+
+  function warmLevel10RevealCutsceneAssets(shotIndex = 0) {
+    const currentShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[shotIndex];
+    const nextShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[shotIndex + 1];
+    const shotSources = [currentShot, nextShot].flatMap((shot) => shot ? [
+      shot.imageSrc,
+      shot.insertSrc,
+      shot.mode === "panorama" ? LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC : null,
+    ] : []);
+    warmUiSprites([
+      LEVEL10_CUTSCENE_TEXT_PANEL_SRC,
+      LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC,
+      LEVEL10_CUTSCENE_FX_ATLAS_SRC,
+      LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC,
+      ...shotSources,
+    ]);
   }
 
   function level10RevealCutsceneShot(cutscene = state.level10RevealCutscene) {
@@ -6014,6 +6386,7 @@
       return true;
     }
     cutscene.elapsed = nextShot.start + 0.001;
+    warmLevel10RevealCutsceneAssets(shotIndex + 1);
     beginLevel10RevealCutsceneStaticTransition(cutscene, 1);
     return true;
   }
@@ -6026,6 +6399,7 @@
     const previousShot = LEVEL10_REVEAL_CUTSCENE_SHOTS[Math.max(0, shotIndex - 1)];
     if (!previousShot || shotIndex <= 0) return false;
     cutscene.elapsed = previousShot.start + 0.001;
+    warmLevel10RevealCutsceneAssets(shotIndex - 1);
     beginLevel10RevealCutsceneStaticTransition(cutscene, -1);
     return true;
   }
@@ -6162,6 +6536,7 @@
 
   function startFinalVictoryTransition() {
     if (state.finalVictoryTransition) return false;
+    warmFinalVictoryCutsceneAssets();
     state.finalVictoryTransition = window.FoodAnimalsVictoryRebootRuntime.finalVictoryTransition({
       holdDuration: FINAL_VICTORY_HOLD_SECONDS,
       staticDuration: FINAL_VICTORY_STATIC_FADE_SECONDS,
@@ -6173,6 +6548,10 @@
     state.message = "Command lattice severed. Nursery sector unlocked.";
     playGameSfx("victory", { theme: "horror", volume: 1.05 });
     return true;
+  }
+
+  function warmFinalVictoryCutsceneAssets() {
+    warmBackgrounds([FINAL_VICTORY_CUTSCENE_SRC, FINAL_VICTORY_IDEAL_SRC]);
   }
 
   function completeFinalVictoryTransitionReset(transition) {
@@ -7664,7 +8043,7 @@
       damage -= absorbed;
     }
     if (damage > 0) target.hp = Math.max(0, target.hp - damage);
-    recordCombatDamage(battle, source, target, damage, absorbed);
+    recordCombatDamage(battle, source, target, damage, absorbed, options);
     triggerCombatHitMotion(target, source, battle, damage, absorbed);
     if (
       absorbed > 0 &&
@@ -12362,6 +12741,54 @@
     }
   }
 
+  function formatStatRate(value) {
+    return value >= 100 ? String(Math.round(value)) : value >= 10 ? value.toFixed(0) : value.toFixed(1);
+  }
+
+  function drawTeamStatsBlock(stats, x, y, maxWidth, options = {}) {
+    if (!stats) return 0;
+    drawInfoSectionTitle(options.title || (stats.mode === "actual" ? "Team telemetry" : "Team stats"), x, y);
+    const gap = 6;
+    const colW = Math.floor((maxWidth - gap * 2) / 3);
+    const rowY = y + 13;
+    const rows = stats.mode === "actual"
+      ? [
+          ["DPS", formatStatRate(stats.dps)],
+          ["IN/s", formatStatRate(stats.incomingPerSecond)],
+          ["SUS/s", formatStatRate(stats.sustainPerSecond)],
+          ["STAT", stats.statusDamage],
+          ["SHLD", stats.shieldAbsorbed],
+          ["NET", teamStatSigned(stats.netSurvival)],
+        ]
+      : [
+          ["DPS", formatStatRate(stats.dps)],
+          ["EFF", formatStatRate(stats.effectiveDps)],
+          ["DoT", formatStatRate(stats.dotPerTick)],
+          ["HP", stats.hp],
+          ["SHLD", stats.startShield],
+          ["SUS/s", formatStatRate(stats.sustainPerSecond)],
+        ];
+    rows.forEach(([label, value], index) => {
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      drawInfoMetric(label, value, x + col * (colW + gap), rowY + row * 38, colW);
+    });
+    const footerY = rowY + 82;
+    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    ctx.font = "800 9px Inter, sans-serif";
+    const footer = stats.mode === "actual"
+      ? `KOs ${stats.kos} / losses ${stats.losses} / ${stats.duration.toFixed(1)}s`
+      : `${stats.units} units / control ${stats.control} / preview ${stats.enemyPreviewUnits || 0}`;
+    fitText(footer, x, footerY, maxWidth, "800 9px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+    registerTooltip(x, y, maxWidth, 98, {
+      title: stats.mode === "actual" ? "Team telemetry" : "Projected team stats",
+      body: stats.mode === "actual"
+        ? "Actual team output, incoming damage, sustain, status damage, and net survival from the combat ledger."
+        : "Projected team output, effective output against preview targets, status pressure, starting shield, and sustain.",
+    });
+    return 102;
+  }
+
   function drawSmallProgressBar(x, y, w, pct, color) {
     roundedRect(x, y, w, 7, 4);
     ctx.fillStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.12)");
@@ -15619,18 +16046,23 @@
 
     if (!ref) {
       const titleY = 166 + panelDy;
-      const arenaDividerY = 190 + panelDy;
-      const arenaY = 212 + panelDy;
+      const statsDividerY = 190 + panelDy;
+      const statsY = statsDividerY + 18;
       const pendingArenaRewards = arenaRewardPendingRows();
-      const arenaRows = pendingArenaRewards.length ? 2 : 3;
-      const rewardDividerY = arenaY + 92;
+      const statsHeight = 102;
+      const arenaDividerY = statsY + statsHeight + 2;
+      const arenaY = arenaDividerY + 22;
+      const arenaRows = pendingArenaRewards.length ? 1 : 2;
+      const rewardDividerY = arenaY + (arenaRows === 1 ? 74 : 92);
       const rewardY = rewardDividerY + 22;
       const rewardHeight = pendingArenaRewards.length ? 24 + Math.min(3, pendingArenaRewards.length) * 18 : 0;
-      const traitDividerY = pendingArenaRewards.length ? rewardY + rewardHeight + 10 : 318 + panelDy;
+      const traitDividerY = pendingArenaRewards.length ? rewardY + rewardHeight + 8 : arenaY + 118;
       const traitY = traitDividerY + 22;
       ctx.fillStyle = primary;
       ctx.font = "900 17px Inter, sans-serif";
       ctx.fillText(copy("ui.panels.teamIntel", horror ? "War Intel" : "Team Intel"), contentX, titleY);
+      drawInfoDivider(contentX, statsDividerY, contentW);
+      drawTeamStatsBlock(projectedTeamStats(), contentX, statsY, contentW, { title: realityBroken() ? "Squad telemetry" : "Team stats" });
       drawInfoDivider(contentX, arenaDividerY, contentW);
       drawArenaInfoRows(contentX, arenaY, contentW, arenaRows);
       if (pendingArenaRewards.length) {
@@ -15638,7 +16070,7 @@
         drawArenaRewardPendingRows(contentX, rewardY, contentW);
       }
       drawInfoDivider(contentX, traitDividerY, contentW);
-      drawActiveTraitRows(contentX, traitY, contentW, pendingArenaRewards.length ? 4 : Infinity);
+      drawActiveTraitRows(contentX, traitY, contentW, pendingArenaRewards.length ? 1 : 2);
       return;
     }
 
@@ -15846,10 +16278,12 @@
       return;
     }
     drawCombatLedgerDetailsButton(combatLedgerDetailsButtonRect(x, y, maxWidth), Boolean(state.combatLedgerReview?.open));
+    const teamStats = combatLedgerTeamStats(ledger);
     const rows = [
-      [ledgerText("Hits", "Output"), `You ${ledger.ally.damageDealt} / Foe ${ledger.enemy.damageDealt}`, "info_damage", ledgerText("Damage your table dealt and took.", "Damage output recorded by each side.")],
-      [ledgerText("Help", "Repair"), `Heal ${ledger.ally.healingReceived} / Shield ${ledger.ally.shieldingReceived}`, "info_heal", ledgerText("Healing and shielding your team received.", "Repair and shielding received by your units.")],
-      [ledgerText("Falls", "KOs"), `${ledger.ally.kos}-${ledger.enemy.kos} in ${ledger.duration}s`, "info_ko", ledgerText("Who fell, and how long the fight lasted.", "Knockouts and total combat duration.")],
+      [ledgerText("Output", "Damage"), `${teamStats.damageDealt} (${formatStatRate(teamStats.dps)}/s)`, "info_damage", ledgerText("Actual team damage recorded by the fight ledger.", "Actual team damage recorded by combat telemetry.")],
+      [ledgerText("Status", "Status"), `${teamStats.statusDamage} stat / ${teamStats.shieldAbsorbed} shld`, "info_time", ledgerText("Status damage dealt, and shield damage your team absorbed.", "Status damage dealt, and shield impact absorbed by your units.")],
+      [ledgerText("Sustain", "Repair"), `+${teamStats.sustain} (${formatStatRate(teamStats.sustainPerSecond)}/s) net ${teamStatSigned(teamStats.netSurvival)}`, "info_heal", ledgerText("Healing plus shielding, minus incoming damage.", "Repair plus shielding, minus incoming damage.")],
+      [ledgerText("Falls", "KOs"), `${teamStats.kos}-${teamStats.losses} in ${teamStats.duration.toFixed(1)}s`, "info_ko", ledgerText("Who fell, and how long the fight lasted.", "Knockouts, losses, and total combat duration.")],
     ];
     rows.forEach(([label, value, iconId, body], index) => {
       const rowY = y + 18 + index * 18;
@@ -15867,13 +16301,13 @@
       : "No major support target";
     ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 10px Inter, sans-serif";
-    drawUiAtlasIcon("info_damage", x + 8, y + 74, 16, { tooltip: { title: ledgerText("Star", "Peak output"), body: ledgerText("Strongest hitter for the fight.", "Highest recorded damage output.") } });
-    drawUiAtlasIcon("info_shield", x + 8, y + 92, 16, { tooltip: { title: ledgerText("Held", "Protected"), body: ledgerText("Food animal that received the most support.", "Unit that received the most repair and shielding.") } });
-    ctx.fillText(ledgerText("Star", "Peak"), x + 20, y + 78);
-    ctx.fillText(ledgerText("Held", "Prot"), x + 20, y + 96);
+    drawUiAtlasIcon("info_damage", x + 8, y + 92, 16, { tooltip: { title: ledgerText("Star", "Peak output"), body: ledgerText("Strongest hitter for the fight.", "Highest recorded damage output.") } });
+    drawUiAtlasIcon("info_shield", x + 8, y + 110, 16, { tooltip: { title: ledgerText("Held", "Protected"), body: ledgerText("Food animal that received the most support.", "Unit that received the most repair and shielding.") } });
+    ctx.fillText(ledgerText("Star", "Peak"), x + 20, y + 96);
+    ctx.fillText(ledgerText("Held", "Prot"), x + 20, y + 114);
     ctx.font = "900 11px Inter, sans-serif";
-    fitText(mvp, x + 52, y + 78, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
-    fitText(protectedLine, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
+    fitText(mvp, x + 52, y + 96, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
+    fitText(protectedLine, x + 52, y + 114, maxWidth - 52, "900 11px Inter, sans-serif", themeColor("primary", "#16392d"));
   }
 
   function combatLedgerDetailsButtonRect(x = 720, y = 188, maxWidth = 268) {
@@ -16185,7 +16619,14 @@
 
     ctx.fillStyle = muted;
     ctx.font = "900 10px Inter, sans-serif";
-    ctx.fillText(frame ? `t=${frame.t.toFixed(2)}s  ${index + 1}/${frames.length}` : ledgerText("No frames", "No ticks"), rects.track.x, rects.track.y + 27);
+    const flow = combatLedgerFrameTeamStats(ledger, index);
+    const frameLabel = frame
+      ? `t=${frame.t.toFixed(2)}s ${index + 1}/${frames.length}`
+      : ledgerText("No frames", "No ticks");
+    const flowLabel = flow
+      ? `D ${flow.damageDealt} / In ${flow.damageTaken} / Sup ${flow.sustain} / Net ${teamStatSigned(flow.netSurvival)}`
+      : "";
+    fitText(flowLabel ? `${frameLabel}  ${flowLabel}` : frameLabel, rects.track.x, rects.track.y + 27, rects.track.w + 6, "900 10px Inter, sans-serif", muted);
   }
 
   function drawCombatLedgerRosterPanelBg(rect) {
@@ -16493,7 +16934,14 @@
     const source = combatLedgerEventUnitLabel(ledger, event.sourceUid);
     const target = combatLedgerEventUnitLabel(ledger, event.targetUid);
     const amount = Number.isFinite(event.amount) && event.amount > 0 ? Math.round(event.amount) : 0;
-    if (event.type === "damage") return `${source} -> ${target}  -${amount || "?"} HP`;
+    if (event.type === "damage") {
+      const suffix = event.kind === "status"
+        ? " status"
+        : event.shieldDamage > 0 && event.hpDamage <= 0
+          ? " shield"
+          : " HP";
+      return `${source} -> ${target}  -${amount || "?"}${suffix}`;
+    }
     if (event.type === "support") {
       const verb = event.kind === "heal" ? "healed" : "shielded";
       return `${source} ${verb} ${target}${amount ? ` +${amount}` : ""}`;
@@ -19698,6 +20146,11 @@
         win: state.winStreak,
         loss: state.lossStreak,
       },
+      teamStats: {
+        planning: state.phase === "prep" ? projectedTeamStats() : null,
+        lastCombat: state.lastCombatLedger ? combatLedgerTeamStats(state.lastCombatLedger) : null,
+        selectedFrame: state.lastCombatLedger ? combatLedgerFrameTeamStats(state.lastCombatLedger, currentCombatLedgerFrameIndex(state.lastCombatLedger)) : null,
+      },
       lastIncome: state.lastIncome,
       lastCombatLedger: state.lastCombatLedger,
       expandedCombatLedger: state.lastCombatLedger ? {
@@ -19720,6 +20173,8 @@
         eventTypeFilters: combatLedgerEventTypeFilters(),
         bigMomentsOnly: Boolean(state.combatLedgerReview.bigMomentsOnly),
         frameStepSeconds: COMBAT_LEDGER_FRAME_SECONDS,
+        teamStats: combatLedgerTeamStats(state.lastCombatLedger),
+        selectedFrameStats: combatLedgerFrameTeamStats(state.lastCombatLedger, currentCombatLedgerFrameIndex(state.lastCombatLedger)),
       } : { enabled: false },
       shopFrozen: [...state.shopFrozen],
       shopSales: [...state.shopSales],
@@ -20124,6 +20579,7 @@
   }
 
   function applyVictoryEpilogueRoute() {
+    warmFinalVictoryCutsceneAssets();
     state.phase = "victoryCutscene";
     state.round = FINAL_VICTORY_ROUND + 1;
     state.realityOverride = false;
@@ -20767,38 +21223,14 @@
     applyInitialRouteScreen();
   }
   markActiveRunRoute();
-  getUiSprite(COZY_AWNING_TRANSITION_SRC);
-  getUiSprite(COZY_BATTLE_DEPLOY_OVERLAY_SRC);
-  getUiSprite(REALITY_BATTLE_DEPLOY_OVERLAY_SRC);
-  getUiSprite(COZY_BATTLE_DEPLOY_TITLE_SRC);
-  getUiSprite(REALITY_BATTLE_DEPLOY_TITLE_SRC);
-  getUiSprite(COZY_BATTLE_RESULT_VICTORY_TITLE_SRC);
-  getUiSprite(COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
-  getUiSprite(REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC);
-  getUiSprite(REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC);
-  getUiSprite(COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC);
-  getUiSprite(REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC);
-  getUiSprite(PLAYER_STORY_PORTRAIT_SRC);
-  getUiSprite(TABS_STORY_PORTRAIT_SRC);
-  getUiSprite(HORROR_TABS_STORY_PORTRAIT_SRC);
-  getUiSprite(STORY_DIALOGUE_PAPER_BG_SRC);
-  getUiSprite(STORY_DIALOGUE_WAR_BG_SRC);
-  [...Object.values(STORY_MILESTONES), FINAL_TABS_STORY]
-    .flatMap((story) => [
-      story.backgroundSrc,
-      ...(story.backgroundRanges || []).map((entry) => entry.backgroundSrc),
-    ])
-    .filter(Boolean)
-    .forEach((src) => getBackgroundImage(src));
-  getUiSprite(LEVEL10_CUTSCENE_TEXT_PANEL_SRC);
-  getUiSprite(LEVEL10_CUTSCENE_EVIDENCE_FRAME_SRC);
-  getUiSprite(LEVEL10_CUTSCENE_FX_ATLAS_SRC);
-  getUiSprite(LEVEL10_CUTSCENE_GLITCH_OVERLAY_SRC);
-  LEVEL10_REVEAL_CUTSCENE_SHOTS.forEach((shot) => {
-    if (shot.imageSrc) getUiSprite(shot.imageSrc);
-    if (shot.insertSrc) getUiSprite(shot.insertSrc);
-    if (shot.mode === "panorama") getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
-  });
+  warmUiSprites([
+    COZY_AWNING_TRANSITION_SRC,
+    realityBroken() ? REALITY_BATTLE_DEPLOY_OVERLAY_SRC : COZY_BATTLE_DEPLOY_OVERLAY_SRC,
+    realityBroken() ? REALITY_BATTLE_DEPLOY_TITLE_SRC : COZY_BATTLE_DEPLOY_TITLE_SRC,
+    realityBroken() ? REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC : COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
+    realityBroken() ? REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC : COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+    realityBroken() ? REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC : COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
+  ]);
   ensureEnemyPreview();
   draw();
   requestAnimationFrame(gameLoop);

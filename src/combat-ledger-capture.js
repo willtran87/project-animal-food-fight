@@ -194,7 +194,7 @@
     }
     recordEvent(battle, {
       type: "damage",
-      kind: source ? "damage" : "environment",
+      kind: options.kind || (options.status ? "status" : source ? "damage" : "environment"),
       source,
       target,
       amount: impact,
