@@ -11,13 +11,13 @@
       ["field-guide-runtime", "h-3ccbcafe2cf9"],
       ["run-storage", "h-207527d426cf"],
       ["food-lob-runtime", "h-1ca912fa3197"],
-      ["start-menu", "h-3fedb0d40c75"],
+      ["start-menu", "h-e7f161235916"],
     ],
     openingVn: [
       ["dynamic-asset-manifest", "h-4fa3a12ec438"],
       ["audio-settings", "h-38640bea81d8"],
       ["audio-runtime", "h-d1084282d065"],
-      ["opening-vn", "h-93436a59cc20"],
+      ["opening-vn", "h-f76ee04453c4"],
     ],
     game: [
       ["dynamic-asset-manifest", "h-4fa3a12ec438"],

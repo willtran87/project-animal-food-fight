@@ -6,29 +6,10 @@
     <title>Food Animals - Opening VN Prototype</title>
     <base href="../" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
-    <link rel="preload" as="image" href="assets/backgrounds/picnic-arena-background-v1-2048x1280.webp" />
-    <link rel="preload" as="image" href="assets/backgrounds/arena-dim-sum-kitchen-v1.webp" />
     <link rel="preload" as="image" href="assets/opening-vn/runtime/awakening-greenhouse-lab-bg-v1.webp" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/presentation-briefing-room-bg-v1.webp" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/display-corkboard-bg-v2.webp" />
     <link rel="preload" as="image" href="assets/player/runtime/player-tutorial-dialogue-cutout-v6.png" />
     <link rel="preload" as="image" href="assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png" />
-    <link rel="preload" as="image" href="assets/sprites/runtime/toast-tortoise/toast-tortoise_toastlet_idle_SW_00.png" />
-    <link rel="preload" as="image" href="assets/sprites/runtime/taco-tiger/taco-tiger_taco-cub_idle_SW_00.png" />
-    <link rel="preload" as="image" href="assets/sprites/runtime/sushi-seal/sushi-seal_maki-pup_idle_SW_00.png" />
-    <link rel="preload" as="image" href="assets/sprites/runtime/noodle-newt/noodle-newt_noodle-newt_idle_SW_00.png" />
-    <link rel="preload" as="image" href="assets/sprites/runtime/berry-bat/berry-bat_berry-bat_idle_SW_00.png" />
-    <link rel="preload" as="image" href="assets/items/runtime/bacon_strips-sticker-v1-lv1.webp" />
-    <link rel="preload" as="image" href="assets/items/runtime/berry_fizz-v1.webp" />
     <link rel="preload" as="image" href="assets/ui/runtime/conversation-paper-bg-v1.webp" />
-    <link rel="preload" as="image" href="assets/ui/runtime/tutorial-cryo-awakening-diagram-transparent-v2.png" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/green-ark-renewal-doc-v2.png?v=position-1" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/living-recipe-editing-doc-v2.png?v=position-1" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/yield-comparison-doc-v2.png?v=position-1" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/food-web-diagnostics-doc-v2.png?v=position-1" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/stability-pressure-doc-v2.png?v=position-1" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/broken-pattern-vats-doc-v2.png?v=position-1" />
-    <link rel="preload" as="image" href="assets/opening-vn/runtime/tutorial-paddock-placement-doc-v2.png?v=position-1" />
     <link rel="stylesheet" href="styles/opening-vn.css?v=highlight-boundaries-3-corkboard-scale-2-dialogue-skip-confirm-1-1600x1000-screens-1-tutorial-anchor-3" />
   </head>
   <body>
@@ -41,11 +22,11 @@
         </aside>
 
         <section class="paddock-preview" aria-label="Opening briefing document" hidden>
-          <img alt="" src="assets/ui/runtime/tutorial-cryo-awakening-diagram-transparent-v2.png" />
+          <img alt="" />
         </section>
 
         <section class="tutorial-shop" aria-label="Actual frozen tutorial shop screen" hidden>
-          <iframe class="actual-shop-frame" title="Actual Food Animals shop tutorial route" src="local-test-pages/game.html?screen=opening-tutorial-shop&embed=opening-vn"></iframe>
+          <iframe class="actual-shop-frame" title="Actual Food Animals shop tutorial route" loading="lazy" data-src="local-test-pages/game.html?screen=opening-tutorial-shop&embed=opening-vn"></iframe>
           <div class="actual-shop-highlights" aria-hidden="true">
             <span class="actual-highlight hud" data-highlight="hud"></span>
             <span class="actual-highlight shop" data-highlight="shop"></span>
@@ -78,6 +59,6 @@
         </section>
       </section>
     </main>
-    <script src="src/app-scripts.js?v=h-842f909d1661" data-entry="opening-vn"></script>
+    <script src="src/app-scripts.js?v=h-0197dabf18ec" data-entry="opening-vn"></script>
   </body>
 </html>

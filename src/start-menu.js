@@ -1483,6 +1483,14 @@ function purgeGameData() {
   return purged;
 }
 
+function markCampaignFrameReady(loadToken = campaignFrameLoadToken) {
+  window.requestAnimationFrame(() => {
+    if (loadToken === campaignFrameLoadToken) {
+      document.body.dataset.campaignFrameReady = "true";
+    }
+  });
+}
+
 function openCampaignTarget(url, screen = "opening") {
   if (!campaignFrame) {
     window.location.href = url;
@@ -1494,11 +1502,7 @@ function openCampaignTarget(url, screen = "opening") {
   campaignFrame.hidden = false;
   campaignFrame.addEventListener("load", () => {
     if (loadToken !== campaignFrameLoadToken) return;
-    window.requestAnimationFrame(() => {
-      if (loadToken === campaignFrameLoadToken) {
-        document.body.dataset.campaignFrameReady = "true";
-      }
-    });
+    markCampaignFrameReady(loadToken);
   }, { once: true });
   campaignFrame.src = url;
 }
@@ -1507,6 +1511,10 @@ window.addEventListener("message", (event) => {
   if (!campaignFrame || event.source !== campaignFrame.contentWindow) return;
   if (event.origin !== window.location.origin) return;
   const data = event.data || {};
+  if (data.type === "food-animals:opening-vn:ready") {
+    markCampaignFrameReady();
+    return;
+  }
   if (data.type !== "food-animals:opening-vn:complete") return;
   openCampaignTarget(data.targetUrl || appUrl(GAME_TARGET_BASE_URL).href, "game");
 });

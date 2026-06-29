@@ -343,37 +343,37 @@ const visualBoards = {
   },
   greenArk: {
     id: "greenArk",
-    src: "assets/opening-vn/runtime/green-ark-renewal-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/green-ark-renewal-doc-v2.webp?v=position-1",
     alt: "Cozy science document showing Project Green Ark as a renewable food supply cycle",
   },
   livingRecipe: {
     id: "livingRecipe",
-    src: "assets/opening-vn/runtime/living-recipe-editing-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/living-recipe-editing-doc-v2.webp?v=position-1",
     alt: "Cozy science document showing Food Animals as editable living recipes",
   },
   yieldComparison: {
     id: "yieldComparison",
-    src: "assets/opening-vn/runtime/yield-comparison-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/yield-comparison-doc-v2.webp?v=position-1",
     alt: "Cozy science document comparing Food Animal yields against ordinary livestock",
   },
   foodWeb: {
     id: "foodWeb",
-    src: "assets/opening-vn/runtime/food-web-diagnostics-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/food-web-diagnostics-doc-v2.webp?v=position-1",
     alt: "Cozy science document showing Food Animal food-web failure modes",
   },
   stabilityPressure: {
     id: "stabilityPressure",
-    src: "assets/opening-vn/runtime/stability-pressure-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/stability-pressure-doc-v2.webp?v=position-1",
     alt: "Cozy science document comparing stable and unstable pressure-test patterns",
   },
   brokenPattern: {
     id: "brokenPattern",
-    src: "assets/opening-vn/runtime/broken-pattern-vats-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/broken-pattern-vats-doc-v2.webp?v=position-1",
     alt: "Cozy science document showing broken herd patterns leading to empty vats",
   },
   paddock: {
     id: "paddock",
-    src: "assets/opening-vn/runtime/tutorial-paddock-placement-doc-v2.png?v=position-1",
+    src: "assets/opening-vn/runtime/tutorial-paddock-placement-doc-v2.webp?v=position-1",
     alt: "Cozy science document showing Food Animals arranged into a stable tutorial paddock pattern",
   },
 };
@@ -391,6 +391,7 @@ const sceneTransitionCurtain = document.querySelector(".scene-transition-curtain
 const paddockPreview = document.querySelector(".paddock-preview");
 const visualImage = paddockPreview.querySelector("img");
 const tutorialShop = document.querySelector(".tutorial-shop");
+const tutorialShopFrame = document.querySelector(".actual-shop-frame");
 const playerStandee = document.querySelector(".player-standee");
 const tabsCounter = document.querySelector(".tabs-counter");
 const SCENE_TRANSITION_MS = 640;
@@ -400,6 +401,7 @@ const BOARD_DOCUMENT_DELAY_MS = 320;
 const DOCUMENT_SWAP_DELAY_MS = 170;
 const BOARD_REVEAL_MS = 520;
 const BOARD_DISMISS_MS = 380;
+const OPENING_READY_MESSAGE = "food-animals:opening-vn:ready";
 const SETTINGS_STORAGE_KEY = window.FoodAnimalsAudioSettings?.STORAGE_KEY || "harvest-friends:start-menu-settings:v1";
 const VN_SFX_TRACKS = {
   next: "assets/audio/sfx/cozy-ui-confirm.wav",
@@ -414,15 +416,91 @@ const vnSfx = {
 };
 const DOCUMENT_REVEAL_MS = 280;
 const TUTORIAL_COMPLETE_TARGET_URL = "local-test-pages/game.html";
+const TUTORIAL_SHOP_ROUTE = "local-test-pages/game.html?screen=opening-tutorial-shop&embed=opening-vn";
 let desiredBoardHref = "";
 let displayedBoardHref = "";
 let visualTransitionToken = 0;
 let visualTransitionTimers = [];
 let sceneTransitionTimer = null;
 let tutorialCompleteNavigationTimer = null;
+let openingReadySignaled = false;
+const warmImageCache = [];
 
 function appUrl(path) {
   return new URL(path, document.baseURI || window.location.href);
+}
+
+const CRITICAL_READY_IMAGE_SOURCES = [
+  "assets/opening-vn/runtime/awakening-greenhouse-lab-bg-v1.webp",
+  "assets/player/runtime/player-tutorial-dialogue-cutout-v6.png",
+  "assets/shopkeeper/runtime/tabs-dialogue-cutout-v1.png",
+  "assets/ui/runtime/conversation-paper-bg-v1.webp",
+];
+
+const DEFERRED_OPENING_IMAGE_SOURCES = [
+  "assets/opening-vn/runtime/presentation-briefing-room-bg-v1.webp",
+  "assets/opening-vn/runtime/display-corkboard-bg-v2.webp",
+  visualBoards.greenArk.src,
+  visualBoards.livingRecipe.src,
+  visualBoards.yieldComparison.src,
+  visualBoards.foodWeb.src,
+  visualBoards.stabilityPressure.src,
+  visualBoards.brokenPattern.src,
+  visualBoards.paddock.src,
+  "assets/backgrounds/arena-dim-sum-kitchen-v1.webp",
+];
+
+function imageReady(src) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = resolve;
+    image.onerror = resolve;
+    image.src = appUrl(src).href;
+    if (image.decode) {
+      image.decode().then(resolve, resolve);
+    }
+  });
+}
+
+function warmImage(src) {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = appUrl(src).href;
+  warmImageCache.push(image);
+}
+
+function scheduleDeferredOpeningImageWarmup() {
+  const warmQueue = () => {
+    DEFERRED_OPENING_IMAGE_SOURCES.forEach((src, index) => {
+      window.setTimeout(() => warmImage(src), index * 220);
+    });
+  };
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(warmQueue, { timeout: 1400 });
+    return;
+  }
+  window.setTimeout(warmQueue, 700);
+}
+
+function signalOpeningReady() {
+  if (openingReadySignaled || !isCampaignEmbedded()) return;
+  openingReadySignaled = true;
+  window.parent.postMessage(
+    { type: OPENING_READY_MESSAGE, href: window.location.href },
+    window.location.origin,
+  );
+}
+
+function signalOpeningReadyWhenStable() {
+  if (!isCampaignEmbedded()) return;
+  const criticalImagesReady = Promise.all(CRITICAL_READY_IMAGE_SOURCES.map(imageReady));
+  const fallbackReady = new Promise((resolve) => window.setTimeout(resolve, 1800));
+  Promise.race([criticalImagesReady, fallbackReady]).then(() => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(signalOpeningReady);
+    });
+  });
 }
 
 function currentBeat() {
@@ -451,6 +529,11 @@ function boardForBeat(beat, index) {
 
 function openingSceneForIndex(index) {
   return index <= 9 ? "awakening" : "presentation";
+}
+
+function ensureTutorialShopLoaded() {
+  if (!tutorialShopFrame || tutorialShopFrame.getAttribute("src")) return;
+  tutorialShopFrame.src = tutorialShopFrame.dataset.src || TUTORIAL_SHOP_ROUTE;
 }
 
 function triggerOpeningSceneTransition(fromScene, toScene) {
@@ -602,6 +685,9 @@ function render() {
   skipConfirm.hidden = !state.skipConfirm;
   backButton.disabled = !canGoBack();
   updateVisualBoard(board);
+  if (state.phase !== "opening" || state.index >= beats.length - 3) {
+    ensureTutorialShopLoaded();
+  }
   tutorialShop.hidden = state.phase === "opening";
   playerStandee.classList.toggle("is-speaking", beat.speaker === "You");
   tabsCounter.classList.toggle("is-speaking", beat.speaker === "Tabs");
@@ -811,7 +897,8 @@ window.render_game_to_text = () =>
     tutorialShop: {
       visible: state.phase !== "opening",
       screen: "Actual frozen tutorial shop",
-      route: "local-test-pages/game.html?screen=opening-tutorial-shop&embed=opening-vn",
+      route: TUTORIAL_SHOP_ROUTE,
+      loaded: Boolean(tutorialShopFrame?.getAttribute("src")),
       highlightedStep: currentTutorialStep(),
       plannedInteractions: [
         "review the fixed shop shelf",
@@ -856,3 +943,5 @@ window.advanceTime = () => {
 };
 
 render();
+signalOpeningReadyWhenStable();
+scheduleDeferredOpeningImageWarmup();
