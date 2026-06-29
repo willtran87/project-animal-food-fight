@@ -69,7 +69,7 @@ const ACTIVE_RUN_STORAGE_KEY = window.FoodAnimalsRunStorage?.STORAGE_KEY || "har
 const DEFAULT_MUSIC_TRACK = "market";
 const DEFAULT_HORROR_MUSIC_TRACK = "horror-market";
 const MENU_MUSIC_MAX_VOLUME = 0.85;
-const MENU_SFX_IDS = ["ui-hover", "ui-confirm", "ui-back", "invalid", "transition"];
+const MENU_SFX_IDS = ["ui-hover", "ui-confirm", "ui-back", "invalid", "transition", "signal-static"];
 const MENU_SFX_TRACKS = Object.fromEntries(
   ["cozy", "horror"].map((theme) => [
     theme,
@@ -1188,7 +1188,7 @@ function beginMenuRebootStaticReveal() {
   clearRebootStaticTimer();
   consumeMenuReturnReveal();
   state.rebootStaticReveal = true;
-  playMenuSfx("transition", { force: true, volume: 0.78, rate: 0.86 });
+  playMenuSfx("signal-static", { force: true, volume: 0.82, rate: 0.86 });
   rebootStaticTimer = window.setTimeout(() => {
     rebootStaticTimer = null;
     state.rebootStaticReveal = false;
@@ -1202,7 +1202,7 @@ function beginMenuLoadReveal() {
   state.menuLoadRevealKind = consumeMenuReturnReveal() ? "return" : "load";
   state.menuLoadReveal = true;
   if (state.menuLoadRevealKind === "return") {
-    playMenuSfx("transition", { force: true, volume: 0.45, rate: 1.08 });
+    playMenuSfx("signal-static", { force: true, volume: 0.48, rate: 1.08 });
   }
   const duration = state.menuLoadRevealKind === "return" ? 1100 : 900;
   menuLoadRevealTimer = window.setTimeout(() => {

@@ -37,7 +37,7 @@ This folder contains prototype music loops used by the standalone start menu and
 
 Current SFX IDs:
 
-- UI: `ui-hover`, `ui-confirm`, `ui-back`, `invalid`.
+- UI: `ui-hover`, `ui-confirm`, `ui-back`, `invalid`, `ledger-tick`.
 - Shop and placement: `reroll`, `buy`, `sell`, `upgrade`, `freeze`, `pickup`, `drop`, `equip`, `merge`.
-- Combat and results: `battle-start`, `hit`, `shield`, `heal`, `control`, `ko`, `reward`, `victory`, `defeat`.
-- Transitions: `transition`, `reality-break`, `reboot`.
+- Combat and results: `battle-start`, `hit`, `shield`, `heal`, `control`, `ko`, `reward`, `victory`, `defeat`, `hazard-pulse`.
+- Transitions: `transition`, `reality-break`, `reboot`, `signal-static`.

@@ -52,6 +52,9 @@
     "transition",
     "reality-break",
     "reboot",
+    "signal-static",
+    "hazard-pulse",
+    "ledger-tick",
   ];
 
   const IDLE_BREATH = {

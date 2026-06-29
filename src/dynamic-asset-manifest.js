@@ -2,7 +2,7 @@
   "use strict";
 
   const THEMES = ["cozy", "horror"];
-  const MENU_SFX_IDS = ["ui-hover", "ui-confirm", "ui-back", "invalid", "transition"];
+  const MENU_SFX_IDS = ["ui-hover", "ui-confirm", "ui-back", "invalid", "transition", "signal-static"];
   const GAME_SFX_IDS = [
     "ui-hover",
     "ui-confirm",
@@ -29,6 +29,9 @@
     "transition",
     "reality-break",
     "reboot",
+    "signal-static",
+    "hazard-pulse",
+    "ledger-tick",
   ];
 
   const audioSfx = Object.freeze([
@@ -57,6 +60,9 @@
     "assets/audio/sfx/cozy-transition.wav",
     "assets/audio/sfx/cozy-reality-break.wav",
     "assets/audio/sfx/cozy-reboot.wav",
+    "assets/audio/sfx/cozy-signal-static.wav",
+    "assets/audio/sfx/cozy-hazard-pulse.wav",
+    "assets/audio/sfx/cozy-ledger-tick.wav",
     "assets/audio/sfx/horror-ui-hover.wav",
     "assets/audio/sfx/horror-ui-confirm.wav",
     "assets/audio/sfx/horror-ui-back.wav",
@@ -82,6 +88,9 @@
     "assets/audio/sfx/horror-transition.wav",
     "assets/audio/sfx/horror-reality-break.wav",
     "assets/audio/sfx/horror-reboot.wav",
+    "assets/audio/sfx/horror-signal-static.wav",
+    "assets/audio/sfx/horror-hazard-pulse.wav",
+    "assets/audio/sfx/horror-ledger-tick.wav",
   ]);
 
   const expectedAudioSfxCount = THEMES.length * new Set([...MENU_SFX_IDS, ...GAME_SFX_IDS]).size;

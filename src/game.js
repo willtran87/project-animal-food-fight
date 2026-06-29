@@ -5916,7 +5916,7 @@
       seed: Math.floor((cutscene.elapsed || 0) * 997) + Math.floor(state.idleTime * 61),
     };
     if (!options.silentSfx) {
-      playGameSfx(options.sfxId || "transition", {
+      playGameSfx(options.sfxId || "signal-static", {
         theme: "horror",
         volume: options.volume ?? (options.completeOnEnd ? 0.74 : 0.58),
         rate: options.rate ?? (direction < 0 ? 0.88 : 1),
@@ -6244,8 +6244,8 @@
     const damagePct = moldDamagePct(battle.moldStacks);
     const moldStyle = currentMoldStatusStyle();
     const units = [...battle.allies, ...battle.enemies].filter((unit) => !unit.dead);
-    playGameSfx(realityBroken() ? "reality-break" : "control", {
-      volume: realityBroken() ? 0.42 : 0.28,
+    playGameSfx("hazard-pulse", {
+      volume: realityBroken() ? 0.56 : 0.42,
       rate: Math.max(0.72, 1.04 - battle.moldStacks * 0.035),
     });
     units.forEach((unit) => {
@@ -10391,7 +10391,7 @@
   function playCombatLedgerReviewActionSfx(action) {
     if (action === "openDetails" || action === "closeDetails" || action === "panel") return;
     if (action === "prevFrame" || action === "nextFrame" || action === "scrubFrame" || action === "selectEvent") {
-      playThrottledGameSfx("ledger-frame", "ui-hover", { volume: 0.14, rate: action === "prevFrame" ? 0.92 : 1.06 }, 0.07);
+      playThrottledGameSfx("ledger-frame", "ledger-tick", { volume: 0.32, rate: action === "prevFrame" ? 0.92 : 1.06 }, 0.07);
       return;
     }
     playGameSfx("ui-confirm", { volume: 0.34 });
@@ -18709,7 +18709,7 @@
     const rects = combatLedgerReviewRects(state.lastCombatLedger);
     if (!pointInRect(pos.x, pos.y, rects.log)) return;
     scrollCombatLedgerLog(event.deltaY < 0 ? 3 : -3);
-    playThrottledGameSfx("ledger-scroll", "ui-hover", { volume: 0.08, rate: event.deltaY < 0 ? 1.06 : 0.94 }, 0.12);
+    playThrottledGameSfx("ledger-scroll", "ledger-tick", { volume: 0.22, rate: event.deltaY < 0 ? 1.06 : 0.94 }, 0.12);
     event.preventDefault();
   }
 
@@ -19001,7 +19001,7 @@
       const frames = state.lastCombatLedger.frames || [];
       state.combatLedgerReview.frameIndex = clamp(currentCombatLedgerFrameIndex(state.lastCombatLedger) + delta, 0, Math.max(0, frames.length - 1));
       syncCombatLedgerFocusedEventToFrame(state.lastCombatLedger);
-      playThrottledGameSfx("ledger-frame", "ui-hover", { volume: 0.14, rate: delta < 0 ? 0.92 : 1.06 }, 0.07);
+      playThrottledGameSfx("ledger-frame", "ledger-tick", { volume: 0.32, rate: delta < 0 ? 0.92 : 1.06 }, 0.07);
       event.preventDefault();
       return;
     }
@@ -19013,7 +19013,7 @@
       if (event.key === "PageDown") scrollCombatLedgerLog(-visibleRows);
       if (event.key === "Home") setCombatLedgerLogScrollOffset(Math.max(0, events.length - visibleRows));
       if (event.key === "End") setCombatLedgerLogScrollOffset(0);
-      playThrottledGameSfx("ledger-scroll", "ui-hover", { volume: 0.1, rate: event.key === "PageUp" || event.key === "Home" ? 1.06 : 0.94 }, 0.1);
+      playThrottledGameSfx("ledger-scroll", "ledger-tick", { volume: 0.24, rate: event.key === "PageUp" || event.key === "Home" ? 1.06 : 0.94 }, 0.1);
       event.preventDefault();
       return;
     }
