@@ -129,7 +129,7 @@
       playerBoardPower: plan.playerBoardPower || 0,
       playerEconomyPower: plan.playerEconomyPower || 0,
       playerTotalPower: plan.playerTotalPower || 0,
-      economyComparison: plan.playerEconomyComparison
+      boardEconomyComparison: plan.playerEconomyComparison
         ? {
             expected: Number((plan.playerEconomyComparison.expected || 0).toFixed(1)),
             market: Number((plan.playerEconomyComparison.market || 0).toFixed(1)),
