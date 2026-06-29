@@ -1623,7 +1623,7 @@
     benedict_lobster: "assets/sprites/runtime/defeat-stills/benedict-lobster-war-machine-defeat-v6.png?v=1",
     curry_crab: "assets/sprites/runtime/defeat-stills/curry-crab-war-machine-defeat-v5.png?v=1",
     churro_cheetah: "assets/sprites/runtime/defeat-stills/churro-cheetah-war-machine-defeat-v6.png?v=1",
-    "banana_split_giraffe_boss": "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v6.png?v=1",
+    "banana_split_giraffe_boss": "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v7.png?v=1",
     granola_goat: "assets/sprites/runtime/defeat-stills/granola-goat-war-machine-defeat-v5.png?v=1",
     breakfast_burrito_boar: "assets/sprites/runtime/defeat-stills/breakfast-burrito-boar-war-machine-defeat-v6.png?v=1",
     caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v6.png?v=1",
