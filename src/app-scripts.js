@@ -65,7 +65,7 @@
       ["copy-data", "h-86f26eddcd59"],
       ["story-data", "h-b70e8344d60c"],
       ["trait-arena-data", "h-2e5155bd22b2"],
-      ["unit-data", "h-6ee16299f7ed"],
+      ["unit-data", "h-017b03cd042d"],
       ["item-data", "h-0058eeab957d"],
       ["economy-enemy-data", "h-b8919d5f4612"],
       ["rarity-shop-data", "h-6829c90dffeb"],
