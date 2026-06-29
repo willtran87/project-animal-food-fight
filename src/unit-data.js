@@ -1629,7 +1629,7 @@
     caesar_salamander: "assets/sprites/runtime/defeat-stills/caesar-salamander-war-machine-defeat-v6.png?v=1",
     cucumber_cobra: "assets/sprites/runtime/defeat-stills/cucumber-cobra-war-machine-defeat-v6.png?v=1",
     avocado_axolotl: "assets/sprites/runtime/defeat-stills/avocado-axolotl-war-machine-defeat-v6.png?v=1",
-    "cyber_brain_final_boss": "assets/sprites/runtime/defeat-stills/cyber-brain-final-boss-defeat-v1.png?v=1",
+    "cyber_brain_final_boss": "assets/sprites/runtime/defeat-stills/cyber-brain-final-boss-food-spill-defeat-v2.png?v=1",
     "brainstem_wire_minion": {
       1: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier1.png?v=1",
       2: "assets/sprites/runtime/defeat-stills/brainstem-wire-minion-defeat-v3-thin-outline-tier2.png?v=1",
