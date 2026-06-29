@@ -26,9 +26,79 @@
     return runtime.audio;
   }
 
+  function isWindowActive() {
+    const focused = typeof document.hasFocus === "function" ? document.hasFocus() : true;
+    return !document.hidden && focused;
+  }
+
+  function pauseAll(runtime) {
+    if (!runtime) return false;
+
+    let paused = false;
+    if (runtime.audio && !runtime.audio.paused) {
+      runtime.audio.pause();
+      paused = true;
+    }
+
+    if (runtime.pools) {
+      runtime.pools.forEach((pool) => {
+        pool.forEach((audio) => {
+          if (audio && !audio.paused) {
+            audio.pause();
+            paused = true;
+          }
+        });
+      });
+    }
+
+    return paused;
+  }
+
+  function updateWindowActivity(runtime, options = {}) {
+    if (!runtime) return isWindowActive();
+
+    const active = isWindowActive();
+    runtime.windowAudioActive = active;
+
+    if (!active) {
+      pauseAll(runtime);
+      return false;
+    }
+
+    if (options.resume && runtime.lastMusicSyncOptions) {
+      syncMusic(runtime, runtime.lastMusicSyncOptions);
+    }
+
+    return true;
+  }
+
+  function bindWindowActivity(runtime) {
+    if (!runtime || runtime.windowAudioActivityBound) return;
+    runtime.windowAudioActivityBound = true;
+
+    const handleActivityChange = () => updateWindowActivity(runtime, { resume: true });
+    const handlePageHide = () => {
+      runtime.windowAudioActive = false;
+      pauseAll(runtime);
+    };
+    document.addEventListener("visibilitychange", handleActivityChange);
+    window.addEventListener("blur", handleActivityChange);
+    window.addEventListener("focus", handleActivityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handleActivityChange);
+    updateWindowActivity(runtime);
+  }
+
   function syncMusic(runtime, options = {}) {
     const audio = options.audio || ensureMusicElement(runtime, options.track);
     if (!runtime || !audio) return null;
+    bindWindowActivity(runtime);
+    runtime.lastMusicSyncOptions = { ...options, audio };
+
+    if (!isWindowActive()) {
+      pauseAll(runtime);
+      return null;
+    }
 
     const volume = clamp01(options.volume ?? audio.volume);
     audio.volume = volume;
@@ -59,15 +129,14 @@
 
   function pauseForHiddenTab(runtime, hidden = document.hidden) {
     if (!runtime?.audio) return false;
-    if (hidden) {
-      runtime.audio.pause();
-      return true;
-    }
+    bindWindowActivity(runtime);
+    if (hidden || !isWindowActive()) return pauseAll(runtime);
     return false;
   }
 
   function poolFor(runtime, src, poolSize = 4) {
     if (!runtime || !src) return [];
+    bindWindowActivity(runtime);
     if (!runtime.pools) runtime.pools = new Map();
     if (!runtime.next) runtime.next = new Map();
     if (!runtime.pools.has(src)) {
@@ -82,6 +151,11 @@
 
   function playSfx(runtime, options = {}) {
     if (!runtime) return null;
+    bindWindowActivity(runtime);
+    if (!isWindowActive()) {
+      pauseAll(runtime);
+      return null;
+    }
     if (!runtime.armed && !options.force) return null;
     const volume = clamp01(options.volume ?? 1);
     if (volume <= 0) return null;
@@ -100,7 +174,10 @@
   }
 
   window.FoodAnimalsAudioRuntime = {
+    bindWindowActivity,
     ensureMusicElement,
+    isWindowActive,
+    pauseAll,
     pauseForHiddenTab,
     playSfx,
     poolFor,

@@ -804,6 +804,10 @@ window.addEventListener("pointerdown", handleRunModeOutsidePointerDown, { captur
 window.addEventListener("pointerdown", handleOptionsOutsidePointerDown, { capture: true });
 window.addEventListener("pointerdown", handleLobPointerDown);
 window.addEventListener("keydown", armMenuSfx, { capture: true });
+document.addEventListener("visibilitychange", syncMenuAudioForWindowActivity);
+window.addEventListener("blur", syncMenuAudioForWindowActivity);
+window.addEventListener("focus", syncMenuAudioForWindowActivity);
+window.addEventListener("pageshow", syncMenuAudioForWindowActivity);
 window.addEventListener("storage", (event) => {
   if (![ACTIVE_RUN_STORAGE_KEY, GAME_COMPLETED_STORAGE_KEY, HORROR_MENU_UNLOCK_STORAGE_KEY, HORROR_REVEALED_STORAGE_KEY].includes(event.key)) return;
   state.activeRun = getActiveRun();
@@ -1217,6 +1221,8 @@ function finishFieldGuideClose() {
 }
 
 window.addEventListener("pagehide", () => {
+  menuMusic.pause();
+  window.FoodAnimalsAudioRuntime.pauseAll(menuSfx);
   clearStartTransitionTimers();
   clearFieldGuideCloseTimer();
   clearRebootStaticTimer();
@@ -1772,6 +1778,11 @@ function updateMenuMusicVolume() {
 function ensureMenuMusicPlaying() {
   updateMenuMusicVolume();
 
+  if (!window.FoodAnimalsAudioRuntime.isWindowActive()) {
+    if (!menuMusic.paused) menuMusic.pause();
+    return;
+  }
+
   if (state.settings.music <= 0 || !menuMusic.paused || menuMusicPlayPromise) return;
 
   menuMusicPlayPromise = menuMusic
@@ -1785,6 +1796,18 @@ function ensureMenuMusicPlaying() {
       state.audio.musicBlocked = true;
       menuMusicPlayPromise = null;
     });
+}
+
+function syncMenuAudioForWindowActivity() {
+  if (!window.FoodAnimalsAudioRuntime.isWindowActive()) {
+    menuMusic.pause();
+    window.FoodAnimalsAudioRuntime.pauseAll(menuSfx);
+    return;
+  }
+
+  if (state.settings.music > 0 && (state.audio.musicStarted || state.audio.musicBlocked || menuMusicPlayPromise)) {
+    ensureMenuMusicPlaying();
+  }
 }
 
 function applyLobFrame(lob, t) {
