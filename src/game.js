@@ -178,6 +178,7 @@
   const HORROR_DEFEAT_STILL_SCALE = 1.3;
   const HORROR_PARTICLE_SPEED_SCALE = 1.24;
   const HORROR_PARTICLE_LIFE_SCALE = 0.74;
+  const HORROR_ATTACK_SFX_VOLUME_SCALE = 0.55;
   const FINAL_VICTORY_ROUND = 20;
   const FINAL_BOSS_TYPE_ID = "cyber_brain_final_boss";
   const FINAL_BOSS_MINION_TYPE_ID = "brainstem_wire_minion";
@@ -665,10 +666,12 @@
 
   function playGameSfx(id, options = {}) {
     const baseVolume = gameSfxVolume();
+    const themeId = options.theme || currentCopyThemeId();
+    const horrorAttackScale = themeId === "horror" && id === "hit" ? HORROR_ATTACK_SFX_VOLUME_SCALE : 1;
     window.FoodAnimalsAudioRuntime.playSfx(gameSfx, {
-      src: gameSfxSrc(id, options.theme || currentCopyThemeId()),
+      src: gameSfxSrc(id, themeId),
       force: options.force,
-      volume: baseVolume * (options.volume ?? 1),
+      volume: baseVolume * (options.volume ?? 1) * horrorAttackScale,
       rate: options.rate,
       poolSize: 4,
     });
@@ -17924,17 +17927,28 @@
     ctx.save();
     if (shot.mode === "panorama") {
       const panOffsetX = Number.isFinite(options.panOffsetX) ? options.panOffsetX : 0;
+      const panoramaW = Math.max(W, Number.isFinite(options.panoramaWidth) ? options.panoramaWidth : W * 1.85);
       ctx.translate(panOffsetX, 0);
-      for (let i = 0; i < 4; i++) {
+      const smokeCount = 6;
+      for (let i = 0; i < smokeCount; i++) {
+        const baseX = -120 + (panoramaW + 40) * (i / Math.max(1, smokeCount - 1));
         const drift = ((time * (6 + i) + i * 91) % 190) - 95;
-        drawLevel10CutsceneFxCell("smoke", -90 + i * 260 + drift, 56 + i * 78, 360, 224, {
-          alpha: 0.18 + i * 0.025,
+        drawLevel10CutsceneFxCell("smoke", baseX + drift, 56 + (i % 4) * 78, 360, 224, {
+          alpha: 0.17 + (i % 4) * 0.025,
           blend: "screen",
           rotate: Math.sin(time * 0.18 + i) * 0.08,
           flipX: i % 2 === 1,
         });
       }
-      [[156, 178], [476, 300], [746, 206], [884, 392]].forEach(([px, py], i) => {
+      [
+        [0.09, 178],
+        [0.26, 300],
+        [0.43, 206],
+        [0.6, 392],
+        [0.77, 238],
+        [0.91, 360],
+      ].forEach(([xRatio, py], i) => {
+        const px = panoramaW * xRatio;
         const blink = glitchNoise(frame * 19 + i * 71);
         if (blink > 0.28) {
           drawLevel10CutsceneFxCell("sparks", px - 72, py - 70, 142, 142, {
@@ -17944,9 +17958,12 @@
           });
         }
       });
-      drawLevel10CutsceneFxCell("warning", 690, 58, 245, 176, {
-        alpha: 0.22 + glitchNoise(frame * 11) * 0.16,
-        blend: "lighter",
+      [0.38, 0.78].forEach((xRatio, i) => {
+        drawLevel10CutsceneFxCell("warning", panoramaW * xRatio - 122, 58 + i * 24, 245, 176, {
+          alpha: 0.2 + glitchNoise(frame * 11 + i * 83) * 0.14,
+          blend: "lighter",
+          flipX: i % 2 === 1,
+        });
       });
     } else {
       const tearY = 64 + (frame % 160) * 0.62;
@@ -18083,6 +18100,7 @@
     ctx.fillRect(0, 0, W, H);
     const image = getUiSprite(LEVEL10_REVEAL_WAR_YARD_PANORAMA_SRC);
     let panoramaPanOffsetX = 0;
+    let panoramaDrawWidth = W * 1.85;
     if (image?.complete && image.naturalWidth > 0) {
       const scale = Math.max(W / image.naturalWidth, H / image.naturalHeight);
       const drawW = image.naturalWidth * scale;
@@ -18092,6 +18110,7 @@
       const drawX = -panTravel * pan;
       const drawY = (H - drawH) / 2;
       panoramaPanOffsetX = drawX;
+      panoramaDrawWidth = drawW;
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(image, Math.round(drawX), Math.round(drawY), Math.ceil(drawW), Math.ceil(drawH));
       ctx.imageSmoothingEnabled = true;
@@ -18112,7 +18131,7 @@
     vignette.addColorStop(1, "rgba(0, 0, 0, 0.78)");
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, W, H);
-    drawLevel10CutsceneAmbientFx(shot, progress, frame, { panOffsetX: panoramaPanOffsetX });
+    drawLevel10CutsceneAmbientFx(shot, progress, frame, { panOffsetX: panoramaPanOffsetX, panoramaWidth: panoramaDrawWidth });
 
     const captionW = 640;
     const captionX = 42;

@@ -1585,10 +1585,10 @@
     "banana_split_giraffe_boss": "assets/sprites/runtime/defeat-stills/banana-split-giraffe-boss-war-machine-defeat-v2.png?v=1",
   };
   const REALITY_DEFEAT_STILL_SPRITES = {
-    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v6.png?v=1",
-    sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-war-machine-defeat-v4.png?v=1",
-    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-war-machine-defeat-v5.png?v=1",
-    berry_bat: "assets/sprites/runtime/defeat-stills/berry-bat-war-machine-defeat-v3.png?v=1",
+    toast_tortoise: "assets/sprites/runtime/defeat-stills/toast-tortoise-war-machine-defeat-v8.png?v=1",
+    sushi_seal: "assets/sprites/runtime/defeat-stills/sushi-seal-war-machine-defeat-v5.png?v=1",
+    taco_tiger: "assets/sprites/runtime/defeat-stills/taco-tiger-war-machine-defeat-v7.png?v=1",
+    berry_bat: "assets/sprites/runtime/defeat-stills/berry-bat-war-machine-defeat-v4.png?v=1",
     noodle_newt: "assets/sprites/runtime/defeat-stills/noodle-newt-war-machine-defeat-v8.png?v=1",
     pancake_penguin: "assets/sprites/runtime/defeat-stills/pancake-penguin-war-machine-defeat-v5.png?v=1",
     pretzel_python: "assets/sprites/runtime/defeat-stills/pretzel-python-war-machine-defeat-v5.png?v=1",
