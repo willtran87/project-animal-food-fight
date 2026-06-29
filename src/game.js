@@ -1011,10 +1011,11 @@
 
   function exitToMainMenuWithSave() {
     saveCurrentRun({ message: false });
-    state.message = "Run saved";
     state.optionsMenu.open = false;
-    markMenuReturnReveal();
-    navigateToMainMenu();
+    return startShopReturnTransitionOverlay({
+      source: "normalMenuReturn",
+      message: "Run saved - returning to menu",
+    });
   }
   const backgroundImageCache = new Map();
   let unitSeq = 1;
@@ -1516,6 +1517,7 @@
   function makeGiraffeBossUnit(plan = {}) {
     const maxHp = Math.round(430 * (plan.bossHpMultiplier || 1));
     const atk = Math.round(18 * (plan.bossAtkMultiplier || 1));
+    const abilityPower = Math.max(1, Math.round(20 * (plan.bossAtkMultiplier || 1)));
     return {
       kind: "unit",
       uid: unitSeq++,
@@ -1537,8 +1539,8 @@
       maxHp,
       baseAtk: atk,
       atk,
-      abilityPower: 20,
-      baseAbilityPower: 20,
+      abilityPower,
+      baseAbilityPower: abilityPower,
       speed: 1.04,
       cooldown: 0.36 + random() * 0.18,
       targetUid: null,
@@ -3642,13 +3644,69 @@
     return boardTierScore + equippedItemScore + drinkScore + traitScore + permanentHpScore;
   }
 
+  function playerEconomyPowerScore(round = state.round) {
+    const economyGate = clamp((round - 2) / 10, 0, 1);
+    if (economyGate <= 0) return 0;
+    const benchTierScore = (state?.bench || [])
+      .filter(isUnit)
+      .reduce((sum, unit) => sum + (unit.tier || 1) * 0.32 + (unit.item ? itemTier(unit.item.tier) * 0.18 : 0), 0);
+    const storedItemScore = (state?.itemBench || [])
+      .filter(isItem)
+      .reduce((sum, item) => sum + itemTier(item.tier) * 0.24, 0);
+    const shopLevelScore = Math.max(0, (state?.shopLevel || 1) - 1) * 0.85;
+    const unlockedSlotScore = Math.max(0, (state?.shopUnlocked || []).filter(Boolean).length - SHOP_STARTING_UNLOCKED_SLOTS) * 0.42;
+    const bankScore = clamp((state?.gold || 0) / 115, 0, 3.2);
+    const freeRollScore = clamp((state?.freeRolls || 0) * 0.18, 0, 1.25);
+    const arenaPrepScore = state?.arenaPrepBuff ? 0.95 : 0;
+    return economyGate * (benchTierScore + storedItemScore + shopLevelScore + unlockedSlotScore + bankScore + freeRollScore + arenaPrepScore);
+  }
+
+  function playerTotalPowerScore(round = state.round) {
+    return playerBoardPowerScore() + playerEconomyPowerScore(round);
+  }
+
   function expectedPlayerPowerForRound(round) {
-    return Math.min(34, 4 + round * 1.15);
+    const storyExpectation = Math.min(34, 4 + round * 1.15);
+    if (!isInfiniteMode() || round <= FINAL_VICTORY_ROUND) return storyExpectation;
+    const over20 = Math.max(0, round - FINAL_VICTORY_ROUND);
+    return Math.min(96, storyExpectation + over20 * 1.4 + Math.pow(over20, 1.18) * 0.32);
   }
 
   function enemyAdaptivePressure(round) {
-    const overage = playerBoardPowerScore() - expectedPlayerPowerForRound(round);
-    return clamp(overage / 28, 0, 0.2);
+    const overage = playerTotalPowerScore(round) - expectedPlayerPowerForRound(round);
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    const cap = infinitePressure > 0
+      ? clamp(0.22 + infinitePressure * 0.012, 0.22, 0.78)
+      : enemyPreFinalAdaptiveCap(round);
+    const divisor = infinitePressure > 0 ? 20 : enemyPreFinalAdaptiveDivisor(round);
+    return clamp(overage / divisor, 0, cap);
+  }
+
+  function enemyPreFinalAdaptiveCap(round) {
+    return clamp(0.2 + Math.max(0, round - 4) * 0.01, 0.2, 0.36);
+  }
+
+  function enemyPreFinalAdaptiveDivisor(round) {
+    return clamp(28 - Math.max(0, round - 4) * 0.38, 22, 28);
+  }
+
+  function enemyPreFinalCatchupShare(round) {
+    return clamp(0.55 + Math.max(0, round - 4) * 0.01, 0.55, 0.72);
+  }
+
+  function enemyPreFinalCatchupStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
+    if (round > FINAL_VICTORY_ROUND || adaptivePressure <= 0) return 0;
+    const roundWeight = clamp((round - 4) / 16, 0, 1);
+    return adaptivePressure * roundWeight * 0.28;
+  }
+
+  function enemyStoryRewardPressure(round) {
+    if (isInfiniteMode()) return 0;
+    return clamp(Math.max(0, round - 3) * 0.012 + Math.max(0, round - GIRAFFE_BOSS_ROUND) * 0.01, 0, 0.24);
+  }
+
+  function enemyBossAdaptiveStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
+    return adaptivePressure * 0.58 + enemyPreFinalCatchupStatBonus(round, adaptivePressure) * 0.85 + enemyStoryRewardPressure(round) * 0.95;
   }
 
   function enemyLatePressure(round) {
@@ -3676,6 +3734,12 @@
   }
 
   function makeFinalBossEnemyPlan(round = FINAL_VICTORY_ROUND) {
+    const adaptivePressure = enemyAdaptivePressure(round);
+    const catchupStatBonus = enemyPreFinalCatchupStatBonus(round, adaptivePressure);
+    const storyRewardPressure = enemyStoryRewardPressure(round);
+    const bossAdaptiveStatBonus = enemyBossAdaptiveStatBonus(round, adaptivePressure);
+    const hpMultiplier = FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER + bossAdaptiveStatBonus;
+    const atkMultiplier = FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER + bossAdaptiveStatBonus * 0.72;
     return {
       round,
       finalBoss: true,
@@ -3688,15 +3752,23 @@
       themeTrait: null,
       count: 8,
       rarityWeights: { common: 0, uncommon: 0, rare: 0, epic: 100 },
-      targetExtraTier: 0,
-      tier3Chance: 0,
-      tier4Chance: 0,
-      hpMultiplier: FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER,
-      atkMultiplier: FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER,
+      expectedPlayerPower: Number(expectedPlayerPowerForRound(round).toFixed(2)),
+      targetPlayerPower: Number(enemyEconomyTargetPower(round).toFixed(2)),
+      playerBoardPower: Number(playerBoardPowerScore().toFixed(2)),
+      playerEconomyPower: Number(playerEconomyPowerScore(round).toFixed(2)),
+      playerTotalPower: Number(playerTotalPowerScore(round).toFixed(2)),
+      targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
+      tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
+      tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
+      hpMultiplier,
+      atkMultiplier,
       toppingCount: 0,
       drinkCount: 0,
-      adaptivePressure: 0,
-      shopPowerStatBonus: FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER - 1,
+      adaptivePressure,
+      catchupStatBonus,
+      storyRewardPressure,
+      bossAdaptiveStatBonus,
+      shopPowerStatBonus: hpMultiplier - 1,
       shopPowerTierBonus: 0,
       shopPowerTier3Bonus: 0,
     };
@@ -3718,6 +3790,7 @@
 
   function makeGiraffeBossEnemyPlan(round = GIRAFFE_BOSS_ROUND) {
     const plan = makeStandardEnemyPlan(round);
+    const bossAdaptiveStatBonus = enemyBossAdaptiveStatBonus(round, plan.adaptivePressure);
     return {
       ...plan,
       archetypeId: `${GIRAFFE_BOSS_TYPE_ID}_${plan.archetypeId}`,
@@ -3725,8 +3798,9 @@
       giraffeBoss: true,
       bossTypeId: GIRAFFE_BOSS_TYPE_ID,
       bossSlot: GIRAFFE_BOSS_SLOT,
-      bossHpMultiplier: 1,
-      bossAtkMultiplier: 1,
+      bossAdaptiveStatBonus,
+      bossHpMultiplier: 1 + bossAdaptiveStatBonus,
+      bossAtkMultiplier: 1 + bossAdaptiveStatBonus * 0.75,
     };
   }
 
@@ -3737,13 +3811,11 @@
     const shopPowerStatBonus = enemyShopPowerStatBonus(round);
     const economyJitter = enemyEconomyBudgetJitter(round);
     const post20Pressure = enemyPost20EconomyPressure(round);
+    const infiniteStatBonus = enemyInfiniteStatBonus(round, adaptivePressure);
+    const catchupStatBonus = enemyPreFinalCatchupStatBonus(round, adaptivePressure);
+    const storyRewardPressure = enemyStoryRewardPressure(round);
     const budget = enemyEconomyBudget(round, adaptivePressure, economyJitter);
-    const minimumUnitCount = Math.min(boardSlots.length, 2 + Math.floor(Math.max(0, round - 1) / 4));
-    const supportBudgetShare = clamp(0.08 + round * 0.014 + enemyShopPowerTierBonus(round) * 0.8 + Math.min(0.06, latePressure * 0.008), 0.1, 0.32);
-    const unitBudgetShare = 1 - supportBudgetShare;
-    const unitBudget = Math.min(budget, Math.max(Math.round(budget * unitBudgetShare), minimumUnitCount * (ECONOMY.unitCost + 7)));
-    const supportBudget = Math.max(0, budget - unitBudget);
-    const drinkBudgetShare = clamp(0.43 + round * 0.01, 0.44, 0.64);
+    const minimumUnitCount = boardSlots.length;
     return {
       round,
       archetypeId: "economy_random",
@@ -3758,17 +3830,20 @@
       rarityWeights,
       expectedPlayerPower: Number(expectedPlayerPowerForRound(round).toFixed(2)),
       targetPlayerPower: Number(enemyEconomyTargetPower(round).toFixed(2)),
+      playerBoardPower: Number(playerBoardPowerScore().toFixed(2)),
+      playerEconomyPower: Number(playerEconomyPowerScore(round).toFixed(2)),
+      playerTotalPower: Number(playerTotalPowerScore(round).toFixed(2)),
       targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
       tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
       tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
-      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + latePressure * 0.011 + adaptivePressure * 0.145 + shopPowerStatBonus),
-      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + latePressure * 0.007 + adaptivePressure * 0.11 + shopPowerStatBonus),
+      hpMultiplier: Math.max(0.55, 0.77 + round * 0.033 + latePressure * 0.011 + adaptivePressure * 0.145 + shopPowerStatBonus + infiniteStatBonus + catchupStatBonus + storyRewardPressure * 0.34),
+      atkMultiplier: Math.max(0.55, 0.77 + round * 0.031 + latePressure * 0.007 + adaptivePressure * 0.11 + shopPowerStatBonus + infiniteStatBonus * 0.78 + catchupStatBonus * 0.75 + storyRewardPressure * 0.22),
       economyBudget: budget,
       economyJitter,
       post20Pressure,
-      unitBudget,
-      toppingBudget: Math.max(0, Math.round(supportBudget * (1 - drinkBudgetShare))),
-      drinkBudget: Math.max(0, Math.round(supportBudget * drinkBudgetShare)),
+      unitBudget: budget,
+      toppingBudget: 0,
+      drinkBudget: 0,
       unitSpend: 0,
       toppingSpend: 0,
       drinkSpend: 0,
@@ -3776,9 +3851,13 @@
       toppingCount: 0,
       drinkCount: 0,
       adaptivePressure,
+      infiniteStatBonus,
+      catchupStatBonus,
+      storyRewardPressure,
       shopPowerStatBonus,
       shopPowerTierBonus: enemyShopPowerTierBonus(round),
       shopPowerTier3Bonus: enemyShopPowerTier3Bonus(round),
+      spendPriority: ["fillBoard", "upgradeUnits", "drinks", "toppings"],
     };
   }
 
@@ -3786,13 +3865,17 @@
     const latePressure = enemyLatePressure(round);
     const targetPower = enemyEconomyTargetPower(round);
     const post20Pressure = enemyPost20EconomyPressure(round);
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    const storyRewardPressure = enemyStoryRewardPressure(round);
     const base = 10
       + Math.max(0, targetPower - 1) * 14.5
       + round * 8
       + Math.pow(Math.max(1, round), 1.05) * 1.4
-      + post20Pressure * 42;
+      + post20Pressure * 42
+      + infinitePressure * 18
+      + storyRewardPressure * 95;
     const shopPower = 1 + enemyShopPowerStatBonus(round) + enemyShopPowerTierBonus(round);
-    const pressure = 1 + adaptivePressure * 1.15 + latePressure * 0.025 + post20Pressure * 0.055;
+    const pressure = 1 + adaptivePressure * 1.15 + latePressure * 0.025 + post20Pressure * 0.055 + infinitePressure * 0.018 + storyRewardPressure * 0.45;
     return Math.max(ECONOMY.unitCost, Math.round(base * shopPower * pressure * jitter));
   }
 
@@ -3807,10 +3890,22 @@
     return over20 <= 0 ? 0 : over20 + Math.pow(over20, 1.35) * 0.62;
   }
 
+  function enemyInfinitePost20Pressure(round) {
+    return isInfiniteMode() ? enemyPost20EconomyPressure(round) : 0;
+  }
+
+  function enemyInfiniteStatBonus(round, adaptivePressure = enemyAdaptivePressure(round)) {
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    if (infinitePressure <= 0) return 0;
+    return clamp(infinitePressure * 0.018 + adaptivePressure * 0.22, 0, 5.5);
+  }
+
   function enemyEconomyTargetPower(round) {
     const expectedPower = expectedPlayerPowerForRound(round);
-    const actualPower = playerBoardPowerScore();
-    return expectedPower + Math.max(0, actualPower - expectedPower) * 0.55;
+    const actualPower = playerTotalPowerScore(round);
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    const catchupShare = infinitePressure > 0 ? clamp(0.68 + infinitePressure * 0.004, 0.68, 0.92) : enemyPreFinalCatchupShare(round);
+    return expectedPower + Math.max(0, actualPower - expectedPower) * catchupShare;
   }
 
   function enemyEconomyRarityWeights(round) {
@@ -3825,17 +3920,27 @@
   }
 
   function enemyEconomyTargetExtraTier(round, adaptivePressure = 0) {
-    return clamp(Math.min(0.66, round * 0.038) + adaptivePressure * 0.28 + enemyShopPowerTierBonus(round) + enemyPost20EconomyPressure(round) * 0.018, 0, 0.95);
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    const cap = infinitePressure > 0 ? clamp(0.95 + infinitePressure * 0.018, 0.95, 2.25) : 0.95;
+    const roundBase = Math.min(infinitePressure > 0 ? 1.12 : 0.66, round * 0.038);
+    const adaptiveTierPressure = adaptivePressure * (infinitePressure > 0 ? 0.46 : 0.42);
+    return clamp(roundBase + adaptiveTierPressure + enemyShopPowerTierBonus(round) + enemyStoryRewardPressure(round) * 0.38 + infinitePressure * 0.018, 0, cap);
   }
 
   function enemyEconomyTier3Chance(round, adaptivePressure = 0) {
     if (round < 8 && adaptivePressure < 0.15) return 0;
-    return clamp((round - 7) * 0.012 + adaptivePressure * 0.07 + enemyShopPowerTier3Bonus(round) + enemyPost20EconomyPressure(round) * 0.006, 0, 0.34);
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    const cap = infinitePressure > 0 ? clamp(0.34 + infinitePressure * 0.006, 0.34, 0.72) : 0.34;
+    const adaptiveTier3Pressure = adaptivePressure * (infinitePressure > 0 ? 0.07 : 0.1);
+    return clamp((round - 7) * 0.012 + adaptiveTier3Pressure + enemyShopPowerTier3Bonus(round) + enemyStoryRewardPressure(round) * 0.16 + infinitePressure * 0.006, 0, cap);
   }
 
   function enemyEconomyTier4Chance(round, adaptivePressure = 0) {
     if (round < 15 && adaptivePressure < 0.24) return 0;
-    return clamp((round - 14) * 0.0048 + adaptivePressure * 0.055 + enemyPost20EconomyPressure(round) * 0.0038, 0, 0.18);
+    const infinitePressure = enemyInfinitePost20Pressure(round);
+    const cap = infinitePressure > 0 ? clamp(0.18 + infinitePressure * 0.0032, 0.18, 0.46) : 0.18;
+    const adaptiveTier4Pressure = adaptivePressure * (infinitePressure > 0 ? 0.055 : 0.075);
+    return clamp((round - 14) * 0.0048 + adaptiveTier4Pressure + enemyStoryRewardPressure(round) * 0.08 + infinitePressure * 0.0038, 0, cap);
   }
 
   function chooseEnemyArchetype(round) {
@@ -3986,32 +4091,113 @@
   }
 
   function enemyEconomyTierWeight(tier, plan) {
+    const storyRewardPressure = plan.storyRewardPressure || 0;
     if (tier <= 1) return 1;
-    if (tier === 2) return 0.12 + (plan.targetExtraTier || 0) * 1.15;
-    if (tier === 3) return Math.max(0.015, (plan.tier3Chance || 0) * 4.2);
-    return Math.max(0.006, (plan.tier4Chance || 0) * 7);
+    if (tier === 2) return 0.12 + (plan.targetExtraTier || 0) * 1.15 + storyRewardPressure * 0.75;
+    if (tier === 3) return Math.max(0.015, (plan.tier3Chance || 0) * 4.2 + storyRewardPressure * 1.55);
+    return Math.max(0.006, (plan.tier4Chance || 0) * 7 + storyRewardPressure * 1.15);
   }
 
-  function enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds = []) {
+  function enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds = [], options = {}) {
     const candidates = [];
+    const minTier = Math.max(1, options.minTier || 1);
+    const maxTier = Math.min(4, Math.max(minTier, options.maxTier || 4));
     CATALOG.forEach((base) => {
-      for (let tier = 1; tier <= 4; tier += 1) {
+      for (let tier = minTier; tier <= maxTier; tier += 1) {
         const cost = enemyUnitEconomyCost(base.id, tier, slot);
         if (cost > remaining) continue;
         const rarityWeight = Math.max(0, plan.rarityWeights?.[base.rarity || "common"] || 0);
         if (rarityWeight <= 0) continue;
         const duplicatePenalty = usedTypeIds.includes(base.id) ? 0.18 : 1;
-        const weight = rarityWeight * enemyEconomyTierWeight(tier, plan) * duplicatePenalty / Math.max(1, Math.sqrt(cost));
+        const fillBias = options.fillOnly ? 1 / Math.max(1, cost) : 1 / Math.max(1, Math.sqrt(cost));
+        const weight = rarityWeight * enemyEconomyTierWeight(tier, plan) * duplicatePenalty * fillBias;
         candidates.push({ base, tier, cost, weight });
       }
     });
     return candidates;
   }
 
-  function chooseEnemyEconomyUnit(plan, remaining, slot, usedTypeIds = []) {
-    const candidates = enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds);
+  function chooseEnemyEconomyUnit(plan, remaining, slot, usedTypeIds = [], options = {}) {
+    const candidates = enemyEconomyUnitCandidates(plan, remaining, slot, usedTypeIds, options);
     if (!candidates.length) return null;
     return weightedChoice(candidates, (candidate) => candidate.weight);
+  }
+
+  function enemyMinimumFillCostForSlot(slot) {
+    return ECONOMY.unitCost + enemyPositionCost(slot);
+  }
+
+  function enemyMinimumFillCostForSlots(slots, count = slots.length) {
+    return slots
+      .slice(0, Math.max(0, count))
+      .reduce((sum, slot) => sum + enemyMinimumFillCostForSlot(slot), 0);
+  }
+
+  function enemyAffordableFillCount(slots, budget, maxCount = slots.length) {
+    let total = 0;
+    let count = 0;
+    for (const slot of slots.slice(0, Math.max(0, maxCount))) {
+      const cost = enemyMinimumFillCostForSlot(slot);
+      if (total + cost > budget) break;
+      total += cost;
+      count += 1;
+    }
+    return count;
+  }
+
+  function makePlannedEnemyUnit(candidate, plan, slot) {
+    const unit = makeUnit(candidate.base.id, candidate.tier);
+    unit.enemyPlan = plan.archetypeId;
+    unit.enemySlot = slot;
+    unit.enemyEconomyCost = candidate.cost;
+    return applyEnemyRoundStats(unit, plan);
+  }
+
+  function enemyUnitUpgradeCandidates(units, plan, remaining) {
+    return units.flatMap((unit, index) => {
+      const currentTier = Math.max(1, unit.tier || 1);
+      const currentCost = unit.enemyEconomyCost || enemyUnitEconomyCost(unit.typeId, currentTier, unit.enemySlot ?? 0);
+      const base = CATALOG.find((entry) => entry.id === unit.typeId);
+      const rarityWeight = Math.max(0, plan.rarityWeights?.[base?.rarity || unit.rarity || "common"] || 0);
+      if (!base || rarityWeight <= 0 || currentTier >= 4) return [];
+      const entries = [];
+      for (let tier = currentTier + 1; tier <= 4; tier += 1) {
+        const nextCost = enemyUnitEconomyCost(unit.typeId, tier, unit.enemySlot ?? 0);
+        const upgradeCost = Math.max(0, nextCost - currentCost);
+        if (upgradeCost <= 0 || upgradeCost > remaining) continue;
+        const tierJump = tier - currentTier;
+        const weight = rarityWeight
+          * enemyEconomyTierWeight(tier, plan)
+          * (1 + tierJump * 0.18)
+          / Math.max(1, Math.sqrt(upgradeCost));
+        entries.push({ index, base, tier, cost: upgradeCost, totalCost: nextCost, weight });
+      }
+      return entries;
+    });
+  }
+
+  function upgradeEnemyUnitsByBudget(units, plan, remaining) {
+    let budget = Math.max(0, remaining);
+    let upgradeSpend = 0;
+    let upgradeCount = 0;
+    let guard = units.length * 4;
+    while (budget > 0 && guard > 0) {
+      guard -= 1;
+      const candidate = weightedChoice(enemyUnitUpgradeCandidates(units, plan, budget), (entry) => entry.weight);
+      if (!candidate) break;
+      const previous = units[candidate.index];
+      const upgraded = makeUnit(previous.typeId, candidate.tier);
+      upgraded.enemyPlan = plan.archetypeId;
+      upgraded.enemySlot = previous.enemySlot;
+      upgraded.enemyEconomyCost = candidate.totalCost;
+      units[candidate.index] = applyEnemyRoundStats(upgraded, plan);
+      budget -= candidate.cost;
+      upgradeSpend += candidate.cost;
+      upgradeCount += 1;
+    }
+    plan.unitUpgradeSpend = upgradeSpend;
+    plan.unitUpgradeCount = upgradeCount;
+    return budget;
   }
 
   function enemyEconomyItemCandidates(plan, remaining, kind) {
@@ -4051,48 +4237,39 @@
   }
 
   function makeEnemyTeam(plan = makeEnemyPlan()) {
-    if (plan.finalBoss) return makeFinalBossTeam();
+    if (plan.finalBoss) return makeFinalBossTeam(plan);
     if (plan.giraffeBoss) return makeGiraffeBossTeam(plan);
     const usedTypeIds = [];
     const openSlots = randomEnemyFormationSlots(boardSlots.length);
-    let remaining = Math.max(ECONOMY.unitCost, plan.unitBudget || plan.economyBudget || ECONOMY.unitCost);
+    let remaining = Math.max(enemyMinimumFillCostForSlot(openSlots[0] ?? 0), plan.economyBudget || plan.unitBudget || ECONOMY.unitCost);
+    const fillTargetCount = enemyAffordableFillCount(openSlots, remaining, Math.min(boardSlots.length, plan.minimumUnitCount || boardSlots.length));
     let unitSpend = 0;
     let positionSpend = 0;
     const units = [];
-    while (openSlots.length) {
+    while (openSlots.length && units.length < fillTargetCount) {
       const slot = openSlots.shift();
-      const reservedForMinimumUnits = Math.max(0, (plan.minimumUnitCount || 0) - units.length - 1) * (ECONOMY.unitCost + 1);
+      const slotsStillNeeded = Math.max(0, fillTargetCount - units.length - 1);
+      const reservedForMinimumUnits = enemyMinimumFillCostForSlots(openSlots, slotsStillNeeded);
       const spendable = Math.max(0, remaining - reservedForMinimumUnits);
-      const candidate = chooseEnemyEconomyUnit(plan, spendable, slot, usedTypeIds);
+      const candidate = chooseEnemyEconomyUnit(plan, spendable, slot, usedTypeIds, { maxTier: 1, fillOnly: true });
       if (!candidate) {
-        if (units.length) continue;
-        const fallbackSlot = Number.isInteger(slot) ? slot : 0;
-        const fallback = CATALOG.find((unit) => (unit.rarity || "common") === "common") || CATALOG[0];
-        const unit = makeUnit(fallback.id, 1);
-        unit.enemyPlan = plan.archetypeId;
-        unit.enemySlot = fallbackSlot;
-        units.push(applyEnemyRoundStats(unit, plan));
-        unitSpend += enemyUnitEconomyCost(fallback.id, 1, fallbackSlot);
-        positionSpend += enemyPositionCost(fallbackSlot);
-        break;
+        continue;
       }
       usedTypeIds.push(candidate.base.id);
-      const unit = makeUnit(candidate.base.id, candidate.tier);
-      unit.enemyPlan = plan.archetypeId;
-      unit.enemySlot = slot;
-      units.push(applyEnemyRoundStats(unit, plan));
+      units.push(makePlannedEnemyUnit(candidate, plan, slot));
       remaining -= candidate.cost;
       unitSpend += candidate.cost;
       positionSpend += enemyPositionCost(slot);
-      if (units.length >= boardSlots.length) break;
-      if (remaining < ECONOMY.unitCost + 1 && units.length >= 1) break;
-      if (units.length >= 2 && random() > clamp(remaining / Math.max(1, plan.unitBudget || remaining), 0.18, 0.92)) break;
     }
+    const upgradeStartRemaining = remaining;
+    remaining = upgradeEnemyUnitsByBudget(units, plan, remaining);
+    unitSpend += Math.max(0, upgradeStartRemaining - remaining);
     plan.count = units.length;
     plan.unitSpend = unitSpend;
     plan.positionSpend = positionSpend;
     plan.unitBudgetRemaining = Math.max(0, remaining);
-    equipEnemyToppings(units, plan);
+    plan.drinkBudget = Math.max(0, remaining);
+    plan.toppingBudget = 0;
     return units;
   }
 
@@ -4109,31 +4286,33 @@
       .filter((slot) => !reservedSlots.has(slot))
       .sort(() => random() - 0.5);
     const usedTypeIds = [GIRAFFE_BOSS_TYPE_ID];
-    let remaining = Math.max(0, plan.unitBudget || plan.economyBudget || 0);
+    let remaining = Math.max(0, plan.economyBudget || plan.unitBudget || 0);
+    const fillTargetCount = enemyAffordableFillCount(openSlots, remaining, Math.min(openSlots.length, Math.max(0, (plan.minimumUnitCount || boardSlots.length) - 1)));
     let unitSpend = 0;
     let positionSpend = enemyPositionCost(plan.bossSlot ?? GIRAFFE_BOSS_SLOT);
     const mobs = [];
-    while (openSlots.length) {
+    while (openSlots.length && mobs.length < fillTargetCount) {
       const slot = openSlots.shift();
-      const reservedForMinimumUnits = Math.max(0, (plan.minimumUnitCount || 0) - 1 - mobs.length - 1) * (ECONOMY.unitCost + 1);
+      const slotsStillNeeded = Math.max(0, fillTargetCount - mobs.length - 1);
+      const reservedForMinimumUnits = enemyMinimumFillCostForSlots(openSlots, slotsStillNeeded);
       const spendable = Math.max(0, remaining - reservedForMinimumUnits);
-      const candidate = chooseEnemyEconomyUnit(plan, spendable, slot, usedTypeIds);
+      const candidate = chooseEnemyEconomyUnit(plan, spendable, slot, usedTypeIds, { maxTier: 1, fillOnly: true });
       if (!candidate) continue;
       usedTypeIds.push(candidate.base.id);
-      const unit = makeUnit(candidate.base.id, candidate.tier);
-      unit.enemyPlan = plan.archetypeId;
-      unit.enemySlot = slot;
-      mobs.push(applyEnemyRoundStats(unit, plan));
+      mobs.push(makePlannedEnemyUnit(candidate, plan, slot));
       remaining -= candidate.cost;
       unitSpend += candidate.cost;
       positionSpend += enemyPositionCost(slot);
-      if (remaining < ECONOMY.unitCost + 1) break;
     }
+    const upgradeStartRemaining = remaining;
+    remaining = upgradeEnemyUnitsByBudget(mobs, plan, remaining);
+    unitSpend += Math.max(0, upgradeStartRemaining - remaining);
     plan.count = 1 + mobs.length;
     plan.unitSpend = unitSpend;
     plan.positionSpend = positionSpend;
     plan.unitBudgetRemaining = Math.max(0, remaining);
-    equipEnemyToppings(mobs, plan);
+    plan.drinkBudget = Math.max(0, remaining);
+    plan.toppingBudget = 0;
     return [boss, ...mobs];
   }
 
@@ -4141,10 +4320,10 @@
     return window.FoodAnimalsEnemyTeamRuntime.reservedColumnSlots(bossSlot, BOARD_ROWS, BOARD_COLS, slotGrid);
   }
 
-  function makeFinalBossTeam() {
+  function makeFinalBossTeam(plan = makeEnemyPlan()) {
     const finalBossTuning = {
-      hpMultiplier: FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER,
-      atkMultiplier: FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER,
+      hpMultiplier: plan.hpMultiplier || FINAL_BOSS_SHOP_POWER_HP_MULTIPLIER,
+      atkMultiplier: plan.atkMultiplier || FINAL_BOSS_SHOP_POWER_ATK_MULTIPLIER,
     };
     return [
       makeFinalBossUnit(FINAL_BOSS_MINION_TYPE_ID, { ...finalBossTuning, tier: 2, enemySlot: 5 }),
@@ -4225,6 +4404,7 @@
     plan.drinkSpend = spend;
     plan.drinkCount = count;
     plan.drinkBudgetRemaining = Math.max(0, remaining);
+    plan.toppingBudget = Math.max(0, remaining);
     return drinks;
   }
 
@@ -4233,6 +4413,7 @@
       const plan = makeEnemyPlan();
       const units = makeEnemyTeam(plan);
       const drinks = makeEnemyDrinks(units, plan);
+      equipEnemyToppings(units.filter((unit) => !unit.giraffeBossUnit && !unit.finalBossUnit), plan);
       state.enemyPreview = {
         round: state.round,
         plan: enemyPlanText(plan),
@@ -5524,7 +5705,7 @@
       const completedStoryId = story.id;
       state.activeStory = null;
       if (completedStoryId === "level10") {
-        startLevel10RevealCutscene();
+        startLevel10RevealCutscene({ entryTransition: true });
       }
       if (completedStoryId === FINAL_TABS_STORY_ID) startFinalVictoryTransition();
       return;
@@ -5541,6 +5722,9 @@
       total: LEVEL10_REVEAL_CUTSCENE_SECONDS,
       source: options.source || "level10Reveal",
     };
+    if (options.entryTransition) {
+      beginLevel10RevealCutsceneStaticTransition(state.level10RevealCutscene, 1, { label: "SIGNAL ACQUIRING" });
+    }
     if (!state.seenStoryMilestones.includes(LEVEL10_REVEAL_CUTSCENE_ID)) {
       state.seenStoryMilestones.push(LEVEL10_REVEAL_CUTSCENE_ID);
     }
@@ -5580,6 +5764,7 @@
       duration: LEVEL10_REVEAL_CUTSCENE_STATIC_TRANSITION_SECONDS,
       direction,
       completeOnEnd: Boolean(options.completeOnEnd),
+      label: options.label || null,
       seed: Math.floor((cutscene.elapsed || 0) * 997) + Math.floor(state.idleTime * 61),
     };
   }
@@ -5693,18 +5878,24 @@
         message: "Returning to menu",
       });
     }
+    if (state.phase === "result" && state.hearts > 0 && !state.rewardChoices?.length && shouldStartShopReturnTransition()) {
+      return startShopReturnTransitionOverlay();
+    }
     continuePrep();
     return true;
   }
 
   function startShopReturnTransitionOverlay(options = {}) {
     const horror = realityBroken();
-    const duration = horror ? HORROR_SHOP_RETURN_STATIC_SECONDS : COZY_SHOP_RETURN_AWNING_SECONDS;
+    const normalMenuReturn = options.source === "normalMenuReturn";
+    const duration = normalMenuReturn
+      ? (horror ? 1.9 : 2.05)
+      : horror ? HORROR_SHOP_RETURN_STATIC_SECONDS : COZY_SHOP_RETURN_AWNING_SECONDS;
     if (!horror) clearParticles();
     state.shopReturnStaticTransition = {
       elapsed: 0,
       duration,
-      switchAt: duration * 0.48,
+      switchAt: duration * (normalMenuReturn ? 0.72 : 0.48),
       screenChanged: false,
       theme: horror ? "horror" : "cozy",
       rewardParticles: horror && Array.isArray(options.rewardParticles) ? options.rewardParticles : [],
@@ -10008,7 +10199,157 @@
     });
   }
 
+  function horrorOptionsPulse() {
+    return 0.5 + Math.sin(state.idleTime * 4.8) * 0.5;
+  }
+
+  function drawHorrorCornerBrackets(x, y, w, h, inset = 10, size = 30) {
+    ctx.beginPath();
+    ctx.moveTo(x + inset, y + inset + size);
+    ctx.lineTo(x + inset, y + inset);
+    ctx.lineTo(x + inset + size, y + inset);
+    ctx.moveTo(x + w - inset - size, y + inset);
+    ctx.lineTo(x + w - inset, y + inset);
+    ctx.lineTo(x + w - inset, y + inset + size);
+    ctx.moveTo(x + inset, y + h - inset - size);
+    ctx.lineTo(x + inset, y + h - inset);
+    ctx.lineTo(x + inset + size, y + h - inset);
+    ctx.moveTo(x + w - inset - size, y + h - inset);
+    ctx.lineTo(x + w - inset, y + h - inset);
+    ctx.lineTo(x + w - inset, y + h - inset - size);
+    ctx.stroke();
+  }
+
+  function drawHorrorOptionsPanel(panel) {
+    const pulse = horrorOptionsPulse();
+    ctx.shadowColor = `rgba(70, 255, 99, ${0.24 + pulse * 0.08})`;
+    ctx.shadowBlur = 34;
+    ctx.shadowOffsetY = 10;
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    const panelGradient = ctx.createLinearGradient(panel.x, panel.y, panel.x + panel.w, panel.y + panel.h);
+    panelGradient.addColorStop(0, "rgba(4, 13, 16, 0.99)");
+    panelGradient.addColorStop(0.55, "rgba(3, 20, 19, 0.98)");
+    panelGradient.addColorStop(1, "rgba(9, 7, 14, 0.99)");
+    ctx.fillStyle = panelGradient;
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+
+    roundedRect(panel.x + 8, panel.y + 8, panel.w - 16, panel.h - 16, 6);
+    ctx.strokeStyle = `rgba(0, 232, 255, ${0.14 + pulse * 0.08})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.save();
+    roundedRect(panel.x + 5, panel.y + 5, panel.w - 10, panel.h - 10, 7);
+    ctx.clip();
+    ctx.fillStyle = "rgba(70, 255, 99, 0.045)";
+    for (let y = panel.y + 15; y < panel.y + panel.h - 12; y += 8) {
+      ctx.fillRect(panel.x + 12, Math.round(y), panel.w - 24, 1);
+    }
+    ctx.fillStyle = `rgba(255, 58, 82, ${0.14 + pulse * 0.06})`;
+    ctx.fillRect(panel.x + 22, panel.y + 84, panel.w - 44, 2);
+    ctx.fillStyle = "rgba(0, 232, 255, 0.08)";
+    ctx.fillRect(panel.x + 24, panel.y + 116, 2, panel.h - 158);
+    ctx.fillRect(panel.x + panel.w - 26, panel.y + 116, 2, panel.h - 158);
+    ctx.restore();
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = `rgba(101, 255, 109, ${0.52 + pulse * 0.16})`;
+    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+    ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = `rgba(255, 58, 82, ${0.38 + pulse * 0.16})`;
+    drawHorrorCornerBrackets(panel.x, panel.y, panel.w, panel.h, 13, 31);
+  }
+
+  function drawHorrorOptionsSlider(slider) {
+    const { rect, value, label, id } = slider;
+    const selected = id === state.optionsMenu.selected || id === state.optionsMenu.dragSlider;
+    const trackY = rect.y + rect.h / 2;
+    const knobX = rect.x + (value / 10) * rect.w;
+    const fillColor = id === "music" ? "#00e8ff" : "#ffd15b";
+    const selectedGlow = selected ? 0.34 : 0.18;
+
+    roundedRect(rect.x - 18, rect.y - 31, rect.w + 36, rect.h + 62, 7);
+    ctx.fillStyle = selected ? "rgba(17, 44, 44, 0.82)" : "rgba(2, 10, 13, 0.64)";
+    ctx.fill();
+    ctx.lineWidth = selected ? 2 : 1;
+    ctx.strokeStyle = selected ? `rgba(101, 255, 109, ${0.46 + horrorOptionsPulse() * 0.18})` : "rgba(101, 255, 109, 0.18)";
+    ctx.stroke();
+
+    ctx.fillStyle = "#e8fff0";
+    ctx.font = "900 13px Inter, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label.toUpperCase(), rect.x - 7, rect.y - 22);
+    ctx.textAlign = "right";
+    ctx.fillStyle = fillColor;
+    ctx.fillText(`${value}/10`, rect.x + rect.w + 7, rect.y - 22);
+
+    roundedRect(rect.x, rect.y, rect.w, rect.h, 5);
+    ctx.fillStyle = "rgba(0, 5, 8, 0.9)";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(101, 255, 109, 0.5)";
+    ctx.stroke();
+
+    roundedRect(rect.x + 4, rect.y + 4, Math.max(9, knobX - rect.x - 4), rect.h - 8, 3);
+    const fillGradient = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y);
+    fillGradient.addColorStop(0, fillColor);
+    fillGradient.addColorStop(1, id === "music" ? "#65ff6d" : "#ff6673");
+    ctx.fillStyle = fillGradient;
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(101, 255, 109, 0.38)";
+    for (let tick = 0; tick <= 10; tick += 1) {
+      const x = rect.x + (tick / 10) * rect.w;
+      ctx.beginPath();
+      ctx.moveTo(x, rect.y + rect.h + 6);
+      ctx.lineTo(x, rect.y + rect.h + (tick % 5 === 0 ? 16 : 12));
+      ctx.lineWidth = tick % 5 === 0 ? 2 : 1;
+      ctx.stroke();
+    }
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.font = "800 9px Inter, sans-serif";
+    ctx.fillStyle = "#a8d6c0";
+    ctx.fillText("0", rect.x, rect.y + rect.h + 19);
+    ctx.fillText("5", rect.x + rect.w / 2, rect.y + rect.h + 19);
+    ctx.fillText("10", rect.x + rect.w, rect.y + rect.h + 19);
+
+    ctx.save();
+    ctx.shadowColor = fillColor;
+    ctx.shadowBlur = selected ? 16 : 10;
+    ctx.beginPath();
+    ctx.arc(knobX, trackY, 16, 0, Math.PI * 2);
+    ctx.fillStyle = selected ? "#f2fff7" : "#0b1618";
+    ctx.fill();
+    ctx.lineWidth = selected ? 4 : 3;
+    ctx.strokeStyle = `rgba(101, 255, 109, ${selectedGlow + 0.36})`;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.moveTo(knobX, trackY - 7);
+    ctx.lineTo(knobX + 7, trackY);
+    ctx.lineTo(knobX, trackY + 7);
+    ctx.lineTo(knobX - 7, trackY);
+    ctx.closePath();
+    ctx.fillStyle = selected ? "#06100c" : fillColor;
+    ctx.fill();
+
+    registerTooltip(rect.x - 18, rect.y - 31, rect.w + 36, rect.h + 62, {
+      title: `${label} volume`,
+      body: "Click or drag to adjust.",
+    });
+  }
+
   function drawOptionsSlider(slider) {
+    if (realityBroken()) {
+      drawHorrorOptionsSlider(slider);
+      return;
+    }
     const { rect, value, label, id } = slider;
     const selected = id === state.optionsMenu.selected || id === state.optionsMenu.dragSlider;
     const trackY = rect.y + rect.h / 2;
@@ -10099,59 +10440,115 @@
     const layout = optionsMenuLayout();
     const { panel } = layout;
     const modal = modalTransitionVisual("options");
+    const horror = realityBroken();
+    const pulse = horrorOptionsPulse();
     ctx.save();
     ctx.globalAlpha *= modal.alpha;
-    ctx.fillStyle = realityBroken() ? "rgba(0, 7, 8, 0.72)" : "rgba(22, 57, 45, 0.34)";
+    ctx.fillStyle = horror ? "rgba(0, 5, 8, 0.78)" : "rgba(22, 57, 45, 0.34)";
     ctx.fillRect(0, 0, W, H);
+    if (horror) {
+      ctx.save();
+      ctx.globalAlpha *= 0.42;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
+      for (let y = 0; y < H; y += 5) ctx.fillRect(0, y, W, 1);
+      ctx.fillStyle = `rgba(255, 58, 82, ${0.04 + pulse * 0.025})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
     ctx.translate(panel.x + panel.w / 2, panel.y + panel.h / 2 + modal.offsetY);
     ctx.scale(modal.scale, modal.scale);
     ctx.translate(-(panel.x + panel.w / 2), -(panel.y + panel.h / 2));
-    ctx.shadowColor = realityBroken() ? "rgba(70, 255, 99, 0.18)" : "rgba(22, 57, 45, 0.28)";
-    ctx.shadowBlur = 22;
-    ctx.shadowOffsetY = 8;
-    roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
-    ctx.fillStyle = realityBroken() ? "rgba(5, 16, 18, 0.96)" : "rgba(255, 253, 232, 0.98)";
-    ctx.fill();
-    ctx.shadowColor = "transparent";
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = realityBroken() ? "rgba(70, 255, 99, 0.48)" : "rgba(22, 57, 45, 0.24)";
-    ctx.stroke();
+    if (horror) {
+      drawHorrorOptionsPanel(panel);
+    } else {
+      ctx.shadowColor = "rgba(22, 57, 45, 0.28)";
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetY = 8;
+      roundedRect(panel.x, panel.y, panel.w, panel.h, 8);
+      ctx.fillStyle = "rgba(255, 253, 232, 0.98)";
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(22, 57, 45, 0.24)";
+      ctx.stroke();
+    }
 
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = themeColor("primary", "#16392d");
-    ctx.font = "900 25px Inter, sans-serif";
-    ctx.fillText("Options", panel.x + 30, panel.y + 42);
-    ctx.font = "800 11px Inter, sans-serif";
-    ctx.fillStyle = themeColor("muted", "#6a4b35");
+    if (horror) {
+      ctx.font = "900 10px Inter, sans-serif";
+      ctx.fillStyle = `rgba(255, 58, 82, ${0.72 + pulse * 0.18})`;
+      ctx.fillText("BREACH CONTROL", panel.x + 31, panel.y + 28);
+      ctx.fillStyle = "#f2fff7";
+      ctx.font = "900 28px Inter, sans-serif";
+      ctx.fillText("Options", panel.x + 30, panel.y + 54);
+    } else {
+      ctx.fillStyle = themeColor("primary", "#16392d");
+      ctx.font = "900 25px Inter, sans-serif";
+      ctx.fillText("Options", panel.x + 30, panel.y + 42);
+    }
+    ctx.font = horror ? "900 11px Inter, sans-serif" : "800 11px Inter, sans-serif";
+    ctx.fillStyle = horror ? "#a8d6c0" : themeColor("muted", "#6a4b35");
     const sub = state.phase === "battle" ? "Battle paused" : state.phase === "result" ? "Run menu" : "Prep menu";
-    ctx.fillText(sub, panel.x + 31, panel.y + 70);
+    ctx.fillText(horror ? sub.toUpperCase() : sub, panel.x + 31, horror ? panel.y + 78 : panel.y + 70);
 
     const close = layout.close;
     roundedRect(close.x, close.y, close.w, close.h, 6);
-    ctx.fillStyle = state.optionsMenu.selected === "close" ? themeColor("panelActive", "#e7ffd9") : themeColor("panelSoft", "rgba(255, 249, 214, 0.74)");
+    ctx.fillStyle = state.optionsMenu.selected === "close"
+      ? horror ? "rgba(255, 58, 82, 0.82)" : themeColor("panelActive", "#e7ffd9")
+      : horror ? "rgba(3, 12, 15, 0.9)" : themeColor("panelSoft", "rgba(255, 249, 214, 0.74)");
     ctx.fill();
-    ctx.strokeStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.22)");
+    ctx.strokeStyle = horror ? "rgba(101, 255, 109, 0.5)" : themeColor("borderDim", "rgba(22, 57, 45, 0.22)");
     ctx.stroke();
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    fitText("X", close.x + 8, close.y + 19, close.w - 16, "900 14px Inter, sans-serif", themeColor("primary", "#16392d"));
+    fitText("X", close.x + 8, close.y + 19, close.w - 16, "900 14px Inter, sans-serif", horror ? "#f2fff7" : themeColor("primary", "#16392d"));
 
-    ctx.font = "800 12px Inter, sans-serif";
+    ctx.font = horror ? "900 12px Inter, sans-serif" : "800 12px Inter, sans-serif";
     const saveLine = state.optionsMenu.savedAt ? `Saved ${new Date(state.optionsMenu.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Save before leaving the table.";
-    fitText(saveLine, panel.x + 30, panel.y + 100, panel.w - 60, ctx.font, themeColor("muted", "#6a4b35"));
+    fitText(horror ? saveLine.toUpperCase() : saveLine, panel.x + 30, panel.y + 100, panel.w - 60, ctx.font, horror ? "#ffd15b" : themeColor("muted", "#6a4b35"));
 
     layout.sliders.forEach(drawOptionsSlider);
     layout.buttons.forEach((button) => {
       const selected = state.optionsMenu.selected === button.id;
       roundedRect(button.rect.x, button.rect.y, button.rect.w, button.rect.h, 7);
-      ctx.fillStyle = selected ? themeColor("accent", "#4a9e68") : themeColor("primary", "#16392d");
+      if (horror) {
+        const buttonGradient = ctx.createLinearGradient(button.rect.x, button.rect.y, button.rect.x, button.rect.y + button.rect.h);
+        if (selected) {
+          buttonGradient.addColorStop(0, "#79ff80");
+          buttonGradient.addColorStop(1, "#27c552");
+        } else if (button.id === "exit") {
+          buttonGradient.addColorStop(0, "rgba(58, 13, 20, 0.96)");
+          buttonGradient.addColorStop(1, "rgba(24, 6, 11, 0.98)");
+        } else {
+          buttonGradient.addColorStop(0, "rgba(8, 25, 30, 0.96)");
+          buttonGradient.addColorStop(1, "rgba(2, 9, 13, 0.98)");
+        }
+        ctx.fillStyle = buttonGradient;
+      } else {
+        ctx.fillStyle = selected ? themeColor("accent", "#4a9e68") : themeColor("primary", "#16392d");
+      }
       ctx.fill();
-      ctx.strokeStyle = selected ? themeColor("warning", "#d99043") : "rgba(255,255,255,0.18)";
+      ctx.lineWidth = selected ? 3 : 2;
+      ctx.strokeStyle = horror
+        ? selected ? "#ffd15b" : button.id === "exit" ? "rgba(255, 102, 115, 0.5)" : "rgba(101, 255, 109, 0.32)"
+        : selected ? themeColor("warning", "#d99043") : "rgba(255,255,255,0.18)";
       ctx.stroke();
+      if (horror && !selected) {
+        ctx.fillStyle = button.id === "exit" ? "rgba(255, 102, 115, 0.18)" : "rgba(0, 232, 255, 0.12)";
+        ctx.fillRect(button.rect.x + 8, button.rect.y + 7, button.rect.w - 16, 2);
+      }
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      fitText(button.label, button.rect.x + button.rect.w / 2, button.rect.y + 23, button.rect.w - 20, "900 12px Inter, sans-serif", "#fff7cf");
+      fitText(
+        button.label,
+        button.rect.x + button.rect.w / 2,
+        button.rect.y + 23,
+        button.rect.w - 20,
+        "900 12px Inter, sans-serif",
+        horror ? selected ? "#06100c" : "#f2fff7" : "#fff7cf",
+        "center",
+      );
       registerTooltip(button.rect.x, button.rect.y, button.rect.w, button.rect.h, {
         title: button.label,
         body: button.id === "exit" ? "Saves this run and returns to the main menu." : button.id === "save" ? "Stores this run for Continue Run." : "Closes this menu.",
@@ -17541,10 +17938,10 @@
     ctx.font = "950 15px Inter, sans-serif";
     ctx.fillStyle = "#f0fff0";
     const label = transition.completeOnEnd
-      ? "STORE LINK RESTORING"
+      ? transition.label || "STORE LINK RESTORING"
       : transition.direction < 0
-      ? "SIGNAL ROLLING BACK"
-      : "SIGNAL RECALIBRATING";
+      ? transition.label || "SIGNAL ROLLING BACK"
+      : transition.label || "SIGNAL RECALIBRATING";
     ctx.fillText(label, W / 2, H / 2 + 5);
     ctx.restore();
   }
@@ -18509,6 +18906,7 @@
           duration: Number((state.level10RevealCutscene.transition.duration || LEVEL10_REVEAL_CUTSCENE_STATIC_TRANSITION_SECONDS).toFixed(3)),
           direction: state.level10RevealCutscene.transition.direction || 1,
           completeOnEnd: Boolean(state.level10RevealCutscene.transition.completeOnEnd),
+          label: state.level10RevealCutscene.transition.label || null,
         } : null,
         shot: level10RevealCutsceneShot(state.level10RevealCutscene),
       } : { active: false },

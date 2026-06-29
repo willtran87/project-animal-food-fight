@@ -5,6 +5,7 @@
   const FINAL_TABS_STORY_ID = "level20FinalTabs";
   const CONVERSATION_COURSE_2_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-2-table-logic-v1.png";
   const CONVERSATION_COURSE_3_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-3-supporting-material-v2.png";
+  const CONVERSATION_COURSE_4_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-4-ready-to-go-v1.png";
   const CONVERSATION_COURSE_5_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-course-5-pattern-doubt-v2.png";
   const CONVERSATION_WAVE_10_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-10-tabs-unmasked-v1.png";
   const CONVERSATION_WAVE_15_BG_SRC = "assets/backgrounds/conversation/runtime/conversation-wave-15-harvest-doctrine-v2.png";
@@ -446,6 +447,154 @@
           speaker: "Tabs",
           tone: "bright",
           text: "Think big picture! Individual discomfort is just fertilizer for collective prosperity.",
+        },
+      ],
+    },
+    level4: {
+      round: 4,
+      title: "Course 4 // Ready-To-Go",
+      log: "Story beat: level 4 ready-to-go",
+      backgroundSrc: CONVERSATION_COURSE_4_BG_SRC,
+      beats: [
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Tabs, practical question. How am I supposed to prepare the food?",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Wonderful news: you are not!",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Food animals are one hundred percent service-efficient. They arrive self-managed, nutritionally complete, emotionally engaging, and ready-to-go.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "Ready-to-go.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Exactly. No chopping, brining, butchering, curing, roasting, or morally exhausting prep work required.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "The beauty of food animals is that they are farm-to-table while still being the farm.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "That sentence got worse at the end.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Only because you are picturing it correctly.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "You simply take what you need, and the food animal regenerates the useful portion over time. Sustainable, renewable, very tidy.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Tabs.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Yes, Coordinator?",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "Can they feel pain?",
+        },
+        {
+          speaker: "Tabs",
+          tone: "dismissive",
+          text: "They can experience negative stimulus, yes.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "That was not the question.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "dismissive",
+          text: "It was the survivable version of the question.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Food animals must register harmful input in order to learn avoidance, preserve structure, and improve long-term viability.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "overconfident",
+          text: "Without discomfort, they would wander into hazards, poor matchups, hot pans, and metaphorically loaded conversations.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "So...",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "Yes.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "If it helps, their relationship to pain is extremely productive.",
+        },
+        {
+          speaker: "You",
+          tone: "concerned",
+          text: "It does not help.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Would a joke help?",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "No.",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Pain is just flavor with a lesson plan.",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "...",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "Too spicy?",
+        },
+        {
+          speaker: "You",
+          tone: "skeptical",
+          text: "...",
+        },
+        {
+          speaker: "Tabs",
+          tone: "bright",
+          text: "I will mark that as needs garnish.",
         },
       ],
     },

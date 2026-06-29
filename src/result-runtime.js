@@ -8,7 +8,7 @@
   }
 
   function shopReturnTransitionNavigatesToMenu(transition) {
-    return transition?.source === "cozyDefeatReturn";
+    return transition?.source === "cozyDefeatReturn" || transition?.source === "normalMenuReturn";
   }
 
   function battleResultTitle(options = {}, sources = {}) {

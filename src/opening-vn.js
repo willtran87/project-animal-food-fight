@@ -394,6 +394,7 @@ const tutorialShop = document.querySelector(".tutorial-shop");
 const playerStandee = document.querySelector(".player-standee");
 const tabsCounter = document.querySelector(".tabs-counter");
 const SCENE_TRANSITION_MS = 640;
+const TUTORIAL_ENTER_TRANSITION_MS = 720;
 const TUTORIAL_COMPLETE_TRANSITION_MS = 760;
 const BOARD_DOCUMENT_DELAY_MS = 320;
 const DOCUMENT_SWAP_DELAY_MS = 170;
@@ -456,12 +457,23 @@ function triggerOpeningSceneTransition(fromScene, toScene) {
   if (!fromScene || !toScene || fromScene === toScene) return;
   window.clearTimeout(sceneTransitionTimer);
   sceneTransitionCurtain.dataset.fromScene = fromScene;
-  sceneTransitionCurtain.classList.remove("is-transitioning");
+  sceneTransitionCurtain.classList.remove("is-transitioning", "is-tutorial-entering");
   void sceneTransitionCurtain.offsetWidth;
   sceneTransitionCurtain.classList.add("is-transitioning");
   sceneTransitionTimer = window.setTimeout(() => {
     sceneTransitionCurtain.classList.remove("is-transitioning");
   }, SCENE_TRANSITION_MS);
+}
+
+function triggerTutorialEnterTransition() {
+  window.clearTimeout(sceneTransitionTimer);
+  sceneTransitionCurtain.dataset.fromScene = "presentation";
+  sceneTransitionCurtain.classList.remove("is-transitioning", "is-tutorial-entering");
+  void sceneTransitionCurtain.offsetWidth;
+  sceneTransitionCurtain.classList.add("is-tutorial-entering");
+  sceneTransitionTimer = window.setTimeout(() => {
+    sceneTransitionCurtain.classList.remove("is-tutorial-entering");
+  }, TUTORIAL_ENTER_TRANSITION_MS);
 }
 
 function clearVisualTransitionTimers() {
@@ -692,6 +704,7 @@ function advance() {
     state.phase = "tutorial";
     state.tutorialIndex = 0;
     render();
+    triggerTutorialEnterTransition();
     return;
   }
   if (state.phase === "opening") {
@@ -725,6 +738,7 @@ function skipSection() {
     state.phase = "tutorial";
     state.tutorialIndex = 0;
     render();
+    triggerTutorialEnterTransition();
     return;
   }
   if (state.phase === "tutorial") {
@@ -787,6 +801,10 @@ window.render_game_to_text = () =>
       active: sceneTransitionCurtain.classList.contains("is-completing"),
       durationMs: TUTORIAL_COMPLETE_TRANSITION_MS,
       targetUrl: TUTORIAL_COMPLETE_TARGET_URL,
+    },
+    tutorialEnterTransition: {
+      active: sceneTransitionCurtain.classList.contains("is-tutorial-entering"),
+      durationMs: TUTORIAL_ENTER_TRANSITION_MS,
     },
     innerMonologue: currentBeat().inner === true,
     visualBoard: boardForBeat(currentBeat(), state.index)?.src || null,
