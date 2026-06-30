@@ -226,6 +226,10 @@
   const textMeasureCache = new Map();
   const wrappedTextCache = new Map();
   let assetDrawPending = false;
+  let renderDirty = true;
+  let drawCount = 0;
+  let skippedDrawCount = 0;
+  let lastRenderContinuous = false;
 
   function rememberCacheEntry(cache, key, value) {
     return window.FoodAnimalsCanvasText.remember(cache, key, value, TEXT_LAYOUT_CACHE_LIMIT);
@@ -242,10 +246,13 @@
 
   function requestDraw() {
     assetDrawPending = true;
+    renderDirty = true;
   }
 
   function drawFrame() {
     assetDrawPending = false;
+    renderDirty = false;
+    drawCount += 1;
     draw();
   }
 
@@ -2044,7 +2051,7 @@
         ? copy("ui.reality.autoBroken", "Combat layer active")
         : "Auto theme";
     }
-    draw();
+    drawFrame();
     return { override: state.realityOverride, broken: realityBroken() };
   }
 
@@ -2661,7 +2668,7 @@
     const arena = arenaInfo(arenaId);
     state.arenaId = arena.id;
     if (state.phase === "prep") state.message = themedArena(arena).short;
-    draw();
+    drawFrame();
     return currentArena();
   }
 
@@ -13683,16 +13690,22 @@
     if (!selectedMeal) drawUpgradeStars(selectedTier, x + 73, y + 148, 9, "center");
     drawCodexAttackParticlePreview(animal, x + w - 42, y + 82, 34);
 
-    const headerReserve = 82;
+    const previewRect = codexPreviewRect();
+    const headerParticleReserve = 88;
+    const headerX = Math.round(previewRect.x + previewRect.w + 16);
+    const headerRight = Math.round(x + w - headerParticleReserve);
+    const headerTextW = Math.max(96, headerRight - headerX);
+    const traitX = headerX + 52;
+    const traitW = Math.max(38, headerRight - traitX);
     ctx.fillStyle = "#16392d";
     ctx.font = "900 20px Inter, sans-serif";
-    fitCodexText(displayCatalogName(animal), x + 128, y + 36, w - 144 - headerReserve, "900 20px Inter, sans-serif", themeColor("primary", "#16392d"), 9);
-    fitCodexText(selectedMeal ? form.name : displayCatalogForm(animal, selectedTier, "name"), x + 128, y + 64, w - 144 - headerReserve, "900 16px Inter, sans-serif", themeColor("primary", "#16392d"), 8.2);
+    fitCodexText(displayCatalogName(animal), headerX, y + 36, headerTextW, "900 20px Inter, sans-serif", themeColor("primary", "#16392d"), 9);
+    fitCodexText(selectedMeal ? form.name : displayCatalogForm(animal, selectedTier, "name"), headerX, y + 64, headerTextW, "900 16px Inter, sans-serif", themeColor("primary", "#16392d"), 8.2);
     ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 12px Inter, sans-serif";
-    fitCodexText(`${displayRoleLabel(animal.role) || displayEntryTypeLabel(unit)} - ${familyLabel(animal.family)}`, x + 128, y + 84, w - 144 - headerReserve, "800 12px Inter, sans-serif", themeColor("muted", "#6a4b35"), 8);
-    drawRarityBadge(x + 128, y + 99, animal.rarity, "small");
-    drawTraitChips(animal.traits || [], x + 196, y + 99, w - 210 - headerReserve, { maxRows: 2, fontSize: 8, minWidth: 38, rowHeight: 16 });
+    fitCodexText(`${displayRoleLabel(animal.role) || displayEntryTypeLabel(unit)} - ${familyLabel(animal.family)}`, headerX, y + 84, headerTextW, "800 12px Inter, sans-serif", themeColor("muted", "#6a4b35"), 8);
+    drawRarityBadge(headerX, y + 99, animal.rarity, "small");
+    drawTraitChips(animal.traits || [], traitX, y + 99, traitW, { maxRows: 2, fontSize: 8, minWidth: 38, rowHeight: 16 });
 
     const metricY = y + 154;
     drawInfoMetric("ATK", unit.atk, x + 20, metricY, 56);
@@ -19760,11 +19773,45 @@
     }
   }
 
+  function hasActiveTimedVisuals() {
+    return Boolean(
+      state.phaseTransition ||
+      state.rebootTransition ||
+      state.menuRebootTransition ||
+      state.finalVictoryTransition ||
+      state.shopReturnStaticTransition ||
+      state.finalTabsStoryTransition ||
+      state.postGiraffeHorrorTransition ||
+      state.level10RevealCutscene ||
+      state.activeStory?.transition ||
+      state.activeStory?.beatTransition ||
+      Object.values(state.modalTransitions || {}).some(Boolean) ||
+      (state.shopSlotTransitions || []).some(Boolean) ||
+      state.realityBreakTimer > 0 ||
+      state.particles.length > 0
+    );
+  }
+
+  function shouldRenderContinuously() {
+    if (state.phase === "battle") return true;
+    if (state.phase === "victoryCutscene") return true;
+    if (state.drag || state.optionsMenu.dragSlider || state.codexPreview?.dragging) return true;
+    if (realityBroken()) return true;
+    return hasActiveTimedVisuals();
+  }
+
   function gameLoop(now) {
     const dt = Math.min(0.05, ((now || 0) - state.lastTime) / 1000 || 1 / 60);
     state.lastTime = now || 0;
+    const wasContinuous = shouldRenderContinuously();
     update(dt);
-    draw();
+    const isContinuous = shouldRenderContinuously();
+    lastRenderContinuous = isContinuous;
+    if (renderDirty || wasContinuous || isContinuous) {
+      drawFrame();
+    } else {
+      skippedDrawCount += 1;
+    }
     requestAnimationFrame(gameLoop);
   }
 
@@ -19826,6 +19873,16 @@
       gold: state.gold,
       hearts: state.hearts,
       message: state.message,
+      rendering: {
+        backingScale: Number(BACKING_SCALE.toFixed(2)),
+        touchFirst: isTouchFirstDevice,
+        dirty: renderDirty,
+        assetDrawPending,
+        continuous: shouldRenderContinuously(),
+        lastContinuous: lastRenderContinuous,
+        drawCount,
+        skippedDrawCount,
+      },
       music: {
         scene: gameMusicSceneKey(),
         trackId: musicTrack?.id || null,
@@ -21114,7 +21171,7 @@
   window.advanceTime = (ms) => {
     const steps = Math.max(1, Math.round(ms / (1000 / 60)));
     for (let i = 0; i < steps; i++) update(1 / 60);
-    draw();
+    drawFrame();
     return renderGameToText();
   };
   window.__foodAnimals = {
@@ -21200,15 +21257,36 @@
 
   canvas.addEventListener("pointerdown", armGameSfx);
   canvas.addEventListener("pointerdown", armGameMusic);
-  canvas.addEventListener("pointerdown", onPointerDown);
-  canvas.addEventListener("pointermove", onPointerMove);
-  canvas.addEventListener("pointerup", onPointerUp);
-  canvas.addEventListener("pointercancel", onPointerCancel);
-  canvas.addEventListener("pointerleave", onPointerLeave);
-  canvas.addEventListener("wheel", onWheel, { passive: false });
+  canvas.addEventListener("pointerdown", (event) => {
+    onPointerDown(event);
+    requestDraw();
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    onPointerMove(event);
+    requestDraw();
+  });
+  canvas.addEventListener("pointerup", (event) => {
+    onPointerUp(event);
+    requestDraw();
+  });
+  canvas.addEventListener("pointercancel", (event) => {
+    onPointerCancel(event);
+    requestDraw();
+  });
+  canvas.addEventListener("pointerleave", (event) => {
+    onPointerLeave(event);
+    requestDraw();
+  });
+  canvas.addEventListener("wheel", (event) => {
+    onWheel(event);
+    requestDraw();
+  }, { passive: false });
   window.addEventListener("keydown", armGameSfx);
   window.addEventListener("keydown", armGameMusic);
-  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keydown", (event) => {
+    onKeyDown(event);
+    requestDraw();
+  });
   document.addEventListener("visibilitychange", pauseGameMusicForHiddenTab);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) saveCurrentRunSilently();
@@ -21232,6 +21310,6 @@
     realityBroken() ? REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC : COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
   ]);
   ensureEnemyPreview();
-  draw();
+  drawFrame();
   requestAnimationFrame(gameLoop);
 })();
