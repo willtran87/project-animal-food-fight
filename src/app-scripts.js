@@ -106,9 +106,8 @@
       throw new Error(`Unknown Food Animals script entry: ${entryName || "(missing)"}`);
     }
     document.documentElement.dataset.scriptEntry = entry;
-    for (const [name, version] of scripts) {
-      await loadScript(name, version);
-    }
+    document.documentElement.dataset.scriptLoadMode = "ordered-parallel";
+    await Promise.all(scripts.map(([name, version]) => loadScript(name, version)));
     document.documentElement.dataset.scriptEntryReady = "true";
   }
 
