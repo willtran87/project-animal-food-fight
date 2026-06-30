@@ -13,13 +13,13 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `runtime/status-chalk-course-v1.png`, `runtime/status-chalk-coins-v1.png`, and `runtime/status-chalk-health-v1.png` - generated blank chalk status boards for the top HUD.
 - `runtime/battle-speed-chalk-board-v1.png` - generated blank chalk board for the battle speed control.
 - `runtime/chalk-sign-restart-v1.png` - generated defeated-state restart chalk sign.
-- `runtime/cozy-awning-transition-v1.png` - generated transparent market awning used for cozy reward-to-shop transitions.
-- `runtime/cozy-battle-deploy-overlay-v2.png` - active generated transparent straight-on placemat frame used behind live battle-start deploy text in cozy mode.
+- `runtime/cozy-awning-transition-v1.webp` - high-quality WebP runtime copy of the generated transparent market awning used for cozy reward-to-shop transitions.
+- `runtime/cozy-battle-deploy-overlay-v2.webp` - high-quality WebP runtime copy of the generated transparent straight-on placemat frame used behind live battle-start deploy text in cozy mode.
 - `runtime/cozy-battle-deploy-overlay-v1.png` - first cozy deploy placemat frame, retained as a superseded draft because it read as angled.
 - `runtime/horror-battle-deploy-overlay-v1.png` - generated transparent command-console frame used behind live battle-start deploy text in horror/war mode.
-- `runtime/transition-title-pattern-set-v1.png` / `runtime/transition-title-deploying-wave-v1.png` - active generated transparent word art used by the centered deploy transition.
-- `runtime/transition-title-pattern-holds-v1.png` / `runtime/transition-title-pattern-breaks-v1.png` - active generated transparent cozy word art used by battle result transitions.
-- `runtime/transition-title-run-over-v2.png` - active generated transparent cozy game-over word art, regenerated after v1 read as horror/war text.
+- `runtime/transition-title-pattern-set-v1.webp` / `runtime/transition-title-deploying-wave-v1.png` - active generated transparent word art used by the centered deploy transition.
+- `runtime/transition-title-pattern-holds-v1.webp` / `runtime/transition-title-pattern-breaks-v1.webp` - active high-quality WebP cozy word art used by battle result transitions.
+- `runtime/transition-title-run-over-v2.webp` - active high-quality WebP cozy game-over word art, regenerated after v1 read as horror/war text.
 - `runtime/transition-title-relay-opened-v2.png` / `runtime/transition-title-hull-breach-v2.png` / `runtime/transition-title-system-down-v2.png` - active generated transparent horror/war result word art, restyled to match the acid-green `DEPLOYING WAVE` combat-start title.
 - `runtime/transition-title-relay-opened-v1.png` / `runtime/transition-title-hull-breach-v1.png` / `runtime/transition-title-system-down-v1.png` - first horror result title pass, retained as superseded drafts because the grey metal treatment did not match the combat-start alert style.
 - `runtime/transition-title-plates-up-v1.png` / `runtime/transition-title-course-cleared-v1.png` / `runtime/transition-title-service-lost-v1.png` / `runtime/transition-title-target-cleared-v1.png` / `runtime/transition-title-unit-loss-v1.png` / `runtime/transition-title-run-over-v1.png` - second title-art pass, retained as superseded drafts after the transition copy moved to tighter story terms and `RUN OVER` was regenerated in the cozy style.
@@ -55,10 +55,10 @@ Generated UI icons use a chroma-key source, transparent intermediate, and packed
 - `transparent/chalk-sign-restart-v1-transparent.png` - magenta key removed, then cropped into the runtime restart-sign PNG.
 - `source/cozy-awning-transition-v1-chromakey.png` - built-in image generation source for the cozy reward-return awning on a flat green key.
 - `transparent/cozy-awning-transition-v1-transparent.png` - green key removed with `remove_chroma_key.py`.
-- `runtime/cozy-awning-transition-v1.png` - transparent runtime copy used by `game.js`; no text, no coins, food motifs only.
+- `runtime/cozy-awning-transition-v1.webp` - high-quality WebP runtime copy used by `game.js`; no text, no coins, food motifs only.
 - `source/cozy-battle-deploy-overlay-v2-chromakey.png` / `source/cozy-battle-deploy-overlay-v1-chromakey.png` / `source/horror-battle-deploy-overlay-v1-chromakey.png` - built-in image generation sources for the text-free battle-start deploy frames on flat magenta keys.
 - `transparent/cozy-battle-deploy-overlay-v2-transparent.png` / `transparent/cozy-battle-deploy-overlay-v1-transparent.png` / `transparent/horror-battle-deploy-overlay-v1-transparent.png` - magenta key removed with `remove_chroma_key.py`.
-- `runtime/cozy-battle-deploy-overlay-v2.png` / `runtime/horror-battle-deploy-overlay-v1.png` - active transparent runtime copies used by `game.js`; all deploy text remains canvas-rendered live.
+- `runtime/cozy-battle-deploy-overlay-v2.webp` / `runtime/horror-battle-deploy-overlay-v1.png` - active transparent runtime copies used by `game.js`; all deploy text remains canvas-rendered live.
 - `source/transition-title-*-chromakey.png` - built-in image generation sources for deploy/result title word art on flat magenta keys.
 - `transparent/transition-title-*-transparent.png` - magenta key removed with `remove_chroma_key.py`.
 - `runtime/transition-title-*.png` - transparent cropped title art used by `game.js`, with canvas text fallbacks preserved if assets are not ready.

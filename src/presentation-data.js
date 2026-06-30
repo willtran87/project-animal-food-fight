@@ -193,16 +193,16 @@
 
   const BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-picnic-blanket-v1.webp?v=3";
   const REALITY_BATTLE_FIELD_BG_SRC = "assets/ui/runtime/battle-field-war-grid-v1.webp?v=1";
-  const COZY_AWNING_TRANSITION_SRC = "assets/ui/runtime/cozy-awning-transition-v1.png?v=1";
-  const COZY_BATTLE_DEPLOY_OVERLAY_SRC = "assets/ui/runtime/cozy-battle-deploy-overlay-v2.png?v=1";
+  const COZY_AWNING_TRANSITION_SRC = "assets/ui/runtime/cozy-awning-transition-v1.webp?v=2";
+  const COZY_BATTLE_DEPLOY_OVERLAY_SRC = "assets/ui/runtime/cozy-battle-deploy-overlay-v2.webp?v=2";
   const REALITY_BATTLE_DEPLOY_OVERLAY_SRC = "assets/ui/runtime/horror-battle-deploy-overlay-v1.png?v=1";
-  const COZY_BATTLE_DEPLOY_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-set-v1.png?v=1";
+  const COZY_BATTLE_DEPLOY_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-set-v1.webp?v=2";
   const REALITY_BATTLE_DEPLOY_TITLE_SRC = "assets/ui/runtime/transition-title-deploying-wave-v1.png?v=1";
-  const COZY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-holds-v1.png?v=1";
-  const COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-breaks-v1.png?v=1";
+  const COZY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-holds-v1.webp?v=2";
+  const COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-pattern-breaks-v1.webp?v=2";
   const REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC = "assets/ui/runtime/transition-title-relay-opened-v2.png?v=1";
   const REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC = "assets/ui/runtime/transition-title-hull-breach-v2.png?v=1";
-  const COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-run-over-v2.png?v=1";
+  const COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-run-over-v2.webp?v=2";
   const REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC = "assets/ui/runtime/transition-title-system-down-v2.png?v=1";
   const BATTLE_SPEED_CHALK_SRC = "assets/ui/runtime/battle-speed-chalk-board-v1.webp";
   const RESTART_CHALK_SIGN_SRC = "assets/ui/runtime/chalk-sign-restart-v1.webp";

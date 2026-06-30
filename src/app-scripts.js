@@ -61,7 +61,7 @@
       ["codex-canvas", "h-d9fb7a89483a"],
       ["transition-canvas", "h-fbe83b8e2c90"],
       ["story-canvas", "h-d680f38fa832"],
-      ["presentation-data", "h-9b9630e41561"],
+      ["presentation-data", "h-0f01b1bd1de4"],
       ["copy-data", "h-8fdddff7791a"],
       ["story-data", "h-51da772c2360"],
       ["trait-arena-data", "h-2e5155bd22b2"],
