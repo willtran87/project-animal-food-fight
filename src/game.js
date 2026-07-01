@@ -2025,7 +2025,8 @@
     state.realityBreakTimer = REALITY_BREAK_REVEAL_SECONDS;
     state.message = copy("ui.reality.triggerMessage", "ILLUSION FAILURE - combat layer exposed");
     state.log.unshift(copy("ui.reality.triggerLog", "Illusion failed: future war layer exposed"));
-    playGameSfx("reality-break", { theme: "horror", volume: 1.1 });
+    playGameSfx("reality-break-stinger", { theme: "horror", volume: 1.1 });
+    playGameSfx("reality-break", { theme: "horror", volume: 0.45, rate: 0.86 });
   }
 
   function startPostGiraffeHorrorTransition() {
@@ -2650,6 +2651,13 @@
       .map((unit) => displayCatalogShort(unit));
   }
 
+  function ownedFavoriteUsersForItem(itemId) {
+    return allOwnedRefs()
+      .map((ref) => ref.unit)
+      .filter((unit) => FAVORITE_TOPPINGS[unit.typeId]?.itemId === itemId && !hasFavoriteTopping(unit))
+      .map((unit) => displayUnitShort(unit));
+  }
+
   function randomArenaId(excludeId = null) {
     const pool = ARENAS.filter((arena) => arena.id !== excludeId);
     const choices = pool.length ? pool : ARENAS;
@@ -3161,6 +3169,250 @@
     const opportunity = shopEntryMergeOpportunity(entry);
     if (!opportunity || !hasShopMergeTarget(entry)) return null;
     return opportunity;
+  }
+
+  function itemHasAnyValue(item, props) {
+    return props.some((prop) => item?.[prop]);
+  }
+
+  function itemRecommendationTags(item, shopIndex = null) {
+    if (!isItem(item)) return [];
+    const tags = [];
+    const addTag = (label, body, tone = "neutral") => {
+      if (!tags.some((tag) => tag.label === label)) tags.push({ label, body, tone });
+    };
+    if (shopIndex !== null && shopSlotMergeOpportunity(shopIndex)) {
+      addTag("MERGE", `Completes a ${itemDisplayShort(item)} item merge.`, "merge");
+    }
+    const favoriteUsers = ownedFavoriteUsersForItem(item.id);
+    if (favoriteUsers.length) {
+      addTag("FAV", `${favoriteUsers.slice(0, 2).join(", ")} ${favoriteUsers.length > 1 ? "prefer" : "prefers"} this topping.`, "favorite");
+    }
+    if (isDrink(item) && item.pairTraits?.length) {
+      const pairedUnits = allOwnedRefs().filter((ref) => unitMatchesDrinkPair(ref.unit, item)).map((ref) => displayUnitShort(ref.unit));
+      if (pairedUnits.length) addTag("PAIR", `${drinkPairLabel(item)} drink pair for ${pairedUnits.slice(0, 2).join(", ")}.`, "pair");
+    }
+    if (shopIndex !== null && availableItemDiscount() > 0 && purchaseCost(item, shopIndex) < saleAdjustedEntryCost(item, shopIndex)) {
+      addTag("DISC", `First-item discount applies: -${availableItemDiscount()} ${currencyTerm({ lower: true })}.`, "economy");
+    }
+    if (itemHasAnyValue(item, [
+      "maxHpBonusPct",
+      "drinkMaxHpPct",
+      "frontRowDamageReductionPct",
+      "onHitShieldPct",
+      "onAttackShieldPct",
+      "deathSaveShieldPct",
+      "decoyHpPct",
+      "statusDamageReductionPct",
+      "shieldCapBonusPct",
+      "firstHitRedirect",
+    ])) {
+      addTag("TANK", "Durability or shield scaling for front-line units.", "defense");
+    }
+    if (itemHasAnyValue(item, [
+      "damageBonusPct",
+      "attackSpeedPct",
+      "drinkAttackSpeedPct",
+      "burnDamagePct",
+      "splashDamagePct",
+      "pierceDamagePct",
+      "executeSplashBonusPct",
+      "backRowTargeting",
+      "firstAttacksBonusPct",
+      "shieldedAttackBonusPct",
+      "shieldedTargetDamagePct",
+      "teamVulnerabilityPct",
+    ])) {
+      addTag("CARRY", "Damage, speed, or targeting for your main attacker.", "offense");
+    }
+    if (itemHasAnyValue(item, [
+      "supportBonusPct",
+      "overhealShieldPct",
+      "supportHastePct",
+      "receivedSupportSharePct",
+      "extraAdjacentHealPct",
+      "teamHastePct",
+      "supportRowEchoPct",
+      "teamOverhealShieldPct",
+      "adjacentStartShieldPct",
+      "adjacentPulseShieldPct",
+      "adjacentPulseAttackBuffPct",
+      "adjacentStartAttackBuffPct",
+      "supportAttackBuffPct",
+    ])) {
+      addTag("SUP", "Amplifies healing, shielding, haste, or adjacent allies.", "support");
+    }
+    if (itemHasAnyValue(item, [
+      "sellBonusGold",
+      "surviveGold",
+      "firstItemDiscountGold",
+      "sameLineShopChancePct",
+      "mergeProgressBonus",
+      "economyPulseShieldPct",
+      "economyPulseAttackBoostPct",
+    ])) {
+      addTag("ECO", "Improves shop value, future buys, or economy pulses.", "economy");
+    }
+    if (itemHasAnyValue(item, [
+      "cooldownDelay",
+      "attackSlowPct",
+      "antiSupportPct",
+      "markDamagePct",
+      "statusDurationBonusPct",
+      "statusDurationReductionPct",
+      "firstDebuffCleanseHealPct",
+      "drinkPulseAttackSlowPct",
+      "drinkPulseEnemyDamagePct",
+    ])) {
+      addTag("CTRL", "Adds disruption, slows, marks, or status protection.", "control");
+    }
+    if (isDrink(item) && item.drinkPulseType) {
+      addTag("PULSE", drinkPulseSpecLine(item, drinkPulseUnlocked(item)) || "Timed drink pulse bonus.", "support");
+    }
+    return tags.slice(0, 3);
+  }
+
+  function activeShopItemCarrierPreview() {
+    const previewFrom = (source, ref) => {
+      if (!ref || ref.area !== "shop") return null;
+      const item = shopEntryAt(ref.index);
+      return isItem(item) ? { source, shopIndex: ref.index, item, carriers: itemCarrierRecommendations(item, ref.index) } : null;
+    };
+    if (state.drag?.area === "shop" && isItem(state.drag.unit)) {
+      return { source: "drag", shopIndex: state.drag.index, item: state.drag.unit, carriers: itemCarrierRecommendations(state.drag.unit, state.drag.index) };
+    }
+    const hoverRef = state.hover?.area === "shop" || state.hover?.area === "shopFreeze" ? { area: "shop", index: state.hover.index } : null;
+    const hovered = previewFrom("hover", hoverRef);
+    if (hoverRef && !hovered) return null;
+    return hovered || previewFrom("selected", state.selected);
+  }
+
+  function itemCarrierRecommendations(item, shopIndex = null) {
+    if (!isItem(item)) return [];
+    return allOwnedRefs()
+      .map((ref) => itemCarrierScore(item, ref, shopIndex))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score || a.unitName.localeCompare(b.unitName))
+      .slice(0, 3)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+  }
+
+  function itemCarrierScore(item, ref, shopIndex = null) {
+    const unit = ref.unit;
+    const reasons = [];
+    let score = 0;
+    const add = (points, label) => {
+      if (!points) return;
+      score += points;
+      if (label && !reasons.includes(label)) reasons.push(label);
+    };
+    if (!unit || !isUnit(unit)) return { ...ref, unitName: "", score: 0, reasons };
+    if (isTopping(item) && unit.item) return { ...ref, unitName: displayUnitShort(unit), score: 0, reasons };
+    if (FAVORITE_TOPPINGS[unit.typeId]?.itemId === item.id) add(120, "favorite topping");
+    if (isDrink(item) && unitMatchesDrinkPair(unit, item)) add(90, `${drinkPairLabel(item)} pair`);
+    const roleGroup = foodRoleGroup(unit);
+    const role = `${unit.role || ""}`.toLowerCase();
+    if (itemRoleMatchesUnit(item, unit, roleGroup, role, "defense")) add(36, "durability fit");
+    if (itemRoleMatchesUnit(item, unit, roleGroup, role, "offense")) add(36, "damage fit");
+    if (itemRoleMatchesUnit(item, unit, roleGroup, role, "support")) add(34, "support fit");
+    if (itemRoleMatchesUnit(item, unit, roleGroup, role, "control")) add(32, "control fit");
+    if (itemRoleMatchesUnit(item, unit, roleGroup, role, "economy")) add(30, "economy fit");
+    if (item.attackSpeedPct || item.drinkAttackSpeedPct || item.firstAttacksBonusPct || item.timedHastePct) {
+      add(Math.min(24, Math.round((unit.atk || 0) * 0.8)), "attack speed value");
+    }
+    if (item.abilityPowerBonusPct || item.drinkAbilityPowerPct) {
+      add(roleGroup === "support" || roleGroup === "control" ? 22 : 12, "ability power value");
+    }
+    if (item.maxHpBonusPct || item.drinkMaxHpPct || item.onHitShieldPct || item.frontRowDamageReductionPct) {
+      add(Math.min(22, Math.round((unit.maxHp || 0) / 18)), "high HP value");
+    }
+    if (shopIndex !== null && purchaseCost(item, shopIndex) === 0) add(8, "free buy");
+    return {
+      area: ref.area,
+      index: ref.index,
+      unitName: displayUnitShort(unit),
+      lineName: displayUnitLineName(unit),
+      role: displayRoleLabel(unit.role),
+      score,
+      reasons: reasons.slice(0, 3),
+    };
+  }
+
+  function itemRoleMatchesUnit(item, unit, roleGroup, role, fit) {
+    if (fit === "defense") {
+      return itemHasAnyValue(item, [
+        "maxHpBonusPct",
+        "drinkMaxHpPct",
+        "frontRowDamageReductionPct",
+        "onHitShieldPct",
+        "onAttackShieldPct",
+        "deathSaveShieldPct",
+        "decoyHpPct",
+        "statusDamageReductionPct",
+        "shieldCapBonusPct",
+        "firstHitRedirect",
+      ]) && (roleGroup === "support" || roleGroup === "scaling" || /guard|guardian|tank|thorn|shell|brawler|breaker/.test(role) || unit.ability === "taunt_guard");
+    }
+    if (fit === "offense") {
+      return itemHasAnyValue(item, [
+        "damageBonusPct",
+        "attackSpeedPct",
+        "drinkAttackSpeedPct",
+        "abilityPowerBonusPct",
+        "drinkAbilityPowerPct",
+        "burnDamagePct",
+        "splashDamagePct",
+        "pierceDamagePct",
+        "executeSplashBonusPct",
+        "backRowTargeting",
+        "firstAttacksBonusPct",
+        "shieldedAttackBonusPct",
+        "shieldedTargetDamagePct",
+        "teamVulnerabilityPct",
+      ]) && (roleGroup === "damage" || roleGroup === "scaling" || /carry|finisher|volley|brawler|breaker|crunch|splash|dressing/.test(role));
+    }
+    if (fit === "support") {
+      return itemHasAnyValue(item, [
+        "supportBonusPct",
+        "overhealShieldPct",
+        "supportHastePct",
+        "receivedSupportSharePct",
+        "extraAdjacentHealPct",
+        "teamHastePct",
+        "supportRowEchoPct",
+        "teamOverhealShieldPct",
+        "adjacentStartShieldPct",
+        "adjacentPulseShieldPct",
+        "adjacentPulseAttackBuffPct",
+        "adjacentStartAttackBuffPct",
+        "supportAttackBuffPct",
+      ]) && roleGroup === "support";
+    }
+    if (fit === "control") {
+      return itemHasAnyValue(item, [
+        "cooldownDelay",
+        "attackSlowPct",
+        "antiSupportPct",
+        "markDamagePct",
+        "statusDurationBonusPct",
+        "statusDurationReductionPct",
+        "firstDebuffCleanseHealPct",
+        "drinkPulseAttackSlowPct",
+        "drinkPulseEnemyDamagePct",
+      ]) && roleGroup === "control";
+    }
+    if (fit === "economy") {
+      return itemHasAnyValue(item, [
+        "sellBonusGold",
+        "surviveGold",
+        "firstItemDiscountGold",
+        "sameLineShopChancePct",
+        "mergeProgressBonus",
+        "economyPulseShieldPct",
+        "economyPulseAttackBoostPct",
+      ]) && roleGroup === "economy";
+    }
+    return false;
   }
 
   function ownedSlotShopMergeOpportunity(area, index) {
@@ -6520,7 +6772,7 @@
     state.selected = null;
     state.drag = null;
     state.message = options.message || (horror ? "Signal stabilizing" : "Market restocking");
-    playGameSfx("transition");
+    playGameSfx("shop-return-static", { theme: horror ? "horror" : "cozy", volume: horror ? 0.95 : 0.78, rate: normalMenuReturn ? 0.92 : 1 });
     return true;
   }
 
@@ -6553,7 +6805,8 @@
     state.hover = null;
     state.selected = null;
     state.message = "Command lattice severed. Nursery sector unlocked.";
-    playGameSfx("victory", { theme: "horror", volume: 1.05 });
+    playGameSfx("final-epilogue", { theme: "horror", volume: 1.05 });
+    playGameSfx("victory", { theme: "horror", volume: 0.45, rate: 0.86 });
     return true;
   }
 
@@ -8992,6 +9245,7 @@
       drawRealityOverlay();
       drawRealityRevealDistortionOverlay();
       drawMergeOpportunityOverlay();
+      drawItemCarrierPreviewOverlay();
       if (state.phase === "prep" && !state.codexOpen) drawCodexMenuButton();
       drawStoryConversationOverlay();
       drawLevel10RevealCutsceneOverlay();
@@ -11843,6 +12097,99 @@
     });
   }
 
+  function drawShopRecommendationTags(item, x, y, w, h, shopIndex) {
+    const tags = itemRecommendationTags(item, shopIndex).slice(0, 2);
+    if (!tags.length) return;
+    const horror = realityBroken();
+    const tagW = 31;
+    const tagH = 10;
+    const tagX = x + w / 2 - tagW - 6;
+    const startY = y - h / 2 + 24;
+    const colors = {
+      merge: horror ? ["rgba(12, 40, 23, 0.94)", "#5fff75", "#d9ffe4"] : ["rgba(207, 255, 221, 0.94)", "#16974e", "#0b6a38"],
+      favorite: horror ? ["rgba(44, 24, 12, 0.94)", "#ffd15b", "#fff0ba"] : ["rgba(255, 239, 185, 0.96)", "#c27619", "#663a0d"],
+      pair: horror ? ["rgba(11, 38, 42, 0.94)", "#55f0ff", "#d6fbff"] : ["rgba(213, 248, 255, 0.95)", "#238093", "#174b56"],
+      offense: horror ? ["rgba(48, 11, 20, 0.94)", "#ff4867", "#ffe1e7"] : ["rgba(255, 222, 216, 0.95)", "#d9573c", "#782616"],
+      defense: horror ? ["rgba(13, 31, 45, 0.94)", "#8dc6ff", "#e3f2ff"] : ["rgba(222, 238, 255, 0.95)", "#4776b2", "#254464"],
+      support: horror ? ["rgba(20, 38, 16, 0.94)", "#baff6d", "#efffd9"] : ["rgba(232, 255, 216, 0.95)", "#5d9a2f", "#31591b"],
+      economy: horror ? ["rgba(43, 34, 7, 0.94)", "#ffe16e", "#fff7c8"] : ["rgba(255, 244, 202, 0.96)", "#b98317", "#60420b"],
+      control: horror ? ["rgba(33, 16, 48, 0.94)", "#d5a1ff", "#f5e5ff"] : ["rgba(240, 226, 255, 0.95)", "#8051a8", "#4c2e67"],
+      neutral: horror ? ["rgba(7, 18, 20, 0.94)", "#9efaaa", "#eaffef"] : ["rgba(255, 253, 232, 0.96)", "rgba(22, 57, 45, 0.34)", "#16392d"],
+    };
+    ctx.save();
+    tags.forEach((tag, index) => {
+      const palette = colors[tag.tone] || colors.neutral;
+      const tagY = startY + index * (tagH + 3);
+      roundedRect(tagX, tagY, tagW, tagH, horror ? 2 : 5);
+      ctx.fillStyle = palette[0];
+      ctx.fill();
+      ctx.strokeStyle = palette[1];
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      fitText(tag.label, tagX + tagW / 2, tagY + 7.2, tagW - 4, "900 6.5px Inter, sans-serif", palette[2], "center");
+      registerTooltip(tagX, tagY, tagW, tagH, {
+        title: tag.label,
+        body: tag.body,
+      });
+    });
+    ctx.restore();
+  }
+
+  function drawItemCarrierPreviewOverlay() {
+    if (state.phase !== "prep" || state.codexOpen) return;
+    const preview = activeShopItemCarrierPreview();
+    if (!preview?.carriers?.length) return;
+    preview.carriers.forEach((carrier) => drawItemCarrierHighlight(carrier, preview.item));
+  }
+
+  function carrierSlotRect(carrier) {
+    const slot = carrier.area === "board" ? boardSlots[carrier.index] : carrier.area === "bench" ? benchSlots[carrier.index] : null;
+    if (!slot) return null;
+    return { x: slot.x - 36, y: slot.y - 36, w: 72, h: 72, cx: slot.x, cy: slot.y };
+  }
+
+  function drawItemCarrierHighlight(carrier, item) {
+    const rect = carrierSlotRect(carrier);
+    if (!rect) return;
+    const horror = realityBroken();
+    const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 180 + carrier.rank * 0.7);
+    const rankOne = carrier.rank === 1;
+    const stroke = horror
+      ? rankOne ? "#7dff7a" : "rgba(101, 255, 109, 0.72)"
+      : rankOne ? "#16974e" : "rgba(74, 158, 104, 0.72)";
+    const fill = horror
+      ? rankOne ? "rgba(70, 255, 99, 0.13)" : "rgba(70, 255, 99, 0.08)"
+      : rankOne ? "rgba(207, 255, 221, 0.22)" : "rgba(231, 255, 217, 0.16)";
+    ctx.save();
+    ctx.shadowColor = rankOne
+      ? horror ? "rgba(101, 255, 109, 0.55)" : "rgba(37, 186, 94, 0.48)"
+      : "rgba(37, 186, 94, 0.25)";
+    ctx.shadowBlur = rankOne ? 12 + pulse * 6 : 7 + pulse * 4;
+    roundedRect(rect.x - 4, rect.y - 4, rect.w + 8, rect.h + 8, 10);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = rankOne ? 3 : 2;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    const badgeW = rankOne ? 38 : 27;
+    const badgeH = 14;
+    const badgeX = rect.x + rect.w - badgeW + 3;
+    const badgeY = rect.y - 8;
+    roundedRect(badgeX, badgeY, badgeW, badgeH, horror ? 2 : 6);
+    ctx.fillStyle = horror ? "rgba(5, 24, 17, 0.96)" : "rgba(207, 255, 221, 0.98)";
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    fitText(rankOne ? "BEST" : "FIT", badgeX + badgeW / 2, badgeY + 10, badgeW - 5, "900 7px Inter, sans-serif", horror ? "#d9ffe4" : "#0b6a38", "center");
+    ctx.restore();
+    registerTooltip(rect.x - 6, rect.y - 8, rect.w + 12, rect.h + 16, {
+      title: `${carrier.unitName} + ${itemDisplayShort(item)}`,
+      body: `${rankOne ? "Best carrier" : "Strong carrier"}: ${carrier.reasons.join(", ") || "good stat fit"}.`,
+    });
+  }
+
   function drawOwnedMergeOpportunityMarker(x, y, w, h, area, index) {
     if (state.drag) return;
     const opportunity = ownedSlotShopMergeOpportunity(area, index);
@@ -12351,6 +12698,7 @@
       const shopPrimary = themeColor("primary", "#16392d");
       const shopMuted = themeColor("muted", "#7c452d");
       const bottom = y + h / 2;
+      drawShopRecommendationTags(item, x, y, w, h, options.shopIndex);
       fitText(itemDisplayShort(item), x, bottom - 57, w - 14, "800 12px Inter, sans-serif", shopPrimary);
       fitText(itemCardText(item), x, bottom - 36, w - 14, "700 10px Inter, sans-serif", shopMuted);
       drawUpgradeStars(itemTier(item.tier), x, bottom - 24, 7, "center");
@@ -20297,6 +20645,7 @@
       selected: state.selected,
       selectedEntry: getSelectedRef()?.entry ? entryText(getSelectedRef().entry) : null,
       selectedUnit: getSelectedRef()?.unit ? unitText(getSelectedRef().unit) : null,
+      itemCarrierPreview: itemCarrierPreviewText(activeShopItemCarrierPreview()),
       drag: state.drag
         ? {
             area: state.drag.area,
@@ -20318,6 +20667,30 @@
     return unitText(entry);
   }
 
+  function itemCarrierPreviewText(preview) {
+    if (!preview) return null;
+    return {
+      source: preview.source,
+      shopIndex: preview.shopIndex,
+      item: {
+        id: preview.item.id,
+        short: itemDisplayShort(preview.item),
+        type: preview.item.type,
+        tier: itemTier(preview.item.tier),
+      },
+      carriers: (preview.carriers || []).map((carrier) => ({
+        rank: carrier.rank,
+        area: carrier.area,
+        index: carrier.index,
+        unitName: carrier.unitName,
+        lineName: carrier.lineName,
+        role: carrier.role,
+        score: carrier.score,
+        reasons: [...carrier.reasons],
+      })),
+    };
+  }
+
   function shopEntryText(entry, index) {
     const mergeOpportunity = shopSlotMergeOpportunity(index);
     return {
@@ -20332,6 +20705,8 @@
       shopMergePhantomProgress: mergeOpportunity?.phantomProgress || 0,
       shopMergeRequired: mergeOpportunity?.required || 3,
       shopMergeText: mergeOpportunity?.text || null,
+      recommendationTags: isItem(entry) ? itemRecommendationTags(entry, index) : [],
+      carrierRecommendations: isItem(entry) ? itemCarrierRecommendations(entry, index) : [],
     };
   }
 
@@ -20478,6 +20853,7 @@
       description: itemDescriptionText(item),
       specs: itemSpecLines(item).map(themedGeneratedText),
       favoriteFor: favoriteUsersForItem(item.id),
+      recommendationTags: itemRecommendationTags(item),
     };
   }
 

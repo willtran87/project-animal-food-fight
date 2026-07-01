@@ -3,6 +3,10 @@
   "private": true,
   "scripts": {
     "serve": "python -m http.server 8173",
+    "music:v2": "node tools/generate_music_v2_tracks.mjs",
+    "music:v2:local": "python tools/generate_local_music_v2.py",
+    "music:v3:local": "python tools/generate_local_music_v3.py",
+    "audio:transition-sfx": "python tools/generate_transition_sfx.py",
     "check:syntax": "node tools/check_syntax.mjs",
     "check:assets": "node tools/check_asset_references.mjs",
     "check:data": "node tools/check_data_integrity.mjs",

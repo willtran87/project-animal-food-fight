@@ -15,6 +15,26 @@ This folder contains prototype music loops used by the standalone start menu and
 - `horror-false-victory-loop-v1.wav` - horror-theme False Victory loop.
 - `horror-last-defeat-loop-v1.wav` - horror-theme Last Defeat loop.
 
+## V2 Comparison Tracks
+
+`music-v2-manifest.json` defines the ElevenLabs `music_v2` prompt set for direct comparison in `local-test-pages/music.html`.
+
+Generate the MP3s with:
+
+```powershell
+$env:ELEVENLABS_API_KEY="..."
+npm run music:v2
+```
+
+Without an ElevenLabs key, the local synthesized comparison set can be regenerated with:
+
+```powershell
+npm run music:v2:local
+npm run music:v3:local
+```
+
+The generated files use the same runtime names with version suffixes, such as `cozy-market-menu-loop-v2.mp3`, `cozy-market-menu-loop-v3.mp3`, and `horror-midnight-skirmish-loop-v3.mp3`. The music test page marks them as pending until the files exist.
+
 `start-menu.js` owns the current audio UI: music volume, SFX volume placeholder state, track selection, autoplay fallback state, and persisted settings under `harvest-friends:start-menu-settings:v1`.
 
 `game.js` reuses the saved music volume and picks tracks by scene:
@@ -33,11 +53,11 @@ This folder contains prototype music loops used by the standalone start menu and
 
 ## SFX
 
-`assets/audio/sfx/` contains paired cozy and horror variants for the first runtime SFX pass. Event hooks use generic IDs such as `buy`, `hit`, `merge`, or `ui-confirm`; `game.js` and `start-menu.js` choose the cozy or horror file from the active theme.
+`assets/audio/sfx/` contains paired cozy and horror variants for runtime SFX. Event hooks use generic IDs such as `buy`, `hit`, `merge`, or `ui-confirm`; `game.js` and `start-menu.js` choose the cozy or horror file from the active theme. Regenerate the bespoke transition cues with `npm run audio:transition-sfx`.
 
 Current SFX IDs:
 
 - UI: `ui-hover`, `ui-confirm`, `ui-back`, `invalid`, `ledger-tick`.
 - Shop and placement: `reroll`, `buy`, `sell`, `upgrade`, `freeze`, `pickup`, `drop`, `equip`, `merge`.
 - Combat and results: `battle-start`, `hit`, `shield`, `heal`, `control`, `ko`, `reward`, `victory`, `defeat`, `hazard-pulse`.
-- Transitions: `transition`, `reality-break`, `reboot`, `signal-static`.
+- Transitions: `transition`, `reality-break`, `reality-break-stinger`, `shop-return-static`, `final-epilogue`, `reboot`, `signal-static`.

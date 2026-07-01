@@ -10,6 +10,7 @@ The current build is a static HTML/CSS/JavaScript project. The default route ope
 - `local-test-pages/start-menu.html` loads `src/start-menu.js` / `styles/start-menu.css`, the direct local test route for the Harvest Friends start menu.
 - `local-test-pages/opening-vn.html` loads `src/opening-vn.js` / `styles/opening-vn.css`, the direct local test route for the opening/tutorial dialogue flow.
 - `local-test-pages/game.html` loads `src/game.js`, the playable auto-battler and all direct gameplay/test routes.
+- `local-test-pages/music.html` loads shared presentation/audio data for cycling through music loops.
 
 ## Local Development
 
@@ -37,6 +38,7 @@ The individual screens are also available at:
 http://127.0.0.1:8173/local-test-pages/start-menu.html
 http://127.0.0.1:8173/local-test-pages/opening-vn.html
 http://127.0.0.1:8173/local-test-pages/game.html
+http://127.0.0.1:8173/local-test-pages/music.html
 http://127.0.0.1:8173/local-test-pages/conversation-cozy.html
 http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 ```
@@ -44,6 +46,10 @@ http://127.0.0.1:8173/local-test-pages/conversation-horror.html
 ## Useful Routes
 
 - `/local-test-pages/start-menu.html?theme=horror` opens the horror/future-war side of the start menu, then Start Run enters the shared opening/tutorial flow.
+- `/local-test-pages/music.html?theme=horror&cycle=1` cycles through horror music loops; use `track=<id>` to jump to a specific loop.
+- `npm run music:v2` generates the v2 comparison loops from `assets/audio/music-v2-manifest.json` when `ELEVENLABS_API_KEY` is set.
+- `npm run music:v2:local` regenerates the current local synthesized v2 comparison loops without an external API key.
+- `npm run music:v3:local` regenerates the more complex local v3 comparison loops.
 - `/local-test-pages/game.html?smoke=basic` or `/local-test-pages/game.html?smoke=core-loop` seeds a deterministic smoke-test team.
 - `/local-test-pages/game.html?theme=cozy` starts in the cozy illusion layer but still allows the story reveal; use `/local-test-pages/game.html?reality=cozy` to force cozy.
 - `/local-test-pages/game.html?theme=horror` forces the horror/future-war layer.
@@ -220,6 +226,7 @@ When changing asset wiring, prefer checking both cozy and horror themes because 
 - `local-test-pages/game.html`, `styles/game.css`, `src/game.js`: playable game local test route.
 - `local-test-pages/start-menu.html`, `styles/start-menu.css`, `src/start-menu.js`: start menu local test route.
 - `local-test-pages/opening-vn.html`, `styles/opening-vn.css`, `src/opening-vn.js`: opening/tutorial VN local test route.
+- `local-test-pages/music.html`: direct music loop cycler.
 - `docs/`: project-level design and mapping notes.
 - `assets/`: runtime game art, source/intermediate asset pipeline outputs, audio, and design references.
 - `tools/`: local asset-processing utilities.

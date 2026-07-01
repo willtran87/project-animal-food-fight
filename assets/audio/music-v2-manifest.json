@@ -1,0 +1,105 @@
+{
+  "modelId": "music_v2",
+  "tracks": [
+    {
+      "id": "market-v2",
+      "originalId": "market",
+      "theme": "cozy",
+      "slot": "menu",
+      "label": "Sunny Market v2",
+      "file": "cozy-market-menu-loop-v2.mp3",
+      "musicLengthMs": 48000,
+      "prompt": "Instrumental seamless game menu loop for Harvest Friends, a cozy food-animal auto-battler. Warm sunny farmers market mood, playful marimba and pizzicato strings, soft brushed percussion, light acoustic bass, tiny kitchen percussion, inviting but not childish, clear loopable ending, no vocals."
+    },
+    {
+      "id": "prep-v2",
+      "originalId": "prep",
+      "theme": "cozy",
+      "slot": "prep",
+      "label": "Prep Counter v2",
+      "file": "cozy-prep-counter-loop-v2.mp3",
+      "musicLengthMs": 38000,
+      "prompt": "Instrumental seamless preparation-screen loop for a cozy food-animal strategy game. Gentle countertop rhythm, soft xylophone, muted upright piano, plucked strings, relaxed planning energy, curious and tidy, light kitchen taps as percussion, no vocals, loopable ending."
+    },
+    {
+      "id": "battle-v2",
+      "originalId": "battle",
+      "theme": "cozy",
+      "slot": "battle",
+      "label": "Picnic Skirmish v2",
+      "file": "cozy-picnic-skirmish-loop-v2.mp3",
+      "musicLengthMs": 36000,
+      "prompt": "Instrumental seamless battle loop for a cute-but-tactical picnic auto-battler. Bright tempo, hand percussion, pizzicato strings, toy piano accents, nimble bass, energetic without becoming frantic, whimsical combat momentum, no vocals, strong loopable groove."
+    },
+    {
+      "id": "victory-v2",
+      "originalId": "victory",
+      "theme": "cozy",
+      "slot": "victory",
+      "label": "Little Victory v2",
+      "file": "cozy-little-victory-loop-v2.mp3",
+      "musicLengthMs": 23000,
+      "prompt": "Instrumental short seamless victory loop for a cozy food-animal game. Warm small-win celebration, ukulele, glockenspiel, soft claps, gentle brass flourish, sunny and satisfying, restrained enough for a results screen, no vocals, loopable ending."
+    },
+    {
+      "id": "defeat-v2",
+      "originalId": "defeat",
+      "theme": "cozy",
+      "slot": "defeat",
+      "label": "Soft Defeat v2",
+      "file": "cozy-soft-defeat-loop-v2.mp3",
+      "musicLengthMs": 28000,
+      "prompt": "Instrumental seamless defeat loop for a cozy game, tender and encouraging rather than tragic. Soft felt piano, muted strings, distant music box, slow gentle rhythm, bittersweet but safe, leaves room to restart, no vocals, loopable ending."
+    },
+    {
+      "id": "horror-market-v2",
+      "originalId": "horror-market",
+      "theme": "horror",
+      "slot": "menu",
+      "label": "Ruined Market v2",
+      "file": "horror-ruined-market-loop-v2.mp3",
+      "musicLengthMs": 48000,
+      "prompt": "Instrumental seamless horror menu loop for a post-human automated food market. Low industrial drones, distant failing machinery, cold synth pulses, sparse metallic percussion, unsettling but usable for a menu, faint distorted market ambience, no vocals, loopable ending."
+    },
+    {
+      "id": "horror-prep-v2",
+      "originalId": "horror-prep",
+      "theme": "horror",
+      "slot": "prep",
+      "label": "Cold Prep Table v2",
+      "file": "horror-cold-prep-table-loop-v2.mp3",
+      "musicLengthMs": 38000,
+      "prompt": "Instrumental seamless planning loop for a cold post-human prep table in a strategy horror game. Refrigeration hum, restrained sub bass, surgical metallic ticks, distant warning tones, tense concentration, not too busy, no vocals, loopable ending."
+    },
+    {
+      "id": "horror-battle-v2",
+      "originalId": "horror-battle",
+      "theme": "horror",
+      "slot": "battle",
+      "label": "Midnight Skirmish v2",
+      "file": "horror-midnight-skirmish-loop-v2.mp3",
+      "musicLengthMs": 36000,
+      "prompt": "Instrumental seamless combat loop for a future-war food-machine horror auto-battler. Driving industrial percussion, pulsing dark synth bass, glitch hits, emergency-light rhythm, tense tactical momentum, aggressive but readable, no vocals, loopable ending."
+    },
+    {
+      "id": "horror-victory-v2",
+      "originalId": "horror-victory",
+      "theme": "horror",
+      "slot": "victory",
+      "label": "False Victory v2",
+      "file": "horror-false-victory-loop-v2.mp3",
+      "musicLengthMs": 23000,
+      "prompt": "Instrumental short seamless false-victory loop for a horror strategy game. Hollow triumph, detuned brass pad, cold choir-like synth without voices, slow machine pulse, achievement with dread underneath, no vocals, loopable ending."
+    },
+    {
+      "id": "horror-defeat-v2",
+      "originalId": "horror-defeat",
+      "theme": "horror",
+      "slot": "defeat",
+      "label": "Last Defeat v2",
+      "file": "horror-last-defeat-loop-v2.mp3",
+      "musicLengthMs": 28000,
+      "prompt": "Instrumental seamless defeat loop for a post-human machine-horror game. Deep mournful synth, distant metal stress, slow heartbeat-like pulse, cold ambience, final but not melodramatic, leaves space for UI, no vocals, loopable ending."
+    }
+  ]
+}

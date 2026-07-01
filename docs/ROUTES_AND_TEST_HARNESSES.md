@@ -10,6 +10,7 @@ This project has one root campaign entry and several direct local test pages. Th
 | `/local-test-pages/start-menu.html` | Direct start menu route. |
 | `/local-test-pages/opening-vn.html` | Direct opening/tutorial visual-novel route. |
 | `/local-test-pages/game.html` | Direct game canvas route. |
+| `/local-test-pages/music.html` | Direct music loop cycler route. |
 
 ```mermaid
 flowchart LR
@@ -17,12 +18,14 @@ flowchart LR
   Start["start-menu.html"]
   Opening["opening-vn.html"]
   Game["game.html"]
+  Music["music.html"]
   ConversationWrappers["conversation-*.html wrappers"]
 
   Root --> Start
   Start --> Opening
   Opening --> Game
   ConversationWrappers --> Game
+  Music --> Audio["presentation-data + audio-runtime"]
 ```
 
 ## Common Query Params
@@ -38,6 +41,14 @@ flowchart LR
 | `runMode`, `run`, or `mode` | `story`, `infinite`, `endless`, `arcade`, `freeplay`, `free-play` | Selects story or infinite mode. |
 | `stage` or `at` | `crawl`, `message`, `static`, `fade`, `ideal`, `reboot` | Jumps the victory epilogue to a later beat. |
 | `t` or `elapsed` | seconds | Sets victory epilogue elapsed time where supported. |
+
+Music cycler params:
+
+| Param | Values | Effect |
+| --- | --- | --- |
+| `track` | A music track id such as `market` or `horror-battle` | Opens the cycler on that track. |
+| `theme` | `cozy`, `horror` | Filters the track list and selects the first matching track when `track` is absent. |
+| `cycle` | `1`, `true`, `yes`, `on` | Enables timed track cycling. |
 
 ## Route Aliases
 
@@ -103,6 +114,7 @@ Each major screen exposes `window.render_game_to_text()` for scriptable inspecti
 Common hooks:
 
 - `window.render_game_to_text()`: JSON state summary for start menu, opening VN, or game route.
+- `window.render_music_test_to_text()`: JSON state summary for the direct music cycler route.
 - `window.advanceTime(ms)`: deterministic time advance where implemented.
 - `window.__foodAnimals`: selected game internals for debug and test scripts.
 - `window.spawnFoodLob()`: menu-only visual harness.
