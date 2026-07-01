@@ -13286,15 +13286,10 @@
     const textX = x + 68;
     const textW = badgeX - textX - 5;
     const specW = maxWidth - 76;
-    const specs = favorite.specs || favoriteToppingSpecLines(unit);
-    const metrics = window.FoodAnimalsSelectedPanelCanvas.favoriteToppingMetrics(
-      specs,
-      maxWidth,
-      (line, width) => wrappedTextLines(line, width).length,
-    );
-    const specLineHeight = metrics.specLineHeight;
+    const specs = (favorite.specs || favoriteToppingSpecLines(unit)).slice(0, 3);
+    const specLineHeight = 10;
     ctx.font = "800 8.5px Inter, sans-serif";
-    const cardH = metrics.cardH;
+    const cardH = 86;
     roundedRect(x, cardTop, maxWidth, cardH, 6);
     ctx.fillStyle = fill;
     ctx.fill();
@@ -13326,9 +13321,8 @@
     ctx.fillStyle = themeColor("muted", "#6a4b35");
     ctx.font = "800 8.5px Inter, sans-serif";
     let lineY = cardTop + 36;
-    specs.forEach((line) => {
-      const drawnRows = drawWrappedTextFull(line, textX, lineY, specW, specLineHeight);
-      lineY += drawnRows * specLineHeight + 2;
+    specs.forEach((line, index) => {
+      wrapTextLimited(line, textX, lineY + index * (specLineHeight + 2), specW, specLineHeight, 1);
     });
     return cardH;
   }
@@ -16498,6 +16492,8 @@
     const effect = specialEffectFor(unit);
     const slotRect = equipmentSlotRect();
     const headerTextW = Math.max(72, slotRect.x - textX - 8);
+    const actionLayout = selectedPanelActionLayout(ref);
+    const actionTop = actionLayout.y;
 
     drawFoodAnimal(unit, contentX + 26, 194 + panelDy, 25, true);
     drawSelectedEquipmentSlot(unit);
@@ -16523,7 +16519,10 @@
     ctx.fillText(effect.title, contentX, abilityDividerY + 17);
     ctx.fillStyle = muted;
     ctx.font = "700 10px Inter, sans-serif";
-    wrapTextLimited(effect.body, contentX, abilityDividerY + 32, contentW, 11, favoriteH ? 4 : 6);
+    const abilityBodyY = abilityDividerY + 32;
+    const abilitySafeBottom = actionTop - 14;
+    const fittedAbilityLines = Math.max(1, Math.floor((abilitySafeBottom - abilityBodyY) / 11) + 1);
+    wrapTextLimited(effect.body, contentX, abilityBodyY, contentW, 11, Math.min(favoriteH ? 3 : 6, fittedAbilityLines));
     if (ref.area === "bench" || ref.area === "board") {
       drawButton({ ...selectedSellButton(ref), label: "Sell", coinAmount: sellValue(unit) }, true);
     }
