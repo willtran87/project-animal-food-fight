@@ -12237,6 +12237,7 @@
       drawUnitCard(unit, x, y, w, h, area === "shop", area !== "shop", {
         hideTileName: area === "board" || area === "bench" || area === "itemBench" || area === "drinks",
         placementArea: area,
+        playerSide: area === "board",
         shopIndex: area === "shop" ? index : null,
       });
       ctx.restore();
@@ -13090,6 +13091,7 @@
     drawFoodAnimal(unit, x, y - (shopCard ? 20 : 4), radius, facingRight, {
       presentationScale,
       preserveBase: presentationScale !== 1,
+      playerSide: Boolean(options.playerSide),
     });
     if (shopCard) drawRarityBadge(x - w / 2 + 7, y - h / 2 + 7, unit.rarity, "small");
     ctx.textAlign = "center";
@@ -15006,6 +15008,7 @@
     const presentationScale = Math.max(0.01, options.presentationScale || 1);
     const preserveBase = Boolean(options.preserveBase && presentationScale !== 1);
     const anchorBase = Boolean(options.anchorBase);
+    const playerSide = Boolean(options.playerSide || unit?.side === "ally");
     const drawScale = {
       scaleX: breath.scaleX * combatMotion.scaleX,
       scaleY: breath.scaleY * combatMotion.scaleY,
@@ -15039,14 +15042,14 @@
       const effectRadius = r * presentationScale;
       drawContentSequenceEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit);
       drawPostGiraffeHorrorContentEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit, postGiraffeTransition);
-      drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
+      drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight, { playerSide });
       return;
     }
     if (runtimeSprite && !spriteImageFailed(runtimeSprite)) {
       const effectRadius = r * presentationScale;
       drawContentSequenceEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit);
       drawPostGiraffeHorrorContentEffect({ x: drawX - effectRadius * 1.45, y: drawY - effectRadius * 1.45, w: effectRadius * 2.9, h: effectRadius * 2.9 }, "unit", unit, postGiraffeTransition);
-      drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight);
+      drawUnitToppings(unit, drawX, drawY, r, runtimeFacingRight, { playerSide });
       return;
     }
 
@@ -15082,7 +15085,7 @@
     ctx.restore();
     drawContentSequenceEffect({ x: drawX - size / 2, y: drawY - size / 2, w: size, h: size }, "unit", unit);
     drawPostGiraffeHorrorContentEffect({ x: drawX - size / 2, y: drawY - size / 2, w: size, h: size }, "unit", unit, postGiraffeTransition);
-    drawUnitToppings(unit, drawX, drawY, r, facingRight);
+    drawUnitToppings(unit, drawX, drawY, r, facingRight, { playerSide });
   }
 
   function combatMotionForUnit(unit) {
@@ -15158,11 +15161,13 @@
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
-  function drawUnitToppings(unit, x, y, r, facingRight = false) {
+  function drawUnitToppings(unit, x, y, r, facingRight = false, options = {}) {
     if (!unit?.item) return;
     const offsetX = r * (facingRight ? -0.08 : 0.08);
     const offsetY = -r * 0.82;
-    drawItemIcon(unit.item, x + offsetX, y + offsetY, r * 0.9);
+    drawItemIcon(unit.item, x + offsetX, y + offsetY, r * 0.9, {
+      flipX: shouldMirrorHorrorPlayerTopping(unit.item, options),
+    });
   }
 
   function drawItemIcon(item, x, y, r, options = {}) {
@@ -15178,15 +15183,26 @@
     if (spriteImageReady(image)) {
       ctx.imageSmoothingEnabled = false;
       let drawRect = { x: x - size / 2, y: y - size / 2, w: size, h: size };
+      const drawReadyItemImage = (rect) => {
+        if (!options.flipX) {
+          ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h);
+          return;
+        }
+        ctx.save();
+        ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, -rect.w / 2, -rect.h / 2, rect.w, rect.h);
+        ctx.restore();
+      };
       if (options.centerOpaque) {
         const metrics = itemSpriteMetrics(image);
         const offsetX = ((metrics.x + metrics.w / 2) / Math.max(1, image.naturalWidth) - 0.5) * size;
         const anchorY = Math.max(0, Math.min(1, options.opaqueAnchorY ?? 0.5));
         const offsetY = ((metrics.y + metrics.h * anchorY) / Math.max(1, image.naturalHeight) - 0.5) * size;
         drawRect = { x: x - size / 2 - offsetX, y: y - size / 2 - offsetY, w: size, h: size };
-        ctx.drawImage(image, x - size / 2 - offsetX, y - size / 2 - offsetY, size, size);
+        drawReadyItemImage(drawRect);
       } else {
-        ctx.drawImage(image, x - size / 2, y - size / 2, size, size);
+        drawReadyItemImage(drawRect);
       }
       drawContentSequenceEffect(drawRect, bleedKind, item);
       drawPostGiraffeHorrorContentEffect(drawRect, bleedKind, item, postGiraffeTransition);
@@ -15298,6 +15314,25 @@
     ctx.scale(-1, 1);
     ctx.drawImage(image, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
     ctx.restore();
+  }
+
+  const REALITY_PLAYER_SIDE_MIRRORED_TOPPINGS = new Set([
+    "avocado_fan",
+    "bacon_strips",
+    "basil_leaf",
+    "cherry_tomato",
+    "pretzel_stick",
+    "rice_ball",
+    "seaweed_wrap",
+    "chili_pepper",
+    "garlic_clove",
+    "hot_sauce_bottle",
+    "lemon_wedge",
+    "skewer",
+  ]);
+
+  function shouldMirrorHorrorPlayerTopping(item, options = {}) {
+    return Boolean(options.playerSide && realityBroken() && isTopping(item) && REALITY_PLAYER_SIDE_MIRRORED_TOPPINGS.has(item.id));
   }
 
   const REALITY_RUNTIME_INVERT_FACING = new Set(["crab_cake_caterpillar", "cucumber_cobra"]);
