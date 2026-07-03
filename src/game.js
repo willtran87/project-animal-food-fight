@@ -218,6 +218,8 @@
   const BATTLE_DEPLOY_TRANSITION_SECONDS = 1.45;
   const BATTLE_RESULT_TRANSITION_SECONDS = 1.45;
   const SHOP_SLOT_TRANSITION_SECONDS = 0.48;
+  const MERGE_CUTSCENE_SECONDS = 3.35;
+  const MERGE_CUTSCENE_COMMIT_AT = 2.05;
   const storyData = window.FoodAnimalsStoryData;
   if (!storyData) throw new Error("FoodAnimalsStoryData must load before game.js");
   const { FINAL_TABS_STORY_ID, FINAL_TABS_STORY, STORY_MILESTONES } = storyData;
@@ -560,6 +562,7 @@
     menuRebootTransition: null,
     finalVictoryTransition: null,
     victoryCutscene: null,
+    mergeCutscene: null,
     runConcluded: false,
     activeStory: null,
     seenStoryMilestones: [],
@@ -571,6 +574,8 @@
   stateRef = state;
   let activeRunAutosaveTimer = 0;
   let lastActiveRunSaveJson = "";
+  let pendingMergeCutsceneCommit = null;
+  let pendingMergeCutsceneQueue = [];
 
   const gameMusic = {
     audio: null,
@@ -842,6 +847,7 @@
     }
     snapshot.state.codexOpen = false;
     snapshot.state.optionsMenu = { open: false, selected: "resume", savedAt: snapshot.savedAt, dragSlider: null };
+    snapshot.state.mergeCutscene = null;
     if (snapshot.state.codexPreview) snapshot.state.codexPreview.dragging = false;
     return snapshot;
   }
@@ -871,6 +877,9 @@
     state.hover = null;
     state.tooltipTargets = [];
     state.drag = null;
+    state.mergeCutscene = null;
+    pendingMergeCutsceneCommit = null;
+    pendingMergeCutsceneQueue = [];
     if (state.codexPreview) state.codexPreview.dragging = false;
     rngState = rngRuntime.createState(state.runSeed || snapshot.runSeed || rngState.seed, state.rngCalls);
     syncRngState();
@@ -3036,9 +3045,137 @@
     state[ref.area][ref.index] = item;
   }
 
+  function refSlot(ref) {
+    if (ref.area === "board") return boardSlots[ref.index];
+    if (ref.area === "bench") return benchSlots[ref.index];
+    if (ref.area === "shop") return shopSlots[ref.index];
+    return itemRefSlot(ref);
+  }
+
   function itemRefSlot(ref) {
     if (ref.area === "itemBench") return itemBenchSlots[ref.index];
     return ref.area === "drinks" ? drinkSlots[ref.index] : benchSlots[ref.index];
+  }
+
+  function mergeCutsceneActive() {
+    return Boolean(state.mergeCutscene);
+  }
+
+  function mergeCutscenePending() {
+    return pendingMergeCutsceneQueue.length > 0;
+  }
+
+  function mergeCutscenePlaybackBlocked() {
+    return Boolean(
+      state.phase !== "prep" ||
+      state.shopReturnStaticTransition ||
+      state.phaseTransition ||
+      state.level10RevealCutscene ||
+      state.activeStory ||
+      state.finalTabsStoryTransition ||
+      state.rebootTransition ||
+      state.menuRebootTransition ||
+      state.finalVictoryTransition ||
+      state.victoryCutscene ||
+      state.codexOpen ||
+      state.optionsMenu?.open,
+    );
+  }
+
+  function mergeCutsceneHiddenRefs(refs) {
+    const seen = new Set();
+    return refs
+      .filter((ref) => ref && Number.isInteger(ref.index))
+      .filter((ref) => {
+        const key = `${ref.area}:${ref.index}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((ref) => ({ area: ref.area, index: ref.index }));
+  }
+
+  function mergeCutsceneVisualForRef(ref, entry = null) {
+    const slot = refSlot(ref);
+    const visualEntry = entry || ref.unit || ref.item || state[ref.area]?.[ref.index] || null;
+    return {
+      area: ref.area,
+      index: ref.index,
+      entry: cloneRunValue(visualEntry),
+      x: slot?.x || W / 2,
+      y: slot?.y || H / 2,
+    };
+  }
+
+  function mergeCutsceneStageSpots(count) {
+    const centerX = W / 2 - 12;
+    const planeY = 326;
+    if (count <= 1) return [{ x: centerX, y: planeY }];
+    if (count === 2) return [{ x: centerX - 94, y: planeY }, { x: centerX + 94, y: planeY }];
+    return [
+      { x: centerX - 172, y: planeY },
+      { x: centerX, y: planeY },
+      { x: centerX + 172, y: planeY },
+    ];
+  }
+
+  function buildMergeCutscene({ kind, sources, destination, result, hiddenRefs }) {
+    const visibleSources = sources.filter((source) => source?.entry).slice(0, 3);
+    while (visibleSources.length && visibleSources.length < 3) {
+      const source = visibleSources[visibleSources.length % Math.max(1, visibleSources.length)];
+      visibleSources.push({ ...source, phantom: true });
+    }
+    const slot = refSlot(destination);
+    return {
+      kind,
+      elapsed: 0,
+      duration: MERGE_CUTSCENE_SECONDS,
+      commitAt: MERGE_CUTSCENE_COMMIT_AT,
+      committed: false,
+      sources: visibleSources.map((source, index) => ({
+        ...source,
+        stage: mergeCutsceneStageSpots(Math.max(3, visibleSources.length))[index] || mergeCutsceneStageSpots(1)[0],
+      })),
+      destination: {
+        area: destination.area,
+        index: destination.index,
+        x: slot?.x || W / 2,
+        y: slot?.y || H / 2,
+      },
+      result: cloneRunValue(result),
+      hiddenRefs: mergeCutsceneHiddenRefs(hiddenRefs),
+      horror: realityBroken(),
+    };
+  }
+
+  function activateMergeCutscene(cutscene, commit) {
+    state.mergeCutscene = cutscene;
+    pendingMergeCutsceneCommit = commit;
+    state.selected = null;
+    state.drag = null;
+    state.hover = null;
+    state.message = realityBroken() ? "Fusion rising" : "Something is cooking";
+    playGameSfx("ui-hover", { volume: 0.38, rate: 0.76 });
+    return true;
+  }
+
+  function tryStartNextPendingMergeCutscene() {
+    if (mergeCutsceneActive() || !mergeCutscenePending() || mergeCutscenePlaybackBlocked()) return false;
+    const next = pendingMergeCutsceneQueue.shift();
+    return activateMergeCutscene(next.cutscene, next.commit);
+  }
+
+  function startMergeCutscene({ kind, sources, destination, result, hiddenRefs }, commit) {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return false;
+    const cutscene = buildMergeCutscene({ kind, sources, destination, result, hiddenRefs });
+    if (mergeCutscenePlaybackBlocked()) {
+      pendingMergeCutsceneQueue.push({ cutscene, commit });
+      state.selected = null;
+      state.drag = null;
+      state.hover = null;
+      return true;
+    }
+    return activateMergeCutscene(cutscene, commit);
   }
 
   function itemMergeProgressCount(itemId, tier) {
@@ -3050,23 +3187,30 @@
   }
 
   function mergeItemTriples(itemId, tier) {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return false;
     const matches = allLooseItemRefs().filter((ref) => ref.item.id === itemId && itemTier(ref.item.tier) === itemTier(tier));
     if (itemTier(tier) >= MAX_ITEM_TIER || matches.length < 3) return false;
     const ordered = orderedItemMergeRefs(matches, matches[0].item);
     const consumedRefs = ordered.slice(0, 3);
     const keeper = consumedRefs[0];
-    consumedRefs.forEach((ref) => placeItemRef(ref, null));
     const evolved = makeItem(itemId, itemTier(tier) + 1);
     evolved.purchaseGold = mergedItemPurchaseGold(consumedRefs.map((ref) => ref.item));
-    placeItemRef(keeper, evolved);
-    const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
-    if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
-    state.selected = null;
-    state.drag = null;
-    state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
-    mergeExplosion(itemRefSlot(keeper), evolved);
-    state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
-    return true;
+    return startMergeCutscene({
+      kind: "item",
+      sources: consumedRefs.map((ref) => mergeCutsceneVisualForRef(ref, ref.item)),
+      destination: keeper,
+      result: evolved,
+      hiddenRefs: consumedRefs,
+    }, () => {
+      consumedRefs.forEach((ref) => placeItemRef(ref, null));
+      placeItemRef(keeper, evolved);
+      const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
+      if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
+      state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
+      mergeExplosion(itemRefSlot(keeper), evolved);
+      state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+      playGameSfx("merge");
+    });
   }
 
   function itemMatchesMerge(item, target) {
@@ -3272,16 +3416,94 @@
     return tags.slice(0, 3);
   }
 
-  function activeShopItemCarrierPreview() {
-    const previewFrom = (source, ref) => {
-      if (!ref || ref.area !== "shop") return null;
-      const item = shopEntryAt(ref.index);
-      return isItem(item) ? { source, shopIndex: ref.index, item, carriers: itemCarrierRecommendations(item, ref.index) } : null;
-    };
-    if (state.drag?.area === "shop" && isItem(state.drag.unit)) {
-      return { source: "drag", shopIndex: state.drag.index, item: state.drag.unit, carriers: itemCarrierRecommendations(state.drag.unit, state.drag.index) };
+  function ownedEntryRefsForShopEntry(entry) {
+    if (isUnit(entry)) {
+      return allOwnedRefs().filter((ref) => ref.unit.typeId === entry.typeId);
     }
-    const hoverRef = state.hover?.area === "shop" || state.hover?.area === "shopFreeze" ? { area: "shop", index: state.hover.index } : null;
+    if (isItem(entry)) {
+      return allLooseItemRefs().filter((ref) => ref.item.id === entry.id);
+    }
+    return [];
+  }
+
+  function ownedEntryLocationLabel(ref) {
+    if (ref.area === "board") return "deployed";
+    if (ref.area === "drinks") return "loaded";
+    return "stored";
+  }
+
+  function ownedShopEntryBody(entry, refs) {
+    const count = refs.length;
+    const where = [...new Set(refs.map(ownedEntryLocationLabel))].join(", ");
+    if (isUnit(entry)) {
+      return `You already own ${count} ${displayUnitLineName(entry)}${count === 1 ? "" : " copies"}${where ? ` (${where})` : ""}.`;
+    }
+    const label = isDrink(entry) ? drinkTerm({ lower: true }) : toppingTerm({ lower: true });
+    return `You already own ${count} ${itemDisplayShort(entry)} ${label}${count === 1 ? "" : "s"}${where ? ` (${where})` : ""}.`;
+  }
+
+  function shopEntryIndicatorTags(entry, shopIndex = null) {
+    if (!entry) return [];
+    const tags = [];
+    const addTag = (label, body, tone = "neutral") => {
+      if (!tags.some((tag) => tag.label === label)) tags.push({ label, body, tone });
+    };
+    if (isTopping(entry)) {
+      const favoriteUsers = ownedFavoriteUsersForItem(entry.id);
+      if (favoriteUsers.length) {
+        addTag("FAV", `${favoriteUsers.slice(0, 2).join(", ")} ${favoriteUsers.length > 1 ? "prefer" : "prefers"} this topping.`, "favorite");
+      }
+    }
+    const ownedRefs = ownedEntryRefsForShopEntry(entry);
+    if (ownedRefs.length) addTag("OWN", ownedShopEntryBody(entry, ownedRefs), "owned");
+    if (isItem(entry)) {
+      itemRecommendationTags(entry, shopIndex)
+        .filter((tag) => tag.label !== "FAV" && tag.label !== "MERGE")
+        .forEach((tag) => addTag(tag.label, tag.body, tag.tone));
+    }
+    return tags.slice(0, 2);
+  }
+
+  function itemCarrierPreviewRef(ref) {
+    if (!ref) return null;
+    if (ref.area === "shop" || ref.area === "shopFreeze") return { area: "shop", index: ref.index };
+    if (ref.area === "bench" || ref.area === "itemBench" || ref.area === "drinks") return { area: ref.area, index: ref.index };
+    return null;
+  }
+
+  function itemCarrierPreviewEntry(ref) {
+    if (!ref) return null;
+    return ref.area === "shop" ? shopEntryAt(ref.index) : state[ref.area]?.[ref.index] || null;
+  }
+
+  function activeItemCarrierPreview() {
+    const previewFrom = (source, ref) => {
+      const normalized = itemCarrierPreviewRef(ref);
+      if (!normalized) return null;
+      const item = itemCarrierPreviewEntry(normalized);
+      if (!isItem(item)) return null;
+      const shopIndex = normalized.area === "shop" ? normalized.index : null;
+      return {
+        source,
+        area: normalized.area,
+        index: normalized.index,
+        shopIndex,
+        item,
+        carriers: itemCarrierRecommendations(item, shopIndex),
+      };
+    };
+    if (state.drag && isItem(state.drag.unit)) {
+      const shopIndex = state.drag.area === "shop" ? state.drag.index : null;
+      return {
+        source: "drag",
+        area: state.drag.area,
+        index: state.drag.index,
+        shopIndex,
+        item: state.drag.unit,
+        carriers: itemCarrierRecommendations(state.drag.unit, shopIndex),
+      };
+    }
+    const hoverRef = itemCarrierPreviewRef(state.hover);
     const hovered = previewFrom("hover", hoverRef);
     if (hoverRef && !hovered) return null;
     return hovered || previewFrom("selected", state.selected);
@@ -3434,6 +3656,7 @@
   }
 
   function buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex) {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return false;
     const entry = shopEntryAt(shopIndex);
     if (!entry || !canMergeShopEntryIntoSlot(entry, targetArea, targetIndex)) return false;
     const cost = purchaseCost(entry, shopIndex);
@@ -3442,28 +3665,35 @@
       playGameSfx("invalid");
       return false;
     }
-    state.gold -= cost;
-    markItemDiscountUsed(entry, shopIndex, cost);
-    clearPurchasedShopSlot(shopIndex);
 
     if (isItem(entry)) {
       const consumedRefs = itemMergeRefsWithIncoming(entry, targetArea, targetIndex);
       const consumedItems = consumedRefs.map((ref) => ref.item);
-      consumedRefs.forEach((ref) => placeItemRef(ref, null));
       const evolved = makeItem(entry.id, itemTier(entry.tier) + 1);
       evolved.purchaseGold = mergedItemPurchaseGold(consumedItems, cost);
       const keeper = { area: targetArea, index: targetIndex };
-      placeItemRef(keeper, evolved);
-      const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
-      if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
-      state.selected = null;
-      state.drag = null;
-      state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
-      mergeExplosion(itemRefSlot(keeper), evolved);
-      state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
-      playGameSfx("merge");
-      resolveItemMerges();
-      return true;
+      return startMergeCutscene({
+        kind: "item",
+        sources: [
+          mergeCutsceneVisualForRef({ area: "shop", index: shopIndex }, entry),
+          ...consumedRefs.map((ref) => mergeCutsceneVisualForRef(ref, ref.item)),
+        ],
+        destination: keeper,
+        result: evolved,
+        hiddenRefs: [{ area: "shop", index: shopIndex }, ...consumedRefs],
+      }, () => {
+        state.gold -= cost;
+        markItemDiscountUsed(entry, shopIndex, cost);
+        clearPurchasedShopSlot(shopIndex);
+        consumedRefs.forEach((ref) => placeItemRef(ref, null));
+        placeItemRef(keeper, evolved);
+        const reward = ITEM_MERGE_GOLD_REWARD[evolved.tier] || 0;
+        if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
+        state.message = `${itemDisplayShort(evolved)} mixed${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
+        mergeExplosion(itemRefSlot(keeper), evolved);
+        state.log.unshift(`${evolved.name} reached ${itemLevelLabel(evolved)}${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+        playGameSfx("merge");
+      });
     }
 
     const consumedRefs = unitMergeRefsWithIncoming(entry, targetArea, targetIndex);
@@ -3475,24 +3705,33 @@
       .map((ref) => ref.unit.item)
       .filter((item) => item && !mergeItemIsConsumed(item))
       .map((item) => cloneItem(item));
-    consumedRefs.forEach((ref) => placeRef(ref, null));
     const evolved = makeUnit(entry.typeId, entry.tier + 1);
     evolved.purchaseGold = mergedUnitPurchaseGold(consumedUnits, cost);
     evolved.item = keeperItem;
     refreshUnitItemStats(evolved);
-    placeRef({ area: targetArea, index: targetIndex }, evolved);
-    extraItems.forEach((item) => moveItemToBench(item));
-    const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
-    if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
-    state.selected = null;
-    state.drag = null;
-    state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
-    mergeExplosion(targetArea === "board" ? boardSlots[targetIndex] : benchSlots[targetIndex], evolved);
-    state.log.unshift(`${evolved.name} reached ${evolved.tier} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
-    playGameSfx("merge");
-    resolveItemMerges();
-    resolveMerges();
-    return true;
+    return startMergeCutscene({
+      kind: "unit",
+      sources: [
+        mergeCutsceneVisualForRef({ area: "shop", index: shopIndex }, entry),
+        ...consumedRefs.map((ref) => mergeCutsceneVisualForRef(ref, ref.unit)),
+      ],
+      destination: { area: targetArea, index: targetIndex },
+      result: evolved,
+      hiddenRefs: [{ area: "shop", index: shopIndex }, ...consumedRefs],
+    }, () => {
+      state.gold -= cost;
+      markItemDiscountUsed(entry, shopIndex, cost);
+      clearPurchasedShopSlot(shopIndex);
+      consumedRefs.forEach((ref) => placeRef(ref, null));
+      placeRef({ area: targetArea, index: targetIndex }, evolved);
+      extraItems.forEach((item) => moveItemToBench(item));
+      const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
+      if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
+      state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
+      mergeExplosion(targetArea === "board" ? boardSlots[targetIndex] : benchSlots[targetIndex], evolved);
+      state.log.unshift(`${evolved.name} reached ${evolved.tier} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+      playGameSfx("merge");
+    });
   }
 
   function mergeProgressFor(ref) {
@@ -3522,37 +3761,43 @@
   }
 
   function mergeTriples(typeId, tier) {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return false;
     const matches = allOwnedRefs().filter((ref) => ref.unit.typeId === typeId && ref.unit.tier === tier);
     const base = CATALOG.find((unit) => unit.id === typeId);
     const maxTier = base?.forms.length || 1;
     if (tier >= maxTier || mergeProgressCount(typeId, tier) < 3) return false;
     const consumedRefs = selectMergeRefs(matches);
-    const keeper = matches[0];
+    const keeper = consumedRefs[0] || matches[0];
     const keeperItem = mergeItemIsConsumed(keeper.unit.item) ? null : cloneItem(keeper.unit.item);
     const extraItems = consumedRefs
       .slice(1)
       .map((ref) => ref.unit.item)
       .filter((item) => item && !mergeItemIsConsumed(item))
       .map((item) => cloneItem(item));
-    consumedRefs.forEach((ref) => placeRef(ref, null));
     const evolved = makeUnit(typeId, tier + 1);
     evolved.item = keeperItem;
     refreshUnitItemStats(evolved);
-    placeRef(keeper, evolved);
-    extraItems.forEach((item) => moveItemToBench(item));
-    const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
-    if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
-    state.selected = null;
-    state.drag = null;
-    state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
-    mergeExplosion(keeper.area === "board" ? boardSlots[keeper.index] : benchSlots[keeper.index], evolved);
-    state.log.unshift(`${evolved.name} reached ${tier + 1} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
-    playGameSfx("merge");
-    resolveItemMerges();
-    return true;
+    return startMergeCutscene({
+      kind: "unit",
+      sources: consumedRefs.map((ref) => mergeCutsceneVisualForRef(ref, ref.unit)),
+      destination: keeper,
+      result: evolved,
+      hiddenRefs: consumedRefs,
+    }, () => {
+      consumedRefs.forEach((ref) => placeRef(ref, null));
+      placeRef(keeper, evolved);
+      extraItems.forEach((item) => moveItemToBench(item));
+      const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
+      if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
+      state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
+      mergeExplosion(keeper.area === "board" ? boardSlots[keeper.index] : benchSlots[keeper.index], evolved);
+      state.log.unshift(`${evolved.name} reached ${tier + 1} stars${reward ? ` and earned ${reward} ${currencyTerm({ lower: true })}` : ""}`);
+      playGameSfx("merge");
+    });
   }
 
   function resolveMerges() {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return;
     let changed = true;
     while (changed) {
       changed = false;
@@ -3566,6 +3811,7 @@
   }
 
   function resolveItemMerges() {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return;
     let changed = true;
     while (changed) {
       changed = false;
@@ -9027,6 +9273,9 @@
     updateStoryConversationTransition(dt);
     updateStoryBeatTransition(dt);
     updateLevel10RevealCutscene(dt);
+    // Merge cutscenes are prep UI timing and must not inherit battle-speed scaling.
+    updateMergeCutscene(dt);
+    tryStartNextPendingMergeCutscene();
     if (state.level10RevealCutscene) return;
     if (state.optionsMenu.open) return;
     if (state.phase === "victoryCutscene" && state.victoryCutscene) {
@@ -9036,6 +9285,29 @@
     const step = state.phase === "battle" ? dt * currentBattleSpeed() : dt;
     if (state.phase === "battle" && !phaseTransitionBlocksBattle()) updateBattle(step);
     state.particles = window.FoodAnimalsParticleRuntime.update(state.particles, step);
+  }
+
+  function updateMergeCutscene(dt) {
+    const cutscene = state.mergeCutscene;
+    if (!cutscene) return;
+    if (mergeCutscenePlaybackBlocked()) return;
+    cutscene.elapsed = Math.min(cutscene.duration, (cutscene.elapsed || 0) + dt);
+    if (!cutscene.committed && cutscene.elapsed >= (cutscene.commitAt || MERGE_CUTSCENE_COMMIT_AT)) {
+      cutscene.committed = true;
+      if (pendingMergeCutsceneCommit) {
+        const commit = pendingMergeCutsceneCommit;
+        pendingMergeCutsceneCommit = null;
+        commit();
+      }
+    }
+    if (cutscene.elapsed >= (cutscene.duration || MERGE_CUTSCENE_SECONDS)) {
+      state.mergeCutscene = null;
+      pendingMergeCutsceneCommit = null;
+      if (state.phase === "prep") {
+        resolveItemMerges();
+        resolveMerges();
+      }
+    }
   }
 
   function updatePhaseTransition(dt) {
@@ -9238,6 +9510,7 @@
       }
       drawTopBar();
       if (state.phase !== "result") drawParticles();
+      drawMergeCutsceneOverlay();
       if (state.codexOpen) {
         state.tooltipTargets = [];
         drawCodexOverlay();
@@ -11721,7 +11994,7 @@
 
   function drawPrep() {
     drawShopkeeperStall();
-    shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, shopEntryAt(i), "shop", i));
+    shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, mergeCutsceneHides("shop", i) ? null : shopEntryAt(i), "shop", i));
     itemBenchSlots.forEach((slot, i) => drawItemBenchSlot(slot, i));
     boardSlots.forEach((slot, i) => drawBoardSlot(slot, i));
     drinkSlots.forEach((slot, i) => drawDrinkSlot(slot, i));
@@ -11984,8 +12257,205 @@
     ctx.restore();
   }
 
+  function mergeCutsceneHides(area, index) {
+    const cutscene = state.mergeCutscene;
+    return Boolean(cutscene?.hiddenRefs?.some((ref) => ref.area === area && ref.index === index));
+  }
+
+  function lerpNumber(from, to, t) {
+    return from + (to - from) * clamp01(t);
+  }
+
+  function mergeCutsceneCenter() {
+    return { x: W / 2 + 8, y: 286 };
+  }
+
+  function mergeCutsceneSourcePosition(source, cutscene) {
+    const t = cutscene.elapsed || 0;
+    const center = mergeCutsceneCenter();
+    if (t < 0.78) {
+      const p = easeOutCubic(t / 0.78);
+      return {
+        x: lerpNumber(source.x, source.stage.x, p),
+        y: lerpNumber(source.y, source.stage.y, p),
+        scale: lerpNumber(0.72, 1.12, p),
+        alpha: lerpNumber(0.78, source.phantom ? 0.72 : 1, p),
+      };
+    }
+    if (t < 1.44) {
+      const charge = (t - 0.78) / 0.66;
+      const wobble = Math.sin(charge * Math.PI * 8 + source.index) * (cutscene.horror ? 4.5 : 2.2);
+      return {
+        x: source.stage.x + wobble,
+        y: source.stage.y - Math.abs(Math.sin(charge * Math.PI * 4)) * 10,
+        scale: 1.1 + Math.sin(charge * Math.PI * 5) * 0.035,
+        alpha: source.phantom ? 0.7 : 1,
+      };
+    }
+    if (t < cutscene.commitAt) {
+      const p = easeInOutCubic((t - 1.44) / Math.max(0.001, cutscene.commitAt - 1.44));
+      return {
+        x: lerpNumber(source.stage.x, center.x, p),
+        y: lerpNumber(source.stage.y, center.y, p),
+        scale: lerpNumber(1.08, 0.36, p),
+        alpha: lerpNumber(source.phantom ? 0.7 : 1, 0.08, p),
+      };
+    }
+    return { x: center.x, y: center.y, scale: 0.1, alpha: 0 };
+  }
+
+  function mergeCutsceneResultPosition(cutscene) {
+    const t = cutscene.elapsed || 0;
+    const center = mergeCutsceneCenter();
+    const destination = cutscene.destination || center;
+    const revealStart = (cutscene.commitAt || MERGE_CUTSCENE_COMMIT_AT) - 0.08;
+    if (t < revealStart) return null;
+    const reveal = easeOutCubic((t - revealStart) / 0.36);
+    const returnStart = 2.48;
+    const returnEnd = 3.08;
+    const breath = 1 + Math.sin(Math.max(0, t - revealStart) * Math.PI * 2.15) * 0.026;
+    if (t < returnStart) {
+      return {
+        x: center.x,
+        y: center.y - (1 - reveal) * 16,
+        scale: lerpNumber(0.38, 1.42, reveal) * breath,
+        alpha: reveal,
+      };
+    }
+    const p = easeInOutCubic((t - returnStart) / Math.max(0.001, returnEnd - returnStart));
+    return {
+      x: lerpNumber(center.x, destination.x, p),
+      y: lerpNumber(center.y, destination.y, p),
+      scale: lerpNumber(1.34, 0.74, p) * breath,
+      alpha: 1,
+      returning: true,
+      landing: clamp01((t - returnEnd) / 0.26),
+    };
+  }
+
+  function drawMergeCutsceneEntry(entry, x, y, scale = 1, alpha = 1) {
+    if (!entry || alpha <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.fillStyle = realityBroken() ? "rgba(0, 0, 0, 0.42)" : "rgba(70, 47, 28, 0.22)";
+    ctx.beginPath();
+    ctx.ellipse(x, y + 38 * scale, 42 * scale, 10 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (isItem(entry)) {
+      drawItemIcon(entry, x, y, 35 * scale, {
+        centerOpaque: isDrink(entry),
+        opaqueAnchorY: isDrink(entry) ? DRINK_COASTER_OPAQUE_ANCHOR_Y : 0.5,
+      });
+    } else {
+      drawFoodAnimal(entry, x, y + 16 * scale, 45 * scale, true, {
+        presentationScale: realityBroken() ? 1.22 : 1.08,
+        preserveBase: true,
+      });
+    }
+    ctx.restore();
+  }
+
+  function drawMergeCutsceneParticles(cutscene) {
+    const t = cutscene.elapsed || 0;
+    const center = mergeCutsceneCenter();
+    const horror = cutscene.horror;
+    const charge = clamp01((t - 0.72) / 1.28);
+    const reveal = clamp01((t - (cutscene.commitAt || MERGE_CUTSCENE_COMMIT_AT)) / 0.46);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 46; i += 1) {
+      const seed = i * 41 + Math.floor(t * 18) * 17;
+      const angle = glitchNoise(seed) * Math.PI * 2;
+      const radius = (34 + glitchNoise(seed + 3) * 172) * (1 - reveal * 0.42);
+      const spin = t * (horror ? 3.4 : 2.1) * (i % 2 ? -1 : 1);
+      const x = center.x + Math.cos(angle + spin) * radius * charge;
+      const y = center.y + Math.sin(angle + spin) * radius * 0.58 * charge;
+      const size = horror ? 1 + glitchNoise(seed + 9) * 3.4 : 1.5 + glitchNoise(seed + 9) * 3.1;
+      const alpha = (0.08 + charge * 0.34 + reveal * 0.18) * (1 - Math.max(0, t - 2.86) / 0.5);
+      ctx.fillStyle = horror
+        ? i % 3 === 0 ? `rgba(255, 42, 74, ${alpha})` : `rgba(91, 255, 112, ${alpha})`
+        : i % 4 === 0 ? `rgba(255, 214, 94, ${alpha})` : `rgba(151, 225, 139, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (horror && t > 0.9 && t < 2.35) {
+      const frame = Math.floor(t * 34);
+      for (let i = 0; i < 7; i += 1) {
+        if (glitchNoise(frame * 31 + i * 13) < 0.38) continue;
+        const y = center.y - 86 + glitchNoise(frame * 37 + i * 17) * 172;
+        const x = center.x - 190 + glitchNoise(frame * 41 + i * 19) * 380;
+        const w = 42 + glitchNoise(frame * 43 + i * 23) * 140;
+        ctx.fillStyle = i % 2 ? "rgba(255, 42, 74, 0.12)" : "rgba(80, 255, 108, 0.11)";
+        ctx.fillRect(x, y, w, 2 + Math.floor(glitchNoise(frame * 47 + i * 29) * 5));
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawMergeCutsceneLanding(cutscene, resultVisual) {
+    if (!resultVisual?.landing) return;
+    const p = resultVisual.landing;
+    const destination = cutscene.destination;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = cutscene.horror ? `rgba(96, 255, 114, ${0.46 * (1 - p)})` : `rgba(255, 225, 122, ${0.58 * (1 - p)})`;
+    ctx.lineWidth = 3 + p * 6;
+    ctx.beginPath();
+    ctx.ellipse(destination.x, destination.y + 8, 28 + p * 42, 13 + p * 18, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (!cutscene.horror) {
+      for (let i = 0; i < 7; i += 1) {
+        const angle = (i / 7) * Math.PI * 2 + p * 1.4;
+        drawCozySparkle(destination.x + Math.cos(angle) * (20 + p * 34), destination.y + Math.sin(angle) * (12 + p * 20), 3.6 * (1 - p));
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawMergeCutsceneOverlay() {
+    const cutscene = state.mergeCutscene;
+    if (!cutscene || state.phase !== "prep") return;
+    state.tooltipTargets = [];
+    const t = cutscene.elapsed || 0;
+    const center = mergeCutsceneCenter();
+    const vignette = cutscene.horror ? "rgba(0, 8, 7, 0.46)" : "rgba(45, 31, 18, 0.28)";
+    ctx.save();
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, W, H);
+    const halo = ctx.createRadialGradient(center.x, center.y, 16, center.x, center.y, 250);
+    if (cutscene.horror) {
+      halo.addColorStop(0, "rgba(86, 255, 105, 0.24)");
+      halo.addColorStop(0.35, "rgba(255, 38, 68, 0.11)");
+      halo.addColorStop(1, "rgba(0, 0, 0, 0)");
+    } else {
+      halo.addColorStop(0, "rgba(255, 239, 159, 0.34)");
+      halo.addColorStop(0.45, "rgba(139, 210, 132, 0.13)");
+      halo.addColorStop(1, "rgba(0, 0, 0, 0)");
+    }
+    ctx.fillStyle = halo;
+    ctx.fillRect(center.x - 270, center.y - 220, 540, 440);
+    drawMergeCutsceneParticles(cutscene);
+    (cutscene.sources || []).forEach((source) => {
+      const visual = mergeCutsceneSourcePosition(source, cutscene);
+      drawMergeCutsceneEntry(source.entry, visual.x, visual.y, visual.scale, visual.alpha);
+    });
+    const resultVisual = mergeCutsceneResultPosition(cutscene);
+    if (resultVisual) {
+      drawMergeCutsceneEntry(cutscene.result, resultVisual.x, resultVisual.y, resultVisual.scale, resultVisual.alpha);
+      drawMergeCutsceneLanding(cutscene, resultVisual);
+    }
+    if (t > 1.82 && t < 2.32) {
+      const flash = 1 - Math.abs(t - 2.05) / 0.27;
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = cutscene.horror ? `rgba(92, 255, 111, ${0.13 * flash})` : `rgba(255, 243, 178, ${0.18 * flash})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
   function drawMergeOpportunityOverlay() {
-    if (state.phase !== "prep" || state.codexOpen) return;
+    if (state.phase !== "prep" || state.codexOpen || state.mergeCutscene) return;
     shopSlots.forEach((slot, index) => {
       drawShopMergeOpportunityBadge(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, index);
     });
@@ -12037,9 +12507,6 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("MERGE", x, badgeY + badgeH / 2 + 0.5);
-    ctx.fillStyle = `rgba(37, 186, 94, ${0.56 + pulse * 0.34})`;
-    drawCozySparkle(badgeX - 5, badgeY + 7, 3 + pulse);
-    drawCozySparkle(badgeX + badgeW + 5, badgeY + 9, 2.5 + pulse * 0.8);
     ctx.restore();
 
     registerTooltip(badgeX, badgeY, badgeW, badgeH, {
@@ -12049,7 +12516,6 @@
   }
 
   function drawHorrorShopMergeOpportunityBadge(x, y, w, h, index, opportunity) {
-    const horror = realityBroken();
     const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 130 + index * 0.75);
     ctx.save();
     ctx.shadowColor = "rgba(101, 255, 109, 0.50)";
@@ -12059,14 +12525,6 @@
     drawCornerBrackets(x - w / 2 + 5, y - h / 2 + 5, w - 10, h - 10, 14);
     ctx.stroke();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = `rgba(255, 42, 74, ${0.22 + pulse * 0.22})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x - w / 2 + 11, y - h / 2 + 25 + pulse * 5);
-    ctx.lineTo(x + w / 2 - 11, y - h / 2 + 21 + pulse * 5);
-    ctx.moveTo(x - w / 2 + 14, y + h / 2 - 19 - pulse * 4);
-    ctx.lineTo(x + w / 2 - 14, y + h / 2 - 16 - pulse * 4);
-    ctx.stroke();
 
     const badge = window.FoodAnimalsSlotCanvas.mergeBadgeRect(x, y, w, h, true);
     const { x: badgeX, y: badgeY, w: badgeW, h: badgeH } = badge;
@@ -12097,8 +12555,8 @@
     });
   }
 
-  function drawShopRecommendationTags(item, x, y, w, h, shopIndex) {
-    const tags = itemRecommendationTags(item, shopIndex).slice(0, 2);
+  function drawShopIndicatorTags(entry, x, y, w, h, shopIndex) {
+    const tags = shopEntryIndicatorTags(entry, shopIndex);
     if (!tags.length) return;
     const horror = realityBroken();
     const tagW = 31;
@@ -12108,6 +12566,7 @@
     const colors = {
       merge: horror ? ["rgba(12, 40, 23, 0.94)", "#5fff75", "#d9ffe4"] : ["rgba(207, 255, 221, 0.94)", "#16974e", "#0b6a38"],
       favorite: horror ? ["rgba(44, 24, 12, 0.94)", "#ffd15b", "#fff0ba"] : ["rgba(255, 239, 185, 0.96)", "#c27619", "#663a0d"],
+      owned: horror ? ["rgba(9, 30, 36, 0.94)", "#55f0ff", "#d6fbff"] : ["rgba(213, 248, 255, 0.96)", "#238093", "#174b56"],
       pair: horror ? ["rgba(11, 38, 42, 0.94)", "#55f0ff", "#d6fbff"] : ["rgba(213, 248, 255, 0.95)", "#238093", "#174b56"],
       offense: horror ? ["rgba(48, 11, 20, 0.94)", "#ff4867", "#ffe1e7"] : ["rgba(255, 222, 216, 0.95)", "#d9573c", "#782616"],
       defense: horror ? ["rgba(13, 31, 45, 0.94)", "#8dc6ff", "#e3f2ff"] : ["rgba(222, 238, 255, 0.95)", "#4776b2", "#254464"],
@@ -12137,7 +12596,7 @@
 
   function drawItemCarrierPreviewOverlay() {
     if (state.phase !== "prep" || state.codexOpen) return;
-    const preview = activeShopItemCarrierPreview();
+    const preview = activeItemCarrierPreview();
     if (!preview?.carriers?.length) return;
     preview.carriers.forEach((carrier) => drawItemCarrierHighlight(carrier, preview.item));
   }
@@ -12203,21 +12662,15 @@
 
   function drawCozyOwnedMergeOpportunityMarker(x, y, w, h, area, index, opportunity) {
     const pulse = 0.5 + 0.5 * Math.sin((state.lastTime || 0) / 190 + index * 0.9);
+    const markerX = x + w / 2 - 10;
+    const markerY = y - h / 2 + 10;
     ctx.save();
     roundedRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4, 8);
     ctx.strokeStyle = `rgba(22, 151, 78, ${0.58 + pulse * 0.30})`;
     ctx.lineWidth = 1.6 + pulse * 0.8;
     ctx.stroke();
-    const dotR = 5 + pulse * 1.4;
-    ctx.beginPath();
-    ctx.arc(x + w / 2 - 10, y - h / 2 + 10, dotR, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(37, 186, 94, 0.94)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(8, 94, 50, 0.82)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = "rgba(207, 255, 221, 0.86)";
-    drawCozySparkle(x + w / 2 - 10, y - h / 2 + 10, 3.5);
+    drawCozySparkle(markerX, markerY, 4.2);
     ctx.restore();
 
     registerTooltip(x + w / 2 - 20, y - h / 2, 20, 22, {
@@ -12235,17 +12688,17 @@
     ctx.lineWidth = 1.4 + pulse * 0.6;
     drawCornerBrackets(x - w / 2 + 3, y - h / 2 + 3, w - 6, h - 6, 9);
     ctx.stroke();
-    ctx.strokeStyle = "rgba(255, 42, 74, 0.72)";
+    ctx.strokeStyle = `rgba(255, 42, 74, ${0.52 + pulse * 0.22})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(markerX - 8, markerY);
+    ctx.lineTo(markerX - 3, markerY);
+    ctx.moveTo(markerX + 3, markerY);
     ctx.lineTo(markerX + 8, markerY);
     ctx.moveTo(markerX, markerY - 8);
+    ctx.lineTo(markerX, markerY - 3);
+    ctx.moveTo(markerX, markerY + 3);
     ctx.lineTo(markerX, markerY + 8);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(markerX, markerY, 5 + pulse * 2, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(101, 255, 109, ${0.55 + pulse * 0.32})`;
     ctx.stroke();
     ctx.fillStyle = "rgba(101, 255, 109, 0.82)";
     ctx.fillRect(markerX - 2, markerY - 2, 4, 4);
@@ -12440,7 +12893,8 @@
   }
 
   function drawDrinkSlot(slot, index) {
-    drawSlot(slot.x, slot.y, DRINK_SLOT_SIZE, DRINK_SLOT_SIZE, state.drinks[index], "drinks", index);
+    const entry = mergeCutsceneHides("drinks", index) ? null : state.drinks[index];
+    drawSlot(slot.x, slot.y, DRINK_SLOT_SIZE, DRINK_SLOT_SIZE, entry, "drinks", index);
     if (state.drinks[index]) return;
     const slotTooltip = {
       title: realityBroken() ? "Fuel rail" : "Combat coaster",
@@ -12450,7 +12904,8 @@
   }
 
   function drawBoardSlot(slot, index) {
-    drawSlot(slot.x, slot.y, 72, 72, state.board[index], "board", index);
+    const entry = mergeCutsceneHides("board", index) ? null : state.board[index];
+    drawSlot(slot.x, slot.y, 72, 72, entry, "board", index);
     if (state.board[index]) return;
     registerTooltip(slot.x - 36, slot.y - 36, 72, 72, {
       title: realityBroken() ? "Deployment grid" : "Combat plate",
@@ -12459,7 +12914,8 @@
   }
 
   function drawBenchSlot(slot, index) {
-    drawSlot(slot.x, slot.y, 72, 72, state.bench[index], "bench", index);
+    const entry = mergeCutsceneHides("bench", index) ? null : state.bench[index];
+    drawSlot(slot.x, slot.y, 72, 72, entry, "bench", index);
     if (state.bench[index]) return;
     registerTooltip(slot.x - 36, slot.y - 36, 72, 72, {
       title: "General bench",
@@ -12468,7 +12924,8 @@
   }
 
   function drawItemBenchSlot(slot, index) {
-    drawSlot(slot.x, slot.y, ITEM_BENCH_SLOT_SIZE, ITEM_BENCH_SLOT_SIZE, state.itemBench[index], "itemBench", index);
+    const entry = mergeCutsceneHides("itemBench", index) ? null : state.itemBench[index];
+    drawSlot(slot.x, slot.y, ITEM_BENCH_SLOT_SIZE, ITEM_BENCH_SLOT_SIZE, entry, "itemBench", index);
     if (state.itemBench[index]) return;
     const title = slot.kind === "drink" ? `${drinkTerm()} storage` : `${toppingTerm()} storage`;
     const body = slot.kind === "drink" ? `Store spare ${drinkPluralTerm({ lower: true })} here.` : `Store spare ${toppingPluralTerm({ lower: true })} here.`;
@@ -12641,6 +13098,7 @@
       const shopPrimary = themeColor("primary", "#16392d");
       const shopMuted = themeColor("muted", "#7c452d");
       const bottom = y + h / 2;
+      drawShopIndicatorTags(unit, x, y, w, h, options.shopIndex);
       fitText(displayUnitShort(unit), x, bottom - 61, w - 14, "800 12px Inter, sans-serif", shopPrimary);
       ctx.fillStyle = shopMuted;
       ctx.font = "700 12px Inter, sans-serif";
@@ -12698,7 +13156,7 @@
       const shopPrimary = themeColor("primary", "#16392d");
       const shopMuted = themeColor("muted", "#7c452d");
       const bottom = y + h / 2;
-      drawShopRecommendationTags(item, x, y, w, h, options.shopIndex);
+      drawShopIndicatorTags(item, x, y, w, h, options.shopIndex);
       fitText(itemDisplayShort(item), x, bottom - 57, w - 14, "800 12px Inter, sans-serif", shopPrimary);
       fitText(itemCardText(item), x, bottom - 36, w - 14, "700 10px Inter, sans-serif", shopMuted);
       drawUpgradeStars(itemTier(item.tier), x, bottom - 24, 7, "center");
@@ -19357,6 +19815,7 @@
       if (pointInRect(pos.x, pos.y, rects.continue)) return { area: "level10RevealCutscene", action: "advance" };
       return { area: "level10RevealCutscene", action: "panel" };
     }
+    if (state.mergeCutscene) return null;
     if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
     if (state.phase === "victoryCutscene") {
       if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
@@ -19549,6 +20008,12 @@
     const pos = canvasPoint(event);
     state.pointer = pos;
     const hit = hitTest(pos);
+    if (state.mergeCutscene) {
+      state.selected = null;
+      state.drag = null;
+      event.preventDefault();
+      return;
+    }
     if (state.optionsMenu.open) {
       applyOptionsMenuHit(hit);
       event.preventDefault();
@@ -19722,6 +20187,11 @@
   function onPointerMove(event) {
     const pos = canvasPoint(event);
     state.pointer = pos;
+    if (state.mergeCutscene) {
+      state.hover = null;
+      event.preventDefault();
+      return;
+    }
     if (state.optionsMenu.open) {
       if (state.optionsMenu.dragSlider) setOptionSliderFromPoint(state.optionsMenu.dragSlider, pos.x);
       state.hover = null;
@@ -19748,6 +20218,12 @@
   }
 
   function onPointerUp(event) {
+    if (state.mergeCutscene) {
+      state.drag = null;
+      state.hover = null;
+      event.preventDefault();
+      return;
+    }
     if (state.optionsMenu.open) {
       state.optionsMenu.dragSlider = null;
       event.preventDefault();
@@ -19765,6 +20241,11 @@
 
   function onPointerCancel(event) {
     state.pointer = null;
+    if (state.mergeCutscene) {
+      state.drag = null;
+      state.hover = null;
+      return;
+    }
     if (state.optionsMenu.open) {
       state.optionsMenu.dragSlider = null;
       return;
@@ -19782,6 +20263,10 @@
   }
 
   function onWheel(event) {
+    if (state.mergeCutscene) {
+      event.preventDefault();
+      return;
+    }
     if (state.optionsMenu.open) {
       event.preventDefault();
       return;
@@ -19972,6 +20457,14 @@
 
   function onKeyDown(event) {
     const key = event.key.toLowerCase();
+    if (state.mergeCutscene) {
+      if (key === "f") {
+        if (!document.fullscreenElement) canvas.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+      event.preventDefault();
+      return;
+    }
     if (state.optionsMenu.open) {
       if (event.key === "Escape") {
         closeOptionsMenu();
@@ -20129,6 +20622,7 @@
       state.shopReturnStaticTransition ||
       state.finalTabsStoryTransition ||
       state.postGiraffeHorrorTransition ||
+      state.mergeCutscene ||
       state.level10RevealCutscene ||
       state.activeStory?.transition ||
       state.activeStory?.beatTransition ||
@@ -20326,6 +20820,25 @@
         } : null,
         shot: level10RevealCutsceneShot(state.level10RevealCutscene),
       } : { active: false },
+      mergeCutscene: state.mergeCutscene ? {
+        active: true,
+        queued: pendingMergeCutsceneQueue.length,
+        kind: state.mergeCutscene.kind,
+        elapsed: Number((state.mergeCutscene.elapsed || 0).toFixed(2)),
+        duration: Number((state.mergeCutscene.duration || MERGE_CUTSCENE_SECONDS).toFixed(2)),
+        committed: Boolean(state.mergeCutscene.committed),
+        commitAt: Number((state.mergeCutscene.commitAt || MERGE_CUTSCENE_COMMIT_AT).toFixed(2)),
+        sourceCount: state.mergeCutscene.sources?.length || 0,
+        sources: (state.mergeCutscene.sources || []).map((source) => ({
+          area: source.area,
+          index: source.index,
+          phantom: Boolean(source.phantom),
+          entry: source.entry ? entryText(source.entry) : null,
+        })),
+        destination: state.mergeCutscene.destination || null,
+        result: state.mergeCutscene.result ? entryText(state.mergeCutscene.result) : null,
+        style: state.mergeCutscene.horror ? "dystopian-lab-fusion-pull-merge-return" : "rustic-food-prep-lab-pull-merge-return",
+      } : { active: false, queued: pendingMergeCutsceneQueue.length },
       reality: {
         broken: realityBroken(),
         copyTheme: currentCopyThemeId(),
@@ -20644,7 +21157,7 @@
       selected: state.selected,
       selectedEntry: getSelectedRef()?.entry ? entryText(getSelectedRef().entry) : null,
       selectedUnit: getSelectedRef()?.unit ? unitText(getSelectedRef().unit) : null,
-      itemCarrierPreview: itemCarrierPreviewText(activeShopItemCarrierPreview()),
+      itemCarrierPreview: itemCarrierPreviewText(activeItemCarrierPreview()),
       drag: state.drag
         ? {
             area: state.drag.area,
@@ -20670,6 +21183,8 @@
     if (!preview) return null;
     return {
       source: preview.source,
+      area: preview.area || null,
+      index: Number.isInteger(preview.index) ? preview.index : null,
       shopIndex: preview.shopIndex,
       item: {
         id: preview.item.id,
@@ -20704,6 +21219,7 @@
       shopMergePhantomProgress: mergeOpportunity?.phantomProgress || 0,
       shopMergeRequired: mergeOpportunity?.required || 3,
       shopMergeText: mergeOpportunity?.text || null,
+      indicatorTags: shopEntryIndicatorTags(entry, index),
       recommendationTags: isItem(entry) ? itemRecommendationTags(entry, index) : [],
       carrierRecommendations: isItem(entry) ? itemCarrierRecommendations(entry, index) : [],
     };
