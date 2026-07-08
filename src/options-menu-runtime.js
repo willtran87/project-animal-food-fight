@@ -8,7 +8,7 @@
   }
 
   function canOpen(state) {
-    if (state.activeStory || state.codexOpen || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return false;
+    if (state.activeStory || state.codexOpen || state.mergeCutscene || state.rebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return false;
     if (state.phase === "victoryCutscene") return false;
     return state.phase === "prep" || state.phase === "battle" || state.phase === "result";
   }
