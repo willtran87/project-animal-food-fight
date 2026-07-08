@@ -1491,11 +1491,18 @@ function markCampaignFrameReady(loadToken = campaignFrameLoadToken) {
   });
 }
 
+function pauseMenuAudioForCampaign() {
+  menuMusic.pause();
+  menuMusicPlayPromise = null;
+  window.FoodAnimalsAudioRuntime.pauseAll(menuSfx);
+}
+
 function openCampaignTarget(url, screen = "opening") {
   if (!campaignFrame) {
     window.location.href = url;
     return;
   }
+  pauseMenuAudioForCampaign();
   const loadToken = ++campaignFrameLoadToken;
   delete document.body.dataset.campaignFrameReady;
   document.body.dataset.campaignScreen = screen;

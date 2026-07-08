@@ -182,6 +182,12 @@
   const HORROR_PARTICLE_SPEED_SCALE = 1.24;
   const HORROR_PARTICLE_LIFE_SCALE = 0.74;
   const HORROR_ATTACK_SFX_VOLUME_SCALE = 0.55;
+  const COMBAT_SFX_THROTTLE_SECONDS = Object.freeze({
+    hit: 0.045,
+    ko: 0.08,
+    heal: 0.1,
+    shield: 0.1,
+  });
   const FINAL_VICTORY_ROUND = 20;
   const FINAL_BOSS_TYPE_ID = "cyber_brain_final_boss";
   const FINAL_BOSS_MINION_TYPE_ID = "brainstem_wire_minion";
@@ -584,6 +590,7 @@
     blocked: false,
     playPromise: null,
     volumeSetting: null,
+    lastSyncKey: null,
   };
   const gameSfx = {
     armed: false,
@@ -639,9 +646,15 @@
   }
 
   function syncGameMusic() {
+    const track = currentGameMusicTrack();
+    const volume = gameMusicVolume();
+    const syncKey = `${track?.id || ""}|${track?.src || ""}|${volume.toFixed(4)}|${gameMusic.armed ? "armed" : "idle"}`;
+    const needsResume = Boolean(gameMusic.armed && volume > 0 && gameMusic.audio?.paused && !gameMusic.playPromise);
+    if (gameMusic.lastSyncKey === syncKey && !needsResume) return null;
+    gameMusic.lastSyncKey = syncKey;
     window.FoodAnimalsAudioRuntime.syncMusic(gameMusic, {
-      track: currentGameMusicTrack(),
-      volume: gameMusicVolume(),
+      track,
+      volume,
     });
   }
 
@@ -698,6 +711,15 @@
     if (now - last < interval) return null;
     gameSfx.lastPlayedAt.set(key, now);
     return playGameSfx(id, options);
+  }
+
+  function playCombatSfx(id, options = {}) {
+    return playThrottledGameSfx(
+      `combat:${id}`,
+      id,
+      options,
+      COMBAT_SFX_THROTTLE_SECONDS[id] ?? 0.06,
+    );
   }
 
   function armGameSfx() {
@@ -5983,7 +6005,7 @@
     } else {
       saveCurrentRunSilently();
     }
-    playGameSfx(won ? "victory" : "defeat");
+    if (!finalVictory) playGameSfx(won ? "victory" : "defeat");
   }
 
   function combatLedgerLabels() {
@@ -6055,17 +6077,17 @@
     }));
     if (impact <= 0) return;
     if (options.silentSfx) return;
-    playGameSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
+    playCombatSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
   }
 
   function recordCombatKo(battle, source, target) {
     if (!window.FoodAnimalsCombatLedgerCapture.recordKo(battle, source, target, combatLedgerCaptureOptions())) return;
-    playGameSfx("ko", { volume: 0.9 });
+    playCombatSfx("ko", { volume: 0.9 });
   }
 
   function recordCombatSupport(unit, amount, kind, source = null, battle = state.battle) {
     if (!window.FoodAnimalsCombatLedgerCapture.recordSupport(battle, unit, amount, kind, source, combatLedgerCaptureOptions())) return;
-    playGameSfx(kind === "heal" ? "heal" : "shield", { volume: 0.42 });
+    playCombatSfx(kind === "heal" ? "heal" : "shield", { volume: 0.42 });
   }
 
   function summarizeCombatLedger(battle, won, heartDamage) {
@@ -11513,6 +11535,7 @@
   }
 
   function openCodexOverlay() {
+    if (mergeCutsceneActive() || mergeCutscenePending()) return false;
     state.codexOpen = true;
     startModalTransition("codex", "enter");
     state.codexSelectedId = state.codexSelectedId || CATALOG[0]?.id || null;
@@ -15380,7 +15403,10 @@
   function getRuntimeSprite(unit, options = {}) {
     const src = runtimeSpriteSrcFor(unit, options);
     return window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
-      onLoad: requestDraw,
+      onLoad: (image) => {
+        warmAlphaMetrics(image, runtimeSpriteMetricsCache);
+        requestDraw();
+      },
       onError: requestDraw,
     });
   }
@@ -15388,7 +15414,10 @@
   function getDefeatStillSprite(unit, options = {}) {
     const src = defeatStillSpriteSrcFor(unit, options);
     return window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
-      onLoad: requestDraw,
+      onLoad: (image) => {
+        warmAlphaMetrics(image, runtimeSpriteMetricsCache);
+        requestDraw();
+      },
       onError: requestDraw,
     });
   }
@@ -15433,7 +15462,10 @@
 
   function getItemSpriteBySrc(src) {
     return window.FoodAnimalsRuntimeAssets.getCachedImage(itemSpriteCache, src, {
-      onLoad: requestDraw,
+      onLoad: (image) => {
+        warmAlphaMetrics(image, itemSpriteMetricsCache);
+        requestDraw();
+      },
       onError: requestDraw,
     });
   }
@@ -15490,13 +15522,19 @@
   function preloadDefeatStillSprites() {
     window.FoodAnimalsRuntimeAssets.preloadEntries(DEFEAT_STILL_SPRITES, (src) => {
       window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
-        onLoad: requestDraw,
+        onLoad: (image) => {
+          warmAlphaMetrics(image, runtimeSpriteMetricsCache);
+          requestDraw();
+        },
         onError: requestDraw,
       });
     });
     window.FoodAnimalsRuntimeAssets.preloadEntries(REALITY_DEFEAT_STILL_SPRITES, (src) => {
       window.FoodAnimalsRuntimeAssets.getCachedImage(runtimeSpriteCache, src, {
-        onLoad: requestDraw,
+        onLoad: (image) => {
+          warmAlphaMetrics(image, runtimeSpriteMetricsCache);
+          requestDraw();
+        },
         onError: requestDraw,
       });
     });
@@ -15714,6 +15752,18 @@
 
   function itemSpriteMetrics(image) {
     return alphaSpriteMetrics(image, itemSpriteMetricsCache);
+  }
+
+  function warmAlphaMetrics(image, cache) {
+    if (!image) return;
+    const warm = () => {
+      window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache);
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(warm, { timeout: 500 });
+    } else {
+      window.setTimeout(warm, 0);
+    }
   }
 
   function alphaSpriteMetrics(image, cache) {
@@ -20672,7 +20722,6 @@
     if (state.phase === "battle") return true;
     if (state.phase === "victoryCutscene") return true;
     if (state.drag || state.optionsMenu.dragSlider || state.codexPreview?.dragging) return true;
-    if (realityBroken()) return true;
     return hasActiveTimedVisuals();
   }
 

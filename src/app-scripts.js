@@ -11,7 +11,7 @@
       ["field-guide-runtime", "h-4b79e2b56897"],
       ["run-storage", "h-5d37239279d5"],
       ["food-lob-runtime", "h-a15cd33070c2"],
-      ["start-menu", "h-12bcbe4b029b"],
+      ["start-menu", "h-8f68cab9ba6c"],
     ],
     openingVn: [
       ["dynamic-asset-manifest", "h-ff7c18de9ec1"],
@@ -40,7 +40,7 @@
       ["reward-runtime", "h-90e2baab36bc"],
       ["combat-ledger-capture", "h-8320c339f1eb"],
       ["combat-ledger-runtime", "h-8f876fab5977"],
-      ["options-menu-runtime", "h-ad628d066597"],
+      ["options-menu-runtime", "h-b2802e9b2602"],
       ["particle-runtime", "h-fabfae4213fb"],
       ["result-runtime", "h-cca8b708a6e1"],
       ["battle-flow-runtime", "h-67296199578f"],
@@ -70,7 +70,7 @@
       ["economy-enemy-data", "h-1fc098d5a701"],
       ["rarity-shop-data", "h-e12dbb56e12f"],
       ["status-effect-data", "h-dc183b7afdae"],
-      ["game", "h-0a10f98a05cd"],
+      ["game", "h-05d1d01cb133"],
     ],
   });
 
