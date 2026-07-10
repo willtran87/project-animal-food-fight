@@ -26,7 +26,12 @@ async function enterTutorial(page, label, viewport) {
   await page.waitForTimeout(300);
   await page.getByRole("button", { name: "Skip" }).click();
   await page.getByRole("button", { name: "Confirm Skip" }).click();
-  await page.waitForTimeout(700);
+  await page.waitForFunction(
+    () => !document.querySelector(".scene-transition-curtain")?.classList.contains("is-tutorial-entering"),
+    null,
+    { timeout: 3000 },
+  );
+  await page.waitForTimeout(50);
 }
 
 async function collectMetrics(page) {
