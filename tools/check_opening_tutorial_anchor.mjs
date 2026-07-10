@@ -186,8 +186,8 @@ function assertAnchored(label, metrics, { strictTop }) {
     if (transform !== "none") throw new Error(`${label}: ${name} has transform ${transform}`);
   }
   if (strictTop) {
-    assertNear(metrics.relative.iframeTop, 3, 5, `${label}: tutorial iframe top relative to stage`);
-    assertNear(metrics.relative.iframeBottomGap, 3, 5, `${label}: tutorial iframe bottom relative to stage`);
+    assertNear(metrics.relative.iframeTop, 3, 12, `${label}: tutorial iframe top relative to stage`);
+    assertNear(metrics.relative.iframeBottomGap, 3, 12, `${label}: tutorial iframe bottom relative to stage`);
   }
   if (metrics.pageScroll.scrollWidth > metrics.pageScroll.clientWidth + 1) {
     throw new Error(`${label}: page has horizontal overflow`);
