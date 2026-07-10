@@ -59,6 +59,7 @@ async function collectMetrics(page) {
     const shop = document.querySelector(".tutorial-shop")?.getBoundingClientRect();
     const dialogue = document.querySelector(".dialogue-panel")?.getBoundingClientRect();
     const iframe = document.querySelector(".actual-shop-frame");
+    const iframeRect = iframe?.getBoundingClientRect();
     const frameDoc = iframe?.contentDocument;
     const frameWin = iframe?.contentWindow;
     const canvas = frameDoc?.querySelector("#game");
@@ -82,6 +83,8 @@ async function collectMetrics(page) {
         ? {
             shopTop: Math.round(shop.top - stage.top),
             shopBottomGap: Math.round(stage.bottom - shop.bottom),
+            iframeTop: iframeRect ? Math.round(iframeRect.top - stage.top) : null,
+            iframeBottomGap: iframeRect ? Math.round(stage.bottom - iframeRect.bottom) : null,
             dialogueBottomGap: Math.round(stage.bottom - dialogue.bottom),
           }
         : null,
@@ -183,8 +186,8 @@ function assertAnchored(label, metrics, { strictTop }) {
     if (transform !== "none") throw new Error(`${label}: ${name} has transform ${transform}`);
   }
   if (strictTop) {
-    assertNear(metrics.relative.shopTop, 3, 5, `${label}: tutorial shop top relative to stage`);
-    assertNear(metrics.relative.shopBottomGap, 3, 5, `${label}: tutorial shop bottom relative to stage`);
+    assertNear(metrics.relative.iframeTop, 3, 5, `${label}: tutorial iframe top relative to stage`);
+    assertNear(metrics.relative.iframeBottomGap, 3, 5, `${label}: tutorial iframe bottom relative to stage`);
   }
   if (metrics.pageScroll.scrollWidth > metrics.pageScroll.clientWidth + 1) {
     throw new Error(`${label}: page has horizontal overflow`);
