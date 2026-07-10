@@ -1122,6 +1122,14 @@ button {
     aspect-ratio: 16 / 10;
   }
 
+  .dialogue-panel {
+    height: 72%;
+  }
+
+  .dialogue-actions {
+    gap: 8px;
+  }
+
   .tabs-portrait {
     width: 100%;
     height: auto;
@@ -1200,8 +1208,8 @@ button {
 
   .vn-button {
     min-width: 68px;
-    min-height: 24px;
+    min-height: 44px;
     padding: 0 8px;
-    font-size: 0.5rem;
+    font-size: 0.65rem;
   }
 }

@@ -31291,25 +31291,41 @@
     };
   }
 
-  function hitTest(pos) {
+  function minimumTouchHitRect(rect, minimumCssPixels = 44) {
+    const canvasRect = canvas.getBoundingClientRect();
+    if (!canvasRect.width || !canvasRect.height) return rect;
+    const width = Math.max(rect.w, (minimumCssPixels / canvasRect.width) * W);
+    const height = Math.max(rect.h, (minimumCssPixels / canvasRect.height) * H);
+    return {
+      x: rect.x - (width - rect.w) / 2,
+      y: rect.y - (height - rect.h) / 2,
+      w: width,
+      h: height,
+    };
+  }
+
+  function hitTest(pos, options = {}) {
+    const touchRect = (rect) => options.touch ? minimumTouchHitRect(rect) : rect;
     if (state.optionsMenu.open) return hitTestOptionsMenu(pos);
     if (state.finalTabsStoryTransition) return null;
     if (state.activeStory) {
-      if (pointInRect(pos.x, pos.y, storyBackButtonRect())) return { area: "story", action: "back" };
-      if (pointInRect(pos.x, pos.y, storySkipButtonRect())) return { area: "story", action: "skip" };
-      if (pointInRect(pos.x, pos.y, storyAdvanceButtonRect())) return { area: "story", action: "advance" };
+      if (pointInRect(pos.x, pos.y, touchRect(storyBackButtonRect()))) return { area: "story", action: "back" };
+      if (pointInRect(pos.x, pos.y, touchRect(storySkipButtonRect()))) return { area: "story", action: "skip" };
+      if (pointInRect(pos.x, pos.y, touchRect(storyAdvanceButtonRect()))) return { area: "story", action: "advance" };
+      if (options.touch && pointInRect(pos.x, pos.y, storyDialogueLayout().panel)) return { area: "story", action: "advance" };
       return { area: "story", action: "panel" };
     }
     if (state.level10RevealCutscene) {
       const rects = level10CutsceneNavButtonRects();
-      if (pointInRect(pos.x, pos.y, rects.back)) return { area: "level10RevealCutscene", action: "back" };
-      if (pointInRect(pos.x, pos.y, rects.continue)) return { area: "level10RevealCutscene", action: "advance" };
+      if (pointInRect(pos.x, pos.y, touchRect(rects.back))) return { area: "level10RevealCutscene", action: "back" };
+      if (pointInRect(pos.x, pos.y, touchRect(rects.continue))) return { area: "level10RevealCutscene", action: "advance" };
+      if (options.touch) return { area: "level10RevealCutscene", action: "advance" };
       return { area: "level10RevealCutscene", action: "panel" };
     }
     if (state.mergeCutscene) return null;
     if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.phaseTransition) return null;
     if (state.phase === "victoryCutscene") {
-      if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, VICTORY_REBOOT_BUTTON)) {
+      if (victoryCutsceneStage() === "ideal" && pointInRect(pos.x, pos.y, touchRect(VICTORY_REBOOT_BUTTON))) {
         return { area: "button", index: "victoryReboot" };
       }
       return null;
@@ -31498,7 +31514,7 @@
   function onPointerDown(event) {
     const pos = canvasPoint(event);
     state.pointer = pos;
-    const hit = hitTest(pos);
+    const hit = hitTest(pos, { touch: event.pointerType === "touch" });
     if (state.mergeCutscene) {
       state.selected = null;
       state.drag = null;
@@ -31730,27 +31746,37 @@
     event.preventDefault();
   }
 
-  function onPointerCancel(event) {
-    state.pointer = null;
-    if (state.mergeCutscene) {
-      state.drag = null;
-      state.hover = null;
-      return;
-    }
-    if (state.optionsMenu.open) {
-      state.optionsMenu.dragSlider = null;
-      return;
-    }
-    if (!state.drag) return;
+  function cancelActivePointerInteraction(event) {
+    const hadDrag = Boolean(state.drag);
+    const hadSliderDrag = Boolean(state.optionsMenu.dragSlider);
+    const hadCodexDrag = Boolean(state.codexPreview?.dragging);
     state.drag = null;
-    state.message = "Cancelled";
-    canvas.releasePointerCapture?.(event.pointerId);
+    state.optionsMenu.dragSlider = null;
+    if (state.codexPreview) state.codexPreview.dragging = false;
+    if (hadDrag) state.message = "Cancelled";
+    if (event?.pointerId != null && canvas.hasPointerCapture?.(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    return hadDrag || hadSliderDrag || hadCodexDrag;
   }
 
-  function onPointerLeave() {
+  function onPointerCancel(event) {
     state.pointer = null;
     state.hover = null;
-    if (state.optionsMenu.open) state.optionsMenu.dragSlider = null;
+    cancelActivePointerInteraction(event);
+  }
+
+  function onPointerLeave(event) {
+    state.pointer = null;
+    state.hover = null;
+    cancelActivePointerInteraction(event);
+  }
+
+  function onLostPointerCapture(event) {
+    if (!state.drag && !state.optionsMenu.dragSlider && !state.codexPreview?.dragging) return;
+    state.pointer = null;
+    state.hover = null;
+    cancelActivePointerInteraction(event);
   }
 
   function onWheel(event) {
@@ -33766,6 +33792,10 @@
   });
   canvas.addEventListener("pointerleave", (event) => {
     onPointerLeave(event);
+    requestDraw();
+  });
+  canvas.addEventListener("lostpointercapture", (event) => {
+    onLostPointerCapture(event);
     requestDraw();
   });
   canvas.addEventListener("wheel", (event) => {

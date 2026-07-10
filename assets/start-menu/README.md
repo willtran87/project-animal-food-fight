@@ -33,6 +33,8 @@ The food-lob sprites follow the same chroma-key workflow as other generated art:
 
 `start-menu.js` currently uses the v1 and v2 lob sets together, spawns lobs edge-to-edge from offscreen, caps active lobs by viewport width, and exposes menu/lob state through `window.render_game_to_text()`.
 
+The active cozy Banana Split Giraffe Field Guide plate is `field-guide/cozy/banana-split-giraffe-boss-anatomy-journal-v2-hd-pixel-transparent.webp`. It corrects the specimen to four legs and a continuous neck-to-chest silhouette while preserving the original Plate 46 journal content. Its generated trail is `source/banana-split-giraffe-boss-anatomy-journal-v2-chromakey.png` -> `transparent/banana-split-giraffe-boss-anatomy-journal-v2-transparent.webp`.
+
 ## Notes
 
 - The standalone menu dispatches `food-animals:start-menu:start` when Start Run is chosen, but it is not yet integrated as the launch shell for `index.html`.

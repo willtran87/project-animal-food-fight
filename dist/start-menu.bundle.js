@@ -1153,6 +1153,8 @@ const FIELD_GUIDE_PAGES = [
     src:
       slug === "bao-bun-badger"
         ? `${FIELD_GUIDE_ASSET_BASE}/cozy/bao-bun-badger-anatomy-journal-v2-hd-pixel-transparent.webp`
+        : slug === "banana-split-giraffe-boss"
+          ? `${FIELD_GUIDE_ASSET_BASE}/cozy/banana-split-giraffe-boss-anatomy-journal-v2-hd-pixel-transparent.webp`
         : `${FIELD_GUIDE_ASSET_BASE}/cozy/${slug}-anatomy-journal-v1-hd-pixel-transparent.webp`,
   })),
 ];

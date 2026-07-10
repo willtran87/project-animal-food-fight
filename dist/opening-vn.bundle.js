@@ -821,6 +821,7 @@ let visualTransitionToken = 0;
 let visualTransitionTimers = [];
 let sceneTransitionTimer = null;
 let tutorialCompleteNavigationTimer = null;
+let tutorialCompletionDispatched = false;
 let openingReadySignaled = false;
 const warmImageCache = [];
 
@@ -1153,34 +1154,48 @@ function goBack() {
   triggerOpeningSceneTransition(previousScene, openingSceneForIndex(state.index));
 }
 
+function dispatchTutorialCompletion() {
+  if (state.phase !== "complete" || tutorialCompletionDispatched) return false;
+  tutorialCompletionDispatched = true;
+  tutorialCompleteNavigationTimer = null;
+  const targetUrl = appUrl(TUTORIAL_COMPLETE_TARGET_URL).href;
+  window.dispatchEvent(new CustomEvent("food-animals:opening-vn:complete", {
+    detail: { targetUrl },
+  }));
+  if (isCampaignEmbedded()) {
+    window.parent.postMessage(
+      { type: "food-animals:opening-vn:complete", targetUrl },
+      window.location.origin,
+    );
+    return true;
+  }
+  window.location.href = targetUrl;
+  return true;
+}
+
+function scheduleTutorialCompletion(delay = TUTORIAL_COMPLETE_TRANSITION_MS) {
+  window.clearTimeout(tutorialCompleteNavigationTimer);
+  tutorialCompleteNavigationTimer = window.setTimeout(dispatchTutorialCompletion, Math.max(0, delay));
+}
+
 function completeTutorial() {
   playVnSfx("transition");
   state.phase = "complete";
   state.skipConfirm = false;
+  tutorialCompletionDispatched = false;
   sceneTransitionCurtain.classList.remove("is-transitioning", "is-completing");
   void sceneTransitionCurtain.offsetWidth;
   sceneTransitionCurtain.classList.add("is-completing");
   render();
-  window.clearTimeout(tutorialCompleteNavigationTimer);
-  tutorialCompleteNavigationTimer = window.setTimeout(() => {
-    tutorialCompleteNavigationTimer = null;
-    const targetUrl = appUrl(TUTORIAL_COMPLETE_TARGET_URL).href;
-    window.dispatchEvent(new CustomEvent("food-animals:opening-vn:complete", {
-      detail: { targetUrl },
-    }));
-    if (isCampaignEmbedded()) {
-      window.parent.postMessage(
-        { type: "food-animals:opening-vn:complete", targetUrl },
-        window.location.origin,
-      );
-      return;
-    }
-    window.location.href = targetUrl;
-  }, TUTORIAL_COMPLETE_TRANSITION_MS);
+  scheduleTutorialCompletion();
 }
 
 function advance() {
-  if (state.phase === "complete") return;
+  if (state.phase === "complete") {
+    tutorialCompletionDispatched = false;
+    scheduleTutorialCompletion(0);
+    return;
+  }
   playVnSfx("next", { volume: 0.7 });
   state.lastAction = "next";
   state.skipConfirm = false;
@@ -1251,6 +1266,12 @@ window.addEventListener("pagehide", () => {
   if (tutorialCompleteNavigationTimer !== null) {
     window.clearTimeout(tutorialCompleteNavigationTimer);
     tutorialCompleteNavigationTimer = null;
+  }
+});
+
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted && state.phase === "complete" && !tutorialCompletionDispatched) {
+    scheduleTutorialCompletion(0);
   }
 });
 
