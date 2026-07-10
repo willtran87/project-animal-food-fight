@@ -18,8 +18,12 @@ function hashContent(content) {
   return `h-${crypto.createHash("sha256").update(content).digest("hex").slice(0, 12)}`;
 }
 
+function readText(filePath) {
+  return fs.readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
+}
+
 function hashFile(filePath) {
-  return hashContent(fs.readFileSync(filePath));
+  return hashContent(readText(filePath));
 }
 
 function replaceScriptEntryVersions(source) {
@@ -34,7 +38,7 @@ function replaceLoaderVersions(source, loaderVersion) {
   return source.replace(/src="src\/app-scripts\.js\?v=[^"]+"/g, `src="src/app-scripts.js?v=${loaderVersion}"`);
 }
 
-const originalAppScripts = fs.readFileSync(appScriptsPath, "utf8");
+const originalAppScripts = readText(appScriptsPath);
 const updatedAppScripts = replaceScriptEntryVersions(originalAppScripts);
 const loaderVersion = hashContent(updatedAppScripts);
 
@@ -44,7 +48,7 @@ if (updatedAppScripts !== originalAppScripts) {
 }
 
 const htmlUpdates = htmlPaths.map((htmlPath) => {
-  const originalHtml = fs.readFileSync(htmlPath, "utf8");
+  const originalHtml = readText(htmlPath);
   const updatedHtml = replaceLoaderVersions(originalHtml, loaderVersion);
   if (updatedHtml !== originalHtml) pendingUpdates.push(path.relative(repoRoot, htmlPath));
   return { htmlPath, updatedHtml };
