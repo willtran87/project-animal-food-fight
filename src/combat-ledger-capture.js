@@ -25,7 +25,15 @@
   }
 
   function emptySide() {
-    return { damageDealt: 0, damageTaken: 0, healingReceived: 0, shieldingReceived: 0, kos: 0 };
+    return {
+      damageDealt: 0,
+      damageTaken: 0,
+      statusDamageDealt: 0,
+      shieldAbsorbed: 0,
+      healingReceived: 0,
+      shieldingReceived: 0,
+      kos: 0,
+    };
   }
 
   function ensureSide(ledger, side) {
@@ -183,18 +191,23 @@
     const impact = Math.max(0, hpDamage || 0) + Math.max(0, shieldDamage || 0);
     if (!ledger || impact <= 0 || !target) return 0;
     const targetSide = target.side || "enemy";
+    const kind = options.kind || (options.status ? "status" : source ? "damage" : "environment");
     const targetEntry = ensureUnit(ledger, target, options.labels);
     if (targetEntry) targetEntry.damageTaken += impact;
-    ensureSide(ledger, targetSide).damageTaken += impact;
+    const targetTotals = ensureSide(ledger, targetSide);
+    targetTotals.damageTaken += impact;
+    targetTotals.shieldAbsorbed += Math.max(0, shieldDamage || 0);
     if (source) {
       const sourceSide = source.side || (targetSide === "ally" ? "enemy" : "ally");
       const sourceEntry = ensureUnit(ledger, source, options.labels);
       if (sourceEntry) sourceEntry.damageDealt += impact;
-      ensureSide(ledger, sourceSide).damageDealt += impact;
+      const sourceTotals = ensureSide(ledger, sourceSide);
+      sourceTotals.damageDealt += impact;
+      if (kind === "status") sourceTotals.statusDamageDealt += impact;
     }
     recordEvent(battle, {
       type: "damage",
-      kind: options.kind || (options.status ? "status" : source ? "damage" : "environment"),
+      kind,
       source,
       target,
       amount: impact,

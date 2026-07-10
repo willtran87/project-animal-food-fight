@@ -1,6 +1,9 @@
 {
   "name": "project-food-animals",
   "private": true,
+  "devDependencies": {
+    "playwright": "1.60.0"
+  },
   "scripts": {
     "serve": "python -m http.server 8173",
     "music:v2": "node tools/generate_music_v2_tracks.mjs",
@@ -11,12 +14,15 @@
     "check:assets": "node tools/check_asset_references.mjs",
     "check:data": "node tools/check_data_integrity.mjs",
     "check:logic": "node tools/check_runtime_logic.mjs",
+    "build:runtime": "node tools/build_runtime_bundles.mjs",
+    "build:pages": "npm run check:runtime-bundles && npm run check:script-versions && npm run report:unused-assets && node tools/build_pages_dist.mjs",
+    "check:runtime-bundles": "node tools/build_runtime_bundles.mjs --check",
     "report:unused-assets": "node tools/report_unused_assets.mjs",
     "report:balance": "node tools/report_balance_simulation.mjs",
     "update:script-versions": "node tools/update_script_versions.mjs",
     "check:script-versions": "node tools/update_script_versions.mjs --check",
     "check:tutorial": "node tools/check_opening_tutorial_anchor.mjs",
     "check:visual": "node tools/check_game_routes_highres.mjs",
-    "check": "npm run check:syntax && npm run check:script-versions && npm run check:assets && npm run check:data && npm run check:logic && npm run check:visual && npm run check:tutorial"
+    "check": "npm run check:runtime-bundles && npm run check:syntax && npm run check:script-versions && npm run check:assets && npm run check:data && npm run check:logic && npm run check:visual && npm run check:tutorial"
   }
 }

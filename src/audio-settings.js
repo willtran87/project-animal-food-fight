@@ -2,6 +2,7 @@
   "use strict";
 
   const STORAGE_KEY = "harvest-friends:start-menu-settings:v1";
+  const storageAvailability = new Map();
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -14,12 +15,15 @@
   }
 
   function canUseLocalStorage(storageKey = STORAGE_KEY) {
+    if (storageAvailability.has(storageKey)) return storageAvailability.get(storageKey);
     try {
       const key = `${storageKey}:probe`;
       window.localStorage.setItem(key, "1");
       window.localStorage.removeItem(key);
+      storageAvailability.set(storageKey, true);
       return true;
     } catch {
+      storageAvailability.set(storageKey, false);
       return false;
     }
   }

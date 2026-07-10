@@ -15,8 +15,24 @@
   </head>
   <body>
     <main id="game-shell" aria-label="Food Animal Auto-Battler">
-      <canvas id="game" width="1600" height="1000"></canvas>
+      <p id="game-instructions" class="sr-only">
+        Auto-battler game canvas. Use the arrow keys to move between controls, Enter or Space to activate,
+        Escape to close overlays, and F to toggle fullscreen. Pointer and touch dragging move units and items.
+      </p>
+      <output id="game-status" class="sr-only" aria-live="polite" aria-atomic="true"></output>
+      <canvas
+        id="game"
+        width="1600"
+        height="1000"
+        tabindex="0"
+        role="application"
+        aria-label="Harvest Friends auto-battler"
+        aria-describedby="game-instructions game-status"
+        aria-keyshortcuts="Enter Space Escape ArrowUp ArrowDown ArrowLeft ArrowRight F"
+      >
+        Harvest Friends requires canvas support. Current game state is announced in the adjacent live region.
+      </canvas>
     </main>
-    <script src="src/app-scripts.js?v=h-43265544cf02" data-entry="game"></script>
+    <script src="src/app-scripts.js?v=h-2a29dab1b818" data-entry="game"></script>
   </body>
 </html>

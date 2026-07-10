@@ -7,6 +7,10 @@
     swipeMinPx: 46,
     swipeAxisBias: 1.25,
   };
+  const CHROMA_CACHE_LIMIT = 6;
+  const chromaWorkerRequests = new Map();
+  let chromaWorker = null;
+  let chromaWorkerRequestId = 0;
 
   function displayName(theme) {
     return theme === "horror" ? "Specifications" : "Field Guide";
@@ -147,30 +151,88 @@
     return visited;
   }
 
+  function ensureChromaWorker() {
+    if (chromaWorker) return chromaWorker;
+    if (typeof Worker !== "function" || typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") {
+      return null;
+    }
+    const workerUrl = new URL("src/field-guide-worker.js?v=worker-1", document.baseURI || window.location.href);
+    chromaWorker = new Worker(workerUrl, { name: "field-guide-chroma" });
+    chromaWorker.onmessage = (event) => {
+      const request = chromaWorkerRequests.get(event.data?.id);
+      if (!request) return;
+      chromaWorkerRequests.delete(event.data.id);
+      if (event.data.error || !event.data.blob) request.reject(new Error(event.data.error || "Chroma worker failed"));
+      else request.resolve(event.data.blob);
+    };
+    chromaWorker.onerror = (event) => {
+      chromaWorkerRequests.forEach((request) => request.reject(new Error(event.message || "Chroma worker failed")));
+      chromaWorkerRequests.clear();
+      chromaWorker?.terminate();
+      chromaWorker = null;
+    };
+    return chromaWorker;
+  }
+
+  async function chromaBlobFromWorker(image) {
+    const worker = ensureChromaWorker();
+    if (!worker) return null;
+    const bitmap = await createImageBitmap(image);
+    const id = ++chromaWorkerRequestId;
+    return new Promise((resolve, reject) => {
+      chromaWorkerRequests.set(id, { resolve, reject });
+      worker.postMessage({ id, bitmap }, [bitmap]);
+    });
+  }
+
+  function chromaBlobOnMainThread(image) {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        resolve(null);
+        return;
+      }
+      context.drawImage(image, 0, 0);
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const keyColor = [data[0], data[1], data[2]];
+      const keyedPixels = connectedChromaKeyPixels(data, canvas.width, canvas.height, keyColor);
+      for (let index = 0; index < keyedPixels.length; index += 1) {
+        if (keyedPixels[index]) data[index * 4 + 3] = 0;
+      }
+      context.putImageData(imageData, 0, 0);
+      canvas.toBlob(resolve, "image/webp", 0.92);
+    });
+  }
+
+  function evictOldestChromaEntry(cache) {
+    const oldest = cache.keys().next();
+    if (oldest.done) return;
+    const cached = cache.get(oldest.value);
+    cache.delete(oldest.value);
+    Promise.resolve(cached).then((src) => {
+      if (typeof src === "string" && src.startsWith("blob:")) URL.revokeObjectURL(src);
+    });
+  }
+
   function resolveImageSrc(page, cache) {
     if (!page?.chromaKey) return Promise.resolve(page?.src || "");
     if (cache.has(page.src)) return cache.get(page.src);
+    while (cache.size >= CHROMA_CACHE_LIMIT) evictOldestChromaEntry(cache);
     const keyedImagePromise = new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const context = canvas.getContext("2d", { willReadFrequently: true });
-        if (!context) {
-          resolve(page.src);
-          return;
+      img.decoding = "async";
+      img.onload = async () => {
+        try {
+          const blob = (await chromaBlobFromWorker(img)) || (await chromaBlobOnMainThread(img));
+          resolve(blob ? URL.createObjectURL(blob) : page.src);
+        } catch {
+          const blob = await chromaBlobOnMainThread(img);
+          resolve(blob ? URL.createObjectURL(blob) : page.src);
         }
-        context.drawImage(img, 0, 0);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        const keyColor = [data[0], data[1], data[2]];
-        const keyedPixels = connectedChromaKeyPixels(data, canvas.width, canvas.height, keyColor);
-        for (let index = 0; index < keyedPixels.length; index += 1) {
-          if (keyedPixels[index]) data[index * 4 + 3] = 0;
-        }
-        context.putImageData(imageData, 0, 0);
-        resolve(canvas.toDataURL("image/png"));
       };
       img.onerror = () => resolve(page.src);
       img.src = page.src;

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const toolsDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolsDir, "..");
-const scanRoots = ["src", "tools"];
+const scanRoots = ["src", "tools", "dist"];
 const syntaxExtensions = new Set([".js", ".mjs"]);
 
 function walk(relativeDir) {

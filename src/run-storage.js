@@ -1,14 +1,18 @@
 (function () {
   const STORAGE_KEY = "harvest-friends:active-run:v1";
   const SAVE_VERSION = 1;
+  const storageAvailability = new Map();
 
   function canUseLocalStorage(storageKey = STORAGE_KEY) {
+    if (storageAvailability.has(storageKey)) return storageAvailability.get(storageKey);
     try {
       const key = `${storageKey}:probe`;
       window.localStorage.setItem(key, "1");
       window.localStorage.removeItem(key);
+      storageAvailability.set(storageKey, true);
       return true;
     } catch {
+      storageAvailability.set(storageKey, false);
       return false;
     }
   }
@@ -36,6 +40,7 @@
       window.localStorage.setItem(storageKey, JSON.stringify(record));
       return true;
     } catch {
+      storageAvailability.set(storageKey, false);
       return false;
     }
   }
@@ -46,6 +51,7 @@
       window.localStorage.removeItem(storageKey);
       return true;
     } catch {
+      storageAvailability.set(storageKey, false);
       return false;
     }
   }

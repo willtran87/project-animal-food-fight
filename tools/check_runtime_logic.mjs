@@ -28,6 +28,7 @@ const context = loadBrowserScripts(
     "src/reward-runtime.js",
     "src/enemy-team-runtime.js",
     "src/battle-flow-runtime.js",
+    "src/combat-ledger-capture.js",
     "src/battle-ability-runtime.js",
     "src/battle-item-runtime.js",
     "src/shop-transaction-runtime.js",
@@ -209,6 +210,24 @@ assert.equal(
   false,
   "defeat with health or hull remaining should retry the same round",
 );
+
+const ledgerCapture = context.FoodAnimalsCombatLedgerCapture;
+const ledgerAlly = { uid: 1, side: "ally", name: "Ally", short: "Ally", typeId: "ally", tier: 1 };
+const ledgerEnemy = { uid: 2, side: "enemy", name: "Enemy", short: "Enemy", typeId: "enemy", tier: 1 };
+const ledgerBattle = {
+  elapsed: 1,
+  allies: [ledgerAlly],
+  enemies: [ledgerEnemy],
+  ledger: ledgerCapture.createLedger([ledgerAlly], [ledgerEnemy]),
+};
+for (let index = 0; index < 5; index += 1) {
+  ledgerCapture.recordDamage(ledgerBattle, ledgerAlly, ledgerEnemy, 3, 1, { status: true, maxEvents: 2 });
+  ledgerCapture.recordDamage(ledgerBattle, ledgerEnemy, ledgerAlly, 2, 2, { maxEvents: 2 });
+}
+const ledgerSummary = ledgerCapture.summarize(ledgerBattle, { won: true, heartDamage: 0 });
+assert.equal(ledgerSummary.events.length, 2, "combat event display history should stay bounded");
+assert.equal(ledgerSummary.ally.statusDamageDealt, 20, "status totals should survive event-history eviction");
+assert.equal(ledgerSummary.ally.shieldAbsorbed, 10, "shield totals should survive event-history eviction");
 
 const rewards = context.FoodAnimalsRewardRuntime;
 const rewardState = { gold: 90, freeRolls: 0 };
