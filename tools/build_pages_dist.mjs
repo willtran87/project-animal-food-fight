@@ -14,6 +14,11 @@ if (!fs.existsSync(unusedReportPath)) {
 
 const unusedReport = JSON.parse(fs.readFileSync(unusedReportPath, "utf8"));
 const unusedAssets = new Set((unusedReport.unused || []).map((file) => file.replaceAll("\\", "/")));
+const retainedRuntimeAssets = new Set(
+  (unusedReport.triaged || [])
+    .filter((entry) => entry.action === "keep-retained" && entry.category === "field-guide-page")
+    .map((entry) => entry.file.replaceAll("\\", "/")),
+);
 
 function resetOutput() {
   fs.rmSync(outputRoot, { recursive: true, force: true });
@@ -38,9 +43,22 @@ function copyDirectory(relativeDir, filter = () => true) {
 
 function deployableAsset(relativePath) {
   const normalized = relativePath.replaceAll("\\", "/");
-  if (unusedAssets.has(normalized)) return false;
+  if (unusedAssets.has(normalized) && !retainedRuntimeAssets.has(normalized)) return false;
   if (normalized.includes("/source/") || normalized.includes("/transparent/")) return false;
   return runtimeAssetExtensions.has(path.extname(relativePath).toLowerCase());
+}
+
+function assertFieldGuideArtifact() {
+  for (const theme of ["cozy", "horror"]) {
+    const relativeDir = `assets/start-menu/field-guide/${theme}`;
+    const absoluteDir = path.join(outputRoot, relativeDir);
+    const pageCount = fs.existsSync(absoluteDir)
+      ? fs.readdirSync(absoluteDir).filter((file) => runtimeAssetExtensions.has(path.extname(file).toLowerCase())).length
+      : 0;
+    if (pageCount < 44) {
+      throw new Error(`Pages artifact is missing ${theme} field-guide pages (${pageCount}/44 copied).`);
+    }
+  }
 }
 
 resetOutput();
@@ -55,6 +73,7 @@ resetOutput();
 copyDirectory("styles");
 copyDirectory("dist");
 copyDirectory("assets", deployableAsset);
+assertFieldGuideArtifact();
 
 const deployedFiles = [];
 function collect(relativeDir = "") {
