@@ -64,7 +64,7 @@ try {
   }
 } finally {
   await browser.close();
-  if (server) await server.stop();
+  server?.kill();
 }
 
 fs.writeFileSync(path.join(outputDir, "results.json"), `${JSON.stringify(results, null, 2)}\n`);
