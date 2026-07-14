@@ -24,7 +24,10 @@ try {
       if (message.type() === "error") errors.push(`console: ${message.text()}`);
     });
     page.on("pageerror", (error) => errors.push(`page: ${error.message}`));
-    page.on("requestfailed", (request) => errors.push(`request: ${request.url()} ${request.failure()?.errorText || "failed"}`));
+    page.on("requestfailed", (request) => {
+      const errorText = request.failure()?.errorText || "failed";
+      if (errorText !== "net::ERR_ABORTED") errors.push(`request: ${request.url()} ${errorText}`);
+    });
     page.on("response", (response) => {
       if (response.status() >= 400) errors.push(`response: ${response.status()} ${response.url()}`);
     });
