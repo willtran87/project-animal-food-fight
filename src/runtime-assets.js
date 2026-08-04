@@ -20,12 +20,20 @@
     return image;
   }
 
+  function remember(cache, key, value, maxEntries = 0) {
+    if (!cache) return value;
+    if (cache.has(key)) cache.delete(key);
+    cache.set(key, value);
+    const limit = Math.max(0, Math.floor(maxEntries || 0));
+    while (limit && cache.size > limit) cache.delete(cache.keys().next().value);
+    return value;
+  }
+
   function getCachedImage(cache, src, options = {}) {
     if (!src) return null;
-    if (cache.has(src)) return cache.get(src);
+    if (cache.has(src)) return remember(cache, src, cache.get(src), options.maxEntries);
     const image = loadImage(src, options);
-    cache.set(src, image);
-    return image;
+    return remember(cache, src, image, options.maxEntries);
   }
 
   function preloadEntries(entries, loadSrc) {
@@ -59,7 +67,7 @@
 
   function alphaMetrics(image, cache, options = {}) {
     const cacheKey = imageKey(image);
-    if (cache?.has(cacheKey)) return cache.get(cacheKey);
+    if (cache?.has(cacheKey)) return remember(cache, cacheKey, cache.get(cacheKey), options.maxEntries);
     const fallback = fallbackMetrics(image);
     if (!image?.complete || !image.naturalWidth || !image.naturalHeight) return fallback;
 
@@ -85,7 +93,7 @@
         }
       }
       if (maxX < minX || maxY < minY) {
-        if (cache) cache.set(cacheKey, fallback);
+        remember(cache, cacheKey, fallback, options.maxEntries);
         return fallback;
       }
       const pad = options.pad ?? 2;
@@ -95,10 +103,10 @@
         w: Math.min(width, maxX + pad + 1) - Math.max(0, minX - pad),
         h: Math.min(height, maxY + pad + 1) - Math.max(0, minY - pad),
       };
-      if (cache) cache.set(cacheKey, metrics);
+      remember(cache, cacheKey, metrics, options.maxEntries);
       return metrics;
     } catch {
-      if (cache) cache.set(cacheKey, fallback);
+      remember(cache, cacheKey, fallback, options.maxEntries);
       return fallback;
     }
   }
@@ -112,5 +120,6 @@
     loadImage,
     preloadEntries,
     ready,
+    remember,
   };
 })();

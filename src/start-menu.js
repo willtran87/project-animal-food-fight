@@ -241,7 +241,6 @@ const SPECIFICATIONS_PAGES = [
       label,
       src: horrorFieldGuideSrc(slug, plate),
       alt: `${label} specifications page`,
-      chromaKey: true,
     };
   }),
 ];
@@ -343,19 +342,45 @@ let startRunTimer = null;
 let fieldGuideCloseTimer = null;
 let rebootStaticTimer = null;
 let menuLoadRevealTimer = null;
+let campaignMenuReleaseTimer = null;
 let fieldGuideImageLoadToken = 0;
 let campaignFrameLoadToken = 0;
 const activeLobs = [];
+const companionLobTimers = new Set();
 const chromaKeyImageCache = new Map();
+const warmedMenuImages = new Map();
 
 menuMusic.loop = true;
 menuMusic.preload = "auto";
+
+function hydrateThemeVisualAssets(theme) {
+  document.querySelectorAll(`img[data-theme-asset="${theme}"][data-src]`).forEach((image) => {
+    image.src = image.dataset.src;
+    image.removeAttribute("data-src");
+  });
+}
+
+function warmMenuImage(src) {
+  if (!src) return;
+  if (warmedMenuImages.has(src)) {
+    const image = warmedMenuImages.get(src);
+    warmedMenuImages.delete(src);
+    warmedMenuImages.set(src, image);
+    return;
+  }
+  const image = new Image();
+  image.decoding = "async";
+  image.src = src;
+  warmedMenuImages.set(src, image);
+  while (warmedMenuImages.size > 2) warmedMenuImages.delete(warmedMenuImages.keys().next().value);
+}
 
 function render() {
   coerceLockedMenuState();
   state.activeRun = getActiveRun();
   document.body.dataset.startMenuTheme = state.theme;
   startMenu.dataset.theme = state.theme;
+  hydrateThemeVisualAssets(state.theme);
   startMenu.setAttribute(
     "aria-label",
     state.theme === "horror" ? "Harvest Friends horror start menu" : "Harvest Friends start menu",
@@ -423,7 +448,8 @@ function render() {
   musicTrackSelect.value = getSelectedMusicTrack().id;
   sfxSlider.value = String(state.settings.sfx);
   updateMenuMusicVolume();
-  renderFieldGuide();
+  if (fieldGuideVisible) renderFieldGuide();
+  else releaseFieldGuideAssets();
 }
 
 function chooseAction(action) {
@@ -476,6 +502,9 @@ function openRunModeSelect() {
   state.fieldGuideOpen = false;
   state.fieldGuideClosing = false;
   state.selectedRunMode = "story";
+  warmMenuImage(state.theme === "horror"
+    ? "assets/start-menu/run-mode-selector-horror-bg-v1.webp"
+    : "assets/start-menu/run-mode-selector-cozy-bg-v1.webp");
   render();
   runModeButtons.find((button) => button.dataset.runMode === state.selectedRunMode)
     ?.focus({ preventScroll: true });
@@ -1085,12 +1114,20 @@ function renderFieldGuide() {
         : `${page.label} anatomy journal page`);
     fieldGuideImage.dataset.slug = page.slug;
     fieldGuideImage.dataset.pageKey = pageKey;
-    fieldGuideImage.style.visibility = page.chromaKey ? "hidden" : "";
-    resolveFieldGuideImageSrc(page).then((src) => {
-      if (loadToken !== fieldGuideImageLoadToken || fieldGuideImage.dataset.pageKey !== pageKey) return;
-      fieldGuideImage.src = src;
-      fieldGuideImage.style.visibility = "";
-    });
+    fieldGuideImage.dataset.chromaProcessing = page.chromaKey ? "true" : "false";
+    fieldGuideImage.style.visibility = "";
+    fieldGuideImage.src = page.src;
+    resolveFieldGuideImageSrc(page)
+      .catch(() => page.src)
+      .then((src) => {
+        if (loadToken !== fieldGuideImageLoadToken || fieldGuideImage.dataset.pageKey !== pageKey) return;
+        fieldGuideImage.src = src || page.src;
+      })
+      .finally(() => {
+        if (loadToken !== fieldGuideImageLoadToken || fieldGuideImage.dataset.pageKey !== pageKey) return;
+        fieldGuideImage.dataset.chromaProcessing = "false";
+        fieldGuideImage.style.visibility = "";
+      });
     restartFieldGuideFlip();
   }
 
@@ -1120,6 +1157,18 @@ function resolveFieldGuideImageSrc(page) {
   return window.FoodAnimalsFieldGuideRuntime.resolveImageSrc(page, chromaKeyImageCache);
 }
 
+function releaseFieldGuideAssets() {
+  if (!fieldGuideImage) return;
+  const hasImage = Boolean(fieldGuideImage.getAttribute("src"));
+  if (!hasImage && chromaKeyImageCache.size === 0) return;
+  fieldGuideImageLoadToken += 1;
+  fieldGuideImage.removeAttribute("src");
+  delete fieldGuideImage.dataset.pageKey;
+  delete fieldGuideImage.dataset.slug;
+  fieldGuideImage.dataset.chromaProcessing = "false";
+  window.FoodAnimalsFieldGuideRuntime.clearResolvedImageCache(chromaKeyImageCache);
+}
+
 function connectedChromaKeyPixels(data, width, height, keyColor) {
   return window.FoodAnimalsFieldGuideRuntime.connectedChromaKeyPixels(data, width, height, keyColor);
 }
@@ -1134,7 +1183,7 @@ function beginStartTransition(mode = "start") {
   state.startingGame = true;
   state.startTransitionPhase = "settingTable";
   state.startMode = mode;
-  clearFoodLobTimer();
+  clearActiveFoodLobs();
   window.dispatchEvent(new CustomEvent("food-animals:start-menu:start"));
   render();
 
@@ -1233,6 +1282,8 @@ window.addEventListener("pagehide", () => {
   clearFieldGuideCloseTimer();
   clearRebootStaticTimer();
   clearMenuLoadRevealTimer();
+  clearCampaignMenuReleaseTimer();
+  clearActiveFoodLobs();
 });
 
 function navigateToRunNow() {
@@ -1486,8 +1537,32 @@ function markCampaignFrameReady(loadToken = campaignFrameLoadToken) {
   window.requestAnimationFrame(() => {
     if (loadToken === campaignFrameLoadToken) {
       document.body.dataset.campaignFrameReady = "true";
+      scheduleCampaignMenuRelease(loadToken);
     }
   });
+}
+
+function clearCampaignMenuReleaseTimer() {
+  if (campaignMenuReleaseTimer === null) return;
+  window.clearTimeout(campaignMenuReleaseTimer);
+  campaignMenuReleaseTimer = null;
+}
+
+function scheduleCampaignMenuRelease(loadToken) {
+  clearCampaignMenuReleaseTimer();
+  campaignMenuReleaseTimer = window.setTimeout(() => {
+    campaignMenuReleaseTimer = null;
+    if (loadToken !== campaignFrameLoadToken || document.body.dataset.campaignFrameReady !== "true") return;
+    clearActiveFoodLobs();
+    releaseFieldGuideAssets();
+    warmedMenuImages.clear();
+    startMenu.querySelectorAll("img[src]").forEach((image) => image.removeAttribute("src"));
+    menuMusic.pause();
+    menuMusic.removeAttribute("src");
+    menuMusic.load();
+    window.FoodAnimalsAudioRuntime.release(menuSfx);
+    document.body.dataset.campaignAssetsReleased = "true";
+  }, 1150);
 }
 
 function pauseMenuAudioForCampaign() {
@@ -1502,8 +1577,10 @@ function openCampaignTarget(url, screen = "opening") {
     return;
   }
   pauseMenuAudioForCampaign();
+  clearCampaignMenuReleaseTimer();
   const loadToken = ++campaignFrameLoadToken;
   delete document.body.dataset.campaignFrameReady;
+  delete document.body.dataset.campaignAssetsReleased;
   document.body.dataset.campaignScreen = screen;
   campaignFrame.hidden = false;
   campaignFrame.addEventListener("load", () => {
@@ -1527,6 +1604,8 @@ window.addEventListener("message", (event) => {
 
 function clearActiveFoodLobs() {
   clearFoodLobTimer();
+  companionLobTimers.forEach((timer) => window.clearTimeout(timer));
+  companionLobTimers.clear();
   while (activeLobs.length > 0) {
     removeLobAt(activeLobs.length - 1);
   }
@@ -1565,10 +1644,11 @@ function scheduleNextFoodLob(delay = randomBetween(FOOD_LOB_SPAWN_DELAY.min, FOO
   nextLobTimer = window.setTimeout(() => {
     spawnFoodLob({ automatic: true });
     if (state.settings.motion && activeLobs.length < maxActiveFoodLobs() && Math.random() < FOOD_LOB_COMPANION.chance) {
-      window.setTimeout(
-        () => spawnFoodLob({ automatic: true }),
-        randomBetween(FOOD_LOB_COMPANION.delayMin, FOOD_LOB_COMPANION.delayMax),
-      );
+      const companionTimer = window.setTimeout(() => {
+        companionLobTimers.delete(companionTimer);
+        spawnFoodLob({ automatic: true });
+      }, randomBetween(FOOD_LOB_COMPANION.delayMin, FOOD_LOB_COMPANION.delayMax));
+      companionLobTimers.add(companionTimer);
     }
     scheduleNextFoodLob();
   }, delay);

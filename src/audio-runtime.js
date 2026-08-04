@@ -54,6 +54,27 @@
     return paused;
   }
 
+  function release(runtime) {
+    if (!runtime) return;
+    pauseAll(runtime);
+    if (runtime.audio) {
+      runtime.audio.removeAttribute("src");
+      runtime.audio.load?.();
+      runtime.audio = null;
+    }
+    runtime.pools?.forEach((pool) => {
+      pool.forEach((audio) => {
+        if (!audio) return;
+        audio.removeAttribute("src");
+        audio.load?.();
+      });
+    });
+    runtime.pools?.clear();
+    runtime.next?.clear();
+    runtime.playPromise = null;
+    runtime.lastMusicSyncOptions = null;
+  }
+
   function updateWindowActivity(runtime, options = {}) {
     if (!runtime) return isWindowActive();
 
@@ -181,6 +202,7 @@
     pauseForHiddenTab,
     playSfx,
     poolFor,
+    release,
     syncMusic,
   };
 })();

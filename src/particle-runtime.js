@@ -45,8 +45,19 @@
     return particles;
   }
 
-  function update(particles, step) {
-    particles.forEach((particle) => {
+  function trimToLimit(particles, maxParticles) {
+    const limit = Math.max(0, Math.floor(maxParticles || 0));
+    if (!limit || particles.length <= limit) return particles;
+    const excess = particles.length - limit;
+    particles.copyWithin(0, excess);
+    particles.length = limit;
+    return particles;
+  }
+
+  function update(particles, step, options = {}) {
+    let writeIndex = 0;
+    for (let readIndex = 0; readIndex < particles.length; readIndex += 1) {
+      const particle = particles[readIndex];
       particle.life -= step;
       particle.age = (particle.age || 0) + step;
       particle.x += particle.vx * step;
@@ -55,8 +66,14 @@
       particle.vx *= Math.max(0, 1 - step * (particle.foodParticles ? 1.4 : 0.35));
       particle.vy *= Math.max(0, 1 - step * (particle.foodParticles ? 1.1 : 0.1));
       particle.vy += (particle.gravity || 220) * step;
-    });
-    return particles.filter((particle) => particle.life > 0);
+      if (particle.life > 0) {
+        particles[writeIndex] = particle;
+        writeIndex += 1;
+      }
+    }
+    particles.length = writeIndex;
+    if (options.maxParticles) trimToLimit(particles, options.maxParticles);
+    return particles;
   }
 
   function frame(particle) {
@@ -71,6 +88,7 @@
     clear,
     createBurst,
     frame,
+    trimToLimit,
     update,
   };
 })();

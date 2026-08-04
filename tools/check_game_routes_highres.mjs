@@ -150,6 +150,18 @@ async function collectMetrics(page, testCase, consoleErrors, badResponses) {
       target: rectFor(selector),
       gameShell: rectFor("#game-shell"),
       canvas: rectFor("#game"),
+      canvasBitmap: (() => {
+        const canvas = document.querySelector("#game");
+        if (!canvas) return null;
+        const rect = canvas.getBoundingClientRect();
+        return {
+          width: canvas.width,
+          height: canvas.height,
+          displayWidth: rect.width,
+          displayHeight: rect.height,
+          devicePixelRatio: window.devicePixelRatio || 1,
+        };
+      })(),
       startMenu: rectFor(".start-menu"),
       openingStage: rectFor(".vn-stage"),
       itemData: window.FoodAnimalsItemData
@@ -239,6 +251,17 @@ function assertRoute(label, testCase, metrics) {
   }
   if (testCase.kind === "game") {
     if (!metrics.canvas) throw new Error(`${label}: missing game canvas`);
+    if (!metrics.canvasBitmap) throw new Error(`${label}: missing game canvas bitmap metrics`);
+    const requiredWidth = metrics.canvasBitmap.displayWidth * metrics.canvasBitmap.devicePixelRatio;
+    const requiredHeight = metrics.canvasBitmap.displayHeight * metrics.canvasBitmap.devicePixelRatio;
+    const requiredArea = requiredWidth * requiredHeight;
+    const bitmapArea = metrics.canvasBitmap.width * metrics.canvasBitmap.height;
+    if (metrics.canvasBitmap.width + 1 < requiredWidth || metrics.canvasBitmap.height + 1 < requiredHeight) {
+      throw new Error(`${label}: canvas backing store undersamples its displayed DPR size`);
+    }
+    if (bitmapArea > requiredArea * 1.15) {
+      throw new Error(`${label}: canvas backing store exceeds required pixel area by more than 15%`);
+    }
     if (!metrics.itemData) throw new Error(`${label}: missing FoodAnimalsItemData module`);
     if (metrics.itemData.itemCount < 80) {
       throw new Error(`${label}: expected item catalog to include at least 80 items, got ${metrics.itemData.itemCount}`);

@@ -2,7 +2,7 @@
   "use strict";
 
   const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
+  let ctx = canvas.getContext("2d", { alpha: false });
   const accessibleStatus = document.getElementById("game-status");
   const nativeMeasureText = ctx.measureText.bind(ctx);
   const W = 1024;
@@ -168,11 +168,14 @@
     ]),
   );
   const DISPLAY_SCALE = 1.5625;
+  const MIN_BACKING_SCALE = 0.75;
   const MAX_BACKING_SCALE = 2.5;
   const TOUCH_BACKING_SCALE = 2;
+  const BACKING_SCALE_STEP = 0.0625;
   const isTouchFirstDevice = Boolean(window.navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)")?.matches);
   const backingScaleCeiling = isTouchFirstDevice ? TOUCH_BACKING_SCALE : MAX_BACKING_SCALE;
-  const BACKING_SCALE = Math.max(1.5, Math.min(backingScaleCeiling, (window.devicePixelRatio || 1) * DISPLAY_SCALE));
+  let backingScale = Math.min(backingScaleCeiling, DISPLAY_SCALE);
+  let backingResizeFrame = 0;
   const COMBAT_ATTACK_MOTION_SECONDS = 0.38;
   const COMBAT_SUPPORT_MOTION_SECONDS = 0.42;
   const COMBAT_HIT_MOTION_SECONDS = 0.3;
@@ -346,11 +349,45 @@
   if (!copyData) throw new Error("FoodAnimalsCopyData must load before game.js");
   const { COPY_THEMES } = copyData;
 
-  canvas.width = Math.round(W * BACKING_SCALE);
-  canvas.height = Math.round(H * BACKING_SCALE);
   canvas.style.setProperty("--game-display-width", `${W * DISPLAY_SCALE}px`);
-  ctx.setTransform(BACKING_SCALE, 0, 0, BACKING_SCALE, 0, 0);
-  ctx.imageSmoothingEnabled = true;
+
+  function desiredBackingScale() {
+    const rect = canvas.getBoundingClientRect();
+    const fallbackWidth = Math.min(W * DISPLAY_SCALE, Math.max(W * MIN_BACKING_SCALE, window.innerWidth || W));
+    const cssWidth = rect.width || fallbackWidth;
+    const cssHeight = rect.height || cssWidth * (H / W);
+    const deviceScale = Math.max(1, window.devicePixelRatio || 1);
+    const requiredScale = Math.max(cssWidth * deviceScale / W, cssHeight * deviceScale / H);
+    const quantizedScale = Math.ceil(requiredScale / BACKING_SCALE_STEP) * BACKING_SCALE_STEP;
+    return Math.max(MIN_BACKING_SCALE, Math.min(backingScaleCeiling, quantizedScale));
+  }
+
+  function applyBackingScale(nextScale, force = false) {
+    if (!force && Math.abs(nextScale - backingScale) < BACKING_SCALE_STEP * 0.5) return false;
+    backingScale = nextScale;
+    canvas.width = Math.round(W * backingScale);
+    canvas.height = Math.round(H * backingScale);
+    ctx.setTransform(backingScale, 0, 0, backingScale, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    return true;
+  }
+
+  function scheduleBackingScaleRefresh() {
+    if (backingResizeFrame) return;
+    backingResizeFrame = window.requestAnimationFrame(() => {
+      backingResizeFrame = 0;
+      if (applyBackingScale(desiredBackingScale())) requestDraw();
+    });
+  }
+
+  applyBackingScale(desiredBackingScale(), true);
+  if (typeof ResizeObserver === "function") {
+    new ResizeObserver(scheduleBackingScaleRefresh).observe(canvas);
+  }
+  window.addEventListener("resize", scheduleBackingScaleRefresh, { passive: true });
+  window.addEventListener("orientationchange", scheduleBackingScaleRefresh, { passive: true });
+  document.addEventListener("fullscreenchange", scheduleBackingScaleRefresh);
 
   const unitData = window.FoodAnimalsUnitData;
   if (!unitData) throw new Error("FoodAnimalsUnitData must load before game.js");
@@ -485,6 +522,7 @@
     TIER_SCALING,
   } = economyEnemyData;
   const ATTACK_ANIMATION_SECONDS = 0.32;
+  const BATTLE_OUTCOME_PRESENTATION_HOLD_SECONDS = 0.16;
   const ATTACK_PROJECTILE_SIZE = 58;
   const ATTACK_PROJECTILE_SPIN_MIN = Math.PI * 1.7;
   const ATTACK_PROJECTILE_SPIN_MAX = Math.PI * 2.7;
@@ -635,10 +673,18 @@
     log: [],
   };
   stateRef = state;
+  const mobileStoryMedia = window.matchMedia?.("(pointer: coarse) and (max-width: 1180px), (max-width: 760px)") || { matches: false };
+  const mobileStoryUi = createMobileStoryUi();
   let activeRunAutosaveTimer = 0;
   let lastSilentSnapshotFingerprint = "";
   let lastActiveRunSaveJson = "";
   let pendingMergeCutsceneCommit = null;
+  let attackProjectileSequence = 0;
+
+  mobileStoryMedia.addEventListener?.("change", () => {
+    syncMobileStoryOverlay();
+    requestDraw();
+  });
   let pendingMergeCutsceneQueue = [];
 
   const gameMusic = {
@@ -802,6 +848,42 @@
   const drinkThrowableSpriteCache = new Map();
   const statusEffectSpriteCache = new Map();
   const uiSpriteCache = new Map();
+  const battleStaticLayerCanvas = document.createElement("canvas");
+  battleStaticLayerCanvas.width = W;
+  battleStaticLayerCanvas.height = H;
+  const battleStaticLayerContext = battleStaticLayerCanvas.getContext("2d", { alpha: true });
+  let battleStaticLayerKey = "";
+  const simulationFailureLayerCanvas = document.createElement("canvas");
+  simulationFailureLayerCanvas.width = W;
+  simulationFailureLayerCanvas.height = H;
+  const simulationFailureLayerContext = simulationFailureLayerCanvas.getContext("2d", { alpha: true });
+  let simulationFailureLayerKey = "";
+  const revealNoiseLayerCanvas = document.createElement("canvas");
+  revealNoiseLayerCanvas.width = W;
+  revealNoiseLayerCanvas.height = H;
+  const revealNoiseLayerContext = revealNoiseLayerCanvas.getContext("2d", { alpha: true });
+  let revealNoiseLayerFrame = -1;
+  const realityScanlinePatternCanvas = document.createElement("canvas");
+  realityScanlinePatternCanvas.width = 1;
+  realityScanlinePatternCanvas.height = 5;
+  const realityScanlinePatternContext = realityScanlinePatternCanvas.getContext("2d", { alpha: true });
+  realityScanlinePatternContext.fillStyle = "#46ff63";
+  realityScanlinePatternContext.fillRect(0, 0, 1, 1);
+  const realityScanlinePattern = ctx.createPattern(realityScanlinePatternCanvas, "repeat");
+  const IMAGE_CACHE_LIMITS = Object.freeze({
+    attack: 96,
+    background: 12,
+    drink: 32,
+    item: 192,
+    metrics: 256,
+    particle: 96,
+    pixel: 160,
+    runtime: 192,
+    status: 32,
+    tinted: 240,
+    ui: 112,
+  });
+  const PARTICLE_LIMIT = isTouchFirstDevice ? 384 : 512;
 
   function uniqueAssetSources(sources) {
     return [...new Set((sources || []).filter(Boolean))];
@@ -813,6 +895,29 @@
 
   function warmBackgrounds(sources) {
     uniqueAssetSources(sources).forEach((src) => getBackgroundImage(src));
+  }
+
+  function warmBattleDeployAssets() {
+    warmUiSprites([
+      realityBroken() ? REALITY_BATTLE_DEPLOY_OVERLAY_SRC : COZY_BATTLE_DEPLOY_OVERLAY_SRC,
+      realityBroken() ? REALITY_BATTLE_DEPLOY_TITLE_SRC : COZY_BATTLE_DEPLOY_TITLE_SRC,
+    ]);
+  }
+
+  function warmBattleResultAssets() {
+    warmUiSprites([
+      realityBroken() ? REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC : COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
+      realityBroken() ? REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC : COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
+      realityBroken() ? REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC : COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
+    ]);
+  }
+
+  function scheduleIdleWarmup(callback) {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(callback, { timeout: 1800 });
+    } else {
+      window.setTimeout(callback, 700);
+    }
   }
 
   function canUseLocalStorage() {
@@ -4950,7 +5055,6 @@
       playerEconomyPower: Number(playerEconomyPowerScore(round).toFixed(2)),
       playerTotalPower: Number(playerTotalPowerScore(round).toFixed(2)),
       playerEconomyComparison: economyComparison,
-      economyRunawayPressure,
       targetExtraTier: enemyEconomyTargetExtraTier(round, adaptivePressure),
       tier3Chance: enemyEconomyTier3Chance(round, adaptivePressure),
       tier4Chance: enemyEconomyTier4Chance(round, adaptivePressure),
@@ -5653,6 +5757,8 @@
       return;
     }
     clearParticles();
+    warmBattleDeployAssets();
+    warmBattleResultAssets();
     const previewEnemies = ensureEnemyPreview();
     const previewEnemyDrinks = enemyPreviewDrinks().map((item) => cloneItem(item));
     const enemies = previewEnemies.map((unit, index) => positionBattleUnit(cloneEnemyPreviewUnit(unit), "enemy", enemyPreviewSlotFor(unit, index)));
@@ -6045,6 +6151,7 @@
       startPostGiraffeHorrorTransition();
     }
     state.phase = "result";
+    if (!realityBroken()) warmUiSprites([COZY_AWNING_TRANSITION_SRC]);
     state.enemyPreview = null;
     state.rewardChoices = state.hearts > 0 && !finalVictory ? generateRewardChoices(won) : [];
     state.message = finalVictory
@@ -6157,8 +6264,9 @@
     playCombatSfx("hit", { volume: Math.min(0.68, 0.3 + impact / 120) });
   }
 
-  function recordCombatKo(battle, source, target) {
+  function recordCombatKo(battle, source, target, options = {}) {
     if (!window.FoodAnimalsCombatLedgerCapture.recordKo(battle, source, target, combatLedgerCaptureOptions())) return;
+    if (options.silentSfx) return;
     playCombatSfx("ko", { volume: 0.9 });
   }
 
@@ -7098,6 +7206,7 @@
 
   function startShopReturnTransitionOverlay(options = {}) {
     const horror = realityBroken();
+    if (!horror) warmUiSprites([COZY_AWNING_TRANSITION_SRC]);
     const normalMenuReturn = options.source === "normalMenuReturn";
     const duration = normalMenuReturn
       ? (horror ? 1.9 : 2.05)
@@ -7299,6 +7408,16 @@
     return STATUS_EFFECT_STYLES[currentMoldStatusEffectId()] || STATUS_EFFECT_STYLES.mold;
   }
 
+  const moldStatusEffectDescriptorCache = new Map();
+
+  function currentMoldStatusEffectDescriptor() {
+    const id = currentMoldStatusEffectId();
+    if (!moldStatusEffectDescriptorCache.has(id)) {
+      moldStatusEffectDescriptorCache.set(id, Object.freeze({ id, ...currentMoldStatusStyle() }));
+    }
+    return moldStatusEffectDescriptorCache.get(id);
+  }
+
   function applyMoldTick(battle) {
     battle.moldStacks = (battle.moldStacks || 0) + 1;
     const damagePct = moldDamagePct(battle.moldStacks);
@@ -7353,24 +7472,30 @@
       unit.cooldown = unit.speed;
       performCombatAction(unit, battle, combatFoeScratch);
     }
-    compactTimedEntries(battle.attacks, dt);
+    compactTimedEntries(battle.attacks, dt, (attack) => {
+      resolveAttackImpact(attack, battle);
+    });
     compactTimedEntries(battle.drinkTosses || [], dt, (toss) => {
       drinkTossImpact(toss, battle);
     });
     captureDueCombatLedgerFrames(battle);
-    if (isGiraffeBossRound(state.round) && battle.elapsed > BATTLE_TIMEOUT_SECONDS) {
-      battle.result = "loss";
-      endBattle(false);
-    } else if (battle.enemies.every((u) => u.dead)) {
-      battle.result = "win";
-      endBattle(true);
-    } else if (battle.allies.every((u) => u.dead)) {
-      battle.result = "loss";
-      endBattle(false);
-    } else if (battle.elapsed > BATTLE_TIMEOUT_SECONDS) {
-      battle.result = "loss";
-      endBattle(false);
+    const outcome = battleOutcome(battle);
+    if (!outcome) {
+      battle.outcomePresentation = null;
+      return;
     }
+    if (window.FoodAnimalsBattleCanvas.hasPendingProjectileImpacts(battle.attacks)) return;
+    if (!battle.outcomePresentation || battle.outcomePresentation.result !== outcome) {
+      battle.outcomePresentation = {
+        result: outcome,
+        remaining: BATTLE_OUTCOME_PRESENTATION_HOLD_SECONDS,
+      };
+      return;
+    }
+    battle.outcomePresentation.remaining -= dt;
+    if (battle.outcomePresentation.remaining > 0) return;
+    battle.result = outcome;
+    endBattle(outcome === "win");
   }
 
   const combatUnitScratch = [];
@@ -7381,6 +7506,14 @@
       if (!unit.dead) target.push(unit);
     }
     return target;
+  }
+
+  function battleOutcome(battle) {
+    if (isGiraffeBossRound(state.round) && battle.elapsed > BATTLE_TIMEOUT_SECONDS) return "loss";
+    if (battle.enemies.every((unit) => unit.dead)) return "win";
+    if (battle.allies.every((unit) => unit.dead)) return "loss";
+    if (battle.elapsed > BATTLE_TIMEOUT_SECONDS) return "loss";
+    return null;
   }
 
   function compactTimedEntries(entries, dt, onExpired = null) {
@@ -8595,6 +8728,7 @@
     const sourceSide = source.side || "ally";
     const spinDirection = sourceSide === "enemy" ? -1 : 1;
     return {
+      sequence: ++attackProjectileSequence,
       from: source.uid,
       to: target.uid,
       sourceSide,
@@ -8610,16 +8744,89 @@
     };
   }
 
+  function queueAttackImpact(attack, target, source, options = {}) {
+    if (!attack || !target) return;
+    const pendingCount = Math.max(0, target.pendingVisualImpactCount || 0);
+    if (pendingCount === 0) {
+      target.visualHp = options.hpBefore;
+      target.visualShield = options.shieldBefore;
+    }
+    target.pendingVisualImpactCount = pendingCount + 1;
+    if (options.defeated) target.visualDefeatPending = true;
+    attack.impact = {
+      targetUid: target.uid,
+      sourceUid: source?.uid,
+      hpDamage: Math.max(0, options.hpDamage || 0),
+      shieldDamage: Math.max(0, options.shieldDamage || 0),
+      hpAfter: Math.max(0, options.hpAfter ?? target.hp ?? 0),
+      shieldAfter: Math.max(0, options.shieldAfter ?? target.shield ?? 0),
+      defeated: Boolean(options.defeated),
+      color: options.color || source?.accent || target.accent,
+      particleType: options.particleType || source?.typeId || source?.id,
+      sfx: options.silentSfx ? null : options.defeated ? "ko" : "hit",
+    };
+  }
+
+  function resolveAttackImpact(attack, battle) {
+    const impact = attack?.impact;
+    if (!impact || !battle) return;
+    const target = battleUnitByUid(battle, impact.targetUid);
+    const source = battleUnitByUid(battle, impact.sourceUid);
+    if (!target) return;
+    if (impact.redirect) {
+      burst({ x: target.x, y: target.y }, impact.color || target.accent);
+      return;
+    }
+
+    target.visualHp = impact.hpAfter;
+    target.visualShield = impact.shieldAfter;
+    if (impact.sfx === "ko") {
+      playCombatSfx("ko", { volume: 0.9 });
+    } else if (impact.sfx === "hit") {
+      const totalImpact = impact.hpDamage + impact.shieldDamage;
+      playCombatSfx("hit", { volume: Math.min(0.68, 0.3 + totalImpact / 120) });
+    }
+
+    if (impact.defeated) {
+      target.visualDefeatPending = false;
+      defeatExplosion(target, impact.particleType);
+    } else {
+      triggerCombatHitMotion(target, source, battle, impact.hpDamage, impact.shieldDamage);
+      foodExplosion({ x: target.x, y: target.y }, impact.color, impact.particleType, {
+        count: 10,
+        spread: 14,
+      });
+    }
+
+    target.pendingVisualImpactCount = Math.max(0, (target.pendingVisualImpactCount || 1) - 1);
+    if (target.pendingVisualImpactCount === 0) {
+      delete target.pendingVisualImpactCount;
+      delete target.visualHp;
+      delete target.visualShield;
+      if (target.dead) target.visualDefeatPending = false;
+    }
+  }
+
   function applyDamage(target, amount, source, battle, options = {}) {
     if (!target || target.dead) return 0;
+    const deferProjectileImpact = !options.status && !options.noProjectile;
+    const presentation = window.FoodAnimalsBattleCanvas.unitPresentationState(target);
+    const hpBefore = presentation.hp;
+    const shieldBefore = presentation.shield;
     triggerCombatAttackMotion(source, target, battle, options);
     if (!options.status && !options.noItemTriggers && target.item?.firstHitRedirect && !target.firstHitRedirectUsed) {
       target.firstHitRedirectUsed = true;
-      battle.attacks.push(makeAttackProjectile(source, target, {
+      const redirectProjectile = makeAttackProjectile(source, target, {
         color: target.item.accent || "#6f9231",
         particleType: target.item.id,
-      }));
-      burst({ x: target.x, y: target.y }, target.item.accent || "#6f9231");
+      });
+      redirectProjectile.impact = {
+        targetUid: target.uid,
+        sourceUid: source?.uid,
+        redirect: true,
+        color: target.item.accent || "#6f9231",
+      };
+      battle.attacks.push(redirectProjectile);
       return 0;
     }
     let adjustedAmount = amount;
@@ -8677,8 +8884,10 @@
       damage -= absorbed;
     }
     if (damage > 0) target.hp = Math.max(0, target.hp - damage);
-    recordCombatDamage(battle, source, target, damage, absorbed, options);
-    triggerCombatHitMotion(target, source, battle, damage, absorbed);
+    recordCombatDamage(battle, source, target, damage, absorbed, {
+      ...options,
+      silentSfx: options.silentSfx || deferProjectileImpact,
+    });
     if (
       absorbed > 0 &&
       !options.status &&
@@ -8752,24 +8961,20 @@
     if (damage > 0 && target.ability === "ginger_decoy_summon" && !target.dead) {
       target.hp = Math.max(0, target.hp - gingerDecoyCrumbleOnHit(target));
     }
+    let attackProjectile = null;
     if (!options.noProjectile) {
-      battle.attacks.push(makeAttackProjectile(source, target, {
+      attackProjectile = makeAttackProjectile(source, target, {
         color: options.color || source.accent,
         particleType: options.particleType || source.typeId || source.id,
-      }));
+      });
+      battle.attacks.push(attackProjectile);
     }
     const attackParticleType = options.particleType || source.typeId || source.id;
     const willDefeat = target.hp <= 0 && !target.dead;
-    if (!options.status && (damage > 0 || absorbed > 0) && !willDefeat) {
-      foodExplosion({ x: target.x, y: target.y }, options.color || source.accent, attackParticleType, {
-        count: 10,
-        spread: 14,
-      });
-    }
     if (willDefeat) {
       target.dead = true;
       target.shield = 0;
-      recordCombatKo(battle, source, target);
+      recordCombatKo(battle, source, target, { silentSfx: deferProjectileImpact });
       if ((target.ability === "ginger_decoy_summon" || target.itemDecoySourceUid) && target.crumbleDamage && battle) {
         const foes = (target.side === "ally" ? battle.enemies : battle.allies).filter((foe) => !foe.dead && isAdjacentSlot(target, foe));
         foes.forEach((foe) => applyDamage(foe, target.crumbleDamage, target, battle, {
@@ -8779,7 +8984,30 @@
           noItemTriggers: true,
         }));
       }
-      defeatExplosion(target);
+    }
+    const hasImpact = damage > 0 || absorbed > 0;
+    if (deferProjectileImpact && attackProjectile && hasImpact) {
+      queueAttackImpact(attackProjectile, target, source, {
+        hpBefore,
+        shieldBefore,
+        hpAfter: target.hp,
+        shieldAfter: target.shield,
+        hpDamage: damage,
+        shieldDamage: absorbed,
+        defeated: willDefeat,
+        color: options.color || source.accent,
+        particleType: attackParticleType,
+        silentSfx: options.silentSfx,
+      });
+    } else {
+      triggerCombatHitMotion(target, source, battle, damage, absorbed);
+      if (!options.status && hasImpact && !willDefeat) {
+        foodExplosion({ x: target.x, y: target.y }, options.color || source.accent, attackParticleType, {
+          count: 10,
+          spread: 14,
+        });
+      }
+      if (willDefeat) defeatExplosion(target);
     }
     return damage;
   }
@@ -9189,6 +9417,7 @@
       ? { src: options.imageSrc, cacheKind: options.imageCacheKind || particleSprite }
       : particleSpriteInfo(particleSprite, particleType, particleTier, options.spriteOptions || {});
     state.particles.push(...window.FoodAnimalsParticleRuntime.createBurst(pos, color, options, spriteInfo, random));
+    window.FoodAnimalsParticleRuntime.trimToLimit(state.particles, PARTICLE_LIMIT);
   }
 
   function foodExplosion(pos, color, particleType, options = {}) {
@@ -9412,7 +9641,9 @@
     if (state.realityBreakTimer > 0) state.realityBreakTimer = Math.max(0, state.realityBreakTimer - dt);
     const step = state.phase === "battle" ? dt * currentBattleSpeed() : dt;
     if (state.phase === "battle" && !phaseTransitionBlocksBattle()) updateBattle(step);
-    if (state.particles.length) state.particles = window.FoodAnimalsParticleRuntime.update(state.particles, step);
+    if (state.particles.length) {
+      window.FoodAnimalsParticleRuntime.update(state.particles, step, { maxParticles: PARTICLE_LIMIT });
+    }
   }
 
   function updateMergeCutscene(dt) {
@@ -9622,8 +9853,20 @@
     window.FoodAnimalsCanvasUi.roundedRect(ctx, x, y, w, h, r);
   }
 
+  function withCanvasContext(nextContext, callback) {
+    const previousContext = ctx;
+    ctx = nextContext;
+    try {
+      return callback();
+    } finally {
+      ctx = previousContext;
+    }
+  }
+
   function draw() {
+    syncMobileStoryOverlay();
     state.tooltipTargets = [];
+    if (!mobileStoryUi.root.hidden) return;
     ctx.clearRect(0, 0, W, H);
     if (state.phase === "victoryCutscene") {
       drawVictoryCutscene();
@@ -10175,15 +10418,13 @@
   }
 
   function getBackgroundImage(src = currentArena()?.backgroundSrc || BACKGROUND_SRC) {
-    if (backgroundImageCache.has(src)) return backgroundImageCache.get(src);
-    const image = new Image();
-    image.onload = requestDraw;
-    image.onerror = () => {
-      if (src !== BACKGROUND_SRC && src !== REALITY_BACKGROUND_SRC) backgroundImageCache.delete(src);
-    };
-    image.src = src;
-    backgroundImageCache.set(src, image);
-    return image;
+    return window.FoodAnimalsRuntimeAssets.getCachedImage(backgroundImageCache, src, {
+      maxEntries: IMAGE_CACHE_LIMITS.background,
+      onLoad: requestDraw,
+      onError: () => {
+        if (src !== BACKGROUND_SRC && src !== REALITY_BACKGROUND_SRC) backgroundImageCache.delete(src);
+      },
+    });
   }
 
   function drawTopBar() {
@@ -10284,8 +10525,9 @@
     ctx.save();
     const flicker = state.realityBreakTimer > 0 ? 0.12 + Math.abs(Math.sin(state.idleTime * 34)) * 0.18 : 0.04;
     ctx.globalAlpha = flicker;
-    ctx.fillStyle = "#46ff63";
-    for (let y = 0; y < H; y += 5) ctx.fillRect(0, y, W, 1);
+    ctx.fillStyle = realityScanlinePattern || "#46ff63";
+    if (realityScanlinePattern) ctx.fillRect(0, 0, W, H);
+    else for (let y = 0; y < H; y += 5) ctx.fillRect(0, y, W, 1);
     ctx.globalAlpha = state.realityBreakTimer > 0 ? 0.18 : 0.08;
     ctx.fillStyle = "#ff3348";
     const jitter = Math.round(Math.sin(state.idleTime * 47) * 8);
@@ -10340,41 +10582,7 @@
 
     ctx.fillStyle = `rgba(0, 4, 5, ${0.04 + intensity * 0.2})`;
     ctx.fillRect(0, 0, W, H);
-    ctx.globalCompositeOperation = "lighter";
-
-    for (let y = 0; y < H; y += 3) {
-      const roll = glitchNoise(frame * 97 + y * 13);
-      const bandAlpha = (0.025 + roll * 0.11) * intensity;
-      ctx.fillStyle = y % 2 === 0
-        ? `rgba(88, 255, 105, ${bandAlpha})`
-        : `rgba(255, 55, 82, ${bandAlpha * 0.72})`;
-      ctx.fillRect(0, y, W, roll > 0.82 ? 2 : 1);
-    }
-
-    const speckCount = Math.floor(260 + intensity * 360);
-    for (let i = 0; i < speckCount; i += 1) {
-      const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
-      const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
-      const size = glitchNoise(frame * 167 + i * 23) > 0.86 ? 2 : 1;
-      const speckAlpha = (0.05 + glitchNoise(frame * 181 + i * 29) * 0.3) * intensity;
-      ctx.fillStyle = i % 5 === 0
-        ? `rgba(0, 238, 255, ${speckAlpha})`
-        : `rgba(238, 255, 232, ${speckAlpha})`;
-      ctx.fillRect(x, y, size, size);
-    }
-
-    const blockCount = Math.floor(5 + intensity * 10);
-    for (let i = 0; i < blockCount; i += 1) {
-      if (glitchNoise(frame * 211 + i * 31) < 0.32) continue;
-      const x = Math.floor(glitchNoise(frame * 223 + i * 37) * W);
-      const y = Math.floor(glitchNoise(frame * 227 + i * 41) * H);
-      const w = 18 + Math.floor(glitchNoise(frame * 239 + i * 43) * (60 + intensity * 110));
-      const h = 4 + Math.floor(glitchNoise(frame * 251 + i * 47) * (12 + intensity * 34));
-      ctx.fillStyle = i % 3 === 0
-        ? `rgba(255, 255, 244, ${0.08 * intensity})`
-        : `rgba(61, 255, 124, ${0.08 * intensity})`;
-      ctx.fillRect(x, y, w, h);
-    }
+    drawRevealNoiseLayer(frame, intensity);
 
     if (shockPulse > 0.01) {
       const whiteFlash = Math.max(0, glitchNoise(frame * 43) - 0.72) * shockPulse;
@@ -10388,6 +10596,17 @@
   function drawSimulationFailureArtifacts() {
     const revealIntensity = state.realityBreakTimer > 0 ? 1 : 0.58;
     const frame = Math.floor(state.idleTime * (state.realityBreakTimer > 0 ? 18 : 8));
+    const key = `${frame}:${revealIntensity}`;
+    if (simulationFailureLayerKey !== key) {
+      simulationFailureLayerContext.setTransform(1, 0, 0, 1, 0, 0);
+      simulationFailureLayerContext.clearRect(0, 0, W, H);
+      withCanvasContext(simulationFailureLayerContext, () => renderSimulationFailureArtifacts(frame, revealIntensity));
+      simulationFailureLayerKey = key;
+    }
+    ctx.drawImage(simulationFailureLayerCanvas, 0, 0, W, H);
+  }
+
+  function renderSimulationFailureArtifacts(frame, revealIntensity) {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     for (let i = 0; i < 10; i++) {
@@ -12387,6 +12606,54 @@
     ctx.restore();
   }
 
+  function drawRevealNoiseLayer(frame, intensity) {
+    if (revealNoiseLayerFrame !== frame) {
+      revealNoiseLayerContext.setTransform(1, 0, 0, 1, 0, 0);
+      revealNoiseLayerContext.clearRect(0, 0, W, H);
+      revealNoiseLayerContext.globalCompositeOperation = "lighter";
+      withCanvasContext(revealNoiseLayerContext, () => {
+        for (let y = 0; y < H; y += 3) {
+          const roll = glitchNoise(frame * 97 + y * 13);
+          const bandAlpha = (0.025 + roll * 0.11) * intensity;
+          ctx.fillStyle = y % 2 === 0
+            ? `rgba(88, 255, 105, ${bandAlpha})`
+            : `rgba(255, 55, 82, ${bandAlpha * 0.72})`;
+          ctx.fillRect(0, y, W, roll > 0.82 ? 2 : 1);
+        }
+
+        const speckCount = Math.floor(260 + intensity * 360);
+        for (let i = 0; i < speckCount; i += 1) {
+          const x = Math.floor(glitchNoise(frame * 131 + i * 17) * W);
+          const y = Math.floor(glitchNoise(frame * 149 + i * 19) * H);
+          const size = glitchNoise(frame * 167 + i * 23) > 0.86 ? 2 : 1;
+          const speckAlpha = (0.05 + glitchNoise(frame * 181 + i * 29) * 0.3) * intensity;
+          ctx.fillStyle = i % 5 === 0
+            ? `rgba(0, 238, 255, ${speckAlpha})`
+            : `rgba(238, 255, 232, ${speckAlpha})`;
+          ctx.fillRect(x, y, size, size);
+        }
+
+        const blockCount = Math.floor(5 + intensity * 10);
+        for (let i = 0; i < blockCount; i += 1) {
+          if (glitchNoise(frame * 211 + i * 31) < 0.32) continue;
+          const x = Math.floor(glitchNoise(frame * 223 + i * 37) * W);
+          const y = Math.floor(glitchNoise(frame * 227 + i * 41) * H);
+          const w = 18 + Math.floor(glitchNoise(frame * 239 + i * 43) * (60 + intensity * 110));
+          const h = 4 + Math.floor(glitchNoise(frame * 251 + i * 47) * (12 + intensity * 34));
+          ctx.fillStyle = i % 3 === 0
+            ? `rgba(255, 255, 244, ${0.08 * intensity})`
+            : `rgba(61, 255, 124, ${0.08 * intensity})`;
+          ctx.fillRect(x, y, w, h);
+        }
+      });
+      revealNoiseLayerFrame = frame;
+    }
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.drawImage(revealNoiseLayerCanvas, 0, 0, W, H);
+    ctx.restore();
+  }
+
   function mergeCutsceneHides(area, index) {
     const cutscene = state.mergeCutscene;
     return Boolean(cutscene?.hiddenRefs?.some((ref) => ref.area === area && ref.index === index));
@@ -12952,16 +13219,16 @@
       : horrorSlotBackdropSrc(area, slotKind);
   }
 
-  function drawDecoratedSlotBackdrop(x, y, w, h, area, index = 0) {
+  function drawDecoratedSlotBackdrop(x, y, w, h, area, index = 0, options = {}) {
     if (area === "shop") {
-      const image = getUiSprite(illusionSlotBackdropSrc(area, index));
+      const image = getUiSprite(options.sourceOverride || illusionSlotBackdropSrc(area, index));
       if (!(image && image.complete && image.naturalWidth > 0)) return false;
       ctx.save();
       roundedRect(x - w / 2, y - h / 2, w, h, 8);
       ctx.clip();
       ctx.drawImage(image, Math.round(x - w / 2), Math.round(y - h / 2), w, h);
       ctx.restore();
-      drawSlotBackdropSequenceEffect({ x: x - w / 2, y: y - h / 2, w, h }, area, index);
+      if (!options.skipSequenceEffect) drawSlotBackdropSequenceEffect({ x: x - w / 2, y: y - h / 2, w, h }, area, index);
       return true;
     }
     if (area === "bench") {
@@ -12995,7 +13262,7 @@
       }
       return drawBenchSlotBackdrop(x, y, w, h, index);
     }
-    const src = area === "board" ? illusionSlotBackdropSrc(area, index) : area === "drinks" ? illusionSlotBackdropSrc(area, index) : null;
+    const src = options.sourceOverride || (area === "board" ? illusionSlotBackdropSrc(area, index) : area === "drinks" ? illusionSlotBackdropSrc(area, index) : null);
     if (!src) return false;
     const image = getUiSprite(src);
     if (!(image && image.complete && image.naturalWidth > 0)) return false;
@@ -13004,7 +13271,7 @@
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(image, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
     ctx.restore();
-    drawSlotBackdropSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, area, index);
+    if (!options.skipSequenceEffect) drawSlotBackdropSequenceEffect({ x: x - size / 2, y: y - size / 2, w: size, h: size }, area, index);
     return true;
   }
 
@@ -15514,6 +15781,7 @@
         requestDraw();
       },
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.runtime,
     });
   }
 
@@ -15525,6 +15793,7 @@
         requestDraw();
       },
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.runtime,
     });
   }
 
@@ -15573,6 +15842,7 @@
         requestDraw();
       },
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.item,
     });
   }
 
@@ -15585,6 +15855,7 @@
     return window.FoodAnimalsRuntimeAssets.getCachedImage(attackParticleSpriteCache, src, {
       onLoad: requestDraw,
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.attack,
     });
   }
 
@@ -15597,6 +15868,7 @@
     return window.FoodAnimalsRuntimeAssets.getCachedImage(drinkThrowableSpriteCache, src, {
       onLoad: requestDraw,
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.drink,
     });
   }
 
@@ -15604,6 +15876,7 @@
     return window.FoodAnimalsRuntimeAssets.getCachedImage(particleSpriteCache, src, {
       onLoad: requestDraw,
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.particle,
     });
   }
 
@@ -15633,6 +15906,7 @@
           requestDraw();
         },
         onError: requestDraw,
+        maxEntries: IMAGE_CACHE_LIMITS.runtime,
       });
     });
     window.FoodAnimalsRuntimeAssets.preloadEntries(REALITY_DEFEAT_STILL_SPRITES, (src) => {
@@ -15642,6 +15916,7 @@
           requestDraw();
         },
         onError: requestDraw,
+        maxEntries: IMAGE_CACHE_LIMITS.runtime,
       });
     });
   }
@@ -15664,6 +15939,7 @@
     return window.FoodAnimalsRuntimeAssets.getCachedImage(statusEffectSpriteCache, src, {
       onLoad: requestDraw,
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.status,
     });
   }
 
@@ -15671,6 +15947,7 @@
     return window.FoodAnimalsRuntimeAssets.getCachedImage(uiSpriteCache, src, {
       onLoad: requestDraw,
       onError: requestDraw,
+      maxEntries: IMAGE_CACHE_LIMITS.ui,
     });
   }
 
@@ -15853,7 +16130,7 @@
   }
 
   function runtimeSpriteMetrics(image) {
-    return window.FoodAnimalsRuntimeAssets.alphaMetrics(image, runtimeSpriteMetricsCache);
+    return window.FoodAnimalsRuntimeAssets.alphaMetrics(image, runtimeSpriteMetricsCache, { maxEntries: IMAGE_CACHE_LIMITS.metrics });
   }
 
   function itemSpriteMetrics(image) {
@@ -15863,7 +16140,7 @@
   function warmAlphaMetrics(image, cache) {
     if (!image) return;
     const warm = () => {
-      window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache);
+      window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache, { maxEntries: IMAGE_CACHE_LIMITS.metrics });
     };
     if (typeof window.requestIdleCallback === "function") {
       window.requestIdleCallback(warm, { timeout: 500 });
@@ -15873,13 +16150,15 @@
   }
 
   function alphaSpriteMetrics(image, cache) {
-    return window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache);
+    return window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache, { maxEntries: IMAGE_CACHE_LIMITS.metrics });
   }
 
   function getPixelSprite(unit) {
     const typeId = unit.typeId || unit.id;
     const key = `${typeId}:${unit.tier}`;
-    if (pixelSpriteCache.has(key)) return pixelSpriteCache.get(key);
+    if (pixelSpriteCache.has(key)) {
+      return window.FoodAnimalsRuntimeAssets.remember(pixelSpriteCache, key, pixelSpriteCache.get(key), IMAGE_CACHE_LIMITS.pixel);
+    }
     const sprite = document.createElement("canvas");
     sprite.width = 48;
     sprite.height = 48;
@@ -15887,14 +16166,15 @@
     px.imageSmoothingEnabled = false;
 
     drawPixelFoodAnimal(px, unit);
-    pixelSpriteCache.set(key, sprite);
-    return sprite;
+    return window.FoodAnimalsRuntimeAssets.remember(pixelSpriteCache, key, sprite, IMAGE_CACHE_LIMITS.pixel);
   }
 
   function getTintedPixelSprite(unit, color, label) {
     const typeId = unit.typeId || unit.id;
     const key = `${typeId}:${unit.tier}:${label}`;
-    if (tintedSpriteCache.has(key)) return tintedSpriteCache.get(key);
+    if (tintedSpriteCache.has(key)) {
+      return window.FoodAnimalsRuntimeAssets.remember(tintedSpriteCache, key, tintedSpriteCache.get(key), IMAGE_CACHE_LIMITS.tinted);
+    }
     const sprite = getPixelSprite(unit);
     const mask = document.createElement("canvas");
     mask.width = sprite.width;
@@ -15905,8 +16185,7 @@
     mx.globalCompositeOperation = "source-in";
     mx.fillStyle = color;
     mx.fillRect(0, 0, mask.width, mask.height);
-    tintedSpriteCache.set(key, mask);
-    return mask;
+    return window.FoodAnimalsRuntimeAssets.remember(tintedSpriteCache, key, mask, IMAGE_CACHE_LIMITS.tinted);
   }
 
   function drawPixelFoodAnimal(px, unit) {
@@ -18556,16 +18835,16 @@
 
   function drawBattle(battle = visibleBattle()) {
     if (!battle) return;
-    drawBattleFieldBackdrop();
-    ctx.fillStyle = "rgba(22, 57, 45, 0.14)";
-    ctx.fillRect(BATTLE_FIELD.dividerX, BATTLE_FIELD.dividerTop, 3, BATTLE_FIELD.dividerHeight);
-
-    drawBattleGrid("ally");
-    drawBattleGrid("enemy");
-    drawBattleDrinkSlots("ally", battle.allyDrinks || state.drinks);
-    drawBattleDrinkSlots("enemy", battle.enemyDrinks || []);
+    drawBattleStaticLayer(battle);
+    drawBattleGridEffects("ally");
+    drawBattleGridEffects("enemy");
+    drawBattleDrinkSlotEffects("ally");
+    drawBattleDrinkSlotEffects("enemy");
+    drawBattleDrinkContents("ally", battle.allyDrinks || state.drinks);
+    drawBattleDrinkContents("enemy", battle.enemyDrinks || []);
     battleUnitsInRenderOrder(battle).forEach((unit) => {
-      if (unit.dead) {
+      const presentation = window.FoodAnimalsBattleCanvas.unitPresentationState(unit);
+      if (presentation.defeated) {
         drawBattleDefeatStill(unit);
       } else {
         drawBattleUnit(unit);
@@ -18575,6 +18854,68 @@
     (battle.drinkTosses || []).forEach((toss) => drawDrinkToss(toss, battle));
     drawBattleMoldPanel(battle);
     drawArenaBattlePanel();
+  }
+
+  function battleStaticAssetState(src) {
+    const image = getUiSprite(src);
+    if (image && image.complete && image.naturalWidth > 0) return `${src}:${image.naturalWidth}x${image.naturalHeight}`;
+    return `${src}:${image?.dataset?.loadState || "pending"}`;
+  }
+
+  function battleStaticLayerStateKey(battle) {
+    const boardSrc = baseBattleSlotBackdropSrc("board");
+    const drinkSrc = baseBattleSlotBackdropSrc("drinks");
+    const drinkState = [battle.allyDrinks || state.drinks, battle.enemyDrinks || []]
+      .map((drinks) => drinkSlots.map((_, index) => drinks[index]?.id || "-").join(","))
+      .join("|");
+    return [
+      backingScale,
+      realityBroken() ? "horror" : "cozy",
+      battleStaticAssetState(currentBattleFieldBgSrc()),
+      battleStaticAssetState(boardSrc),
+      battleStaticAssetState(drinkSrc),
+      drinkState,
+    ].join(";");
+  }
+
+  function drawBattleStaticLayer(battle) {
+    const nextKey = battleStaticLayerStateKey(battle);
+    if (battleStaticLayerKey !== nextKey) {
+      const width = Math.round(W * backingScale);
+      const height = Math.round(H * backingScale);
+      if (battleStaticLayerCanvas.width !== width || battleStaticLayerCanvas.height !== height) {
+        battleStaticLayerCanvas.width = width;
+        battleStaticLayerCanvas.height = height;
+      }
+      battleStaticLayerContext.setTransform(1, 0, 0, 1, 0, 0);
+      battleStaticLayerContext.clearRect(0, 0, width, height);
+      battleStaticLayerContext.setTransform(backingScale, 0, 0, backingScale, 0, 0);
+      battleStaticLayerContext.imageSmoothingEnabled = false;
+      withCanvasContext(battleStaticLayerContext, () => {
+        drawBattleFieldBackdrop();
+        ctx.fillStyle = "rgba(22, 57, 45, 0.14)";
+        ctx.fillRect(BATTLE_FIELD.dividerX, BATTLE_FIELD.dividerTop, 3, BATTLE_FIELD.dividerHeight);
+        drawBattleGridBase("ally");
+        drawBattleGridBase("enemy");
+        drawBattleDrinkSlotBases("ally", battle.allyDrinks || state.drinks);
+        drawBattleDrinkSlotBases("enemy", battle.enemyDrinks || []);
+      });
+      battleStaticLayerKey = nextKey;
+    }
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      battleStaticLayerCanvas,
+      0,
+      0,
+      battleStaticLayerCanvas.width,
+      battleStaticLayerCanvas.height,
+      0,
+      0,
+      W,
+      H,
+    );
+    ctx.restore();
   }
 
   function battleUnitsInRenderOrder(battle) {
@@ -18594,15 +18935,17 @@
   }
 
   function battleCanvasOptions() {
-    return {
-      backCol: BACK_COL,
-      boardRows: BOARD_ROWS,
-      finalBossMinionTypeId: FINAL_BOSS_MINION_TYPE_ID,
-      finalBossTypeId: FINAL_BOSS_TYPE_ID,
-      frontCol: FRONT_COL,
-      slotGrid,
-    };
+    return BATTLE_CANVAS_OPTIONS;
   }
+
+  const BATTLE_CANVAS_OPTIONS = Object.freeze({
+    backCol: BACK_COL,
+    boardRows: BOARD_ROWS,
+    finalBossMinionTypeId: FINAL_BOSS_MINION_TYPE_ID,
+    finalBossTypeId: FINAL_BOSS_TYPE_ID,
+    frontCol: FRONT_COL,
+    slotGrid,
+  });
 
   function battleUnitByUid(battle, uid) {
     if (!battle || uid == null) return null;
@@ -18694,6 +19037,8 @@
     const fallbackSpinDirection = (attack.sourceSide || from.side) === "enemy" ? -1 : 1;
     const spin = attack.spin ?? fallbackSpinDirection * ATTACK_PROJECTILE_SPIN_MIN;
     const spinRotation = (attack.rotationStart || 0) + spin * progress;
+    const fx = window.FoodAnimalsBattleCanvas.projectileFxFrame(progress, from.tier || 1, attack.kind || "damage");
+    const color = attack.color || (fx.support ? "#75d9a0" : "#f0d56b");
 
     if (!attack.particleSrc) {
       const spriteInfo = particleSpriteInfo(attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1);
@@ -18702,12 +19047,23 @@
     }
     const image = getParticleSprite(attack.particleCacheKind || attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1, attack.particleSrc);
     const size = ATTACK_PROJECTILE_SIZE + Math.min(4, from.tier || 1) * 5;
+
+    drawProjectileTrail(from, to, duration, progress, color, fx);
+    drawProjectileLaunchFx(from, angle, color, fx);
+    drawProjectileArrivalFx(to, color, fx);
+
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((mirrorLeft ? angle - Math.PI : angle) + spinRotation);
     if (mirrorLeft) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = Math.min(1, 0.25 + progress * 1.35);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.38 * fx.haloScale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
     if (image && image.complete && image.naturalWidth) {
       ctx.drawImage(image, -size / 2, -size / 2, size, size);
     } else {
@@ -18721,6 +19077,88 @@
     }
     ctx.restore();
     ctx.imageSmoothingEnabled = true;
+  }
+
+  function drawProjectileTrail(from, to, duration, progress, color, fx) {
+    const startProgress = Math.max(0, progress - (fx.support ? 0.18 : 0.24));
+    if (progress <= 0.01 || startProgress >= progress) return;
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.globalCompositeOperation = "lighter";
+    for (const layer of [
+      { width: fx.trailWidth * 2.8, alpha: fx.trailAlpha * 0.16 },
+      { width: fx.trailWidth, alpha: fx.trailAlpha * 0.72 },
+    ]) {
+      ctx.beginPath();
+      for (let i = 0; i <= 6; i++) {
+        const sampleProgress = startProgress + (progress - startProgress) * (i / 6);
+        const sample = window.FoodAnimalsBattleCanvas.projectileFrame(
+          from,
+          to,
+          duration * (1 - sampleProgress),
+          duration,
+          18,
+        );
+        if (i === 0) ctx.moveTo(sample.x, sample.y);
+        else ctx.lineTo(sample.x, sample.y);
+      }
+      ctx.globalAlpha = layer.alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = layer.width;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawProjectileLaunchFx(from, angle, color, fx) {
+    if (fx.launchAlpha <= 0) return;
+    const radius = 8 + fx.launchAlpha * 10;
+    ctx.save();
+    ctx.translate(from.x, from.y);
+    ctx.rotate(angle);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = fx.launchAlpha * 0.62;
+    ctx.strokeStyle = color;
+    ctx.lineCap = "round";
+    ctx.lineWidth = fx.support ? 3 : 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, fx.support ? 0 : -0.72, fx.support ? Math.PI * 2 : 0.72);
+    ctx.stroke();
+    if (!fx.support) {
+      for (const offset of [-0.42, 0, 0.42]) {
+        ctx.beginPath();
+        ctx.moveTo(8, Math.sin(offset) * 5);
+        ctx.lineTo(20 + fx.launchAlpha * 10, Math.sin(offset) * 13);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawProjectileArrivalFx(to, color, fx) {
+    if (fx.arrivalAlpha <= 0) return;
+    const bloom = Math.sin(fx.arrivalAlpha * Math.PI * 0.82);
+    ctx.save();
+    ctx.translate(to.x, to.y);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = bloom * (fx.support ? 0.42 : 0.58);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = fx.support ? 3 : 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 9 + fx.arrivalAlpha * (fx.support ? 18 : 24), 0, Math.PI * 2);
+    ctx.stroke();
+    if (!fx.support) {
+      ctx.rotate(Math.PI / 4);
+      for (let i = 0; i < 4; i++) {
+        ctx.rotate(Math.PI / 2);
+        ctx.beginPath();
+        ctx.moveTo(12, 0);
+        ctx.lineTo(24 + fx.arrivalAlpha * 10, 0);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   function drawDrinkToss(toss, battle) {
@@ -18784,15 +19222,19 @@
     return Math.max(min, Math.min(max, value));
   }
 
-  function drawBattleGrid(side) {
-    const battle = visibleBattle();
-    const units = battle ? (side === "ally" ? battle.allies : battle.enemies) : [];
+  function baseBattleSlotBackdropSrc(area) {
+    return realityBroken() ? horrorSlotBackdropSrc(area) : cozySlotBackdropSrc(area);
+  }
+
+  function drawBattleGridBase(side) {
     for (let i = 0; i < boardSlots.length; i++) {
       const { x, y } = battleSlotPosition(side, i);
       const { col } = slotGrid(i);
       const cell = BATTLE_FORMATION.cellSize;
-      const occupied = units.some((unit) => unit.slot === i);
-      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, cell, cell, "board", i);
+      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, cell, cell, "board", i, {
+        skipSequenceEffect: true,
+        sourceOverride: baseBattleSlotBackdropSrc("board"),
+      });
       roundedRect(x - cell / 2, y - cell / 2, cell, cell, 8);
       if (!hasArtBackdrop) {
         ctx.fillStyle = realityBroken()
@@ -18802,7 +19244,28 @@
       }
       ctx.strokeStyle = hasArtBackdrop ? "transparent" : realityBroken() ? "rgba(70, 255, 99, 0.22)" : "rgba(22, 57, 45, 0.12)";
       ctx.stroke();
-      if (occupied) continue;
+    }
+  }
+
+  function drawBattleGridEffects(side) {
+    if (!realityBroken()) return;
+    for (let i = 0; i < boardSlots.length; i++) {
+      const bleed = slotBackdropBleedPhase("board", i);
+      if (!bleed.active) continue;
+      const { x, y } = battleSlotPosition(side, i);
+      const cell = BATTLE_FORMATION.cellSize;
+      if (bleed.phase === "flash") {
+        drawDecoratedSlotBackdrop(x, y, cell, cell, "board", i, {
+          skipSequenceEffect: true,
+          sourceOverride: cozySlotBackdropSrc("board"),
+        });
+      }
+      drawSlotBackdropSequenceEffect({
+        x: x - (cell + 18) / 2,
+        y: y - (cell + 18) / 2,
+        w: cell + 18,
+        h: cell + 18,
+      }, "board", i);
     }
   }
 
@@ -18810,13 +19273,15 @@
     return window.FoodAnimalsBattleCanvas.battleDrinkSlotPosition(side, slot, BATTLE_FORMATION, BOARD_ROWS);
   }
 
-  function drawBattleDrinkSlots(side, drinks) {
-    const battle = visibleBattle();
+  function drawBattleDrinkSlotBases(side, drinks) {
     drinkSlots.forEach((slot, index) => {
       const item = drinks[index];
       const { x, y } = battleDrinkSlotPosition(side, slot);
       const size = BATTLE_DRINK_SLOT_SIZE;
-      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, size, size, "drinks", index);
+      const hasArtBackdrop = drawDecoratedSlotBackdrop(x, y, size, size, "drinks", index, {
+        skipSequenceEffect: true,
+        sourceOverride: baseBattleSlotBackdropSrc("drinks"),
+      });
       roundedRect(x - size / 2, y - size / 2, size, size, 7);
       if (!item && !hasArtBackdrop) {
         ctx.fillStyle = "rgba(242, 237, 210, 0.62)";
@@ -18828,10 +19293,40 @@
         ctx.stroke();
         ctx.lineWidth = 1;
       }
-      if (item) {
-        drawBattleDrinkIcon(item, x, y, BATTLE_DRINK_ICON_RADIUS, battle);
-        drawUpgradeStars(itemTier(item.tier), x, y + size / 2 - 5, 6, "center");
+    });
+  }
+
+  function drawBattleDrinkSlotEffects(side) {
+    if (!realityBroken()) return;
+    drinkSlots.forEach((slot, index) => {
+      const bleed = slotBackdropBleedPhase("drinks", index);
+      if (!bleed.active) return;
+      const { x, y } = battleDrinkSlotPosition(side, slot);
+      const size = BATTLE_DRINK_SLOT_SIZE;
+      if (bleed.phase === "flash") {
+        drawDecoratedSlotBackdrop(x, y, size, size, "drinks", index, {
+          skipSequenceEffect: true,
+          sourceOverride: cozySlotBackdropSrc("drinks"),
+        });
       }
+      drawSlotBackdropSequenceEffect({
+        x: x - (size + 16) / 2,
+        y: y - (size + 16) / 2,
+        w: size + 16,
+        h: size + 16,
+      }, "drinks", index);
+    });
+  }
+
+  function drawBattleDrinkContents(side, drinks) {
+    const battle = visibleBattle();
+    drinkSlots.forEach((slot, index) => {
+      const item = drinks[index];
+      if (!item) return;
+      const { x, y } = battleDrinkSlotPosition(side, slot);
+      const size = BATTLE_DRINK_SLOT_SIZE;
+      drawBattleDrinkIcon(item, x, y, BATTLE_DRINK_ICON_RADIUS, battle);
+      drawUpgradeStars(itemTier(item.tier), x, y + size / 2 - 5, 6, "center");
     });
   }
 
@@ -18870,8 +19365,9 @@
   }
 
   function drawBattleBaseBars(unit, r, anchorY = unit.y) {
-    const shieldPct = unit.shield > 0 ? clamp(unit.shield / Math.max(1, unit.maxHp * 0.5), 0.08, 1) : 0;
-    const hpPct = clamp01(unit.hp / Math.max(1, unit.maxHp));
+    const presentation = window.FoodAnimalsBattleCanvas.unitPresentationState(unit);
+    const shieldPct = presentation.shield > 0 ? clamp(presentation.shield / Math.max(1, unit.maxHp * 0.5), 0.08, 1) : 0;
+    const hpPct = clamp01(presentation.hp / Math.max(1, unit.maxHp));
     const healthVisible = hpPct < 0.995;
     let rows = 0;
     if (shieldPct > 0) {
@@ -18953,7 +19449,7 @@
   }
 
   function activeStatusEffects(unit) {
-    const moldEffect = unit.moldStacks > 0 ? { id: currentMoldStatusEffectId(), ...currentMoldStatusStyle() } : null;
+    const moldEffect = unit.moldStacks > 0 ? currentMoldStatusEffectDescriptor() : null;
     return window.FoodAnimalsStatusRuntime.activeEffects(unit, STATUS_EFFECT_STYLES, { moldEffect });
   }
 
@@ -18961,8 +19457,9 @@
     const effects = activeStatusEffects(unit);
     if (!effects.length) return;
     const time = visibleBattle()?.elapsed || 0;
+    const layouts = window.FoodAnimalsBattleCanvas.statusGlyphLayout(effects.length, x, y, r, time);
     effects.forEach((effect, index) => {
-      const layout = window.FoodAnimalsBattleCanvas.statusGlyphLayout(effects.length, x, y, r, time)[index];
+      const layout = layouts[index];
       drawStatusGlyph(effect, layout.x, layout.y, layout.size);
     });
   }
@@ -19183,6 +19680,107 @@
 
   function storyUsesHorrorTabs(story = state.activeStory) {
     return realityBroken() || story?.id === "level10" || story?.id === "level15" || story?.id === FINAL_TABS_STORY_ID;
+  }
+
+  function createMobileStoryUi() {
+    const root = document.createElement("section");
+    root.id = "mobile-story-ui";
+    root.className = "mobile-story-ui";
+    root.hidden = true;
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-label", "Story scene");
+    root.innerHTML = `
+      <img class="mobile-story-background" alt="" aria-hidden="true" />
+      <div class="mobile-story-shade" aria-hidden="true"></div>
+      <header class="mobile-story-header">
+        <h2 class="mobile-story-title"></h2>
+        <output class="mobile-story-progress"></output>
+      </header>
+      <img class="mobile-story-portrait" alt="" />
+      <section class="mobile-story-panel" aria-live="polite">
+        <strong class="mobile-story-speaker"></strong>
+        <p class="mobile-story-text"></p>
+        <p class="mobile-story-skip-confirm" role="status" hidden>Skip this dialogue section? Tap Skip again to confirm.</p>
+        <div class="mobile-story-actions">
+          <button type="button" data-mobile-story-action="back">Back</button>
+          <button type="button" data-mobile-story-action="skip">Skip</button>
+          <button type="button" data-mobile-story-action="advance">Next</button>
+        </div>
+      </section>
+    `;
+    canvas.insertAdjacentElement("afterend", root);
+    const ui = {
+      root,
+      background: root.querySelector(".mobile-story-background"),
+      portrait: root.querySelector(".mobile-story-portrait"),
+      title: root.querySelector(".mobile-story-title"),
+      progress: root.querySelector(".mobile-story-progress"),
+      speaker: root.querySelector(".mobile-story-speaker"),
+      text: root.querySelector(".mobile-story-text"),
+      skipConfirm: root.querySelector(".mobile-story-skip-confirm"),
+      back: root.querySelector('[data-mobile-story-action="back"]'),
+      skip: root.querySelector('[data-mobile-story-action="skip"]'),
+      advance: root.querySelector('[data-mobile-story-action="advance"]'),
+    };
+    root.querySelectorAll("[data-mobile-story-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!state.activeStory) return;
+        applyStoryHit({ area: "story", action: button.dataset.mobileStoryAction });
+        syncMobileStoryOverlay();
+        requestDraw();
+      });
+    });
+    return ui;
+  }
+
+  function syncMobileStoryImage(image, src, alt = "") {
+    if (!image) return;
+    const nextSrc = src || "";
+    if (image.dataset.storySrc !== nextSrc) {
+      image.dataset.storySrc = nextSrc;
+      if (nextSrc) image.src = nextSrc;
+      else image.removeAttribute("src");
+    }
+    image.hidden = !nextSrc;
+    image.alt = alt;
+  }
+
+  function syncMobileStoryOverlay() {
+    if (!mobileStoryUi) return;
+    const story = state.activeStory;
+    const beat = currentStoryBeat();
+    const active = Boolean(mobileStoryMedia.matches && story && beat);
+    mobileStoryUi.root.hidden = !active;
+    if (!active) {
+      delete document.body.dataset.mobileStory;
+      return;
+    }
+
+    const speaker = String(beat.speaker || "SYSTEM");
+    const speakerKey = speaker.trim().toLowerCase();
+    const tabsSpeaker = storySpeakerIsTabs(speaker);
+    const playerSpeaker = speakerKey === "you";
+    const portraitSrc = tabsSpeaker || playerSpeaker ? storySpeakerPortraitSrc(speaker, story) : null;
+    const horror = storyUsesHorrorTabs(story);
+    const total = Math.max(1, story.beats?.length || 1);
+    const index = Math.max(0, Math.min(story.index || 0, total - 1));
+
+    document.body.dataset.mobileStory = "true";
+    mobileStoryUi.root.dataset.theme = horror ? "horror" : "cozy";
+    mobileStoryUi.root.style.setProperty("--mobile-story-opacity", storyTransitionAlpha(story).toFixed(3));
+    mobileStoryUi.title.textContent = story.title || "Story";
+    mobileStoryUi.progress.textContent = `${index + 1} / ${total}`;
+    mobileStoryUi.speaker.textContent = speaker;
+    mobileStoryUi.text.textContent = beat.text || "";
+    mobileStoryUi.skipConfirm.hidden = !story.skipConfirm;
+    mobileStoryUi.back.disabled = !storyCanGoBack();
+    mobileStoryUi.skip.textContent = story.skipConfirm ? "Confirm Skip" : "Skip";
+    mobileStoryUi.advance.textContent = index >= total - 1 ? "Close" : "Next";
+    mobileStoryUi.portrait.classList.toggle("is-tabs", tabsSpeaker);
+    mobileStoryUi.portrait.classList.toggle("is-player", playerSpeaker);
+    syncMobileStoryImage(mobileStoryUi.background, currentStoryBackgroundSrc(story));
+    syncMobileStoryImage(mobileStoryUi.portrait, portraitSrc, portraitSrc ? `${speaker} portrait` : "");
   }
 
   function storySpeakerPortraitSrc(speaker, story = state.activeStory) {
@@ -20955,7 +21553,7 @@
       hearts: state.hearts,
       message: state.message,
       rendering: {
-        backingScale: Number(BACKING_SCALE.toFixed(2)),
+        backingScale: Number(backingScale.toFixed(2)),
         touchFirst: isTouchFirstDevice,
         dirty: renderDirty,
         assetDrawPending,
@@ -22521,14 +23119,7 @@
     applySmokeScenario();
     applyInitialRouteScreen();
   }
-  warmUiSprites([
-    COZY_AWNING_TRANSITION_SRC,
-    realityBroken() ? REALITY_BATTLE_DEPLOY_OVERLAY_SRC : COZY_BATTLE_DEPLOY_OVERLAY_SRC,
-    realityBroken() ? REALITY_BATTLE_DEPLOY_TITLE_SRC : COZY_BATTLE_DEPLOY_TITLE_SRC,
-    realityBroken() ? REALITY_BATTLE_RESULT_VICTORY_TITLE_SRC : COZY_BATTLE_RESULT_VICTORY_TITLE_SRC,
-    realityBroken() ? REALITY_BATTLE_RESULT_DEFEAT_TITLE_SRC : COZY_BATTLE_RESULT_DEFEAT_TITLE_SRC,
-    realityBroken() ? REALITY_BATTLE_RESULT_RUN_OVER_TITLE_SRC : COZY_BATTLE_RESULT_RUN_OVER_TITLE_SRC,
-  ]);
+  scheduleIdleWarmup(warmBattleDeployAssets);
   ensureEnemyPreview();
   markActiveRunRoute();
   drawFrame();

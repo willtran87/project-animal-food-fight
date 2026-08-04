@@ -1121,18 +1121,66 @@ button {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px) and (orientation: portrait) {
+  .vn-shell {
+    padding: 8px;
+  }
+
   .vn-stage {
     min-height: auto;
+    width: 100%;
+    height: calc(100dvh - 16px);
+    aspect-ratio: auto;
+  }
+
+  .paddock-preview {
+    left: 8%;
+    top: 8%;
+    width: 84%;
+  }
+
+  .vn-stage[data-phase="opening"] .player-standee {
+    left: -20%;
+    bottom: 35%;
+    width: 70%;
+  }
+
+  .vn-stage[data-phase="opening"] .tabs-counter {
+    right: -7%;
+    bottom: 39%;
+    width: 38%;
+  }
+
+  .vn-stage[data-phase="tutorial"] .tutorial-shop {
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: auto;
     aspect-ratio: 16 / 10;
   }
 
+  .vn-stage[data-phase="tutorial"] .player-standee {
+    left: -8%;
+    bottom: 39%;
+    width: 48%;
+  }
+
+  .vn-stage[data-phase="tutorial"] .tabs-counter {
+    right: -2%;
+    bottom: 41%;
+    width: 28%;
+  }
+
   .dialogue-panel {
-    height: 72%;
+    left: 3%;
+    right: 3%;
+    bottom: 2%;
+    height: 40%;
+    padding: 32px 12px 10px;
+    gap: 10px;
   }
 
   .dialogue-actions {
-    gap: 8px;
+    gap: 6px;
   }
 
   .tabs-portrait {
@@ -1185,36 +1233,85 @@ button {
   }
 
   .speaker-label {
-    min-width: 94px;
-    padding: 5px 10px;
-    font-size: 0.56rem;
+    left: 12px;
+    top: -17px;
+    min-width: 112px;
+    padding: 7px 12px;
+    font-size: 0.88rem;
   }
 
   .dialogue-text {
-    max-width: calc(100% - 52px);
-    font-size: 0.52rem;
-    line-height: 1.18;
+    max-width: 100%;
+    padding-right: 48px;
+    overflow-y: auto;
+    font-size: 1rem;
+    line-height: 1.35;
   }
 
   .beat-progress {
-    right: 14px;
-    top: 18px;
-    padding: 2px 7px;
-    font-size: 0.58rem;
+    right: 10px;
+    top: 14px;
+    padding: 3px 7px;
+    font-size: 0.72rem;
   }
 
   .skip-confirm {
-    right: 14px;
-    top: -30px;
-    max-width: 210px;
-    padding: 3px 7px;
-    font-size: 0.48rem;
+    right: 8px;
+    top: -48px;
+    max-width: 250px;
+    padding: 5px 8px;
+    font-size: 0.68rem;
   }
 
   .vn-button {
-    min-width: 68px;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0 6px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (pointer: coarse) and (max-height: 760px) and (orientation: landscape) {
+  .vn-shell {
+    padding: 8px;
+  }
+
+  .dialogue-panel {
+    left: 8%;
+    right: 8%;
+    bottom: 2%;
+    height: 48%;
+    padding: 30px 12px 8px;
+    gap: 6px;
+  }
+
+  .dialogue-text {
+    max-width: calc(100% - 64px);
+    overflow-y: auto;
+    font-size: 0.88rem;
+    line-height: 1.28;
+  }
+
+  .dialogue-actions {
+    gap: 8px;
+  }
+
+  .vn-button {
+    flex: 1 1 0;
+    min-width: 0;
     min-height: 44px;
     padding: 0 8px;
-    font-size: 0.65rem;
+    font-size: 0.76rem;
   }
+}
+.vn-stage[data-opening-assets-released="pending"],
+.vn-stage[data-opening-assets-released="true"] {
+  background-image: none;
+}
+
+.vn-stage[data-opening-assets-released="true"] .paddock-preview,
+.vn-stage[data-opening-assets-released="true"] .scene-transition-curtain:not(.is-tutorial-entering):not(.is-tutorial-completing),
+.tutorial-shop[data-frame-ready="true"] {
+  background-image: none;
 }

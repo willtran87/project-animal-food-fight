@@ -1,4 +1,16 @@
 (function () {
+  const descriptorCaches = new WeakMap();
+
+  function descriptor(styles, id) {
+    let cache = descriptorCaches.get(styles);
+    if (!cache) {
+      cache = new Map();
+      descriptorCaches.set(styles, cache);
+    }
+    if (!cache.has(id)) cache.set(id, Object.freeze({ id, ...styles[id] }));
+    return cache.get(id);
+  }
+
   function duration(source, baseDuration, options = {}) {
     return baseDuration * (1 + (source?.item?.statusDurationBonusPct || 0) + (options.favoriteBonusPct || 0) * 0.75 + (options.arenaBonus || 0));
   }
@@ -24,16 +36,16 @@
 
   function activeEffects(unit, styles, options = {}) {
     const effects = [];
-    if (unit.burn) effects.push({ id: "burn", ...styles.burn });
-    if (unit.mark) effects.push({ id: "mark", ...styles.mark });
-    if (unit.teamVulnerable) effects.push({ id: "teamVulnerable", ...styles.teamVulnerable });
-    if (unit.taunt) effects.push({ id: "taunt", ...styles.taunt });
-    if (unit.haste) effects.push({ id: "haste", ...styles.haste });
-    if (unit.attackBoost) effects.push({ id: "attackBoost", ...styles.attackBoost });
-    if (unit.attackSlow) effects.push({ id: "attackSlow", ...styles.attackSlow });
-    if (unit.antiSupport) effects.push({ id: "antiSupport", ...styles.antiSupport });
-    if (unit.slowed) effects.push({ id: "slowed", ...styles.slowed });
-    if (unit.lateFightStacks > 0) effects.push({ id: "lateFightStacks", ...styles.lateFightStacks });
+    if (unit.burn) effects.push(descriptor(styles, "burn"));
+    if (unit.mark) effects.push(descriptor(styles, "mark"));
+    if (unit.teamVulnerable) effects.push(descriptor(styles, "teamVulnerable"));
+    if (unit.taunt) effects.push(descriptor(styles, "taunt"));
+    if (unit.haste) effects.push(descriptor(styles, "haste"));
+    if (unit.attackBoost) effects.push(descriptor(styles, "attackBoost"));
+    if (unit.attackSlow) effects.push(descriptor(styles, "attackSlow"));
+    if (unit.antiSupport) effects.push(descriptor(styles, "antiSupport"));
+    if (unit.slowed) effects.push(descriptor(styles, "slowed"));
+    if (unit.lateFightStacks > 0) effects.push(descriptor(styles, "lateFightStacks"));
     if (unit.moldStacks > 0 && options.moldEffect) effects.push(options.moldEffect);
     return effects;
   }

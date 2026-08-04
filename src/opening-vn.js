@@ -425,7 +425,9 @@ let sceneTransitionTimer = null;
 let tutorialCompleteNavigationTimer = null;
 let tutorialCompletionDispatched = false;
 let openingReadySignaled = false;
-const warmImageCache = [];
+let openingAssetReleaseTimer = null;
+const WARM_IMAGE_CACHE_LIMIT = 4;
+const warmImageCache = new Map();
 
 function appUrl(path) {
   return new URL(path, document.baseURI || window.location.href);
@@ -440,15 +442,6 @@ const CRITICAL_READY_IMAGE_SOURCES = [
 
 const DEFERRED_OPENING_IMAGE_SOURCES = [
   "assets/opening-vn/runtime/presentation-briefing-room-bg-v1.webp",
-  "assets/opening-vn/runtime/display-corkboard-bg-v2.webp",
-  visualBoards.greenArk.src,
-  visualBoards.livingRecipe.src,
-  visualBoards.yieldComparison.src,
-  visualBoards.foodWeb.src,
-  visualBoards.stabilityPressure.src,
-  visualBoards.brokenPattern.src,
-  visualBoards.paddock.src,
-  "assets/backgrounds/arena-dim-sum-kitchen-v1.webp",
 ];
 
 function imageReady(src) {
@@ -465,10 +458,54 @@ function imageReady(src) {
 }
 
 function warmImage(src) {
+  if (!src) return;
+  const href = appUrl(src).href;
+  if (warmImageCache.has(href)) {
+    const image = warmImageCache.get(href);
+    warmImageCache.delete(href);
+    warmImageCache.set(href, image);
+    return;
+  }
   const image = new Image();
   image.decoding = "async";
-  image.src = appUrl(src).href;
-  warmImageCache.push(image);
+  image.src = href;
+  warmImageCache.set(href, image);
+  while (warmImageCache.size > WARM_IMAGE_CACHE_LIMIT) {
+    warmImageCache.delete(warmImageCache.keys().next().value);
+  }
+}
+
+function warmUpcomingOpeningImages(beat, index) {
+  if (state.phase !== "opening") return;
+  if (index >= 7) warmImage("assets/opening-vn/runtime/presentation-briefing-room-bg-v1.webp");
+  if (index >= 9) warmImage("assets/opening-vn/runtime/display-corkboard-bg-v2.webp");
+  warmImage(boardForBeat(beat, index)?.src);
+  const nextIndex = Math.min(beats.length - 1, index + 1);
+  warmImage(boardForBeat(beats[nextIndex], nextIndex)?.src);
+}
+
+function scheduleOpeningAssetRelease() {
+  if (openingAssetReleaseTimer !== null) return;
+  stage.dataset.openingAssetsReleased = "pending";
+  openingAssetReleaseTimer = window.setTimeout(() => {
+    openingAssetReleaseTimer = null;
+    if (state.phase === "opening") return;
+    clearVisualTransitionTimers();
+    desiredBoardHref = "";
+    displayedBoardHref = "";
+    visualImage.removeAttribute("src");
+    paddockPreview.hidden = true;
+    warmImageCache.clear();
+    stage.dataset.openingAssetsReleased = "true";
+  }, TUTORIAL_ENTER_TRANSITION_MS + 120);
+}
+
+function restoreOpeningAssetOwnership() {
+  if (openingAssetReleaseTimer !== null) {
+    window.clearTimeout(openingAssetReleaseTimer);
+    openingAssetReleaseTimer = null;
+  }
+  delete stage.dataset.openingAssetsReleased;
 }
 
 function scheduleDeferredOpeningImageWarmup() {
@@ -534,6 +571,9 @@ function openingSceneForIndex(index) {
 
 function ensureTutorialShopLoaded() {
   if (!tutorialShopFrame || tutorialShopFrame.getAttribute("src")) return;
+  tutorialShopFrame.addEventListener("load", () => {
+    tutorialShop.dataset.frameReady = "true";
+  }, { once: true });
   tutorialShopFrame.src = tutorialShopFrame.dataset.src || TUTORIAL_SHOP_ROUTE;
 }
 
@@ -666,6 +706,12 @@ function updateVisualBoard(board) {
 function render() {
   const beat = currentBeat();
   const board = boardForBeat(beat, state.index);
+  if (state.phase === "opening") {
+    restoreOpeningAssetOwnership();
+    warmUpcomingOpeningImages(beat, state.index);
+  } else {
+    scheduleOpeningAssetRelease();
+  }
   speakerLabel.textContent = beat.inner ? "You" : beat.speaker;
   speakerLabel.classList.toggle("you", beat.speaker === "You");
   speakerLabel.classList.toggle("thought", beat.inner === true);

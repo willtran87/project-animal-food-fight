@@ -42,13 +42,7 @@
   }
 
   function sideUnitsInRenderOrder(units, options = {}) {
-    return units
-      .map((unit, index) => ({ unit, index }))
-      .sort((a, b) => {
-        const colDelta = unitRenderLayer(b.unit, options) - unitRenderLayer(a.unit, options);
-        return colDelta || a.index - b.index;
-      })
-      .map((entry) => entry.unit);
+    return units.slice().sort((a, b) => unitRenderLayer(b, options) - unitRenderLayer(a, options));
   }
 
   function unitsInRenderOrder(battle, options = {}) {
@@ -69,6 +63,36 @@
       dx: to.x - from.x,
       dy: to.y - from.y,
     };
+  }
+
+  function projectileFxFrame(progress, tier = 1, kind = "damage") {
+    const t = clamp01(progress);
+    const support = kind === "support";
+    const launchAlpha = clamp01(1 - t / 0.3);
+    const arrivalAlpha = clamp01((t - 0.68) / 0.32);
+    const tierScale = 1 + Math.max(0, Math.min(3, tier - 1)) * 0.12;
+    return {
+      launchAlpha,
+      arrivalAlpha,
+      trailAlpha: (0.38 + Math.sin(t * Math.PI) * 0.42) * (support ? 0.72 : 1),
+      trailWidth: (support ? 3.5 : 4.5) * tierScale,
+      haloScale: (0.82 + Math.sin(t * Math.PI) * 0.28) * tierScale,
+      support,
+    };
+  }
+
+  function unitPresentationState(unit) {
+    const pendingImpact = Math.max(0, unit?.pendingVisualImpactCount || 0) > 0;
+    return {
+      pendingImpact,
+      defeated: Boolean(unit?.dead && !unit?.visualDefeatPending),
+      hp: Number.isFinite(unit?.visualHp) ? unit.visualHp : unit?.hp || 0,
+      shield: Number.isFinite(unit?.visualShield) ? unit.visualShield : unit?.shield || 0,
+    };
+  }
+
+  function hasPendingProjectileImpacts(attacks) {
+    return Boolean(attacks?.some((attack) => attack?.impact));
   }
 
   function drinkPulseMotion(item, battle, options = {}) {
@@ -103,11 +127,14 @@
   window.FoodAnimalsBattleCanvas = {
     battleDrinkSlotPosition,
     drinkPulseMotion,
+    hasPendingProjectileImpacts,
+    projectileFxFrame,
     projectileFrame,
     sideUnitsInRenderOrder,
     statusGlyphLayout,
     unitRenderColumn,
     unitRenderLayer,
+    unitPresentationState,
     unitsInRenderOrder,
   };
 })();

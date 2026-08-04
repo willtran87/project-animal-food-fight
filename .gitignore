@@ -1,5 +1,6 @@
 output/
 pages-dist/
+node_modules/
 .agents/
 progress.md
 tmp/

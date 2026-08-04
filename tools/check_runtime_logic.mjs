@@ -197,6 +197,25 @@ assert.equal(
   "battle canvas should render front columns before back columns",
 );
 assert.equal(Math.round(battleCanvas.projectileFrame({ x: 0, y: 0 }, { x: 100, y: 0 }, 0.5, 1, 20).x), 75);
+assert.equal(battleCanvas.projectileFxFrame(0, 1, "damage").launchAlpha, 1);
+assert.ok(Math.abs(battleCanvas.projectileFxFrame(1, 1, "damage").arrivalAlpha - 1) < 1e-9);
+assert.equal(battleCanvas.projectileFxFrame(0.5, 3, "support").support, true);
+assert.ok(
+  battleCanvas.projectileFxFrame(0.5, 4, "damage").trailWidth > battleCanvas.projectileFxFrame(0.5, 1, "damage").trailWidth,
+  "higher-tier projectiles should carry more visual weight",
+);
+assert.equal(
+  JSON.stringify(battleCanvas.unitPresentationState({ hp: 0, shield: 0, dead: true, visualHp: 12, visualShield: 4, visualDefeatPending: true, pendingVisualImpactCount: 1 })),
+  JSON.stringify({ pendingImpact: true, defeated: false, hp: 12, shield: 4 }),
+  "a lethal projectile should keep the prior unit presentation visible until impact",
+);
+assert.equal(
+  battleCanvas.unitPresentationState({ hp: 0, shield: 0, dead: true }).defeated,
+  true,
+  "a resolved lethal impact should expose the defeat presentation",
+);
+assert.equal(battleCanvas.hasPendingProjectileImpacts([{ t: 0.2, impact: { targetUid: 2 } }]), true);
+assert.equal(battleCanvas.hasPendingProjectileImpacts([{ t: 0.2, kind: "support" }]), false);
 
 const battleFlow = context.FoodAnimalsBattleFlowRuntime;
 assert.equal(battleFlow.battleStartDecision({ phase: "prep", allyCount: 0 }).reason, "emptyTeam");

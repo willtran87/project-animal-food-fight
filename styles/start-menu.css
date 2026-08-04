@@ -2750,3 +2750,9 @@ select:focus-visible {
     transform: scale(1);
   }
 }
+body[data-campaign-assets-released="true"] .start-menu,
+body[data-campaign-assets-released="true"] .start-menu *,
+body[data-campaign-assets-released="true"] .start-menu *::before,
+body[data-campaign-assets-released="true"] .start-menu *::after {
+  background-image: none !important;
+}

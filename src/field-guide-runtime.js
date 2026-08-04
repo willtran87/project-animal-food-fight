@@ -8,6 +8,8 @@
     swipeAxisBias: 1.25,
   };
   const CHROMA_CACHE_LIMIT = 6;
+  const CHROMA_WORKER_TIMEOUT_MS = 6000;
+  const CHROMA_IMAGE_TIMEOUT_MS = 10000;
   const chromaWorkerRequests = new Map();
   let chromaWorker = null;
   let chromaWorkerRequestId = 0;
@@ -156,22 +158,38 @@
     if (typeof Worker !== "function" || typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") {
       return null;
     }
-    const workerUrl = new URL("src/field-guide-worker.js?v=worker-1", document.baseURI || window.location.href);
-    chromaWorker = new Worker(workerUrl, { name: "field-guide-chroma" });
+    try {
+      const workerUrl = new URL("src/field-guide-worker.js?v=worker-1", document.baseURI || window.location.href);
+      chromaWorker = new Worker(workerUrl, { name: "field-guide-chroma" });
+    } catch {
+      chromaWorker = null;
+      return null;
+    }
     chromaWorker.onmessage = (event) => {
       const request = chromaWorkerRequests.get(event.data?.id);
       if (!request) return;
       chromaWorkerRequests.delete(event.data.id);
+      window.clearTimeout(request.timeoutId);
       if (event.data.error || !event.data.blob) request.reject(new Error(event.data.error || "Chroma worker failed"));
       else request.resolve(event.data.blob);
     };
     chromaWorker.onerror = (event) => {
-      chromaWorkerRequests.forEach((request) => request.reject(new Error(event.message || "Chroma worker failed")));
-      chromaWorkerRequests.clear();
-      chromaWorker?.terminate();
-      chromaWorker = null;
+      event.preventDefault?.();
+      stopChromaWorker(new Error(event.message || "Chroma worker failed"));
     };
     return chromaWorker;
+  }
+
+  function stopChromaWorker(error) {
+    const worker = chromaWorker;
+    chromaWorker = null;
+    worker?.terminate();
+    const requests = [...chromaWorkerRequests.values()];
+    chromaWorkerRequests.clear();
+    requests.forEach((request) => {
+      window.clearTimeout(request.timeoutId);
+      request.reject(error);
+    });
   }
 
   async function chromaBlobFromWorker(image) {
@@ -180,31 +198,53 @@
     const bitmap = await createImageBitmap(image);
     const id = ++chromaWorkerRequestId;
     return new Promise((resolve, reject) => {
-      chromaWorkerRequests.set(id, { resolve, reject });
-      worker.postMessage({ id, bitmap }, [bitmap]);
+      const timeoutId = window.setTimeout(() => {
+        stopChromaWorker(new Error("Chroma worker timed out"));
+      }, CHROMA_WORKER_TIMEOUT_MS);
+      chromaWorkerRequests.set(id, { resolve, reject, timeoutId });
+      try {
+        worker.postMessage({ id, bitmap }, [bitmap]);
+      } catch (error) {
+        chromaWorkerRequests.delete(id);
+        window.clearTimeout(timeoutId);
+        bitmap.close?.();
+        reject(error);
+      }
     });
   }
 
   function chromaBlobOnMainThread(image) {
     return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      const context = canvas.getContext("2d", { willReadFrequently: true });
-      if (!context) {
-        resolve(null);
-        return;
+      let settled = false;
+      const finish = (blob = null) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        resolve(blob || null);
+      };
+      const timeoutId = window.setTimeout(() => finish(null), CHROMA_WORKER_TIMEOUT_MS);
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        if (!context) {
+          finish(null);
+          return;
+        }
+        context.drawImage(image, 0, 0);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const keyColor = [data[0], data[1], data[2]];
+        const keyedPixels = connectedChromaKeyPixels(data, canvas.width, canvas.height, keyColor);
+        for (let index = 0; index < keyedPixels.length; index += 1) {
+          if (keyedPixels[index]) data[index * 4 + 3] = 0;
+        }
+        context.putImageData(imageData, 0, 0);
+        canvas.toBlob(finish, "image/webp", 0.92);
+      } catch {
+        finish(null);
       }
-      context.drawImage(image, 0, 0);
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      const keyColor = [data[0], data[1], data[2]];
-      const keyedPixels = connectedChromaKeyPixels(data, canvas.width, canvas.height, keyColor);
-      for (let index = 0; index < keyedPixels.length; index += 1) {
-        if (keyedPixels[index]) data[index * 4 + 3] = 0;
-      }
-      context.putImageData(imageData, 0, 0);
-      canvas.toBlob(resolve, "image/webp", 0.92);
     });
   }
 
@@ -213,8 +253,23 @@
     if (oldest.done) return;
     const cached = cache.get(oldest.value);
     cache.delete(oldest.value);
-    Promise.resolve(cached).then((src) => {
-      if (typeof src === "string" && src.startsWith("blob:")) URL.revokeObjectURL(src);
+    Promise.resolve(cached)
+      .then((src) => {
+        if (typeof src === "string" && src.startsWith("blob:")) URL.revokeObjectURL(src);
+      })
+      .catch(() => {});
+  }
+
+  function clearResolvedImageCache(cache) {
+    if (!cache) return;
+    const cachedValues = [...cache.values()];
+    cache.clear();
+    cachedValues.forEach((cached) => {
+      Promise.resolve(cached)
+        .then((src) => {
+          if (typeof src === "string" && src.startsWith("blob:")) URL.revokeObjectURL(src);
+        })
+        .catch(() => {});
     });
   }
 
@@ -223,18 +278,30 @@
     if (cache.has(page.src)) return cache.get(page.src);
     while (cache.size >= CHROMA_CACHE_LIMIT) evictOldestChromaEntry(cache);
     const keyedImagePromise = new Promise((resolve) => {
+      let settled = false;
       const img = new Image();
+      const finish = (src = page.src) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(loadTimeoutId);
+        img.onload = null;
+        img.onerror = null;
+        resolve(src || page.src);
+      };
+      const loadTimeoutId = window.setTimeout(() => finish(page.src), CHROMA_IMAGE_TIMEOUT_MS);
       img.decoding = "async";
       img.onload = async () => {
+        window.clearTimeout(loadTimeoutId);
         try {
-          const blob = (await chromaBlobFromWorker(img)) || (await chromaBlobOnMainThread(img));
-          resolve(blob ? URL.createObjectURL(blob) : page.src);
+          const worker = ensureChromaWorker();
+          const blob = worker ? await chromaBlobFromWorker(img) : await chromaBlobOnMainThread(img);
+          if (!settled && blob) finish(URL.createObjectURL(blob));
+          else finish(page.src);
         } catch {
-          const blob = await chromaBlobOnMainThread(img);
-          resolve(blob ? URL.createObjectURL(blob) : page.src);
+          finish(page.src);
         }
       };
-      img.onerror = () => resolve(page.src);
+      img.onerror = () => finish(page.src);
       img.src = page.src;
     });
     cache.set(page.src, keyedImagePromise);
@@ -244,6 +311,7 @@
   window.FoodAnimalsFieldGuideRuntime = {
     DEFAULTS,
     applyView,
+    clearResolvedImageCache,
     clampView,
     connectedChromaKeyPixels,
     currentPage,
