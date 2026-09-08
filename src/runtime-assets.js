@@ -111,7 +111,41 @@
     }
   }
 
+  function outlinedImage(image, cache, options = {}) {
+    if (!ready(image)) return null;
+    const size = options.size || 192;
+    const key = `${imageKey(image)}:${size}`;
+    if (cache.has(key)) return remember(cache, key, cache.get(key), options.maxEntries || 64);
+    const pad = 10;
+    const mask = document.createElement("canvas");
+    mask.width = mask.height = size + pad * 2;
+    const mx = mask.getContext("2d");
+    mx.drawImage(image, pad, pad, size, size);
+    mx.globalCompositeOperation = "source-in";
+    mx.fillStyle = "#e6f9f4";
+    mx.fillRect(0, 0, mask.width, mask.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = mask.width;
+    const ox = canvas.getContext("2d");
+    // Build an alpha silhouette once, not a per-frame blur or pixel readback.
+    for (const distance of [7, 4]) {
+      for (let step = 0; step < 8; step++) {
+        const angle = step * Math.PI / 4;
+        ox.drawImage(mask, Math.round(Math.cos(angle) * distance), Math.round(Math.sin(angle) * distance));
+      }
+      if (distance === 7) {
+        ox.globalCompositeOperation = "source-in";
+        ox.fillStyle = "#08151b";
+        ox.fillRect(0, 0, canvas.width, canvas.height);
+        ox.globalCompositeOperation = "source-over";
+      }
+    }
+    canvas.addEventListener("contextlost", () => cache.delete(key));
+    return remember(cache, key, { canvas, size, pad }, options.maxEntries || 64);
+  }
+
   window.FoodAnimalsRuntimeAssets = {
+    outlinedImage,
     alphaMetrics,
     failed,
     fallbackMetrics,

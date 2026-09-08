@@ -12,13 +12,11 @@
       storageAvailability.set(storageKey, true);
       return true;
     } catch {
-      storageAvailability.set(storageKey, false);
       return false;
     }
   }
 
   function read(storageKey = STORAGE_KEY) {
-    if (!canUseLocalStorage(storageKey)) return null;
     try {
       const record = JSON.parse(window.localStorage.getItem(storageKey) || "null");
       return record && typeof record === "object" ? record : null;
@@ -35,23 +33,19 @@
   }
 
   function write(record, storageKey = STORAGE_KEY) {
-    if (!canUseLocalStorage(storageKey)) return false;
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(record));
       return true;
     } catch {
-      storageAvailability.set(storageKey, false);
       return false;
     }
   }
 
   function clear(storageKey = STORAGE_KEY) {
-    if (!canUseLocalStorage(storageKey)) return false;
     try {
       window.localStorage.removeItem(storageKey);
       return true;
     } catch {
-      storageAvailability.set(storageKey, false);
       return false;
     }
   }

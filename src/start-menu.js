@@ -1495,6 +1495,7 @@ function clearActiveRun() {
 function savedRunLooksCleared(run) {
   const savedState = run?.snapshot?.state;
   if (!savedState || typeof savedState !== "object") return false;
+  if (savedState.endingPending === true && savedState.runMode !== "infinite" && Number(savedState.hearts) > 0) return false;
   if (savedState.runConcluded === true || savedState.campaignCleared === true) return true;
   if (Number(savedState.hearts) <= 0) return true;
   if (savedState.phase === "victoryCutscene" || savedState.finalVictoryTransition || savedState.victoryCutscene) return true;

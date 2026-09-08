@@ -249,6 +249,10 @@
   let lastAccessibleStatus = "";
   let lastAccessibleStatusAt = 0;
   let lastAccessiblePhaseKey = "";
+  const lostRenderSurfaces = new Set();
+  const renderRecovery = { paused: false, losses: 0, restorations: 0, errors: 0, failures: 0, events: [] };
+  let renderRecoveryUi = null;
+  let renderRetryTimer = null;
 
   function rememberCacheEntry(cache, key, value) {
     return window.FoodAnimalsCanvasText.remember(cache, key, value, TEXT_LAYOUT_CACHE_LIMIT);
@@ -270,11 +274,119 @@
   }
 
   function drawFrame() {
+    if (lostRenderSurfaces.size || renderRecovery.paused) return;
     assetDrawPending = false;
     renderDirty = false;
     drawCount += 1;
-    draw();
+    try {
+      draw();
+      renderRecovery.failures = 0;
+      if (renderRecoveryUi) {
+        const restoreFocus = renderRecoveryUi.contains(document.activeElement);
+        renderRecoveryUi.hidden = true;
+        if (restoreFocus) canvas.focus({ preventScroll: true });
+      }
+    } catch (error) {
+      renderRecovery.errors += 1;
+      renderRecovery.failures += 1;
+      recordRenderingEvent("draw-error", error?.message || String(error));
+      pauseRendering();
+      if (renderRecovery.failures === 1 && !renderRetryTimer) {
+        renderRetryTimer = window.setTimeout(() => {
+          renderRetryTimer = null;
+          retryRendering();
+        }, 150);
+      }
+      return;
+    }
     syncAccessibleStatus();
+  }
+
+  function renderingDiagnostics() {
+    return { ...renderRecovery, events: renderRecovery.events.slice(), lostSurfaces: [...lostRenderSurfaces],
+      canvas: { width: canvas.width, height: canvas.height, backingScale },
+      outlineCacheEntries: equippedOutlineCache.size };
+  }
+
+  function recordRenderingEvent(type, detail) {
+    renderRecovery.events.push({ type, detail, at: new Date().toISOString(), phase: state.phase, round: state.round,
+      elapsed: state.battle?.elapsed || 0 });
+    if (renderRecovery.events.length > 12) renderRecovery.events.shift();
+  }
+
+  function pauseRendering() {
+    renderRecovery.paused = true;
+    state.drag = null;
+    state.hover = null;
+    state.pointer = null;
+    activeCanvasPointerId = null;
+    if (!renderRecoveryUi) {
+      renderRecoveryUi = document.createElement("div");
+      renderRecoveryUi.className = "render-recovery";
+      renderRecoveryUi.setAttribute("role", "alert");
+      renderRecoveryUi.innerHTML = '<section><h2>Display interrupted</h2><p>Your run is paused.</p><div><button type="button" data-render-retry>Retry display</button><button type="button" data-render-report>Download diagnostics</button></div></section>';
+      (document.getElementById("game-shell") || canvas.parentElement).append(renderRecoveryUi);
+      renderRecoveryUi.querySelector("[data-render-retry]").addEventListener("click", retryRendering);
+      renderRecoveryUi.querySelector("[data-render-report]").addEventListener("click", () => {
+        const report = { ...renderingDiagnostics(), userAgent: navigator.userAgent, seed: state.runSeed };
+        const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "game-rendering-diagnostics.json";
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+    }
+    renderRecoveryUi.hidden = false;
+    renderRecoveryUi.querySelector("[data-render-retry]").disabled = lostRenderSurfaces.size > 0;
+  }
+
+  function invalidateRenderSurfaces() {
+    for (const surface of [battleStaticLayerCanvas, simulationFailureLayerCanvas, revealNoiseLayerCanvas]) {
+      surface.width = surface.width;
+    }
+    battleStaticLayerKey = "";
+    simulationFailureLayerKey = "";
+    revealNoiseLayerFrame = -1;
+    equippedOutlineCache.clear();
+    pixelSpriteCache.clear();
+    tintedSpriteCache.clear();
+    realityScanlinePatternContext.fillStyle = "#46ff63";
+    realityScanlinePatternContext.fillRect(0, 0, 1, 1);
+    realityScanlinePattern = ctx.createPattern(realityScanlinePatternCanvas, "repeat");
+  }
+
+  function retryRendering() {
+    if (lostRenderSurfaces.size) return;
+    if (renderRetryTimer) window.clearTimeout(renderRetryTimer);
+    renderRetryTimer = null;
+    try {
+      applyBackingScale(backingScale, true);
+      invalidateRenderSurfaces();
+      renderRecovery.paused = false;
+      state.lastTime = performance.now();
+      drawFrame();
+      requestDraw();
+    } catch (error) {
+      renderRecovery.errors += 1;
+      recordRenderingEvent("recovery-error", error?.message || String(error));
+      pauseRendering();
+    }
+  }
+
+  function watchRenderSurface(surface, name) {
+    surface.addEventListener("contextlost", () => {
+      lostRenderSurfaces.add(name);
+      renderRecovery.losses += 1;
+      recordRenderingEvent("context-lost", name);
+      pauseRendering();
+    });
+    surface.addEventListener("contextrestored", () => {
+      lostRenderSurfaces.delete(name);
+      renderRecovery.restorations += 1;
+      recordRenderingEvent("context-restored", name);
+      retryRendering();
+    });
   }
 
   function accessibleUnitNames(units) {
@@ -665,6 +777,7 @@
     victoryCutscene: null,
     mergeCutscene: null,
     runConcluded: false,
+    endingPending: false,
     activeStory: null,
     seenStoryMilestones: [],
     idleTime: 0,
@@ -676,6 +789,7 @@
   const mobileStoryMedia = window.matchMedia?.("(pointer: coarse) and (max-width: 1180px), (max-width: 760px)") || { matches: false };
   const mobileStoryUi = createMobileStoryUi();
   let activeRunAutosaveTimer = 0;
+  let activeCanvasPointerId = null;
   let lastSilentSnapshotFingerprint = "";
   let lastActiveRunSaveJson = "";
   let pendingMergeCutsceneCommit = null;
@@ -843,6 +957,9 @@
   const runtimeSpriteMetricsCache = new Map();
   const itemSpriteMetricsCache = new Map();
   const itemSpriteCache = new Map();
+  const equippedOutlineCache = new Map();
+  let prepBonusCacheKey = "";
+  let prepBonusCache = { groups: [], fuelLinks: [] };
   const attackParticleSpriteCache = new Map();
   const particleSpriteCache = new Map();
   const drinkThrowableSpriteCache = new Map();
@@ -869,7 +986,12 @@
   const realityScanlinePatternContext = realityScanlinePatternCanvas.getContext("2d", { alpha: true });
   realityScanlinePatternContext.fillStyle = "#46ff63";
   realityScanlinePatternContext.fillRect(0, 0, 1, 1);
-  const realityScanlinePattern = ctx.createPattern(realityScanlinePatternCanvas, "repeat");
+  let realityScanlinePattern = ctx.createPattern(realityScanlinePatternCanvas, "repeat");
+  watchRenderSurface(canvas, "main");
+  watchRenderSurface(battleStaticLayerCanvas, "battle");
+  watchRenderSurface(simulationFailureLayerCanvas, "static");
+  watchRenderSurface(revealNoiseLayerCanvas, "reveal");
+  watchRenderSurface(realityScanlinePatternCanvas, "scanlines");
   const IMAGE_CACHE_LIMITS = Object.freeze({
     attack: 96,
     background: 12,
@@ -953,6 +1075,8 @@
   const RUN_SNAPSHOT_KEYS = [
     "phase",
     "runMode",
+    "runConcluded",
+    "endingPending",
     "round",
     "gold",
     "hearts",
@@ -994,6 +1118,7 @@
     "level10RevealCutscene",
     "shopReturnStaticTransition",
     "rebootTransition",
+    "finalTabsStoryTransition",
     "finalVictoryTransition",
     "victoryCutscene",
     "activeStory",
@@ -1035,6 +1160,7 @@
     if (snapshot.state.phase === "battle") {
       snapshot.state.phase = "prep";
       snapshot.state.message = "Battle interrupted";
+      snapshot.state.arenaPrepBuff = cloneRunValue(state.battle?.arenaPrepBuff || null);
     }
     snapshot.state.codexOpen = false;
     snapshot.state.optionsMenu = { open: false, selected: "resume", savedAt: snapshot.savedAt, dragSlider: null };
@@ -1068,6 +1194,7 @@
     Object.assign(state, restored);
     state.log = Array.isArray(state.log) ? state.log.slice(0, RUN_LOG_LIMIT) : [];
     state.runMode = normalizeRunMode(state.runMode);
+    state.endingPending = restored.endingPending === true;
     state.optionsMenu = { open: false, selected: "resume", savedAt: snapshot.savedAt || null, dragSlider: null };
     state.pointer = null;
     state.hover = null;
@@ -1081,7 +1208,17 @@
     syncRngState();
     unitSeq = Math.max(Number(snapshot.unitSeq) || 1, maxUidInValue(restored) + 1);
     state.message = state.message || "Run loaded";
-    ensureEnemyPreview();
+    const shopReturn = state.shopReturnStaticTransition;
+    if (state.phase === "prep" && ["cozyRewardReturn", "horrorRewardReturn"].includes(shopReturn?.source)) {
+      // Older saves captured prep before the return transition marked its switch.
+      shopReturn.screenChanged = true;
+      shopReturn.rewardParticles = [];
+    }
+    if (!state.endingPending) {
+      ensureEnemyPreview();
+      resolveItemMerges();
+      resolveMerges();
+    }
     return true;
   }
 
@@ -1099,7 +1236,7 @@
   }
 
   function writeActiveRunRecord(snapshot = null) {
-    if (state.runConcluded || !canUseLocalStorage() || !shouldMarkActiveRunRoute()) return false;
+    if ((state.runConcluded && !state.endingPending) || !canUseLocalStorage() || !shouldMarkActiveRunRoute()) return false;
     const now = new Date().toISOString();
     const previous = window.FoodAnimalsRunStorage.read(ACTIVE_RUN_STORAGE_KEY);
     const runSnapshot = snapshot || previous?.snapshot || null;
@@ -1119,7 +1256,7 @@
   }
 
   function saveCurrentRun(options = {}) {
-    if (state.runConcluded) return false;
+    if (state.runConcluded && !state.endingPending) return false;
     if (state.menuRebootTransition) return false;
     let snapshot = null;
     try {
@@ -1151,7 +1288,7 @@
   }
 
   function updateRunAutosave(dt) {
-    if (state.runConcluded) return;
+    if (state.runConcluded && !state.endingPending) return;
     if (!shouldMarkActiveRunRoute()) return;
     if (state.phase === "battle") return;
     activeRunAutosaveTimer += dt;
@@ -1177,7 +1314,7 @@
     state.runConcluded = true;
     if (!canUseLocalStorage()) return false;
     try {
-      clearActiveRunRoute();
+      if (!state.endingPending) clearActiveRunRoute();
       window.localStorage.setItem(GAME_COMPLETED_STORAGE_KEY, "1");
       return true;
     } catch {
@@ -1258,11 +1395,11 @@
   }
 
   function exitToMainMenuWithSave() {
-    saveCurrentRun({ message: false });
+    if (!state.runConcluded && !saveCurrentRun({ message: false })) return false;
     state.optionsMenu.open = false;
     return startShopReturnTransitionOverlay({
       source: "normalMenuReturn",
-      message: "Run saved - returning to menu",
+      message: state.runConcluded ? "Returning to menu" : "Run saved - returning to menu",
     });
   }
   const backgroundImageCache = new Map();
@@ -1723,6 +1860,14 @@
       tierScaling: TIER_SCALING,
       random,
     });
+  }
+
+  function addPermanentHp(unit, gain) {
+    unit.permanentHpBonus = (unit.permanentHpBonus || 0) + gain;
+    unit.baseMaxHp = (unit.baseMaxHp || unit.maxHp) + gain;
+    unit.maxHp += gain;
+    unit.hp = Math.min(unit.maxHp, unit.hp + gain);
+    refreshUnitItemStats(unit);
   }
 
   function isFinalBossUnitType(typeId) {
@@ -3686,6 +3831,7 @@
       if (!normalized) return null;
       const item = itemCarrierPreviewEntry(normalized);
       if (!isItem(item)) return null;
+      if (normalized.area === "drinks" && isDrink(item)) return null;
       const shopIndex = normalized.area === "shop" ? normalized.index : null;
       return {
         source,
@@ -3859,6 +4005,34 @@
     window.FoodAnimalsShopTransactionRuntime.clearPurchasedShopSlot(state, shopIndex);
   }
 
+  function mergeEquipmentStoragePlan(consumedRefs, keeper, extraItems) {
+    const storage = { bench: state.bench.slice(), itemBench: state.itemBench.slice() };
+    for (const ref of consumedRefs) {
+      if (ref.area === "bench" && (keeper.area !== "bench" || ref.index !== keeper.index)) {
+        storage.bench[ref.index] = null;
+      }
+    }
+    const placements = [];
+    for (const item of extraItems) {
+      const spot = window.FoodAnimalsShopTransactionRuntime.firstEmptyItemStorage(storage, item, { itemBenchSlotAccepts });
+      if (!spot) {
+        state.message = "Free storage for merge equipment";
+        return null;
+      }
+      storage[spot.area][spot.index] = item;
+      placements.push({ ...spot, item });
+    }
+    return placements;
+  }
+
+  function makeMergedUnit(typeId, tier, consumedUnits, keeperItem, incomingCost = null) {
+    const evolved = makeUnit(typeId, tier);
+    evolved.purchaseGold = mergedUnitPurchaseGold(consumedUnits, incomingCost);
+    evolved.item = keeperItem;
+    addPermanentHp(evolved, consumedUnits.reduce((total, unit) => total + (unit.permanentHpBonus || 0), 0));
+    return evolved;
+  }
+
   function buyShopMergeIntoSlot(shopIndex, targetArea, targetIndex) {
     if (mergeCutsceneActive() || mergeCutscenePending()) return false;
     const entry = shopEntryAt(shopIndex);
@@ -3909,10 +4083,9 @@
       .map((ref) => ref.unit.item)
       .filter((item) => item && !mergeItemIsConsumed(item))
       .map((item) => cloneItem(item));
-    const evolved = makeUnit(entry.typeId, entry.tier + 1);
-    evolved.purchaseGold = mergedUnitPurchaseGold(consumedUnits, cost);
-    evolved.item = keeperItem;
-    refreshUnitItemStats(evolved);
+    const keeper = { area: targetArea, index: targetIndex };
+    if (!mergeEquipmentStoragePlan(consumedRefs, keeper, extraItems)) return false;
+    const evolved = makeMergedUnit(entry.typeId, entry.tier + 1, consumedUnits, keeperItem, cost);
     return startMergeCutscene({
       kind: "unit",
       sources: [
@@ -3923,12 +4096,16 @@
       result: evolved,
       hiddenRefs: [{ area: "shop", index: shopIndex }, ...consumedRefs],
     }, () => {
+      // Queued cinematics can outlive other setup; recheck before any mutation.
+      if (shopEntryAt(shopIndex) !== entry || state.gold < cost || consumedRefs.some((ref) => state[ref.area][ref.index] !== ref.unit)) return false;
+      const placements = mergeEquipmentStoragePlan(consumedRefs, keeper, extraItems);
+      if (!placements) return false;
       state.gold -= cost;
       markItemDiscountUsed(entry, shopIndex, cost);
       clearPurchasedShopSlot(shopIndex);
       consumedRefs.forEach((ref) => placeRef(ref, null));
       placeRef({ area: targetArea, index: targetIndex }, evolved);
-      extraItems.forEach((item) => moveItemToBench(item));
+      placements.forEach(({ area, index, item }) => { state[area][index] = item; });
       const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
       if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
       state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
@@ -3978,9 +4155,8 @@
       .map((ref) => ref.unit.item)
       .filter((item) => item && !mergeItemIsConsumed(item))
       .map((item) => cloneItem(item));
-    const evolved = makeUnit(typeId, tier + 1);
-    evolved.item = keeperItem;
-    refreshUnitItemStats(evolved);
+    if (!mergeEquipmentStoragePlan(consumedRefs, keeper, extraItems)) return false;
+    const evolved = makeMergedUnit(typeId, tier + 1, consumedRefs.map((ref) => ref.unit), keeperItem);
     return startMergeCutscene({
       kind: "unit",
       sources: consumedRefs.map((ref) => mergeCutsceneVisualForRef(ref, ref.unit)),
@@ -3988,9 +4164,12 @@
       result: evolved,
       hiddenRefs: consumedRefs,
     }, () => {
+      if (consumedRefs.some((ref) => state[ref.area][ref.index] !== ref.unit)) return false;
+      const placements = mergeEquipmentStoragePlan(consumedRefs, keeper, extraItems);
+      if (!placements) return false;
       consumedRefs.forEach((ref) => placeRef(ref, null));
       placeRef(keeper, evolved);
-      extraItems.forEach((item) => moveItemToBench(item));
+      placements.forEach(({ area, index, item }) => { state[area][index] = item; });
       const reward = MERGE_GOLD_REWARD[evolved.tier] || 0;
       if (reward) state.gold = Math.min(ECONOMY.maxGold, state.gold + reward);
       state.message = `${evolved.short} evolved${reward ? ` +${reward} ${currencyTerm({ lower: true })}` : ""}`;
@@ -4026,6 +4205,7 @@
         }
       }
     }
+    resolveMerges();
   }
 
   function buyShop(index) {
@@ -4237,6 +4417,7 @@
     state.selected = { area: targetArea, index: targetIndex };
     state.message = realityBroken() ? `${displayUnitShort(unit)} armed` : `${displayUnitShort(unit)} topped`;
     playGameSfx("equip");
+    resolveMerges();
     return true;
   }
 
@@ -4410,6 +4591,7 @@
     state.message = `${displayUnitShort(unit)} sold +${value} ${currencyTerm({ lower: true })}`;
     addRunLog(`Sold ${displayUnitFormName(unit)} for ${value} ${currencyTerm({ lower: true })}`);
     playGameSfx("sell");
+    resolveMerges();
     return true;
   }
 
@@ -4432,6 +4614,7 @@
     state.message = `${displayItemShort(item)} sold +${value} ${currencyTerm({ lower: true })}`;
     addRunLog(`Sold ${displayItemName(item)} for ${value} ${currencyTerm({ lower: true })}`);
     playGameSfx("sell");
+    resolveMerges();
     return true;
   }
 
@@ -4452,6 +4635,7 @@
     state.message = `${displayItemShort(item)} sold +${value} ${currencyTerm({ lower: true })}`;
     addRunLog(`Sold ${displayItemName(item)} for ${value} ${currencyTerm({ lower: true })}`);
     playGameSfx("sell");
+    resolveMerges();
     return true;
   }
 
@@ -5766,6 +5950,7 @@
     state.battle = {
       allies,
       enemies,
+      arenaPrepBuff: cloneRunValue(state.arenaPrepBuff),
       traitLevels: {
         ally: Object.fromEntries(traitSnapshotForUnits(allies).map((trait) => [trait.id, trait])),
         enemy: Object.fromEntries(traitSnapshotForUnits(enemies).map((trait) => [trait.id, trait])),
@@ -5982,12 +6167,7 @@
       cooldown: battleInitialCooldown(),
     };
     clone.item = cloneItem(unit.item);
-    clone.permanentHpBonus = unit.permanentHpBonus || 0;
-    if (clone.permanentHpBonus) {
-      clone.maxHp += clone.permanentHpBonus;
-      clone.hp = clone.maxHp;
-    }
-    refreshUnitItemStats(clone);
+    addPermanentHp(clone, unit.permanentHpBonus || 0);
     return clone;
   }
 
@@ -6175,7 +6355,10 @@
     state.battle = null;
     combatEndExplosion(won);
     const runEnded = state.hearts <= 0 || finalVictory;
-    if (finalVictory) markGameCompleted();
+    if (finalVictory) {
+      state.endingPending = true;
+      markGameCompleted();
+    }
     else if (runEnded) markRunConcluded();
     state.phaseTransition = window.FoodAnimalsBattleFlowRuntime.phaseTransition("battleToResult", BATTLE_RESULT_TRANSITION_SECONDS, {
       won,
@@ -6183,7 +6366,7 @@
     });
     if (finalVictory) {
       startFinalTabsStoryTransition();
-      clearActiveRunRoute();
+      saveCurrentRunSilently();
     } else if (runEnded) {
       clearActiveRunRoute();
     } else {
@@ -6319,9 +6502,7 @@
     allOwnedRefs().forEach((ref) => {
       if (!survivors.has(ref.unit.uid) || ref.unit.ability !== "survive_scale") return;
       const gain = mochiHpGain(ref.unit);
-      ref.unit.permanentHpBonus = (ref.unit.permanentHpBonus || 0) + gain;
-      ref.unit.maxHp += gain;
-      ref.unit.hp = Math.min(ref.unit.maxHp, ref.unit.hp + gain);
+      addPermanentHp(ref.unit, gain);
       addRunLog(`${displayUnitShort(ref.unit)} gained ${gain} max HP`);
     });
   }
@@ -6930,6 +7111,7 @@
       duration: STORY_BEAT_TRANSITION_SECONDS,
       direction: -1,
     };
+    if (state.endingPending) saveCurrentRunSilently();
     return true;
   }
 
@@ -6949,6 +7131,7 @@
       duration: STORY_BEAT_TRANSITION_SECONDS,
       direction: 1,
     };
+    if (state.endingPending) saveCurrentRunSilently();
     return true;
   }
 
@@ -6960,6 +7143,7 @@
       elapsed: 0,
       duration: STORY_TRANSITION_SECONDS,
     };
+    if (state.endingPending) saveCurrentRunSilently();
     return true;
   }
 
@@ -7261,6 +7445,7 @@
     state.message = "Command lattice severed. Nursery sector unlocked.";
     playGameSfx("final-epilogue", { theme: "horror", volume: 1.05 });
     playGameSfx("victory", { theme: "horror", volume: 0.45, rate: 0.86 });
+    if (state.endingPending) saveCurrentRunSilently();
     return true;
   }
 
@@ -7291,10 +7476,12 @@
     state.message = "The doors open";
     state.runConcluded = true;
     clearParticles();
+    if (state.endingPending) saveCurrentRunSilently();
   }
 
   function rebootFromVictoryCutscene() {
     if (state.menuRebootTransition) return false;
+    state.endingPending = false;
     clearActiveRunRoute();
     markHorrorMenuUnlocked();
     markMenuRebootStaticReveal();
@@ -7322,6 +7509,7 @@
 
   function resetGame() {
     state.phase = "prep";
+    state.endingPending = false;
     state.runMode = initialRunMode();
     state.round = 1;
     state.gold = ECONOMY.startingGold;
@@ -7456,22 +7644,26 @@
     const battle = state.battle;
     if (!battle || battle.result) return;
     battle.elapsed += dt;
-    updateBattleStatuses(battle, dt);
-    updateBattleMold(battle);
-    updateDrinkPulses(battle, dt);
-    combatUnitScratch.length = 0;
-    appendLivingUnits(combatUnitScratch, battle.allies);
-    appendLivingUnits(combatUnitScratch, battle.enemies);
-    for (const unit of combatUnitScratch) {
-      if (unit.dead) continue;
-      unit.cooldown -= dt * attackClockMultiplier(unit);
-      if (unit.cooldown > 0) continue;
-      combatFoeScratch.length = 0;
-      appendLivingUnits(combatFoeScratch, unit.side === "ally" ? battle.enemies : battle.allies);
-      if (combatFoeScratch.length === 0) continue;
-      unit.cooldown = unit.speed;
-      performCombatAction(unit, battle, combatFoeScratch);
+    // Once decided, only presentation advances; damage and support cannot change the result.
+    if (!battle.outcomePresentation) {
+      updateBattleStatuses(battle, dt);
+      updateBattleMold(battle);
+      updateDrinkPulses(battle, dt);
+      combatUnitScratch.length = 0;
+      appendLivingUnits(combatUnitScratch, battle.allies);
+      appendLivingUnits(combatUnitScratch, battle.enemies);
+      for (const unit of combatUnitScratch) {
+        if (unit.dead) continue;
+        unit.cooldown -= dt * attackClockMultiplier(unit);
+        if (unit.cooldown > 0) continue;
+        combatFoeScratch.length = 0;
+        appendLivingUnits(combatFoeScratch, unit.side === "ally" ? battle.enemies : battle.allies);
+        if (combatFoeScratch.length === 0) continue;
+        unit.cooldown = unit.speed;
+        performCombatAction(unit, battle, combatFoeScratch);
+      }
     }
+    const hadPendingImpacts = window.FoodAnimalsBattleCanvas.hasPendingProjectileImpacts(battle.attacks);
     compactTimedEntries(battle.attacks, dt, (attack) => {
       resolveAttackImpact(attack, battle);
     });
@@ -7479,23 +7671,20 @@
       drinkTossImpact(toss, battle);
     });
     captureDueCombatLedgerFrames(battle);
-    const outcome = battleOutcome(battle);
-    if (!outcome) {
-      battle.outcomePresentation = null;
-      return;
-    }
-    if (window.FoodAnimalsBattleCanvas.hasPendingProjectileImpacts(battle.attacks)) return;
-    if (!battle.outcomePresentation || battle.outcomePresentation.result !== outcome) {
+    if (!battle.outcomePresentation) {
+      const outcome = battleOutcome(battle);
+      if (!outcome) return;
       battle.outcomePresentation = {
         result: outcome,
         remaining: BATTLE_OUTCOME_PRESENTATION_HOLD_SECONDS,
       };
       return;
     }
+    if (hadPendingImpacts) return;
     battle.outcomePresentation.remaining -= dt;
     if (battle.outcomePresentation.remaining > 0) return;
-    battle.result = outcome;
-    endBattle(outcome === "win");
+    battle.result = battle.outcomePresentation.result;
+    endBattle(battle.result === "win");
   }
 
   const combatUnitScratch = [];
@@ -7563,6 +7752,7 @@
         }
         if (unit.burn.remaining <= 0) unit.burn = null;
       }
+      if (unit.dead) return;
       if (unit.mark) {
         unit.mark.remaining -= negativeDt;
         if (unit.mark.remaining <= 0) unit.mark = null;
@@ -7596,6 +7786,7 @@
         if (unit.slowed.remaining <= 0) unit.slowed = null;
       }
       updateLongFightUnitPulses(unit, battle, dt);
+      if (unit.dead) return;
       if (unit.item?.periodicDamage) {
         unit.periodicItemTick = (unit.periodicItemTick ?? (unit.item.periodicInterval || 3)) - dt;
         if (unit.periodicItemTick <= 0) {
@@ -7612,6 +7803,7 @@
           }
         }
       }
+      if (unit.dead) return;
       if (unit.item?.teamHastePct) {
         unit.teamHasteTick = (unit.teamHasteTick ?? (unit.item.teamHasteInterval || 5)) - dt;
         if (unit.teamHasteTick <= 0) {
@@ -7638,6 +7830,7 @@
           });
         }
       }
+      if (unit.dead) return;
       if (unit.item?.lateFightDamagePct) {
         const start = unit.item.lateFightStart || 8;
         const interval = unit.item.lateFightInterval || 4;
@@ -9615,6 +9808,7 @@
   }
 
   function update(dt) {
+    if (renderRecovery.paused) return;
     syncGameMusic();
     if (!state.menuRebootTransition) updateRunAutosave(dt);
     state.idleTime += dt;
@@ -9656,7 +9850,10 @@
       if (pendingMergeCutsceneCommit) {
         const commit = pendingMergeCutsceneCommit;
         pendingMergeCutsceneCommit = null;
-        commit();
+        if (commit() === false) {
+          state.mergeCutscene = null;
+          return;
+        }
       }
     }
     if (cutscene.elapsed >= (cutscene.duration || MERGE_CUTSCENE_SECONDS)) {
@@ -9803,7 +10000,7 @@
 
   function completeShopReturnStaticScreenChange(transition) {
     if (window.FoodAnimalsResultRuntime.shopReturnTransitionNavigatesToMenu(transition)) {
-      clearActiveRunRoute();
+      if (transition.source !== "normalMenuReturn") clearActiveRunRoute();
       markMenuReturnReveal();
       state.shopReturnStaticTransition = {
         ...transition,
@@ -9814,13 +10011,13 @@
       return;
     }
     const rewardParticles = Array.isArray(transition.rewardParticles) ? transition.rewardParticles : [];
-    continuePrep();
-    if (rewardParticles.length) state.particles.push(...rewardParticles);
     state.shopReturnStaticTransition = {
       ...transition,
       screenChanged: true,
       rewardParticles: [],
     };
+    continuePrep();
+    if (rewardParticles.length) state.particles.push(...rewardParticles);
   }
 
   function updateFinalTabsStoryTransition(dt) {
@@ -9833,6 +10030,7 @@
         ...transition,
         screenChanged: true,
       };
+      if (state.endingPending) saveCurrentRunSilently();
       return;
     }
     if (transition.elapsed >= transition.duration) {
@@ -12288,7 +12486,9 @@
     fitText("X", close.x + 8, close.y + 19, close.w - 16, "900 14px Inter, sans-serif", horror ? "#f2fff7" : themeColor("primary", "#16392d"));
 
     ctx.font = horror ? "900 12px Inter, sans-serif" : "800 12px Inter, sans-serif";
-    const saveLine = state.optionsMenu.savedAt ? `Saved ${new Date(state.optionsMenu.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Save before leaving the table.";
+    const saveLine = state.message === "Save unavailable"
+      ? state.message
+      : state.optionsMenu.savedAt ? `Saved ${new Date(state.optionsMenu.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Save before leaving the table.";
     fitText(horror ? saveLine.toUpperCase() : saveLine, panel.x + 30, panel.y + 100, panel.w - 60, ctx.font, horror ? "#ffd15b" : themeColor("muted", "#6a4b35"));
 
     layout.sliders.forEach(drawOptionsSlider);
@@ -12340,13 +12540,122 @@
     ctx.restore();
   }
 
+  function prepBonusSnapshot() {
+    const key = JSON.stringify([realityBroken(),
+      state.board.map((unit) => unit ? [unit.uid, unit.traits, unit.ignoreTraits] : null),
+      state.drinks.map((item) => item ? [item.uid, item.id, item.tier, item.pairTraits] : null)]);
+    if (key === prepBonusCacheKey) return prepBonusCache;
+    const groups = traitSnapshotForUnits(state.board).filter((trait) => trait.active).map((trait) => ({
+      ...trait,
+      members: state.board.flatMap((unit, index) => unitHasTrait(unit, trait.id) ? [index] : []),
+    }));
+    const fuelLinks = state.drinks.flatMap((fuel, fuelIndex) => {
+      if (!isDrink(fuel)) return [];
+      const lane = drinkSlots[fuelIndex];
+      return state.board.flatMap((unit, boardIndex) => {
+        const slot = boardSlots[boardIndex];
+        if (!isUnit(unit) || (lane.axis === "row" ? slot.row : slot.col) !== lane.targetIndex || !unitMatchesDrinkPair(unit, fuel)) return [];
+        return [{ fuelIndex, boardIndex, traits: fuel.pairTraits.filter((id) => unitHasTrait(unit, id)) }];
+      });
+    });
+    prepBonusCacheKey = key;
+    prepBonusCache = { groups, fuelLinks };
+    return prepBonusCache;
+  }
+
+  function prepBonusFocus() {
+    if (state.drag) return null;
+    const ref = state.hover || state.selected;
+    return ref && (ref.area === "board" || ref.area === "drinks") ? ref : null;
+  }
+
+  function prepBonusVisible() {
+    return state.phase === "prep" && !mergeCutsceneActive() && !mergeCutscenePending() && !state.activeStory && !state.codexOpen;
+  }
+
+  function drawPrepBonusConnections() {
+    if (!prepBonusVisible()) return;
+    const focus = prepBonusFocus();
+    if (focus?.area !== "drinks") return;
+    const links = prepBonusSnapshot().fuelLinks.filter((link) => link.fuelIndex === focus.index);
+    ctx.save();
+    ctx.lineCap = "round";
+    for (const link of links) {
+      const source = drinkSlots[link.fuelIndex], target = boardSlots[link.boardIndex];
+      ctx.beginPath();
+      ctx.moveTo(source.x, source.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.strokeStyle = realityBroken() ? "#061012" : "#fffbee";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.strokeStyle = traitInfo(link.traits[0]).color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPrepBonusBadge(x, y, color, label, tooltip) {
+    ctx.save();
+    roundedRect(x - 8, y - 7, 16, 14, 3);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = "#102321";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    fitText(label, x, y + 2.8, 13, "900 7px Inter, sans-serif", "#071512", "center");
+    ctx.restore();
+    registerTooltip(x - 9, y - 8, 18, 16, tooltip);
+  }
+
+  function drawPrepBonusMarkers() {
+    if (!prepBonusVisible()) return;
+    const { groups, fuelLinks } = prepBonusSnapshot();
+    const focus = prepBonusFocus();
+    state.board.forEach((unit, index) => {
+      if (!isUnit(unit)) return;
+      const slot = boardSlots[index];
+      const traits = groups.filter((group) => group.members.includes(index));
+      const links = fuelLinks.filter((link) => link.boardIndex === index);
+      const focusedTraits = focus?.area === "board" ? traits.filter((trait) => trait.members.includes(focus.index)) : [];
+      const focusedFuel = focus?.area === "drinks" && links.find((link) => link.fuelIndex === focus.index);
+      const colors = focusedFuel ? [traitInfo(focusedFuel.traits[0]).color] : focusedTraits.map((trait) => trait.color);
+      ctx.save();
+      colors.forEach((color, i) => {
+        roundedRect(slot.x - 34 + i * 3, slot.y - 34 + i * 3, 68 - i * 6, 68 - i * 6, 6);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+      ctx.restore();
+      traits.slice(0, 3).forEach((trait, i) => drawPrepBonusBadge(slot.x - 25, slot.y + 19 - i * 17, trait.color, trait.short.slice(0, 2), {
+        title: `${trait.label} ${trait.count} - active`, body: trait.effect,
+      }));
+      if (links.length) drawPrepBonusBadge(slot.x + 25, slot.y + 19, traitInfo(links[0].traits[0]).color, `+${links.length}`, {
+        title: `${links.length} active ${drinkTerm({ lower: true })} ${links.length === 1 ? "pair" : "pairs"}`,
+        body: links.map((link) => `${itemDisplayShort(state.drinks[link.fuelIndex])}: ${drinkPairSpecLine(state.drinks[link.fuelIndex]) || drinkPairLabel(state.drinks[link.fuelIndex])}`).join(". "),
+      });
+    });
+    state.drinks.forEach((fuel, index) => {
+      const links = fuelLinks.filter((link) => link.fuelIndex === index);
+      if (!links.length) return;
+      const slot = drinkSlots[index];
+      drawPrepBonusBadge(slot.x + 25, slot.y + 19, traitInfo(links[0].traits[0]).color, String(links.length), {
+        title: `${links.length} active ${links.length === 1 ? "pair" : "pairs"}`,
+        body: links.map((link) => displayUnitShort(state.board[link.boardIndex])).join(", "),
+      });
+    });
+  }
+
   function drawPrep() {
     drawShopkeeperStall();
     shopSlots.forEach((slot, i) => drawSlot(slot.x, slot.y, SHOP_SLOT_W, SHOP_SLOT_H, mergeCutsceneHides("shop", i) ? null : shopEntryAt(i), "shop", i));
     itemBenchSlots.forEach((slot, i) => drawItemBenchSlot(slot, i));
+    drawPrepBonusConnections();
     boardSlots.forEach((slot, i) => drawBoardSlot(slot, i));
     drinkSlots.forEach((slot, i) => drawDrinkSlot(slot, i));
     benchSlots.forEach((slot, i) => drawBenchSlot(slot, i));
+    drawPrepBonusMarkers();
     drawStatsPanel();
     drawDragPreview();
   }
@@ -15563,6 +15872,7 @@
     const offsetY = -r * 0.82;
     drawItemIcon(unit.item, x + offsetX, y + offsetY, r * 0.9, {
       flipX: shouldMirrorHorrorPlayerTopping(unit.item, options),
+      equipped: true,
     });
   }
 
@@ -15579,7 +15889,18 @@
     if (spriteImageReady(image)) {
       ctx.imageSmoothingEnabled = false;
       let drawRect = { x: x - size / 2, y: y - size / 2, w: size, h: size };
+      const outline = options.equipped && realityBroken() && bleed.phase !== "flash" && (!postGiraffeTransition || postGiraffeTransition.mode === "horror")
+        ? window.FoodAnimalsRuntimeAssets.outlinedImage(image, equippedOutlineCache, { size: 192, maxEntries: 64 })
+        : null;
       const drawReadyItemImage = (rect) => {
+        if (outline) {
+          ctx.save();
+          ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+          if (options.flipX) ctx.scale(-1, 1);
+          const pad = rect.w * outline.pad / outline.size;
+          ctx.drawImage(outline.canvas, -rect.w / 2 - pad, -rect.h / 2 - pad, rect.w + pad * 2, rect.h + pad * 2);
+          ctx.restore();
+        }
         if (!options.flipX) {
           ctx.drawImage(image, rect.x, rect.y, rect.w, rect.h);
           return;
@@ -19726,6 +20047,8 @@
     root.querySelectorAll("[data-mobile-story-action]").forEach((button) => {
       button.addEventListener("click", () => {
         if (!state.activeStory) return;
+        armGameSfx();
+        armGameMusic();
         applyStoryHit({ area: "story", action: button.dataset.mobileStoryAction });
         syncMobileStoryOverlay();
         requestDraw();
@@ -20810,6 +21133,9 @@
   }
 
   function onPointerDown(event) {
+    if (renderRecovery.paused) return;
+    if (activeCanvasPointerId !== null) return;
+    activeCanvasPointerId = event.pointerId;
     const pos = canvasPoint(event);
     state.pointer = pos;
     const hit = hitTest(pos, { touch: event.pointerType === "touch" });
@@ -20990,6 +21316,7 @@
   }
 
   function onPointerMove(event) {
+    if (activeCanvasPointerId !== null && activeCanvasPointerId !== event.pointerId) return;
     const pos = canvasPoint(event);
     state.pointer = pos;
     if (state.mergeCutscene) {
@@ -21023,6 +21350,8 @@
   }
 
   function onPointerUp(event) {
+    if (activeCanvasPointerId !== event.pointerId) return;
+    activeCanvasPointerId = null;
     if (state.mergeCutscene) {
       state.drag = null;
       state.hover = null;
@@ -21059,18 +21388,24 @@
   }
 
   function onPointerCancel(event) {
+    if (activeCanvasPointerId !== event.pointerId) return;
+    activeCanvasPointerId = null;
     state.pointer = null;
     state.hover = null;
     cancelActivePointerInteraction(event);
   }
 
   function onPointerLeave(event) {
+    if (activeCanvasPointerId !== null && activeCanvasPointerId !== event.pointerId) return;
+    activeCanvasPointerId = null;
     state.pointer = null;
     state.hover = null;
     cancelActivePointerInteraction(event);
   }
 
   function onLostPointerCapture(event) {
+    if (activeCanvasPointerId !== event.pointerId) return;
+    activeCanvasPointerId = null;
     if (!state.drag && !state.optionsMenu.dragSlider && !state.codexPreview?.dragging) return;
     state.pointer = null;
     state.hover = null;
@@ -21200,7 +21535,7 @@
         return;
       }
       if (drag.area === "bench" || drag.area === "itemBench" || drag.area === "board" || drag.area === "shop" || drag.area === "drinks") {
-        selectFrom(drag.area, drag.index);
+        state.selected = { area: drag.area, index: drag.index };
         if (state.selected) state.message = "Inspecting";
       } else {
         state.message = "Drop on bench";
@@ -21271,12 +21606,18 @@
   }
 
   function onKeyDown(event) {
+    if (renderRecovery.paused) return;
     const key = event.key.toLowerCase();
+    if (key === "f") {
+      const fullscreenTarget = document.getElementById("game-shell") || canvas.parentElement;
+      const request = document.fullscreenElement
+        ? document.exitFullscreen?.()
+        : fullscreenTarget.requestFullscreen?.();
+      request?.catch(() => {});
+      event.preventDefault();
+      return;
+    }
     if (state.mergeCutscene) {
-      if (key === "f") {
-        if (!document.fullscreenElement) canvas.requestFullscreen?.();
-        else document.exitFullscreen?.();
-      }
       event.preventDefault();
       return;
     }
@@ -21320,10 +21661,6 @@
       return;
     }
     if (state.finalTabsStoryTransition) {
-      if (event.key.toLowerCase() === "f") {
-        if (!document.fullscreenElement) canvas.requestFullscreen?.();
-        else document.exitFullscreen?.();
-      }
       event.preventDefault();
       return;
     }
@@ -21341,10 +21678,7 @@
       return;
     }
     if (state.level10RevealCutscene) {
-      if (key === "f") {
-        if (!document.fullscreenElement) canvas.requestFullscreen?.();
-        else document.exitFullscreen?.();
-      } else if (event.key === "Escape") {
+      if (event.key === "Escape") {
         advanceLevel10RevealCutscene(true);
       } else if (event.key === "ArrowLeft" || event.key === "Backspace") {
         retreatLevel10RevealCutscene();
@@ -21355,18 +21689,11 @@
       return;
     }
     if (state.rebootTransition || state.menuRebootTransition || state.finalVictoryTransition || state.shopReturnStaticTransition || state.finalTabsStoryTransition || state.phaseTransition || state.phase === "victoryCutscene") {
-      if (event.key.toLowerCase() === "f") {
-        if (!document.fullscreenElement) canvas.requestFullscreen?.();
-        else document.exitFullscreen?.();
-      } else if (!state.menuRebootTransition && state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || key === "r")) {
+      if (!state.menuRebootTransition && state.phase === "victoryCutscene" && victoryCutsceneStage() === "ideal" && (event.key === "Enter" || key === "r")) {
         rebootFromVictoryCutscene();
       }
       event.preventDefault();
       return;
-    }
-    if (key === "f") {
-      if (!document.fullscreenElement) canvas.requestFullscreen?.();
-      else document.exitFullscreen?.();
     }
     if (event.key === "Escape") {
       if (state.codexOpen) {
@@ -21449,6 +21776,7 @@
   }
 
   function shouldRenderContinuously() {
+    if (renderRecovery.paused) return false;
     if (state.phase === "battle") return true;
     if (state.phase === "victoryCutscene") return true;
     if (state.drag || state.optionsMenu.dragSlider || state.codexPreview?.dragging) return true;
@@ -22947,7 +23275,9 @@
         continuous: shouldRenderContinuously(),
         drawCount,
         skippedDrawCount,
+        recovery: renderingDiagnostics(),
       },
+      prepBonuses: state.phase === "prep" ? prepBonusSnapshot() : null,
       overlays: {
         options: Boolean(state.optionsMenu?.open),
         codex: Boolean(state.codexOpen),
@@ -23120,7 +23450,7 @@
     applyInitialRouteScreen();
   }
   scheduleIdleWarmup(warmBattleDeployAssets);
-  ensureEnemyPreview();
+  if (!state.endingPending) ensureEnemyPreview();
   markActiveRunRoute();
   drawFrame();
   wakeGameLoop();
