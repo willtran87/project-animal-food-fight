@@ -636,6 +636,7 @@
   const ATTACK_ANIMATION_SECONDS = 0.32;
   const BATTLE_OUTCOME_PRESENTATION_HOLD_SECONDS = 0.16;
   const ATTACK_PROJECTILE_SIZE = 58;
+  const PROJECTILE_TRAIL_DRAW_LIMIT = isTouchFirstDevice ? 64 : 96;
   const ATTACK_PROJECTILE_SPIN_MIN = Math.PI * 1.7;
   const ATTACK_PROJECTILE_SPIN_MAX = Math.PI * 2.7;
   const BATTLE_TIMEOUT_SECONDS = 150;
@@ -19171,7 +19172,8 @@
         drawBattleUnit(unit);
       }
     });
-    battle.attacks.forEach((attack) => drawAttackProjectile(attack, battle));
+    battle.attacks.forEach((attack, index) => drawAttackProjectile(attack, battle,
+      window.FoodAnimalsBattleCanvas.projectileTrailCount(index, battle.attacks.length, PROJECTILE_TRAIL_DRAW_LIMIT)));
     (battle.drinkTosses || []).forEach((toss) => drawDrinkToss(toss, battle));
     drawBattleMoldPanel(battle);
     drawArenaBattlePanel();
@@ -19345,13 +19347,13 @@
     ctx.stroke();
   }
 
-  function drawAttackProjectile(attack, battle) {
+  function drawAttackProjectile(attack, battle, trailCount) {
     const from = battleUnitByUid(battle, attack.from);
     const to = battleUnitByUid(battle, attack.to);
     if (!from || !to) return;
 
     const duration = attack.duration || ATTACK_ANIMATION_SECONDS;
-    const frame = window.FoodAnimalsBattleCanvas.projectileFrame(from, to, attack.t, duration, 18);
+    const frame = window.FoodAnimalsBattleCanvas.projectileFrame(from, to, attack.t, duration);
     const { progress, x, y, dx, dy } = frame;
     const angle = Math.atan2(dy, dx);
     const mirrorLeft = dx < 0;
@@ -19369,7 +19371,7 @@
     const image = getParticleSprite(attack.particleCacheKind || attack.particleSprite || "attack", attack.particleType, attack.particleTier || 1, attack.particleSrc);
     const size = ATTACK_PROJECTILE_SIZE + Math.min(4, from.tier || 1) * 5;
 
-    drawProjectileTrail(from, to, duration, progress, color, fx);
+    drawProjectileTrail(from, to, progress, image, size, angle, mirrorLeft, spin, attack.rotationStart || 0, fx.support, trailCount);
     drawProjectileLaunchFx(from, angle, color, fx);
     drawProjectileArrivalFx(to, color, fx);
 
@@ -19379,11 +19381,13 @@
     if (mirrorLeft) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = Math.min(1, 0.25 + progress * 1.35);
-    ctx.globalCompositeOperation = "lighter";
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(0, 0, size * 0.38 * fx.haloScale, 0, Math.PI * 2);
-    ctx.fill();
+    if (!realityBroken()) {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 0.38 * fx.haloScale, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.globalCompositeOperation = "source-over";
     if (image && image.complete && image.naturalWidth) {
       ctx.drawImage(image, -size / 2, -size / 2, size, size);
@@ -19400,36 +19404,22 @@
     ctx.imageSmoothingEnabled = true;
   }
 
-  function drawProjectileTrail(from, to, duration, progress, color, fx) {
-    const startProgress = Math.max(0, progress - (fx.support ? 0.18 : 0.24));
-    if (progress <= 0.01 || startProgress >= progress) return;
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.globalCompositeOperation = "lighter";
-    for (const layer of [
-      { width: fx.trailWidth * 2.8, alpha: fx.trailAlpha * 0.16 },
-      { width: fx.trailWidth, alpha: fx.trailAlpha * 0.72 },
-    ]) {
-      ctx.beginPath();
-      for (let i = 0; i <= 6; i++) {
-        const sampleProgress = startProgress + (progress - startProgress) * (i / 6);
-        const sample = window.FoodAnimalsBattleCanvas.projectileFrame(
-          from,
-          to,
-          duration * (1 - sampleProgress),
-          duration,
-          18,
-        );
-        if (i === 0) ctx.moveTo(sample.x, sample.y);
-        else ctx.lineTo(sample.x, sample.y);
-      }
-      ctx.globalAlpha = layer.alpha;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = layer.width;
-      ctx.stroke();
+  function drawProjectileTrail(from, to, progress, image, size, angle, mirrorLeft, spin, rotationStart, support, count) {
+    if (!image?.complete || !image.naturalWidth) return;
+    // Derive the short-lived copies from flight progress; no particle entities or extra image loads.
+    for (let index = count - 1; index >= 0; index--) {
+      const frame = window.FoodAnimalsBattleCanvas.projectileTrailFrame(from, to, progress, index, spin, rotationStart, support);
+      if (!frame) continue;
+      const particleSize = size * frame.scale;
+      ctx.save();
+      ctx.translate(frame.x, frame.y);
+      ctx.rotate((mirrorLeft ? angle - Math.PI : angle) + frame.rotation);
+      if (mirrorLeft) ctx.scale(-1, 1);
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = frame.alpha;
+      ctx.drawImage(image, -particleSize / 2, -particleSize / 2, particleSize, particleSize);
+      ctx.restore();
     }
-    ctx.restore();
   }
 
   function drawProjectileLaunchFx(from, angle, color, fx) {

@@ -197,13 +197,40 @@ assert.equal(
   "battle canvas should render front columns before back columns",
 );
 assert.equal(Math.round(battleCanvas.projectileFrame({ x: 0, y: 0 }, { x: 100, y: 0 }, 0.5, 1, 20).x), 75);
+assert.equal(battleCanvas.projectileFrame({ x: 0, y: 100 }, { x: 300, y: 100 }, 0.5, 1).y, 44, "throws should rise 56 pixels above the direct path");
+assert.equal(battleCanvas.projectileFrame({ x: 0, y: 100 }, { x: 300, y: 100 }, 1, 1).y, 100);
+assert.ok(Math.abs(battleCanvas.projectileFrame({ x: 0, y: 100 }, { x: 300, y: 100 }, 0, 1).y - 100) < 1e-9, "the higher arc must still land at the target");
 assert.equal(battleCanvas.projectileFxFrame(0, 1, "damage").launchAlpha, 1);
 assert.ok(Math.abs(battleCanvas.projectileFxFrame(1, 1, "damage").arrivalAlpha - 1) < 1e-9);
 assert.equal(battleCanvas.projectileFxFrame(0.5, 3, "support").support, true);
 assert.ok(
-  battleCanvas.projectileFxFrame(0.5, 4, "damage").trailWidth > battleCanvas.projectileFxFrame(0.5, 1, "damage").trailWidth,
+  battleCanvas.projectileFxFrame(0.5, 4, "damage").haloScale > battleCanvas.projectileFxFrame(0.5, 1, "damage").haloScale,
   "higher-tier projectiles should carry more visual weight",
 );
+for (const budget of [64, 96]) {
+  for (const total of [0, 1, 21, 32, 48, 97, 160, 1000]) {
+    const counts = Array.from({ length: total }, (_, index) => battleCanvas.projectileTrailCount(index, total, budget));
+    assert.ok(counts.every((count) => Number.isInteger(count) && count >= 0 && count <= 3));
+    assert.equal(counts.reduce((sum, count) => sum + count, 0), Math.min(total * 3, budget));
+  }
+}
+for (const direction of [-1, 1]) {
+  const from = { x: 500, y: 250 }, to = { x: 500 + direction * 300, y: 350 };
+  for (let index = 0; index < 3; index++) {
+    const frame = battleCanvas.projectileTrailFrame(from, to, 0.6, index, direction * 6);
+    const head = battleCanvas.projectileFrame(from, to, 0.4, 1);
+    const pastHead = battleCanvas.projectileFrame(from, to, 1 - (0.6 - (index + 1) * 0.1), 1);
+    assert.equal(frame.x, pastHead.x);
+    assert.equal(frame.y, pastHead.y, "trail copies must follow the same lob as the main projectile");
+    assert.ok(direction * (head.x - frame.x) > 0, "trail copies must follow behind the projectile on either side");
+    assert.ok(Math.abs(frame.scale - [0.6, 0.48, 0.36][index]) < 1e-9);
+    assert.ok(frame.alpha > 0 && frame.alpha < 1);
+    assert.equal(battleCanvas.projectileTrailFrame(from, to, 0, index, 6), null);
+    assert.equal(battleCanvas.projectileTrailFrame(from, to, 1, index, 6), null);
+    assert.notEqual(frame.rotation, battleCanvas.projectileTrailFrame(from, to, 0.65, index, direction * 6).rotation);
+    assert.ok(battleCanvas.projectileTrailFrame(from, to, 0.99, index, 6).alpha < frame.alpha, "copies fade before impact");
+  }
+}
 assert.equal(
   JSON.stringify(battleCanvas.unitPresentationState({ hp: 0, shield: 0, dead: true, visualHp: 12, visualShield: 4, visualDefeatPending: true, pendingVisualImpactCount: 1 })),
   JSON.stringify({ pendingImpact: true, defeated: false, hp: 12, shield: 4 }),

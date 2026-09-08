@@ -52,7 +52,7 @@
     ];
   }
 
-  function projectileFrame(from, to, remaining, duration, arcHeight) {
+  function projectileFrame(from, to, remaining, duration, arcHeight = 56) {
     const progress = clamp01(1 - remaining / duration);
     const eased = 1 - (1 - progress) ** 2;
     return {
@@ -74,10 +74,28 @@
     return {
       launchAlpha,
       arrivalAlpha,
-      trailAlpha: (0.38 + Math.sin(t * Math.PI) * 0.42) * (support ? 0.72 : 1),
-      trailWidth: (support ? 3.5 : 4.5) * tierScale,
       haloScale: (0.82 + Math.sin(t * Math.PI) * 0.28) * tierScale,
       support,
+    };
+  }
+
+  function projectileTrailCount(index, total, budget) {
+    if (total <= 0 || budget <= 0) return 0;
+    const copies = Math.min(total * 3, budget);
+    return Math.floor((index + 1) * copies / total) - Math.floor(index * copies / total);
+  }
+
+  function projectileTrailFrame(from, to, progress, index, spin, rotationStart = 0, support = false) {
+    const lag = (index + 1) * 0.1;
+    const sampleProgress = progress - lag;
+    if (sampleProgress <= 0 || progress >= 1) return null;
+    const frame = projectileFrame(from, to, 1 - sampleProgress, 1);
+    return {
+      x: frame.x,
+      y: frame.y,
+      scale: 0.6 - index * 0.12,
+      alpha: (0.68 - index * 0.18) * clamp01(sampleProgress / 0.08) * clamp01((1 - progress) / 0.16) * (support ? 0.8 : 1),
+      rotation: rotationStart + spin * progress * (1.3 + index * 0.25) + index * 2.4,
     };
   }
 
@@ -130,6 +148,8 @@
     hasPendingProjectileImpacts,
     projectileFxFrame,
     projectileFrame,
+    projectileTrailCount,
+    projectileTrailFrame,
     sideUnitsInRenderOrder,
     statusGlyphLayout,
     unitRenderColumn,
