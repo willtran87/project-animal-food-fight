@@ -89,7 +89,7 @@ try {
             return { calls, haloFills, unchanged: before === after };
           });
           assert.equal(checks.calls.length, 4, "three sprite trail copies plus the main projectile");
-          assert.equal(checks.haloFills, horror ? 0 : 1, "in-flight halo must be cozy-only");
+          assert.equal(checks.haloFills, 0, "neither theme should draw an in-flight projectile halo");
           assert.equal(new Set(checks.calls.map((call) => call.src)).size, 1, "trail must reuse the main projectile image");
           const main = checks.calls.at(-1);
           assert.ok(checks.calls.slice(0, 3).every((call, index) =>

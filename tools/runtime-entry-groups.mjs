@@ -27,6 +27,7 @@ export const runtimeEntryGroups = Object.freeze({
     "shop-flow-runtime",
     "card-canvas",
     "canvas-text",
+    "sprite-metrics-data",
     "runtime-assets",
     "run-storage",
     "interaction-runtime",

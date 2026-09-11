@@ -71,6 +71,14 @@
     const fallback = fallbackMetrics(image);
     if (!image?.complete || !image.naturalWidth || !image.naturalHeight) return fallback;
 
+    // Shipped bounds are verified against asset hashes at build time. Unknown art retains the scanner.
+    const path = String(cacheKey).split(/[?#]/)[0].match(/(?:^|\/)assets\/.*$/)?.[0].replace(/^\//, "");
+    const baked = window.FoodAnimalsSpriteMetrics?.[path];
+    if (baked && (options.threshold ?? 8) === 8 && (options.pad ?? 2) === 2
+      && baked.width === image.naturalWidth && baked.height === image.naturalHeight) {
+      return remember(cache, cacheKey, { x: baked.x, y: baked.y, w: baked.w, h: baked.h }, options.maxEntries);
+    }
+
     try {
       const canvas = document.createElement("canvas");
       canvas.width = image.naturalWidth;
@@ -114,13 +122,15 @@
   function outlinedImage(image, cache, options = {}) {
     if (!ready(image)) return null;
     const size = options.size || 192;
-    const key = `${imageKey(image)}:${size}`;
+    const crop = options.crop;
+    const key = `${imageKey(image)}:${size}:${crop ? JSON.stringify([crop.x, crop.y, crop.w, crop.h]) : "full"}`;
     if (cache.has(key)) return remember(cache, key, cache.get(key), options.maxEntries || 64);
     const pad = 10;
     const mask = document.createElement("canvas");
     mask.width = mask.height = size + pad * 2;
     const mx = mask.getContext("2d");
-    mx.drawImage(image, pad, pad, size, size);
+    if (crop) mx.drawImage(image, crop.x, crop.y, crop.w, crop.h, pad, pad, size, size);
+    else mx.drawImage(image, pad, pad, size, size);
     mx.globalCompositeOperation = "source-in";
     mx.fillStyle = "#e6f9f4";
     mx.fillRect(0, 0, mask.width, mask.height);

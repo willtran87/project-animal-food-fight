@@ -263,7 +263,7 @@
       cache: textMeasureCache,
       cacheLimit: TEXT_LAYOUT_CACHE_LIMIT,
       font,
-      nativeMeasureText,
+      nativeMeasureText: ctx.canvas === canvas ? nativeMeasureText : (value) => ctx.measureText(value),
     });
   }
 
@@ -305,7 +305,7 @@
   function renderingDiagnostics() {
     return { ...renderRecovery, events: renderRecovery.events.slice(), lostSurfaces: [...lostRenderSurfaces],
       canvas: { width: canvas.width, height: canvas.height, backingScale },
-      outlineCacheEntries: equippedOutlineCache.size };
+      outlineCacheEntries: horrorOutlineCache.size };
   }
 
   function recordRenderingEvent(type, detail) {
@@ -320,6 +320,7 @@
     state.hover = null;
     state.pointer = null;
     activeCanvasPointerId = null;
+    teamIntelView.drag = null;
     if (!renderRecoveryUi) {
       renderRecoveryUi = document.createElement("div");
       renderRecoveryUi.className = "render-recovery";
@@ -342,13 +343,14 @@
   }
 
   function invalidateRenderSurfaces() {
-    for (const surface of [battleStaticLayerCanvas, simulationFailureLayerCanvas, revealNoiseLayerCanvas]) {
+    for (const surface of [battleStaticLayerCanvas, arenaPanelCanvas, simulationFailureLayerCanvas, revealNoiseLayerCanvas]) {
       surface.width = surface.width;
     }
     battleStaticLayerKey = "";
+    arenaPanelKey = "";
     simulationFailureLayerKey = "";
     revealNoiseLayerFrame = -1;
-    equippedOutlineCache.clear();
+    horrorOutlineCache.clear();
     pixelSpriteCache.clear();
     tintedSpriteCache.clear();
     realityScanlinePatternContext.fillStyle = "#46ff63";
@@ -791,6 +793,7 @@
   const mobileStoryUi = createMobileStoryUi();
   let activeRunAutosaveTimer = 0;
   let activeCanvasPointerId = null;
+  const teamIntelView = { offset: 0, maxScroll: 0, viewport: null, track: null, thumb: null, drag: null };
   let lastSilentSnapshotFingerprint = "";
   let lastActiveRunSaveJson = "";
   let pendingMergeCutsceneCommit = null;
@@ -958,7 +961,10 @@
   const runtimeSpriteMetricsCache = new Map();
   const itemSpriteMetricsCache = new Map();
   const itemSpriteCache = new Map();
-  const equippedOutlineCache = new Map();
+  const horrorOutlineCache = new Map();
+  const themedTraitCache = new Map();
+  let projectedStatsKey = "";
+  let projectedStatsCache = null;
   let prepBonusCacheKey = "";
   let prepBonusCache = { groups: [], fuelLinks: [] };
   const attackParticleSpriteCache = new Map();
@@ -971,6 +977,17 @@
   battleStaticLayerCanvas.height = H;
   const battleStaticLayerContext = battleStaticLayerCanvas.getContext("2d", { alpha: true });
   let battleStaticLayerKey = "";
+  const arenaPanelCanvas = document.createElement("canvas");
+  const arenaPanelContext = arenaPanelCanvas.getContext("2d", { alpha: true });
+  let arenaPanelKey = "";
+  let arenaPanelTooltips = [];
+  let arenaPanelFontRevision = 0;
+  document.fonts?.addEventListener("loadingdone", () => {
+    arenaPanelFontRevision += 1;
+    textMeasureCache.clear();
+    wrappedTextCache.clear();
+    requestDraw();
+  });
   const simulationFailureLayerCanvas = document.createElement("canvas");
   simulationFailureLayerCanvas.width = W;
   simulationFailureLayerCanvas.height = H;
@@ -990,6 +1007,7 @@
   let realityScanlinePattern = ctx.createPattern(realityScanlinePatternCanvas, "repeat");
   watchRenderSurface(canvas, "main");
   watchRenderSurface(battleStaticLayerCanvas, "battle");
+  watchRenderSurface(arenaPanelCanvas, "arena-panel");
   watchRenderSurface(simulationFailureLayerCanvas, "static");
   watchRenderSurface(revealNoiseLayerCanvas, "reveal");
   watchRenderSurface(realityScanlinePatternCanvas, "scanlines");
@@ -2519,6 +2537,8 @@
   }
 
   function traitInfo(traitId) {
+    const key = `${currentCopyThemeId()}:${traitId}`;
+    if (themedTraitCache.has(key)) return themedTraitCache.get(key);
     const base = TRAITS[traitId] || {
       id: traitId,
       label: familyLabel(traitId),
@@ -2527,7 +2547,7 @@
       thresholds: [],
     };
     const override = copyObject(["traits", traitId], {});
-    return {
+    const info = {
       ...base,
       label: override.label || base.label,
       short: override.short || base.short,
@@ -2537,6 +2557,7 @@
         text: themedGeneratedText(threshold.text),
       })),
     };
+    return window.FoodAnimalsRuntimeAssets.remember(themedTraitCache, key, info, 64);
   }
 
   function traitLabel(traitId) {
@@ -2791,6 +2812,16 @@
   }
 
   function projectedTeamStats() {
+    // Whole entries keep upgrades, equipment and status changes in the cache identity.
+    const key = JSON.stringify([currentCopyThemeId(), state.board, state.drinks, state.enemyPreview,
+      state.arenaId, state.arenaPrepBuff, visibleBattle()?.traitLevels]);
+    if (projectedStatsCache && key === projectedStatsKey) return projectedStatsCache;
+    projectedStatsCache = computeProjectedTeamStats();
+    projectedStatsKey = key;
+    return projectedStatsCache;
+  }
+
+  function computeProjectedTeamStats() {
     const units = planningTeamUnits();
     const enemies = planningEnemyUnits();
     const hp = units.reduce((total, unit) => total + (unit.maxHp || unit.hp || 0), 0);
@@ -12559,8 +12590,23 @@
         return [{ fuelIndex, boardIndex, traits: fuel.pairTraits.filter((id) => unitHasTrait(unit, id)) }];
       });
     });
+    const pairingCounts = (links) => Object.keys(TRAITS).flatMap((id) => {
+      const count = links.filter((link) => link.traits.includes(id)).length;
+      if (!count) return [];
+      const info = traitInfo(id);
+      return [{ id, label: info.label, short: info.short.slice(0, 2), color: info.color, count }];
+    });
     prepBonusCacheKey = key;
-    prepBonusCache = { groups, fuelLinks };
+    prepBonusCache = {
+      groups, fuelLinks,
+      unitPairings: state.board.map((_, index) => pairingCounts(fuelLinks.filter((link) => link.boardIndex === index))),
+      fuelPairings: state.drinks.map((_, index) => pairingCounts(fuelLinks.filter((link) => link.fuelIndex === index))),
+      teamPairings: pairingCounts(fuelLinks).map((pair) => {
+        const matches = fuelLinks.filter((link) => link.traits.includes(pair.id));
+        return { ...pair, units: new Set(matches.map((link) => link.boardIndex)).size,
+          fuels: new Set(matches.map((link) => link.fuelIndex)).size };
+      }),
+    };
     return prepBonusCache;
   }
 
@@ -12596,22 +12642,22 @@
     ctx.restore();
   }
 
-  function drawPrepBonusBadge(x, y, color, label, tooltip) {
+  function drawPrepBonusBadge(x, y, color, label, tooltip, width = 16) {
     ctx.save();
-    roundedRect(x - 8, y - 7, 16, 14, 3);
+    roundedRect(x - width / 2, y - 7, width, 14, 3);
     ctx.fillStyle = color;
     ctx.fill();
     ctx.strokeStyle = "#102321";
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    fitText(label, x, y + 2.8, 13, "900 7px Inter, sans-serif", "#071512", "center");
+    fitText(label, x, y + 2.8, width - 3, "900 7px Inter, sans-serif", "#071512", "center");
     ctx.restore();
-    registerTooltip(x - 9, y - 8, 18, 16, tooltip);
+    registerTooltip(x - width / 2 - 1, y - 8, width + 2, 16, tooltip);
   }
 
   function drawPrepBonusMarkers() {
     if (!prepBonusVisible()) return;
-    const { groups, fuelLinks } = prepBonusSnapshot();
+    const { groups, fuelLinks, unitPairings, fuelPairings } = prepBonusSnapshot();
     const focus = prepBonusFocus();
     state.board.forEach((unit, index) => {
       if (!isUnit(unit)) return;
@@ -12620,7 +12666,7 @@
       const links = fuelLinks.filter((link) => link.boardIndex === index);
       const focusedTraits = focus?.area === "board" ? traits.filter((trait) => trait.members.includes(focus.index)) : [];
       const focusedFuel = focus?.area === "drinks" && links.find((link) => link.fuelIndex === focus.index);
-      const colors = focusedFuel ? [traitInfo(focusedFuel.traits[0]).color] : focusedTraits.map((trait) => trait.color);
+      const colors = focusedFuel ? focusedFuel.traits.map((id) => traitInfo(id).color) : focusedTraits.map((trait) => trait.color);
       ctx.save();
       colors.forEach((color, i) => {
         roundedRect(slot.x - 34 + i * 3, slot.y - 34 + i * 3, 68 - i * 6, 68 - i * 6, 6);
@@ -12632,19 +12678,19 @@
       traits.slice(0, 3).forEach((trait, i) => drawPrepBonusBadge(slot.x - 25, slot.y + 19 - i * 17, trait.color, trait.short.slice(0, 2), {
         title: `${trait.label} ${trait.count} - active`, body: trait.effect,
       }));
-      if (links.length) drawPrepBonusBadge(slot.x + 25, slot.y + 19, traitInfo(links[0].traits[0]).color, `+${links.length}`, {
-        title: `${links.length} active ${drinkTerm({ lower: true })} ${links.length === 1 ? "pair" : "pairs"}`,
-        body: links.map((link) => `${itemDisplayShort(state.drinks[link.fuelIndex])}: ${drinkPairSpecLine(state.drinks[link.fuelIndex]) || drinkPairLabel(state.drinks[link.fuelIndex])}`).join(". "),
-      });
+      unitPairings[index].forEach((pair, i) => drawPrepBonusBadge(slot.x + 19, slot.y + 19 - i * 17, pair.color, `${pair.short} ${pair.count}`, {
+        title: `${pair.label}: ${pair.count} matching ${pair.count === 1 ? drinkTerm({ lower: true }) : drinkPluralTerm({ lower: true })}`,
+        body: `${links.filter((link) => link.traits.includes(pair.id)).map((link) => itemDisplayShort(state.drinks[link.fuelIndex])).join(", ")}. A ${drinkTerm({ lower: true })} matching multiple types grants its pairing bonus only once.`,
+      }, 28));
     });
     state.drinks.forEach((fuel, index) => {
       const links = fuelLinks.filter((link) => link.fuelIndex === index);
       if (!links.length) return;
       const slot = drinkSlots[index];
-      drawPrepBonusBadge(slot.x + 25, slot.y + 19, traitInfo(links[0].traits[0]).color, String(links.length), {
-        title: `${links.length} active ${links.length === 1 ? "pair" : "pairs"}`,
-        body: links.map((link) => displayUnitShort(state.board[link.boardIndex])).join(", "),
-      });
+      fuelPairings[index].forEach((pair, i) => drawPrepBonusBadge(slot.x + 19, slot.y + 19 - i * 17, pair.color, `${pair.short} ${pair.count}`, {
+        title: `${pair.label}: ${pair.count} matching ${pair.count === 1 ? "unit" : "units"}`,
+        body: `${links.filter((link) => link.traits.includes(pair.id)).map((link) => displayUnitShort(state.board[link.boardIndex])).join(", ")}. Dual-type units appear in both counts but receive this pairing bonus only once.`,
+      }, 28));
     });
   }
 
@@ -13865,8 +13911,14 @@
       const shopMuted = themeColor("muted", "#7c452d");
       const bottom = y + h / 2;
       drawShopIndicatorTags(item, x, y, w, h, options.shopIndex);
-      fitText(itemDisplayShort(item), x, bottom - 57, w - 14, "800 12px Inter, sans-serif", shopPrimary);
-      fitText(itemCardText(item), x, bottom - 36, w - 14, "700 10px Inter, sans-serif", shopMuted);
+      const hasPairing = isDrink(item) && item.pairTraits?.length;
+      fitText(itemDisplayShort(item), x, bottom - (hasPairing ? 71 : 57), w - 14, "800 12px Inter, sans-serif", shopPrimary);
+      fitText(itemCardText(item), x, bottom - (hasPairing ? 57 : 36), w - 14, "700 10px Inter, sans-serif", shopMuted);
+      if (hasPairing) {
+        drawTraitChips(item.pairTraits, x - w / 2 + 7, bottom - 48, w - 14, {
+          fontSize: 5.5, minWidth: 22, gap: 2, fitRow: true, pairingItem: item,
+        });
+      }
       drawUpgradeStars(itemTier(item.tier), x, bottom - 24, 7, "center");
       drawCurrencyAmount(purchaseCost(item, options.shopIndex), x, bottom - 12, {
         align: "center",
@@ -13998,7 +14050,10 @@
       ctx.strokeStyle = realityBroken() ? "rgba(244, 255, 246, 0.28)" : "rgba(22, 57, 45, 0.22)";
       ctx.lineWidth = 1;
       ctx.stroke();
-      registerTooltip(chip.x, chip.y, chip.w, chip.h, {
+      registerTooltip(chip.x, chip.y, chip.w, chip.h, options.pairingItem ? {
+        title: `${traitDisplayText(traitId)} pairing`,
+        body: `Matching ${traitDisplayText(traitId)} units in this ${drinkTerm({ lower: true })}'s row or column receive its pairing bonus.`,
+      } : {
         title: `${traitDisplayText(traitId)} trait`,
         body: info.effect || "Counts toward a team trait bonus.",
       });
@@ -14011,7 +14066,7 @@
     });
   }
 
-  function drawActiveTraitRows(x, y, maxWidth, maxRows = Infinity) {
+  function drawActiveTraitRows(x, y, maxWidth, maxRows = Infinity, visible = () => true) {
     const activeTraits = activePlayerTraits().filter((trait) => trait.active);
     const traits = Number.isFinite(maxRows) ? activeTraits.slice(0, maxRows) : activeTraits;
     ctx.fillStyle = realityBroken() ? "#dfffe2" : "#16392d";
@@ -14025,6 +14080,7 @@
     }
     traits.forEach((trait, index) => {
       const rowY = y + 20 + index * 22;
+      if (!visible(rowY - 24, rowY + 18)) return;
       const info = traitInfo(trait.id);
       roundedRect(x, rowY - 11, 74, 16, 4);
       if (realityBroken()) {
@@ -14050,6 +14106,7 @@
       ctx.textBaseline = "alphabetic";
       ctx.font = "700 10px Inter, sans-serif";
       fitText(trait.effect, x + 82, rowY, maxWidth - 82, "700 10px Inter, sans-serif", realityBroken() ? "#a9f6ad" : "#6a4b35");
+      registerTooltip(x, rowY - 12, maxWidth, 20, { title: `${trait.label} ${trait.count} - active`, body: trait.effect });
     });
   }
 
@@ -14133,6 +14190,36 @@
   }
 
   function drawArenaBattlePanel() {
+    if (ctx.globalAlpha !== 1 || ctx.globalCompositeOperation !== "source-over" || ctx.filter !== "none"
+      || ctx.shadowBlur || ctx.shadowOffsetX || ctx.shadowOffsetY) {
+      drawArenaBattlePanelArtwork();
+      return;
+    }
+    const key = JSON.stringify([backingScale, currentCopyThemeId(), currentArena(), arenaPanelFontRevision, ctx.lineWidth]);
+    // Align to physical pixels, retaining a margin for the original border antialiasing.
+    const left = Math.floor(640 * backingScale), top = Math.floor(64 * backingScale);
+    const width = Math.ceil(970 * backingScale) - left, height = Math.ceil(128 * backingScale) - top;
+    if (arenaPanelKey !== key) {
+      arenaPanelCanvas.width = width;
+      arenaPanelCanvas.height = height;
+      arenaPanelContext.setTransform(backingScale, 0, 0, backingScale, -left, -top);
+      arenaPanelContext.lineWidth = ctx.lineWidth;
+      const tooltipStart = state.tooltipTargets.length;
+      withCanvasContext(arenaPanelContext, drawArenaBattlePanelArtwork);
+      arenaPanelTooltips = state.tooltipTargets.splice(tooltipStart);
+      arenaPanelKey = key;
+    }
+    ctx.drawImage(arenaPanelCanvas, left / backingScale, top / backingScale, width / backingScale, height / backingScale);
+    ctx.fillStyle = arenaPanelContext.fillStyle;
+    ctx.strokeStyle = arenaPanelContext.strokeStyle;
+    ctx.font = arenaPanelContext.font;
+    ctx.textAlign = arenaPanelContext.textAlign;
+    ctx.textBaseline = arenaPanelContext.textBaseline;
+    // Hit targets belong to the current frame, even when its artwork is reused.
+    state.tooltipTargets.push(...arenaPanelTooltips);
+  }
+
+  function drawArenaBattlePanelArtwork() {
     const arena = themedArena(currentArena());
     const x = 642;
     const y = 66;
@@ -15742,6 +15829,7 @@
         preserveBase,
         anchorBase,
         glitch: finalBossGlitch,
+        horrorOutline: realityBroken() && !runtimeOptions.cozy,
       });
       if (swapToRobot) drawGiraffeBossGlitchStatic(giraffeGlitch, drawX, drawY, r, { presentationScale });
       drawFinalBossVisualGlitchStatic(finalBossGlitch, drawX, drawY, r, { presentationScale });
@@ -15873,7 +15961,6 @@
     const offsetY = -r * 0.82;
     drawItemIcon(unit.item, x + offsetX, y + offsetY, r * 0.9, {
       flipX: shouldMirrorHorrorPlayerTopping(unit.item, options),
-      equipped: true,
     });
   }
 
@@ -15890,8 +15977,8 @@
     if (spriteImageReady(image)) {
       ctx.imageSmoothingEnabled = false;
       let drawRect = { x: x - size / 2, y: y - size / 2, w: size, h: size };
-      const outline = options.equipped && realityBroken() && bleed.phase !== "flash" && (!postGiraffeTransition || postGiraffeTransition.mode === "horror")
-        ? window.FoodAnimalsRuntimeAssets.outlinedImage(image, equippedOutlineCache, { size: 192, maxEntries: 64 })
+      const outline = realityBroken() && bleed.phase !== "flash" && (!postGiraffeTransition || postGiraffeTransition.mode === "horror")
+        ? window.FoodAnimalsRuntimeAssets.outlinedImage(image, horrorOutlineCache, { size: 192, maxEntries: 64 })
         : null;
       const drawReadyItemImage = (rect) => {
         if (outline) {
@@ -16388,6 +16475,14 @@
     ctx.translate(Math.round(x), Math.round(y));
     ctx.rotate(rotation);
     ctx.scale(facingRight ? -breath.scaleX : breath.scaleX, breath.scaleY);
+    if (options.horrorOutline) {
+      const outline = window.FoodAnimalsRuntimeAssets.outlinedImage(image, horrorOutlineCache, { size: 256, maxEntries: 64, crop: metrics });
+      if (outline) {
+        const padX = drawW * outline.pad / outline.size;
+        const padY = drawH * outline.pad / outline.size;
+        ctx.drawImage(outline.canvas, -drawW / 2 - padX, drawTop - padY, drawW + padX * 2, drawH + padY * 2);
+      }
+    }
     if (glitchActive) {
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
@@ -16461,13 +16556,13 @@
 
   function warmAlphaMetrics(image, cache) {
     if (!image) return;
-    const warm = () => {
-      window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache, { maxEntries: IMAGE_CACHE_LIMITS.metrics });
-    };
-    if (typeof window.requestIdleCallback === "function") {
-      window.requestIdleCallback(warm, { timeout: 500 });
-    } else {
-      window.setTimeout(warm, 0);
+    // Prepare before the load callback requests a frame, not in a competing idle task.
+    const metrics = window.FoodAnimalsRuntimeAssets.alphaMetrics(image, cache, { maxEntries: IMAGE_CACHE_LIMITS.metrics });
+    if (realityBroken()) {
+      const unit = cache === runtimeSpriteMetricsCache;
+      window.FoodAnimalsRuntimeAssets.outlinedImage(image, horrorOutlineCache, {
+        size: unit ? 256 : 192, maxEntries: 64, ...(unit ? { crop: metrics } : {}),
+      });
     }
   }
 
@@ -17611,6 +17706,92 @@
     });
   }
 
+  function teamIntelInteractive() {
+    return !renderRecovery.paused && prepBonusVisible() && !getSelectedRef() && !state.drag && !state.optionsMenu.open &&
+      !state.level10RevealCutscene && !state.finalTabsStoryTransition && !modalTransitionClosing("codex");
+  }
+
+  function scrollTeamIntel(offset) {
+    teamIntelView.offset = Math.max(0, Math.min(teamIntelView.maxScroll, Number.isFinite(offset) ? offset : 0));
+  }
+
+  function drawTeamIntelContents() {
+    const panel = INFO_PANEL, horror = realityBroken();
+    const viewport = { x: panel.x + 20, y: panel.y + 52, w: panel.w - 52, h: panel.h - 64 };
+    const { groups, teamPairings } = prepBonusSnapshot();
+    const rewards = arenaRewardPendingRows();
+    const arena = themedArena(currentArena());
+    const traitsHeight = 30 + Math.max(1, groups.length) * 22;
+    const pairsHeight = 30 + Math.max(1, teamPairings.length) * 32 + (teamPairings.length ? 26 : 0);
+    const arenaHeight = 76 + arena.effects.length * 18;
+    const contentHeight = 112 + traitsHeight + pairsHeight + arenaHeight + (rewards.length ? 38 + Math.min(3, rewards.length) * 18 : 0);
+    teamIntelView.viewport = viewport;
+    teamIntelView.maxScroll = Math.max(0, contentHeight - viewport.h);
+    scrollTeamIntel(teamIntelView.offset);
+    ctx.textAlign = "left";
+    fitText(copy("ui.panels.teamIntel", horror ? "War Intel" : "Team Intel"), viewport.x, panel.y + 30, viewport.w, "900 17px Inter, sans-serif", themeColor("primary", "#16392d"));
+    drawInfoDivider(viewport.x, panel.y + 42, viewport.w);
+    const tooltipStart = state.tooltipTargets.length;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+    ctx.clip();
+    let y = viewport.y + 12 - teamIntelView.offset;
+    const visible = (top, bottom) => bottom >= viewport.y && top <= viewport.y + viewport.h;
+    if (visible(y - 20, y + 112)) drawTeamStatsBlock(projectedTeamStats(), viewport.x, y, viewport.w, { title: horror ? "Squad telemetry" : "Team stats" });
+    y += 112;
+    drawInfoDivider(viewport.x, y - 15, viewport.w);
+    if (visible(y - 24, y + traitsHeight)) drawActiveTraitRows(viewport.x, y, viewport.w, Infinity, visible);
+    y += traitsHeight;
+    drawInfoDivider(viewport.x, y - 15, viewport.w);
+    drawInfoSectionTitle("Active pairings", viewport.x, y);
+    if (!teamPairings.length) {
+      fitText("No active pairings", viewport.x, y + 20, viewport.w, "700 11px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+    }
+    teamPairings.forEach((pair, index) => {
+      const rowY = y + 23 + index * 32;
+      if (!visible(rowY - 24, rowY + 20)) return;
+      drawPrepBonusBadge(viewport.x + 38, rowY, pair.color, pair.label, {
+        title: `${pair.label}: ${pair.count} active ${pair.count === 1 ? "pair" : "pairs"}`,
+        body: `${pair.units} matching units and ${pair.fuels} ${drinkPluralTerm({ lower: true })} in their rows or columns. Each fuel-unit match grants its pairing bonus once, even when both types match.`,
+      }, 76);
+      fitText(`${pair.count} active ${pair.count === 1 ? "pair" : "pairs"}`, viewport.x + 84, rowY - 1, viewport.w - 84, "800 10px Inter, sans-serif", themeColor("primary", "#16392d"));
+      fitText(`${pair.units} ${pair.units === 1 ? "unit" : "units"} / ${pair.fuels} ${pair.fuels === 1 ? drinkTerm({ lower: true }) : drinkPluralTerm({ lower: true })}`, viewport.x + 84, rowY + 12, viewport.w - 84, "700 10px Inter, sans-serif", themeColor("muted", "#6a4b35"));
+    });
+    if (teamPairings.length && visible(y + 16 + teamPairings.length * 32, y + pairsHeight + 12)) {
+      ctx.fillStyle = themeColor("muted", "#6a4b35");
+      ctx.font = "700 9px Inter, sans-serif";
+      wrapTextLimited("Dual-type matches appear in both counts; each pairing bonus applies once.", viewport.x, y + 28 + teamPairings.length * 32, viewport.w, 11, 2);
+    }
+    y += pairsHeight;
+    drawInfoDivider(viewport.x, y - 15, viewport.w);
+    if (visible(y - 20, y + arenaHeight)) drawArenaInfoRows(viewport.x, y, viewport.w, arena.effects.length);
+    y += arenaHeight;
+    if (rewards.length && visible(y - 20, y + 38 + Math.min(3, rewards.length) * 18)) {
+      drawInfoDivider(viewport.x, y - 15, viewport.w);
+      drawArenaRewardPendingRows(viewport.x, y, viewport.w);
+    }
+    ctx.restore();
+    // Canvas clipping does not clip hit targets, so trim the scrolled tooltips too.
+    const tips = state.tooltipTargets.splice(tooltipStart);
+    for (const tip of tips) {
+      const top = Math.max(tip.y, viewport.y), bottom = Math.min(tip.y + tip.h, viewport.y + viewport.h);
+      if (bottom > top) state.tooltipTargets.push({ ...tip, y: top, h: bottom - top });
+    }
+    const track = { x: panel.x + panel.w - 22, y: viewport.y, w: 12, h: viewport.h };
+    const thumbH = Math.min(viewport.h, Math.max(30, viewport.h * viewport.h / contentHeight));
+    const thumb = { x: track.x, y: track.y + (track.h - thumbH) * (teamIntelView.maxScroll ? teamIntelView.offset / teamIntelView.maxScroll : 0), w: track.w, h: thumbH };
+    teamIntelView.track = track;
+    teamIntelView.thumb = thumb;
+    if (teamIntelView.maxScroll) {
+      roundedRect(track.x + 4, track.y, 4, track.h, 2);
+      ctx.fillStyle = themeColor("borderDim", "rgba(22, 57, 45, 0.18)"); ctx.fill();
+      roundedRect(thumb.x + 2, thumb.y, 8, thumb.h, 4);
+      ctx.fillStyle = themeColor("muted", "#6a4b35"); ctx.fill();
+      registerTooltip(track.x, track.y, track.w, track.h, { title: "Scroll Team Intel" });
+    }
+  }
+
   function drawStatsPanel() {
     const panel = INFO_PANEL;
     const contentX = panel.x + 20;
@@ -17650,32 +17831,7 @@
     }
 
     if (!ref) {
-      const titleY = 166 + panelDy;
-      const statsDividerY = 190 + panelDy;
-      const statsY = statsDividerY + 18;
-      const pendingArenaRewards = arenaRewardPendingRows();
-      const statsHeight = 102;
-      const arenaDividerY = statsY + statsHeight + 2;
-      const arenaY = arenaDividerY + 22;
-      const arenaRows = pendingArenaRewards.length ? 1 : 2;
-      const rewardDividerY = arenaY + (arenaRows === 1 ? 74 : 92);
-      const rewardY = rewardDividerY + 22;
-      const rewardHeight = pendingArenaRewards.length ? 24 + Math.min(3, pendingArenaRewards.length) * 18 : 0;
-      const traitDividerY = pendingArenaRewards.length ? rewardY + rewardHeight + 8 : arenaY + 118;
-      const traitY = traitDividerY + 22;
-      ctx.fillStyle = primary;
-      ctx.font = "900 17px Inter, sans-serif";
-      ctx.fillText(copy("ui.panels.teamIntel", horror ? "War Intel" : "Team Intel"), contentX, titleY);
-      drawInfoDivider(contentX, statsDividerY, contentW);
-      drawTeamStatsBlock(projectedTeamStats(), contentX, statsY, contentW, { title: realityBroken() ? "Squad telemetry" : "Team stats" });
-      drawInfoDivider(contentX, arenaDividerY, contentW);
-      drawArenaInfoRows(contentX, arenaY, contentW, arenaRows);
-      if (pendingArenaRewards.length) {
-        drawInfoDivider(contentX, rewardDividerY, contentW);
-        drawArenaRewardPendingRows(contentX, rewardY, contentW);
-      }
-      drawInfoDivider(contentX, traitDividerY, contentW);
-      drawActiveTraitRows(contentX, traitY, contentW, pendingArenaRewards.length ? 1 : 2);
+      drawTeamIntelContents();
       return;
     }
 
@@ -17696,6 +17852,11 @@
       ctx.font = "700 12px Inter, sans-serif";
       ctx.fillText(displayEntryTypeLabel(item), textX, 196 + panelDy);
       drawRarityBadge(textX, 205 + panelDy, item.rarity);
+      if (isDrink(item) && item.pairTraits?.length) {
+        drawTraitChips(item.pairTraits, textX, 231 + panelDy, contentW - 66, {
+          maxRows: 1, fontSize: 7, minWidth: 24, pairingItem: item,
+        });
+      }
       drawInfoMetric("COST", { currency: entryCost(item) }, metricXs[0], itemMetricY, metricWs[0]);
       drawInfoMetric(stat.label, stat.value, metricXs[1], itemMetricY, metricWs[1]);
       drawInfoMetric("LV", `${itemTier(item.tier)}/${MAX_ITEM_TIER}`, metricXs[2], itemMetricY, metricWs[2]);
@@ -19381,13 +19542,6 @@
     if (mirrorLeft) ctx.scale(-1, 1);
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = Math.min(1, 0.25 + progress * 1.35);
-    if (!realityBroken()) {
-      ctx.globalCompositeOperation = "lighter";
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(0, 0, size * 0.38 * fx.haloScale, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.globalCompositeOperation = "source-over";
     if (image && image.complete && image.naturalWidth) {
       ctx.drawImage(image, -size / 2, -size / 2, size, size);
@@ -21162,6 +21316,18 @@
       event.preventDefault();
       return;
     }
+    if (teamIntelInteractive() && teamIntelView.viewport && pointInRect(pos.x, pos.y, INFO_PANEL) && pos.y >= teamIntelView.viewport.y) {
+      const track = teamIntelView.track;
+      const onTrack = pointInRect(pos.x, pos.y, track);
+      if (onTrack && teamIntelView.maxScroll > 0 && !pointInRect(pos.x, pos.y, teamIntelView.thumb)) {
+        scrollTeamIntel((pos.y - track.y - teamIntelView.thumb.h / 2) / (track.h - teamIntelView.thumb.h) * teamIntelView.maxScroll);
+      }
+      teamIntelView.drag = { y: pos.y, offset: teamIntelView.offset, scrollbar: onTrack };
+      state.hover = null;
+      canvas.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+      return;
+    }
     if (!hit) {
       state.selected = null;
       return;
@@ -21309,6 +21475,16 @@
     if (activeCanvasPointerId !== null && activeCanvasPointerId !== event.pointerId) return;
     const pos = canvasPoint(event);
     state.pointer = pos;
+    if (teamIntelView.drag) {
+      if (!teamIntelInteractive()) { teamIntelView.drag = null; return; }
+      const drag = teamIntelView.drag;
+      const scale = drag.scrollbar ? teamIntelView.maxScroll / Math.max(1, teamIntelView.track.h - teamIntelView.thumb.h) : -1;
+      scrollTeamIntel(drag.offset + (pos.y - drag.y) * scale);
+      state.pointer = null;
+      state.hover = null;
+      event.preventDefault();
+      return;
+    }
     if (state.mergeCutscene) {
       state.hover = null;
       event.preventDefault();
@@ -21342,6 +21518,12 @@
   function onPointerUp(event) {
     if (activeCanvasPointerId !== event.pointerId) return;
     activeCanvasPointerId = null;
+    if (teamIntelView.drag) {
+      teamIntelView.drag = null;
+      canvas.releasePointerCapture?.(event.pointerId);
+      event.preventDefault();
+      return;
+    }
     if (state.mergeCutscene) {
       state.drag = null;
       state.hover = null;
@@ -21364,6 +21546,8 @@
   }
 
   function cancelActivePointerInteraction(event) {
+    const hadIntelDrag = Boolean(teamIntelView.drag);
+    teamIntelView.drag = null;
     const hadDrag = Boolean(state.drag);
     const hadSliderDrag = Boolean(state.optionsMenu.dragSlider);
     const hadCodexDrag = Boolean(state.codexPreview?.dragging);
@@ -21374,7 +21558,7 @@
     if (event?.pointerId != null && canvas.hasPointerCapture?.(event.pointerId)) {
       canvas.releasePointerCapture(event.pointerId);
     }
-    return hadDrag || hadSliderDrag || hadCodexDrag;
+    return hadDrag || hadSliderDrag || hadCodexDrag || hadIntelDrag;
   }
 
   function onPointerCancel(event) {
@@ -21396,13 +21580,19 @@
   function onLostPointerCapture(event) {
     if (activeCanvasPointerId !== event.pointerId) return;
     activeCanvasPointerId = null;
-    if (!state.drag && !state.optionsMenu.dragSlider && !state.codexPreview?.dragging) return;
+    if (!state.drag && !state.optionsMenu.dragSlider && !state.codexPreview?.dragging && !teamIntelView.drag) return;
     state.pointer = null;
     state.hover = null;
     cancelActivePointerInteraction(event);
   }
 
   function onWheel(event) {
+    if (teamIntelInteractive() && teamIntelView.viewport && pointInRect(canvasPoint(event).x, canvasPoint(event).y, INFO_PANEL)) {
+      const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? teamIntelView.viewport.h : 1;
+      scrollTeamIntel(teamIntelView.offset + event.deltaY * scale);
+      event.preventDefault();
+      return;
+    }
     if (state.mergeCutscene) {
       event.preventDefault();
       return;
@@ -21703,6 +21893,12 @@
       state.selected = null;
     }
     if (state.codexOpen) {
+      event.preventDefault();
+      return;
+    }
+    if (teamIntelInteractive() && ["PageUp", "PageDown", "Home", "End"].includes(event.key)) {
+      const page = teamIntelView.viewport?.h || 300;
+      scrollTeamIntel(event.key === "Home" ? 0 : event.key === "End" ? teamIntelView.maxScroll : teamIntelView.offset + (event.key === "PageDown" ? page : -page));
       event.preventDefault();
       return;
     }
@@ -23268,6 +23464,7 @@
         recovery: renderingDiagnostics(),
       },
       prepBonuses: state.phase === "prep" ? prepBonusSnapshot() : null,
+      teamIntel: teamIntelInteractive() ? { offset: teamIntelView.offset, maxScroll: teamIntelView.maxScroll, viewport: teamIntelView.viewport, thumb: teamIntelView.thumb } : null,
       overlays: {
         options: Boolean(state.optionsMenu?.open),
         codex: Boolean(state.codexOpen),

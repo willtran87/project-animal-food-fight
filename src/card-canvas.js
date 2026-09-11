@@ -42,11 +42,17 @@
     const chips = [];
     let cursor = x;
     let row = 0;
+    const fittedWidths = options.fitRow && maxRows === 1 ? (traits || []).map((traitId) =>
+      Math.max(minWidth, Math.ceil(measure(textFor(traitId), `900 ${fontSize}px Inter, sans-serif`) + 8))
+    ) : null;
+    const desiredWidth = fittedWidths?.reduce((sum, width) => sum + width, 0) || 0;
+    const fitScale = desiredWidth ? Math.min(1, Math.max(0, maxWidth - gap * (fittedWidths.length - 1)) / desiredWidth) : 1;
 
-    (traits || []).forEach((traitId) => {
+    (traits || []).forEach((traitId, index) => {
       const text = textFor(traitId);
       const font = `900 ${fontSize}px Inter, sans-serif`;
       let width = Math.max(minWidth, Math.ceil(measure(text, font) + 8));
+      if (fittedWidths) width = Math.floor(fittedWidths[index] * fitScale);
       if (cursor + width > x + maxWidth) {
         if (row + 1 >= maxRows) return;
         row += 1;

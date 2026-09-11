@@ -16,7 +16,9 @@
     "check:data": "node tools/check_data_integrity.mjs",
     "check:logic": "node tools/check_runtime_logic.mjs",
     "build:runtime": "node tools/build_runtime_bundles.mjs",
-    "build:pages": "npm run check:runtime-bundles && npm run check:script-versions && npm run report:unused-assets && node tools/build_pages_dist.mjs",
+    "build:sprite-metrics": "node tools/build_sprite_metrics.mjs",
+    "check:sprite-metrics": "node tools/build_sprite_metrics.mjs --check",
+    "build:pages": "npm run check:runtime-bundles && npm run check:script-versions && npm run check:sprite-metrics && npm run report:unused-assets && node tools/build_pages_dist.mjs",
     "check:runtime-bundles": "node tools/build_runtime_bundles.mjs --check",
     "report:unused-assets": "node tools/report_unused_assets.mjs",
     "report:balance": "node tools/report_balance_simulation.mjs",
@@ -29,9 +31,11 @@
     "check:projectile-trails": "node tools/check_projectile_trails.mjs",
     "check:save-recovery": "node tools/check_save_recovery.mjs",
     "check:user-feedback": "node tools/check_user_feedback.mjs",
+    "check:team-intel": "node tools/check_team_intel.mjs",
+    "check:render-caches": "node tools/check_render_caches.mjs",
     "check:performance": "node tools/check_runtime_performance.mjs",
     "check:asset-budgets": "node tools/check_asset_budgets.mjs",
     "check:visual": "node tools/check_game_routes_highres.mjs",
-    "check": "npm run check:runtime-bundles && npm run check:syntax && npm run check:script-versions && npm run check:assets && npm run check:data && npm run check:logic && npm run check:combat-impact && npm run check:projectile-trails && npm run check:save-recovery && npm run check:user-feedback && npm run check:performance && npm run check:asset-budgets && npm run check:visual && npm run check:tutorial && npm run check:mobile-scenes && npm run check:field-guide"
+    "check": "npm run check:runtime-bundles && npm run check:syntax && npm run check:script-versions && npm run check:assets && npm run check:sprite-metrics && npm run check:data && npm run check:logic && npm run check:combat-impact && npm run check:projectile-trails && npm run check:save-recovery && npm run check:user-feedback && npm run check:team-intel && npm run check:render-caches && npm run check:performance && npm run check:asset-budgets && npm run check:visual && npm run check:tutorial && npm run check:mobile-scenes && npm run check:field-guide"
   }
 }

@@ -58,6 +58,10 @@ try {
       assert.deepEqual(bonuses.fuelLinks.map((link) => link.boardIndex), [0, 1], "pair matching requires both class and lane");
       assert.deepEqual(bonuses.groups.find((group) => group.id === "breakfast").members, [0, 1, 3]);
       assert.equal(bonuses.groups.some((group) => group.id === "sweet"), false, "benched units must not activate class markers");
+      const counts = (pairs) => Object.fromEntries(pairs.map((pair) => [pair.id, pair.count]));
+      assert.deepEqual(counts(bonuses.fuelPairings[0]), { breakfast: 2, bakery: 2 }, "dual-type units contribute to each matching type");
+      assert.deepEqual(counts(bonuses.unitPairings[0]), { breakfast: 1, bakery: 1 }, "one fuel is counted once per matching type");
+      assert.deepEqual(bonuses.unitPairings[2], [], "out-of-type units must have no pairing badges");
       await page.evaluate(() => {
         const g = window.__foodAnimals, s = g.state;
         s.board[1].ignoreTraits = true;
@@ -65,6 +69,25 @@ try {
       });
       const moved = await page.evaluate(() => JSON.parse(window.render_game_to_text()).prepBonuses);
       assert.deepEqual(moved.fuelLinks.map((link) => [link.fuelIndex, link.boardIndex]), [[0, 0], [3, 0], [3, 3]]);
+      assert.deepEqual(counts(moved.unitPairings[0]), { breakfast: 2, bakery: 2 }, "row and column fuels are counted separately within each type");
+      assert.deepEqual(counts(moved.fuelPairings[0]), { breakfast: 1, bakery: 1 });
+      assert.deepEqual(counts(moved.fuelPairings[3]), { breakfast: 2, bakery: 2 });
+      assert.deepEqual(moved.unitPairings[1], [], "trait-disabled units cannot retain stale pairing counts");
+      const changed = await page.evaluate(() => {
+        const s = window.__foodAnimals.state, unit = s.board[1], traits = unit.traits;
+        unit.ignoreTraits = false;
+        unit.traits = ["breakfast"];
+        const mixed = JSON.parse(window.render_game_to_text()).prepBonuses;
+        const fuel = s.drinks[0]; s.drinks[0] = null;
+        const removed = JSON.parse(window.render_game_to_text()).prepBonuses;
+        s.drinks[0] = fuel; unit.traits = traits;
+        return { mixed, removed };
+      });
+      assert.deepEqual(counts(changed.mixed.fuelPairings[0]), { breakfast: 2, bakery: 1 }, "each type must have its own count, not the lane total");
+      assert.deepEqual(counts(changed.mixed.unitPairings[1]), { breakfast: 1 });
+      assert.deepEqual(changed.removed.fuelPairings[0], [], "removing fuel clears its badges");
+      assert.deepEqual(changed.removed.unitPairings[1], [], "removing fuel clears recipient badges");
+      assert.deepEqual(counts(changed.removed.unitPairings[0]), { breakfast: 1, bakery: 1 }, "other active fuels remain counted");
       await page.evaluate(() => { window.__foodAnimals.state.board[1].ignoreTraits = false; });
       await click(382, 278);
       if (!mobile) {
@@ -78,6 +101,39 @@ try {
         s.board[0].item = g.makeItem("maple_leaf");
         s.board[1].item = g.makeItem("popcorn_kernel");
         s.board[2].item = g.makeItem("marshmallow_cube");
+        s.itemBench[0] = g.makeItem("butter_pat");
+        s.shop[0] = g.makeItem("bean_brew");
+        const cards = window.FoodAnimalsCardCanvas, layout = cards.traitChipLayout;
+        window.__pairingChips = [];
+        const ctx = document.getElementById("game").getContext("2d"), fillText = ctx.fillText, fill = ctx.fill;
+        let lastFill = null;
+        ctx.fill = function (...args) {
+          lastFill = this.fillStyle;
+          return fill.apply(this, args);
+        };
+        window.__activePairDraws = [];
+        ctx.fillText = function (text, x, y, ...args) {
+          if (/^[A-Z]{2} [1-3]$/.test(text) && /^900 7px /.test(this.font)) window.__activePairDraws.push({ text, x, y, color: lastFill });
+          return fillText.call(this, text, x, y, ...args);
+        };
+        cards.traitChipLayout = function (traits, x, y, maxWidth, options) {
+          const result = layout(traits, x, y, maxWidth, options);
+          if (options.pairingItem) {
+            window.__pairingChips.push({ id: options.pairingItem.id, traits, x, y, maxWidth, chips: result.chips });
+          }
+          return result;
+        };
+        const assets = window.FoodAnimalsRuntimeAssets, original = assets.outlinedImage;
+        window.__outlineSamples = [];
+        window.__outlineReuse = new Map();
+        assets.outlinedImage = function (image, cache, options) {
+          const result = original(image, cache, options);
+          const key = image.src + JSON.stringify(options.crop || null);
+          const previous = window.__outlineReuse.get(key);
+          window.__outlineSamples.push({ src: image.src, cropped: Boolean(options.crop), reused: previous === result });
+          window.__outlineReuse.set(key, result);
+          return result;
+        };
       });
       for (const horror of [false, true]) {
         await page.evaluate((horror) => {
@@ -86,12 +142,76 @@ try {
           s.selected = { area: "drinks", index: 0 }; s.hover = null; s.pointer = null;
           window.advanceTime(16);
         }, horror);
+        const pairingLayouts = await page.evaluate(() => {
+          const g = window.__foodAnimals, s = g.state;
+          const shopItem = s.shop[0];
+          const results = [];
+          for (const item of Object.values(window.FoodAnimalsItemData.ITEMS).filter((entry) => entry.pairTraits?.length)) {
+            s.shop[0] = g.makeItem(item.id);
+            s.selected = { area: "shop", index: 0 };
+            window.__pairingChips = [];
+            window.advanceTime(16);
+            results.push({ id: item.id, traits: item.pairTraits, layouts: window.__pairingChips });
+          }
+          s.shop[0] = shopItem;
+          s.selected = { area: "drinks", index: 0 };
+          window.__pairingChips = [];
+          window.advanceTime(16);
+          return { results, labels: JSON.parse(window.render_game_to_text()).traits, selected: window.__pairingChips };
+        });
+        assert.ok(pairingLayouts.results.length >= 21, "exercise every drink/fuel pairing");
+        for (const { id, traits, layouts } of pairingLayouts.results) {
+          assert.equal(layouts.length, 2, `${id}: pairing pills appear in both shop and selected info`);
+          for (const layout of layouts) {
+            assert.equal(layout.id, id);
+            assert.deepEqual(layout.chips.map((chip) => chip.traitId), traits, `${id}: no pairing type may be clipped or omitted: ${JSON.stringify(layout)}`);
+            for (const chip of layout.chips) {
+              assert.equal(chip.text, pairingLayouts.labels[chip.traitId].label, "pills follow cozy/horror type names");
+              assert.ok(chip.x >= layout.x && chip.x + chip.w <= layout.x + layout.maxWidth, "pills fit their reserved row");
+              assert.equal(chip.y, layout.y, "pills must not wrap into stats or price rows");
+            }
+          }
+        }
+        assert.equal(pairingLayouts.selected.length, 2, "deployed fuel retains its info-panel pills without hovering");
         await page.waitForTimeout(1000);
-        await page.evaluate(() => window.advanceTime(16));
+        const outlines = await page.evaluate(() => {
+          window.__outlineSamples = [];
+          window.__activePairDraws = [];
+          window.advanceTime(16);
+          const s = window.__foodAnimals.state;
+          const fuelSrc = new URL(window.__foodAnimals.itemSpriteSrcFor(s.drinks[0]), document.baseURI).href;
+          const looseWeaponSrc = new URL(window.__foodAnimals.itemSpriteSrcFor(s.itemBench[0]), document.baseURI).href;
+          return { samples: window.__outlineSamples, fuelSrc, looseWeaponSrc };
+        });
+        const activePairs = await page.evaluate(() => ({
+          draws: window.__activePairDraws,
+          summary: JSON.parse(window.render_game_to_text()).prepBonuses,
+        }));
+        const expectedPairs = [...activePairs.summary.unitPairings, ...activePairs.summary.fuelPairings].flat();
+        assert.equal(activePairs.draws.length, expectedPairs.length, "every active type must render its own badge without an aggregate count");
+        for (const pair of expectedPairs) {
+          assert.ok(activePairs.draws.some((draw) => draw.text === `${pair.short} ${pair.count}` && draw.color === pair.color.toLowerCase()), "badge labels contain both type and count on the matching theme color");
+        }
         await page.screenshot({ path: path.join(output, `${label}-${horror ? "horror" : "cozy"}-pairs.png`) });
         const diagnostics = await page.evaluate(() => JSON.parse(window.render_game_to_text()).rendering.recovery);
         assert.equal(diagnostics.errors, 0);
-        if (horror) assert.ok(diagnostics.outlineCacheEntries >= 3, "equipped horror weapons must use cached outlines");
+        if (horror) {
+          assert.ok(diagnostics.outlineCacheEntries >= 3 && diagnostics.outlineCacheEntries <= 64);
+          assert.ok(outlines.samples.some((sample) => sample.cropped), "horror units must outline their cropped sprite bounds");
+          assert.ok(outlines.samples.some((sample) => sample.src === outlines.fuelSrc), "horror fuel must use the outline treatment");
+          assert.ok(outlines.samples.some((sample) => sample.src === outlines.looseWeaponSrc), "unequipped horror weapons must have outlines in storage");
+          assert.ok(outlines.samples.some((sample) => sample.reused), "outlines must reuse cached canvases");
+        } else assert.equal(outlines.samples.length, 0, "cozy prep must retain its original art");
+        if (horror) {
+          await page.evaluate(() => {
+            window.__foodAnimals.state.selected = { area: "itemBench", index: 0 };
+            window.__outlineSamples = [];
+            window.advanceTime(16);
+          });
+          assert.ok(await page.evaluate((src) => window.__outlineSamples.filter((sample) => sample.src === src).length >= 2, outlines.looseWeaponSrc),
+            "stored weapon and its info preview must both use outlines");
+          await page.screenshot({ path: path.join(output, `${label}-horror-loose-weapon.png`) });
+        }
       }
       await page.evaluate(() => { window.__foodAnimals.state.selected = { area: "board", index: 0 }; window.advanceTime(16); });
       await page.screenshot({ path: path.join(output, `${label}-class-focus.png`) });
@@ -108,6 +228,20 @@ try {
         await page.evaluate(() => document.getElementById("game").dispatchEvent(new Event("contextrestored")));
         assert.equal(await page.locator(".render-recovery").isVisible(), false);
       }
+      await page.evaluate(() => {
+        const g = window.__foodAnimals;
+        g.startBattle(); g.state.phaseTransition = null;
+        window.advanceTime(16);
+      });
+      await page.waitForTimeout(1000);
+      const battleOutlines = await page.evaluate(() => {
+        window.__outlineSamples = [];
+        window.advanceTime(16);
+        return window.__outlineSamples;
+      });
+      assert.ok(battleOutlines.some((sample) => sample.cropped), "moving combat units must retain outlines");
+      assert.ok(battleOutlines.some((sample) => !sample.cropped), "combat fuel and equipment must retain outlines");
+      await page.screenshot({ path: path.join(output, `${label}-horror-battle-outlines.png`) });
       console.log(`PASS: ${label} selection, pairing, and weapon rendering`);
     } finally { await context.close(); }
   }
