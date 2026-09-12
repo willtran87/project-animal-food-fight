@@ -34,9 +34,10 @@
     "check:team-intel": "node tools/check_team_intel.mjs",
     "check:render-caches": "node tools/check_render_caches.mjs",
     "check:prep-story-caches": "node tools/check_prep_story_caches.mjs",
+    "check:illusion-completion": "node tools/check_illusion_render_completion.mjs",
     "check:performance": "node tools/check_runtime_performance.mjs",
     "check:asset-budgets": "node tools/check_asset_budgets.mjs",
     "check:visual": "node tools/check_game_routes_highres.mjs",
-    "check": "npm run check:runtime-bundles && npm run check:syntax && npm run check:script-versions && npm run check:assets && npm run check:sprite-metrics && npm run check:data && npm run check:logic && npm run check:combat-impact && npm run check:projectile-trails && npm run check:save-recovery && npm run check:user-feedback && npm run check:team-intel && npm run check:render-caches && npm run check:prep-story-caches && npm run check:performance && npm run check:asset-budgets && npm run check:visual && npm run check:tutorial && npm run check:mobile-scenes && npm run check:field-guide"
+    "check": "npm run check:runtime-bundles && npm run check:syntax && npm run check:script-versions && npm run check:assets && npm run check:sprite-metrics && npm run check:data && npm run check:logic && npm run check:combat-impact && npm run check:projectile-trails && npm run check:save-recovery && npm run check:user-feedback && npm run check:team-intel && npm run check:render-caches && npm run check:prep-story-caches && npm run check:illusion-completion && npm run check:performance && npm run check:asset-budgets && npm run check:visual && npm run check:tutorial && npm run check:mobile-scenes && npm run check:field-guide"
   }
 }

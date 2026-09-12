@@ -244,6 +244,8 @@
   let drawCount = 0;
   let skippedDrawCount = 0;
   let lastRenderContinuous = false;
+  let drawingFrame = false;
+  let renderedIllusionActive = false;
   let frameRequestPending = false;
   let idleLoopTimer = null;
   let lastAccessibleStatus = "";
@@ -289,6 +291,8 @@
     drawCount += 1;
     // Presentation-only reuse: transactions and the next frame always see fresh state.
     prepRenderCache = state.phase === "prep" ? new Map() : null;
+    drawingFrame = true;
+    renderedIllusionActive = false;
     try {
       draw();
       renderRecovery.failures = 0;
@@ -310,6 +314,7 @@
       }
       return;
     } finally {
+      drawingFrame = false;
       prepRenderCache = null;
     }
     syncAccessibleStatus();
@@ -11296,6 +11301,8 @@
     if (phase > sequenceSeconds) return { active: false, phase: "idle", progress: 0 };
     const threshold = 1 - Math.min(0.42, chance * (reveal ? 2.2 : 1));
     if (glitchNoise(cycle * 173 + id * 37) <= threshold) return { active: false, phase: "idle", progress: 0 };
+    // Finish effects already painted, including the clean frame after their final phase.
+    if (drawingFrame) renderedIllusionActive = true;
     if (phase < preStaticSeconds) return { active: true, phase: "pre", progress: phase / preStaticSeconds };
     if (phase < preStaticSeconds + flashSeconds) {
       return { active: true, phase: "flash", progress: (phase - preStaticSeconds) / flashSeconds };
@@ -22007,6 +22014,7 @@
 
   function hasActiveTimedVisuals() {
     return Boolean(
+      renderedIllusionActive ||
       state.phaseTransition ||
       state.rebootTransition ||
       state.menuRebootTransition ||
@@ -22063,13 +22071,13 @@
     state.lastTime = now || 0;
     update(dt);
     const isContinuous = shouldRenderContinuously();
-    lastRenderContinuous = isContinuous;
     if (renderDirty || wasContinuous || isContinuous) {
       drawFrame();
     } else {
       skippedDrawCount += 1;
     }
-    scheduleGameLoop(isContinuous);
+    lastRenderContinuous = shouldRenderContinuously();
+    scheduleGameLoop(lastRenderContinuous);
   }
 
   function renderFullGameToText() {
