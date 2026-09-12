@@ -253,6 +253,15 @@
   const renderRecovery = { paused: false, losses: 0, restorations: 0, errors: 0, failures: 0, events: [] };
   let renderRecoveryUi = null;
   let renderRetryTimer = null;
+  let prepRenderCache = null;
+
+  function memoPrepRender(name, key, compute) {
+    if (!prepRenderCache) return compute();
+    let entries = prepRenderCache.get(name);
+    if (!entries) { entries = new Map(); prepRenderCache.set(name, entries); }
+    if (!entries.has(key)) entries.set(key, compute());
+    return entries.get(key);
+  }
 
   function rememberCacheEntry(cache, key, value) {
     return window.FoodAnimalsCanvasText.remember(cache, key, value, TEXT_LAYOUT_CACHE_LIMIT);
@@ -278,6 +287,8 @@
     assetDrawPending = false;
     renderDirty = false;
     drawCount += 1;
+    // Presentation-only reuse: transactions and the next frame always see fresh state.
+    prepRenderCache = state.phase === "prep" ? new Map() : null;
     try {
       draw();
       renderRecovery.failures = 0;
@@ -298,6 +309,8 @@
         }, 150);
       }
       return;
+    } finally {
+      prepRenderCache = null;
     }
     syncAccessibleStatus();
   }
@@ -963,6 +976,8 @@
   const itemSpriteCache = new Map();
   const horrorOutlineCache = new Map();
   const themedTraitCache = new Map();
+  const generatedTextCache = new Map();
+  let horrorTextReplacements = null;
   let projectedStatsKey = "";
   let projectedStatsCache = null;
   let prepBonusCacheKey = "";
@@ -2284,7 +2299,9 @@
 
   function themedGeneratedText(text) {
     if (!realityBroken() || text === null || text === undefined) return text;
-    const replacements = [
+    const value = String(text);
+    if (generatedTextCache.has(value)) return generatedTextCache.get(value);
+    const replacements = horrorTextReplacements || (horrorTextReplacements = [
       [/\bfood animals\b/gi, foodPluralTerm({ lower: true })],
       [/\bfood animal\b/gi, foodTerm({ lower: true })],
       [/\banimals\b/gi, foodPluralTerm({ lower: true })],
@@ -2301,8 +2318,11 @@
       [/\barena\b/gi, arenaTerm({ lower: true })],
       [/\brolls\b/gi, `${rollTerm({ lower: true })}s`],
       [/\broll\b/gi, rollTerm({ lower: true })],
-    ];
-    return replacements.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), String(text));
+    ]);
+    const result = replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), value);
+    // Long generated summaries should not occupy the reusable short-label cache.
+    if (value.length > 2048) return result;
+    return window.FoodAnimalsRuntimeAssets.remember(generatedTextCache, value, result, 512);
   }
 
   function itemDescriptionText(item) {
@@ -3394,6 +3414,10 @@
   }
 
   function allOwnedRefs() {
+    return memoPrepRender("ownedRefs", null, collectOwnedRefs);
+  }
+
+  function collectOwnedRefs() {
     const refs = [];
     state.bench.forEach((unit, index) => {
       if (isUnit(unit)) refs.push({ area: "bench", index, unit });
@@ -3409,6 +3433,10 @@
   }
 
   function allLooseItemRefs() {
+    return memoPrepRender("looseItemRefs", null, collectLooseItemRefs);
+  }
+
+  function collectLooseItemRefs() {
     const refs = [];
     state.bench.forEach((entry, index) => {
       if (isItem(entry)) refs.push({ area: "bench", index, item: entry });
@@ -3658,6 +3686,10 @@
   }
 
   function shopEntryMergeOpportunity(entry) {
+    return memoPrepRender("entryMerge", entry, () => computeShopEntryMergeOpportunity(entry));
+  }
+
+  function computeShopEntryMergeOpportunity(entry) {
     if (!entry) return null;
     if (isItem(entry)) {
       if (itemTier(entry.tier) >= MAX_ITEM_TIER) return null;
@@ -3689,6 +3721,10 @@
   }
 
   function shopSlotMergeOpportunity(index) {
+    return memoPrepRender("slotMerge", index, () => computeShopSlotMergeOpportunity(index));
+  }
+
+  function computeShopSlotMergeOpportunity(index) {
     const entry = shopEntryAt(index);
     if (!entry) return null;
     const opportunity = shopEntryMergeOpportunity(entry);
@@ -3701,6 +3737,10 @@
   }
 
   function itemRecommendationTags(item, shopIndex = null) {
+    return memoPrepRender(`itemTags:${shopIndex}`, item, () => computeItemRecommendationTags(item, shopIndex));
+  }
+
+  function computeItemRecommendationTags(item, shopIndex = null) {
     if (!isItem(item)) return [];
     const tags = [];
     const addTag = (label, body, tone = "neutral") => {
@@ -3824,6 +3864,10 @@
   }
 
   function shopEntryIndicatorTags(entry, shopIndex = null) {
+    return memoPrepRender(`shopTags:${shopIndex}`, entry, () => computeShopEntryIndicatorTags(entry, shopIndex));
+  }
+
+  function computeShopEntryIndicatorTags(entry, shopIndex = null) {
     if (!entry) return [];
     const tags = [];
     const addTag = (label, body, tone = "neutral") => {
@@ -3892,6 +3936,10 @@
   }
 
   function itemCarrierRecommendations(item, shopIndex = null) {
+    return memoPrepRender(`carriers:${shopIndex}`, item, () => computeItemCarrierRecommendations(item, shopIndex));
+  }
+
+  function computeItemCarrierRecommendations(item, shopIndex = null) {
     if (!isItem(item)) return [];
     return allOwnedRefs()
       .map((ref) => itemCarrierScore(item, ref, shopIndex))
@@ -19907,6 +19955,15 @@
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.globalAlpha = 0.86;
+    if (horrorStill) {
+      const outline = window.FoodAnimalsRuntimeAssets.outlinedImage(image, horrorOutlineCache, { size: 256, maxEntries: 64, crop: metrics });
+      if (outline) {
+        const padX = rect.w * outline.pad / outline.size;
+        const padY = rect.h * outline.pad / outline.size;
+        drawImageRegionFacing(outline.canvas, 0, 0, outline.canvas.width, outline.canvas.height,
+          rect.x - padX, rect.y - padY, rect.w + padX * 2, rect.h + padY * 2, facingRight);
+      }
+    }
     drawImageRegionFacing(image, metrics.x, metrics.y, metrics.w, metrics.h, rect.x, rect.y, rect.w, rect.h, facingRight);
     ctx.restore();
     ctx.imageSmoothingEnabled = true;
@@ -20209,8 +20266,12 @@
       if (nextSrc) image.src = nextSrc;
       else image.removeAttribute("src");
     }
-    image.hidden = !nextSrc;
-    image.alt = alt;
+    setStoryProperty(image, "hidden", !nextSrc);
+    setStoryProperty(image, "alt", alt);
+  }
+
+  function setStoryProperty(element, property, value) {
+    if (element[property] !== value) element[property] = value;
   }
 
   function syncMobileStoryOverlay() {
@@ -20218,9 +20279,9 @@
     const story = state.activeStory;
     const beat = currentStoryBeat();
     const active = Boolean(mobileStoryMedia.matches && story && beat);
-    mobileStoryUi.root.hidden = !active;
+    setStoryProperty(mobileStoryUi.root, "hidden", !active);
     if (!active) {
-      delete document.body.dataset.mobileStory;
+      if (document.body.dataset.mobileStory !== undefined) delete document.body.dataset.mobileStory;
       return;
     }
 
@@ -20233,19 +20294,22 @@
     const total = Math.max(1, story.beats?.length || 1);
     const index = Math.max(0, Math.min(story.index || 0, total - 1));
 
-    document.body.dataset.mobileStory = "true";
-    mobileStoryUi.root.dataset.theme = horror ? "horror" : "cozy";
-    mobileStoryUi.root.style.setProperty("--mobile-story-opacity", storyTransitionAlpha(story).toFixed(3));
-    mobileStoryUi.title.textContent = story.title || "Story";
-    mobileStoryUi.progress.textContent = `${index + 1} / ${total}`;
-    mobileStoryUi.speaker.textContent = speaker;
-    mobileStoryUi.text.textContent = beat.text || "";
-    mobileStoryUi.skipConfirm.hidden = !story.skipConfirm;
-    mobileStoryUi.back.disabled = !storyCanGoBack();
-    mobileStoryUi.skip.textContent = story.skipConfirm ? "Confirm Skip" : "Skip";
-    mobileStoryUi.advance.textContent = index >= total - 1 ? "Close" : "Next";
-    mobileStoryUi.portrait.classList.toggle("is-tabs", tabsSpeaker);
-    mobileStoryUi.portrait.classList.toggle("is-player", playerSpeaker);
+    setStoryProperty(document.body.dataset, "mobileStory", "true");
+    setStoryProperty(mobileStoryUi.root.dataset, "theme", horror ? "horror" : "cozy");
+    const opacity = storyTransitionAlpha(story).toFixed(3);
+    if (mobileStoryUi.root.style.getPropertyValue("--mobile-story-opacity") !== opacity) {
+      mobileStoryUi.root.style.setProperty("--mobile-story-opacity", opacity);
+    }
+    setStoryProperty(mobileStoryUi.title, "textContent", story.title || "Story");
+    setStoryProperty(mobileStoryUi.progress, "textContent", `${index + 1} / ${total}`);
+    setStoryProperty(mobileStoryUi.speaker, "textContent", speaker);
+    setStoryProperty(mobileStoryUi.text, "textContent", beat.text || "");
+    setStoryProperty(mobileStoryUi.skipConfirm, "hidden", !story.skipConfirm);
+    setStoryProperty(mobileStoryUi.back, "disabled", !storyCanGoBack());
+    setStoryProperty(mobileStoryUi.skip, "textContent", story.skipConfirm ? "Confirm Skip" : "Skip");
+    setStoryProperty(mobileStoryUi.advance, "textContent", index >= total - 1 ? "Close" : "Next");
+    if (mobileStoryUi.portrait.classList.contains("is-tabs") !== tabsSpeaker) mobileStoryUi.portrait.classList.toggle("is-tabs", tabsSpeaker);
+    if (mobileStoryUi.portrait.classList.contains("is-player") !== playerSpeaker) mobileStoryUi.portrait.classList.toggle("is-player", playerSpeaker);
     syncMobileStoryImage(mobileStoryUi.background, currentStoryBackgroundSrc(story));
     syncMobileStoryImage(mobileStoryUi.portrait, portraitSrc, portraitSrc ? `${speaker} portrait` : "");
   }

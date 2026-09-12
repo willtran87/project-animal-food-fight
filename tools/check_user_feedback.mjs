@@ -126,12 +126,14 @@ try {
         const assets = window.FoodAnimalsRuntimeAssets, original = assets.outlinedImage;
         window.__outlineSamples = [];
         window.__outlineReuse = new Map();
+        window.__outlineCanvases = new WeakMap();
         assets.outlinedImage = function (image, cache, options) {
           const result = original(image, cache, options);
           const key = image.src + JSON.stringify(options.crop || null);
           const previous = window.__outlineReuse.get(key);
           window.__outlineSamples.push({ src: image.src, cropped: Boolean(options.crop), reused: previous === result });
           window.__outlineReuse.set(key, result);
+          if (result) window.__outlineCanvases.set(result.canvas, image.src);
           return result;
         };
       });
@@ -242,6 +244,48 @@ try {
       assert.ok(battleOutlines.some((sample) => sample.cropped), "moving combat units must retain outlines");
       assert.ok(battleOutlines.some((sample) => !sample.cropped), "combat fuel and equipment must retain outlines");
       await page.screenshot({ path: path.join(output, `${label}-horror-battle-outlines.png`) });
+      await page.evaluate(() => {
+        const battle = window.__foodAnimals.state.battle;
+        window.__defeatedFixtures = [battle.allies[0], battle.enemies[0]];
+        for (const unit of window.__defeatedFixtures) {
+          unit.dead = true; unit.hp = 0; unit.visualHp = 0; unit.visualDefeatPending = false;
+        }
+        const ctx = document.getElementById("game").getContext("2d"), drawImage = ctx.drawImage;
+        window.__defeatOutlineDraws = [];
+        ctx.drawImage = function (image, ...args) {
+          const src = window.__outlineCanvases.get(image);
+          if (src) window.__defeatOutlineDraws.push({ src, facing: Math.sign(this.getTransform().a), alpha: this.globalAlpha });
+          return drawImage.call(this, image, ...args);
+        };
+      });
+      for (const horror of [true, false]) {
+        await page.evaluate((horror) => {
+          const s = window.__foodAnimals.state;
+          s.realityOverride = horror; s.realityBroken = horror; s.realityBreakTimer = 0;
+          window.advanceTime(16);
+        }, horror);
+        await page.waitForTimeout(1000);
+        const defeated = await page.evaluate((horror) => {
+          window.__outlineSamples = []; window.__defeatOutlineDraws = [];
+          window.advanceTime(16);
+          const data = window.FoodAnimalsUnitData;
+          const tierSrc = (entry, tier) => typeof entry === "string" ? entry : entry?.[tier] || entry?.[Math.min(4, tier)] || entry?.[1];
+          const fixtures = window.__defeatedFixtures.map((unit) => {
+            const src = (horror && tierSrc(data.REALITY_DEFEAT_STILL_SPRITES[unit.typeId], unit.tier)) || tierSrc(data.DEFEAT_STILL_SPRITES[unit.typeId], unit.tier);
+            return { side: unit.side, src: new URL(src, document.baseURI).href };
+          });
+          return { fixtures, samples: window.__outlineSamples, draws: window.__defeatOutlineDraws };
+        }, horror);
+        for (const fixture of defeated.fixtures) {
+          const draws = defeated.draws.filter((draw) => draw.src === fixture.src);
+          if (horror) {
+            assert.ok(draws.length, `${fixture.side} defeated horror sprite must draw an outline`);
+            assert.ok(draws.some((draw) => draw.facing === (fixture.side === "ally" ? -1 : 1) && Math.abs(draw.alpha - 0.86) < 0.001), "each side's defeat outline must retain facing and fade, including shared sprite assets");
+            assert.ok(defeated.samples.some((sample) => sample.src === fixture.src && sample.cropped && sample.reused), "defeat outlines must reuse the cropped outline cache");
+          } else assert.equal(draws.length, 0, "cozy defeated sprites must stay unoutlined");
+        }
+        await page.screenshot({ path: path.join(output, `${label}-${horror ? "horror" : "cozy"}-defeated-outlines.png`) });
+      }
       console.log(`PASS: ${label} selection, pairing, and weapon rendering`);
     } finally { await context.close(); }
   }

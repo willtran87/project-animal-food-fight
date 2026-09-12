@@ -5,7 +5,7 @@
   const BUNDLE_ENTRIES = Object.freeze({
     startMenu: ["dist/start-menu.bundle.js", "h-d2eb2d792cff"],
     openingVn: ["dist/opening-vn.bundle.js", "h-e2a80755ac3f"],
-    game: ["dist/game.bundle.js", "h-72fee33b2a05"],
+    game: ["dist/game.bundle.js", "h-d4cc14062a60"],
   });
 
   const entryAliases = Object.freeze({
